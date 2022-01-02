@@ -1,0 +1,5 @@
+python-dotenv==0.18.0
+mariadb==1.0.7
+json2html
+pysimplegui
+tkinterhtml
