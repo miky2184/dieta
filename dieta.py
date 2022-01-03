@@ -1,4 +1,5 @@
 import decimal
+from pathlib import Path
 import math
 import os
 from dotenv import load_dotenv
@@ -19,6 +20,24 @@ DB_PWD = os.getenv('DB_PWD')
 MAX_RETRY_LIMIT = 10000
 combo_dict = {'SPUNTINO': 0, 'COLAZIONE': 1, 'PRANZO/CENA': 2, 'CONTORNO': 3}
 
+
+def aggiungi_nuovo_alimento(alimenti_val):
+    conndb = None
+    try:
+        conndb = mariadb.connect(user=DB_USER, database=DB_NAME, host=DB_HOST, password=DB_PWD)
+        cursor = conndb.cursor()
+        cursor.execute("""INSERT INTO DIETA_ALIMENTO (DESCRIZIONE, KCAL, CARBOIDRATI, PROTEINE, GRASSI) 
+                       VALUES (%s, %s, %s, %s, %s);""", (alimenti_val['anome'].upper(), alimenti_val['akcal'],
+                                                         alimenti_val['acarb'], alimenti_val['aprot'],
+                                                         alimenti_val['agras']))
+        conndb.commit()
+    except Exception as e:
+        print(e)
+        if conndb is not None:
+            conndb.close()
+    finally:
+        if conndb is not None:
+            conndb.close()
 
 def set_lista_della_spesa(ingrediente, qta, lista_della_spesa):
     if ingrediente in lista_della_spesa:
@@ -224,7 +243,9 @@ def crea_dieta(perc_colazione, perc_pranzo, perc_spuntini, perc_cena, sesso, alt
         f.close()
 
         # Change path to reflect file location
+        filepath = Path('table.html').resolve()
         filename = 'file:///Users/michele.micunco/Documents/Workspace/GOOGLE/my_python/' + 'table.html'
+        filename = f'file://{filepath}'
         webbrowser.open_new_tab(filename)
     except Exception as e:
         print(e)
@@ -359,8 +380,15 @@ sg.theme('SystemDefault')  # Add a touch of color
 combo_alimenti = get_alimenti()
 choices = list(combo_alimenti.keys())
 
+layout_alimenti = [[ sg.Text('Nome Alimento', size=(20, 1)), sg.InputText(key='anome')],
+                   [sg.Text('KCAL', size=(20, 1)), sg.InputText(key='akcal')],
+[sg.Text('CARBOIDRATI', size=(20, 1)), sg.InputText(key='acarb')],
+[sg.Text('PROTEINE', size=(20, 1)), sg.InputText(key='aprot')],
+[sg.Text('GRASSI', size=(20, 1)), sg.InputText(key='agras')],
+    [sg.Submit('Salva Nuovo Alimento')]]
+
 layout_ricette = [
-    [sg.Text('NOME RICETTA', size=(20, 1)), sg.Input(key='nome_ricetta'),
+    [sg.Text('NOME RICETTA', size=(20, 1)), sg.InputText(key='nome_ricetta'),
      sg.Combo(list(combo_dict.keys()), key='pasto'),
      sg.Checkbox("Stagione", key='stagione')],
     [sg.Combo(list(combo_alimenti.keys()), key='alimento0'), sg.Text('QTA:', size=(20, 1)), sg.InputText(key='qta0')],
@@ -395,7 +423,7 @@ layout_dieta = [[sg.Text('NOME', size=(20, 1)), sg.Input(key='nome', default_tex
                  sg.Slider(range=(0, 100), orientation='h', size=(34, 20), default_value=32, key='perc_cena')],
                 [sg.Submit('Genera Dieta')]]
 
-tabgrp = [[sg.TabGroup([[sg.Tab('La mia dieta', layout_dieta), sg.Tab('Le mie ricetta', layout_ricette)]],
+tabgrp = [[sg.TabGroup([[sg.Tab('La mia dieta', layout_dieta), sg.Tab('Le mie ricetta', layout_ricette), sg.Tab('Aggiungi Alimenti', layout_alimenti)]],
                        tab_location='centertop',
                        title_color='White', tab_background_color='Black', selected_title_color='Black',
                        selected_background_color='Gray', border_width=5)], [sg.Button('Close')]]
@@ -415,6 +443,9 @@ while True:
                    int(values['perc_cena']), str(values['sesso']), int(values['altezza']), int(values['eta']))
     if event == 'Salva Ricetta':
         crea_ricetta(values)
+
+    if event == 'Salva Nuovo Alimento':
+        aggiungi_nuovo_alimento(values)
     ##print('You entered ', values[0])
 
 window.close()
