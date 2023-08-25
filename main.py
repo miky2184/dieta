@@ -1,5 +1,4 @@
 import random
-import time
 from copy import deepcopy
 from decimal import Decimal
 from datetime import datetime, timedelta
@@ -11,6 +10,8 @@ import psycopg2.extras
 import simplejson
 from google.oauth2.service_account import Credentials
 from gspread_formatting import set_column_width, set_data_validation_for_cell_range, DataValidationRule, BooleanCondition
+import schedule
+import time
 
 from db import connect_to_db
 import os
@@ -29,6 +30,7 @@ MAX_RETRY = os.getenv("MAX_RETRY")
 WIDTH_COLS_QTA = os.getenv("WIDTH_COLS_QTA")
 SLEEP_TIME = os.getenv("SLEEP_TIME")
 SA = os.getenv("SA")
+DEV_MODE = os.getenv("DEV_MODE", "F")
 
 ricetta = {"ids": [], "ricette": []}
 
@@ -158,16 +160,6 @@ def __send_telegram_message__(message):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={USER_CHAT_ID}&text={message}"
     print(requests.get(url).json())  # this sends the message
 
-
-def main():
-    __print_setts__()
-    validation_rule = __print_ricette__()
-    __print_ingredienti_ricette__()
-    __crea_menu__()
-    if not print_menu(settimana, validation_rule):
-        __print_lista_della_spesa__(settimana.get("all_food"))
-
-
 def __crea_menu__():
     __genera_menu__(False)
     __genera_menu__(True)
@@ -273,7 +265,7 @@ def __print_ingredienti_ricette__():
             conn.close()
 
 
-def print_menu(dieta_settimanale, validation_rule):
+def __print_menu__(dieta_settimanale, validation_rule):
     existing_menu = True
     dieta_settimanale = simplejson.loads(simplejson.dumps(dieta_settimanale, use_decimal=True))
 
@@ -407,5 +399,30 @@ def __print_lista_della_spesa__(ids_all_food: list):
             conn.close()
 
 
-if __name__ == '__main__':
+def main():
+    __print_setts__()
+    validation_rule = __print_ricette__()
+    __print_ingredienti_ricette__()
+    __crea_menu__()
+    if not __print_menu__(settimana, validation_rule):
+        __print_lista_della_spesa__(settimana.get("all_food"))
+
+
+def pianifica_esecuzione():
+    # Ottieni il giorno della settimana corrente (0 = lunedì, 6 = domenica)
+    giorno_settimana_corrente = datetime.now().weekday()
+
+    # Verifica se oggi è venerdì (4 è il codice per il venerdì)
+    if giorno_settimana_corrente == 4:
+        main()  # Esegui il tuo programma se oggi è venerdì
+
+
+if DEV_MODE == 'N':
+    # Esegui la verifica dell'esecuzione ogni giorno
+    schedule.every().day.at("10:00").do(pianifica_esecuzione)
+
+    while True:
+        schedule.run_pending()
+        time.sleep(600)
+else:
     main()
