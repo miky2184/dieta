@@ -31,7 +31,7 @@ MAX_RETRY = int(os.getenv("MAX_RETRY"))
 WIDTH_COLS_QTA = int(os.getenv("WIDTH_COLS_QTA"))
 SLEEP_TIME = int(os.getenv("SLEEP_TIME", 20))
 SA = os.getenv("SA")
-DEV_MODE = os.getenv("DEV_MODE", "F")
+DEV_MODE = os.getenv("DEV_MODE", "N")
 EXEC_DAY = int(os.getenv("EXEC_DAY", 4))
 EXEC_HOUR = os.getenv("EXEC_HOUR", "10:00")
 
