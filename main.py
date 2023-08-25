@@ -88,8 +88,7 @@ def scegli_pietanza(giorno_settimana: str, meal_time: str, tipo: str, perc: floa
                                 join dieta.alimento a on (ir.id_alimento = a.id)
                                 where {tipo}
                                   and r.enabled
-                                  and (extract(month from current_date) = any(stagionalita) or stagionalita is null)
-                               -- order by 1, 7 desc,8 desc,9 desc,10 desc;
+                                  and (frutta and extract(month from current_date) = any(stagionalita) or stagionalita is null or not frutta)                               
                         """, (perc, perc, perc, perc))
             rows = cur.fetchall()
             max_retry = 900
@@ -324,14 +323,34 @@ def print_lista_della_spesa(ids_all_food: list):
     try:
         conn = connect_to_db()
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+
+            cur.execute(""" create local temporary table temp_ricetta_id ( 
+                                       id_ricetta int8 not null,
+                                       test varchar(1) not null
+                                   ) on commit DROP;
+                        """)
+
+            # cur.execute(""" create table dieta.temp_ricetta_id (
+            #                            id_ricetta int8 not null,
+            #                            test varchar(1) not null
+            #                        ) ;
+            #             """)
+
+            psycopg2.extras.execute_values(cur, f""" insert into temp_ricetta_id (id_ricetta, test)
+                             values %s
+                         """, [(value,'a') for value in ids_all_food])
+
+            #conn.commit()
+
             cur.execute(f"""
                                 select nome, sum(qta) as qta_totale
                                     from dieta.ingredienti_ricetta ir
                                     join dieta.alimento a ON (ir.id_alimento = a.id)
-                                    where id_ricetta = any( %s )
+                                    join temp_ricetta_id t on (t.id_ricetta = ir.id_ricetta)
+                                    where 1 = 1
                                     group by nome
                                     order by nome
-                            """, (ids_all_food,))
+                            """)
             rows = cur.fetchall()
 
             ws = spreadsheet.worksheet("lista della spesa")
