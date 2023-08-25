@@ -1,20 +1,21 @@
+import os
 import random
+import time
 from copy import deepcopy
-from decimal import Decimal
 from datetime import datetime, timedelta
+from decimal import Decimal
 
-import requests
-from dotenv import load_dotenv
 import gspread
 import psycopg2.extras
-import simplejson
-from google.oauth2.service_account import Credentials
-from gspread_formatting import set_column_width, set_data_validation_for_cell_range, DataValidationRule, BooleanCondition
+import requests
 import schedule
-import time
+import simplejson
+from dotenv import load_dotenv
+from google.oauth2.service_account import Credentials
+from gspread_formatting import set_column_width, set_data_validation_for_cell_range, DataValidationRule, \
+    BooleanCondition
 
 from db import connect_to_db
-import os
 
 # Carica le variabili d'ambiente dal file .env
 load_dotenv()
@@ -22,15 +23,17 @@ load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 USER_CHAT_ID = os.getenv("USER_CHAT_ID")
 GS_URL = os.getenv("GS_URL")
-MAX_KCAL = os.getenv("MAX_KCAL")
-CARBOIDRATI_MAX_GIORNALIERI = os.getenv("CARBOIDRATI_MAX_GIORNALIERI")
-PROTEINE_MAX_GIORNALIERI = os.getenv("PROTEINE_MAX_GIORNALIERI")
-GRASSI_MAX_GIORNALIERI = os.getenv("GRASSI_MAX_GIORNALIERI")
-MAX_RETRY = os.getenv("MAX_RETRY")
-WIDTH_COLS_QTA = os.getenv("WIDTH_COLS_QTA")
-SLEEP_TIME = os.getenv("SLEEP_TIME")
+MAX_KCAL = int(os.getenv("MAX_KCAL"))
+CARBOIDRATI_MAX_GIORNALIERI = float(os.getenv("CARBOIDRATI_MAX_GIORNALIERI"))
+PROTEINE_MAX_GIORNALIERI = float(os.getenv("PROTEINE_MAX_GIORNALIERI"))
+GRASSI_MAX_GIORNALIERI = float(os.getenv("GRASSI_MAX_GIORNALIERI"))
+MAX_RETRY = int(os.getenv("MAX_RETRY"))
+WIDTH_COLS_QTA = int(os.getenv("WIDTH_COLS_QTA"))
+SLEEP_TIME = int(os.getenv("SLEEP_TIME", 20))
 SA = os.getenv("SA")
 DEV_MODE = os.getenv("DEV_MODE", "F")
+EXEC_DAY = int(os.getenv("EXEC_DAY", 4))
+EXEC_HOUR = os.getenv("EXEC_HOUR", "10:00")
 
 ricetta = {"ids": [], "ricette": []}
 
@@ -80,7 +83,8 @@ client = gspread.authorize(credentials)
 spreadsheet = client.open_by_url(GS_URL)
 
 
-def __scegli_pietanza__(giorno_settimana: str, meal_time: str, tipo: str, perc: float, disponibili: bool, weekly_check: bool):
+def __scegli_pietanza__(giorno_settimana: str, meal_time: str, tipo: str, perc: float, disponibili: bool,
+                        weekly_check: bool):
     conn = None
     try:
         conn = connect_to_db()
@@ -108,7 +112,8 @@ def __scegli_pietanza__(giorno_settimana: str, meal_time: str, tipo: str, perc: 
             conn.close()
 
 
-def __select_food__(rows, giorno_settimana, meal_time, max_retry, perc: float, disponibili: bool, found: bool, weekly_check: bool):
+def __select_food__(rows, giorno_settimana, meal_time, max_retry, perc: float, disponibili: bool, found: bool,
+                    weekly_check: bool):
     if disponibili:
         ids_disponibili = [oggetto["id"] for oggetto in rows if oggetto["id"] not in settimana["all_food"]]
     else:
@@ -132,10 +137,18 @@ def __select_food__(rows, giorno_settimana, meal_time, max_retry, perc: float, d
                  (day.get("carboidrati") - ricetta_selezionata.get("carboidrati")) > 0 and
                  (day.get("proteine") - ricetta_selezionata.get("proteine")) > 0 and
                  (day.get("grassi") - ricetta_selezionata.get("grassi")) > 0) or (weekly_check and
-                (weekly_nut.get("kcal") - ricetta_selezionata.get("kcal") > 0 and
-                 (weekly_nut.get("carboidrati") - ricetta_selezionata.get("carboidrati")) > 0 and
-                 (weekly_nut.get("proteine") - ricetta_selezionata.get("proteine")) > 0 and
-                 (weekly_nut.get("grassi") - ricetta_selezionata.get("grassi")) > 0))
+                                                                                  (weekly_nut.get(
+                                                                                      "kcal") - ricetta_selezionata.get(
+                                                                                      "kcal") > 0 and
+                                                                                   (weekly_nut.get(
+                                                                                       "carboidrati") - ricetta_selezionata.get(
+                                                                                       "carboidrati")) > 0 and
+                                                                                   (weekly_nut.get(
+                                                                                       "proteine") - ricetta_selezionata.get(
+                                                                                       "proteine")) > 0 and
+                                                                                   (weekly_nut.get(
+                                                                                       "grassi") - ricetta_selezionata.get(
+                                                                                       "grassi")) > 0))
         ):
             settimana.get("all_food").append(id_selezionato)
             mt.get("ids").append(id_selezionato)
@@ -159,6 +172,7 @@ def __select_food__(rows, giorno_settimana, meal_time, max_retry, perc: float, d
 def __send_telegram_message__(message):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={USER_CHAT_ID}&text={message}"
     print(requests.get(url).json())  # this sends the message
+
 
 def __crea_menu__():
     __genera_menu__(False)
@@ -292,7 +306,8 @@ def __print_menu__(dieta_settimanale, validation_rule):
 
     if not existing_menu:
         ws.batch_clear(["B7:C23", "H7:I23", "N7:O23", "T7:U23", "Z7:AA23", "AF7:AG23", "AL7:AM23"])
-        cols_giorno_settimana = {"lunedi": "B-C", "martedi": "H-I", "mercoledi": "N-O", "giovedi": "T-U", "venerdi": "Z-AA",
+        cols_giorno_settimana = {"lunedi": "B-C", "martedi": "H-I", "mercoledi": "N-O", "giovedi": "T-U",
+                                 "venerdi": "Z-AA",
                                  "sabato": "AF-AG", "domenica": "AL-AM", }
         for week_day in cols_giorno_settimana:
             colonna_qta = cols_giorno_settimana[week_day].split('-')[0]
@@ -365,7 +380,7 @@ def __print_lista_della_spesa__(ids_all_food: list):
 
             psycopg2.extras.execute_values(cur, f""" insert into temp_ricetta_id (id_ricetta, test)
                              values %s
-                         """, [(value,'a') for value in ids_all_food])
+                         """, [(value, 'a') for value in ids_all_food])
 
             cur.execute(f"""
                                 select nome, sum(qta) as qta_totale
@@ -412,14 +427,14 @@ def pianifica_esecuzione():
     # Ottieni il giorno della settimana corrente (0 = lunedì, 6 = domenica)
     giorno_settimana_corrente = datetime.now().weekday()
 
-    # Verifica se oggi è venerdì (4 è il codice per il venerdì)
-    if giorno_settimana_corrente == 4:
+    # Verifica il giorno di esecuzione
+    if giorno_settimana_corrente == EXEC_DAY:
         main()  # Esegui il tuo programma se oggi è venerdì
 
 
 if DEV_MODE == 'N':
     # Esegui la verifica dell'esecuzione ogni giorno
-    schedule.every().day.at("10:00").do(pianifica_esecuzione)
+    schedule.every().day.at(EXEC_HOUR).do(pianifica_esecuzione)
 
     while True:
         schedule.run_pending()
