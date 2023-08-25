@@ -4,3 +4,5 @@ Flask==2.3.2
 gspread=5.10.0
 simplejson=3.19.1
 gspread-formatting==1.1.2
+python-telegram-bot==20.4
+pyshorteners==1.0.1
