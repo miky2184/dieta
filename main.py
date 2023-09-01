@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 from google.oauth2.service_account import Credentials
 from gspread_formatting import set_column_width, set_data_validation_for_cell_range, DataValidationRule, \
     BooleanCondition
+from tqdm import tqdm
 
 from db import connect_to_db
 
@@ -181,9 +182,9 @@ def __crea_menu__():
 
 def __genera_menu__(check_weekly: bool) -> None:
     percentuali = [1, 0.75, 0.5]
-    for perc in percentuali:
-        for _ in range(MAX_RETRY):
-            for giorno in settimana["day"]:
+    for perc in tqdm(percentuali):
+        for _ in tqdm(range(MAX_RETRY)):
+            for giorno in tqdm(settimana["day"]):
                 p = settimana["day"][giorno]["pasto"]
                 if len(p["pranzo"]["ricette"]) < 1:
                     __scegli_pietanza__(giorno, "pranzo", "principale", perc, True, check_weekly)
