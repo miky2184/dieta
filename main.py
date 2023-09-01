@@ -182,9 +182,11 @@ def __crea_menu__():
 
 def __genera_menu__(check_weekly: bool) -> None:
     percentuali = [1, 0.75, 0.5]
-    for perc in tqdm(percentuali):
-        for _ in tqdm(range(MAX_RETRY)):
-            for giorno in tqdm(settimana["day"]):
+    total_iterations = len(percentuali) * MAX_RETRY * len(settimana["day"])
+    bar = tqdm(total=total_iterations)
+    for perc in percentuali:
+        for _ in range(MAX_RETRY):
+            for giorno in settimana["day"]:
                 p = settimana["day"][giorno]["pasto"]
                 if len(p["pranzo"]["ricette"]) < 1:
                     __scegli_pietanza__(giorno, "pranzo", "principale", perc, True, check_weekly)
@@ -197,6 +199,8 @@ def __genera_menu__(check_weekly: bool) -> None:
                 __scegli_pietanza__(giorno, "cena", "contorno", perc, True, check_weekly)
                 if len(p["spuntino"]["ricette"]) < 2:
                     __scegli_pietanza__(giorno, "spuntino", "spuntino", perc, False, check_weekly)
+                # Aggiorna la barra di avanzamento
+                bar.update(1)
 
 
 def __print_setts__():
