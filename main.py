@@ -419,30 +419,10 @@ def __print_lista_della_spesa__(ids_all_food: list):
             conn.close()
 
 
-def main():
+if __name__ == "__main__":
     __print_setts__()
     validation_rule = __print_ricette__()
     __print_ingredienti_ricette__()
     __crea_menu__()
     if not __print_menu__(settimana, validation_rule):
         __print_lista_della_spesa__(settimana.get("all_food"))
-
-
-def pianifica_esecuzione():
-    # Ottieni il giorno della settimana corrente (0 = lunedì, 6 = domenica)
-    giorno_settimana_corrente = datetime.now().weekday()
-
-    # Verifica il giorno di esecuzione
-    if giorno_settimana_corrente == EXEC_DAY:
-        main()  # Esegui il tuo programma se oggi è venerdì
-
-
-if DEV_MODE == 'N':
-    # Esegui la verifica dell'esecuzione ogni giorno
-    schedule.every().day.at(EXEC_HOUR).do(pianifica_esecuzione)
-
-    while True:
-        schedule.run_pending()
-        time.sleep(600)
-else:
-    main()
