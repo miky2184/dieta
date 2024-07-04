@@ -8,7 +8,6 @@ from decimal import Decimal
 import gspread
 import psycopg2.extras
 import requests
-import schedule
 import simplejson
 from dotenv import load_dotenv
 from google.oauth2.service_account import Credentials
@@ -36,6 +35,7 @@ DEV_MODE = os.getenv("DEV_MODE", "N")
 EXEC_DAY = int(os.getenv("EXEC_DAY", 4))
 EXEC_HOUR = os.getenv("EXEC_HOUR", "10:00")
 
+elenco_ricette = {}
 ricetta = {"ids": [], "ricette": []}
 
 pasto = {"colazione": deepcopy(ricetta),
@@ -84,8 +84,8 @@ client = gspread.authorize(credentials)
 spreadsheet = client.open_by_url(GS_URL)
 
 
-def __scegli_pietanza__(giorno_settimana: str, meal_time: str, tipo: str, perc: float, disponibili: bool,
-                        weekly_check: bool):
+def scegli_pietanza(giorno_settimana: str, meal_time: str, tipo: str, perc: float, disponibili: bool,
+                    weekly_check: bool):
     conn = None
     try:
         conn = connect_to_db()
@@ -106,15 +106,15 @@ def __scegli_pietanza__(giorno_settimana: str, meal_time: str, tipo: str, perc: 
                         """, (perc, perc, perc, perc))
             rows = cur.fetchall()
             max_retry = 900
-            return __select_food__(rows, giorno_settimana, meal_time, max_retry, perc, disponibili, False, weekly_check)
+            return select_food(rows, giorno_settimana, meal_time, max_retry, perc, disponibili, False, weekly_check)
 
     finally:
         if conn is not None:
             conn.close()
 
 
-def __select_food__(rows, giorno_settimana, meal_time, max_retry, perc: float, disponibili: bool, found: bool,
-                    weekly_check: bool):
+def select_food(rows, giorno_settimana, meal_time, max_retry, perc: float, disponibili: bool, found: bool,
+                weekly_check: bool):
     if disponibili:
         ids_disponibili = [oggetto["id"] for oggetto in rows if oggetto["id"] not in settimana["all_food"]]
     else:
@@ -165,22 +165,11 @@ def __select_food__(rows, giorno_settimana, meal_time, max_retry, perc: float, d
             weekly_nut["grassi"] = weekly_nut.get("grassi") - ricetta_selezionata.get("grassi")
             found = True
         else:
-            __select_food__(rows, giorno_settimana, meal_time, max_retry, perc, disponibili, False, weekly_check)
+            select_food(rows, giorno_settimana, meal_time, max_retry, perc, disponibili, False, weekly_check)
 
     return found
 
-
-def __send_telegram_message__(message):
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={USER_CHAT_ID}&text={message}"
-    print(requests.get(url).json())  # this sends the message
-
-
-def __crea_menu__():
-    __genera_menu__(False)
-    __genera_menu__(True)
-
-
-def __genera_menu__(check_weekly: bool) -> None:
+def genera_menu(check_weekly: bool) -> None:
     percentuali = [1, 0.75, 0.5]
     total_iterations = len(percentuali) * MAX_RETRY * len(settimana["day"])
     bar = tqdm(total=total_iterations)
@@ -189,32 +178,35 @@ def __genera_menu__(check_weekly: bool) -> None:
             for giorno in settimana["day"]:
                 p = settimana["day"][giorno]["pasto"]
                 if len(p["pranzo"]["ricette"]) < 1:
-                    __scegli_pietanza__(giorno, "pranzo", "principale", perc, True, check_weekly)
+                    scegli_pietanza(giorno, "pranzo", "principale", perc, True, check_weekly)
                 if len(p["cena"]["ricette"]) < 1:
-                    __scegli_pietanza__(giorno, "cena", "principale", perc, True, check_weekly)
+                    scegli_pietanza(giorno, "cena", "principale", perc, True, check_weekly)
                 if len(p["colazione"]["ricette"]) < 2:
-                    __scegli_pietanza__(giorno, "colazione", "colazione", perc, False, check_weekly)
-                    __scegli_pietanza__(giorno, "colazione", "colazione_sec", perc, False, check_weekly)
-                __scegli_pietanza__(giorno, "pranzo", "contorno", perc, True, check_weekly)
-                __scegli_pietanza__(giorno, "cena", "contorno", perc, True, check_weekly)
+                    scegli_pietanza(giorno, "colazione", "colazione", perc, False, check_weekly)
+                    scegli_pietanza(giorno, "colazione", "colazione_sec", perc, False, check_weekly)
+                scegli_pietanza(giorno, "pranzo", "contorno", perc, True, check_weekly)
+                scegli_pietanza(giorno, "cena", "contorno", perc, True, check_weekly)
                 if len(p["spuntino"]["ricette"]) < 2:
-                    __scegli_pietanza__(giorno, "spuntino", "spuntino", perc, False, check_weekly)
+                    scegli_pietanza(giorno, "spuntino", "spuntino", perc, False, check_weekly)
                 # Aggiorna la barra di avanzamento
                 bar.update(1)
 
 
-def __print_setts__():
+def print_setts():
+    """ Print info like Kcal, Carbo, Protein and Fat daily into "setts" sheet"""
+
     ws = spreadsheet.worksheet("setts")
 
+    # clear cell
     ws.batch_clear(["A1:D1"])
 
     data_to_write = [[MAX_KCAL, CARBOIDRATI_MAX_GIORNALIERI, PROTEINE_MAX_GIORNALIERI, GRASSI_MAX_GIORNALIERI]]
 
-    ws.update("A1", data_to_write)
+    ws.update(range_name="A1", values=data_to_write)
     ws.columns_auto_resize(0, 4)
 
 
-def __print_ricette__():
+def print_ricette():
     conn = None
     try:
         conn = connect_to_db()
@@ -243,7 +235,7 @@ def __print_ricette__():
                     [row["nome_ricetta"], float(row["kcal"]), float(row["carboidrati"]), float(row["proteine"]),
                      float(row["grassi"])])
 
-            ws.update("A1", data_to_write)
+            ws.update(range_name="A1", values=data_to_write)
             ws.columns_auto_resize(0, 5)
             range_value = []
             for cell in spreadsheet.named_range("ricette"):
@@ -255,7 +247,7 @@ def __print_ricette__():
             conn.close()
 
 
-def __print_ingredienti_ricette__():
+def print_ingredienti_ricette():
     conn = None
     try:
         conn = connect_to_db()
@@ -275,8 +267,12 @@ def __print_ingredienti_ricette__():
 
             for row in rows:
                 data_to_write.append([row["nome_ricetta"], row["nome"], float(row["qta"])])
+                if not elenco_ricette.get(row["nome_ricetta"]):
+                    elenco_ricette[row["nome_ricetta"]] = [f"{str(row['qta'])}gr. di {row['nome']}"]
+                else:
+                    elenco_ricette.get(row["nome_ricetta"]).append(f"{str(row['qta'])}gr. di {row['nome']}")
 
-            ws_ricette.update("A1", data_to_write)
+            ws_ricette.update(range_name="A1", values=data_to_write)
             ws_ricette.set_basic_filter("A1:C")
             ws_ricette.columns_auto_resize(0, 3)
     finally:
@@ -284,7 +280,7 @@ def __print_ingredienti_ricette__():
             conn.close()
 
 
-def __print_menu__(dieta_settimanale, validation_rule):
+def print_menu(dieta_settimanale, validation_rule):
     existing_menu = True
     dieta_settimanale = simplejson.loads(simplejson.dumps(dieta_settimanale, use_decimal=True))
 
@@ -320,36 +316,39 @@ def __print_menu__(dieta_settimanale, validation_rule):
 
             i = 7
             for ricetta_colazione in dieta_settimanale['day'][week_day]['pasto']['colazione']['ricette']:
-                ws.update(str(colonna_qta + str(i)), ricetta_colazione.get('qta'))
-                ws.update(str(colonna_ricetta + str(i)), ricetta_colazione.get('nome_ricetta'))
+                ws.update(range_name=str(colonna_qta + str(i)), values=[[ricetta_colazione.get('qta')]])
+                ws.update(range_name=str(colonna_ricetta + str(i)), values=[[ricetta_colazione.get('nome_ricetta')]])
+                ws.insert_note(str(colonna_ricetta + str(i)), str(elenco_ricette.get(ricetta_colazione.get('nome_ricetta'))))
                 i = i + 1
 
             x = 13
             for ricetta_pranzo in dieta_settimanale['day'][week_day]['pasto']['pranzo']['ricette']:
-                ws.update(str(colonna_qta + str(x)), ricetta_pranzo.get('qta'))
-                ws.update(str(colonna_ricetta + str(x)), ricetta_pranzo.get('nome_ricetta'))
+                ws.update(range_name=str(colonna_qta + str(x)), values=[[ricetta_pranzo.get('qta')]])
+                ws.update(range_name=str(colonna_ricetta + str(x)), values=[[ricetta_pranzo.get('nome_ricetta')]])
+                ws.insert_note(str(colonna_ricetta + str(x)), str(elenco_ricette.get(ricetta_pranzo.get('nome_ricetta'))))
                 x = x + 1
 
             y = 19
             for ricetta_cena in dieta_settimanale['day'][week_day]['pasto']['cena']['ricette']:
-                ws.update(str(colonna_qta + str(y)), ricetta_cena.get('qta'))
-                ws.update(str(colonna_ricetta + str(y)), ricetta_cena.get('nome_ricetta'))
+                ws.update(range_name=str(colonna_qta + str(y)), values=[[ricetta_cena.get('qta')]])
+                ws.update(range_name=str(colonna_ricetta + str(y)), values=[[ricetta_cena.get('nome_ricetta')]])
+                ws.insert_note(str(colonna_ricetta + str(y)), str(elenco_ricette.get(ricetta_cena.get('nome_ricetta'))))
                 y = y + 1
 
             if len(dieta_settimanale['day'][week_day]['pasto']['spuntino']['ricette']) == 2:
-                ws.update(str(colonna_qta + "12"),
-                          dieta_settimanale['day'][week_day]['pasto']['spuntino']['ricette'][0].get('qta'))
-                ws.update(str(colonna_ricetta + "12"),
-                          dieta_settimanale['day'][week_day]['pasto']['spuntino']['ricette'][0].get('nome_ricetta'))
-                ws.update(str(colonna_qta + "18"),
-                          dieta_settimanale['day'][week_day]['pasto']['spuntino']['ricette'][1].get('qta'))
-                ws.update(str(colonna_ricetta + "18"),
-                          dieta_settimanale['day'][week_day]['pasto']['spuntino']['ricette'][1].get('nome_ricetta'))
+                ws.update(range_name=str(colonna_qta + "12"),
+                          values=[[dieta_settimanale['day'][week_day]['pasto']['spuntino']['ricette'][0].get('qta')]])
+                ws.update(range_name=str(colonna_ricetta + "12"),
+                          values=[[dieta_settimanale['day'][week_day]['pasto']['spuntino']['ricette'][0].get('nome_ricetta')]])
+                ws.update(range_name=str(colonna_qta + "18"),
+                          values=[[dieta_settimanale['day'][week_day]['pasto']['spuntino']['ricette'][1].get('qta')]])
+                ws.update(range_name=str(colonna_ricetta + "18"),
+                          values=[[dieta_settimanale['day'][week_day]['pasto']['spuntino']['ricette'][1].get('nome_ricetta')]])
             if len(dieta_settimanale['day'][week_day]['pasto']['spuntino']['ricette']) == 1:
-                ws.update(str(colonna_qta + "12"),
-                          dieta_settimanale['day'][week_day]['pasto']['spuntino']['ricette'][0].get('qta'))
-                ws.update(str(colonna_ricetta + "12"),
-                          dieta_settimanale['day'][week_day]['pasto']['spuntino']['ricette'][0].get('nome_ricetta'))
+                ws.update(range_name=str(colonna_qta + "12"),
+                          values=[[dieta_settimanale['day'][week_day]['pasto']['spuntino']['ricette'][0].get('qta')]])
+                ws.update(range_name=str(colonna_ricetta + "12"),
+                          values=[[dieta_settimanale['day'][week_day]['pasto']['spuntino']['ricette'][0].get('nome_ricetta')]])
 
             set_data_validation_for_cell_range(ws, colonna_ricetta + '7:' + colonna_ricetta + '23', validation_rule)
             time.sleep(SLEEP_TIME)
@@ -364,14 +363,15 @@ def __print_menu__(dieta_settimanale, validation_rule):
         set_column_width(ws, "AL", WIDTH_COLS_QTA)
 
         tg_message = f"""Il menu per la settimana dal {lunedi_successivo.day:02d}/{lunedi_successivo.month:02d} al {domenica_successiva.day:02d}/{domenica_successiva.month:02d} è pronto!!! Lo puoi consultare al seguenti link: {GS_URL}"""
-        __send_telegram_message__(tg_message)
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={USER_CHAT_ID}&text={tg_message}"
+        print(requests.get(url).json())
     else:
         print(f"menu già presente per {new_sheet_name}")
 
     return existing_menu
 
 
-def __print_lista_della_spesa__(ids_all_food: list):
+def print_lista_della_spesa(ids_all_food: list):
     conn = None
     try:
         conn = connect_to_db()
@@ -408,7 +408,7 @@ def __print_lista_della_spesa__(ids_all_food: list):
                 data_to_write.append([row["nome"], float(row["qta_totale"])])
 
             ws.insert_row(["nome", "qta totale"])
-            ws.update("A2", data_to_write)
+            ws.update(range_name="A2", values=[data_to_write])
 
             ws.format('A1:B1', {'textFormat': {'bold': True}})
             ws.set_basic_filter("a1:b")
@@ -420,9 +420,10 @@ def __print_lista_della_spesa__(ids_all_food: list):
 
 
 if __name__ == "__main__":
-    __print_setts__()
-    validation_rule = __print_ricette__()
-    __print_ingredienti_ricette__()
-    __crea_menu__()
-    if not __print_menu__(settimana, validation_rule):
-        __print_lista_della_spesa__(settimana.get("all_food"))
+    print_setts()
+    validation_rule = print_ricette()
+    print_ingredienti_ricette()
+    genera_menu(False)
+    genera_menu(True)
+    if not print_menu(settimana, validation_rule):
+        print_lista_della_spesa(settimana.get("all_food"))
