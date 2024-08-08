@@ -7,40 +7,26 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Funzione per recuperare le ricette dal database
-def recupera_ricette():
-    conn = None
-    try:
-        # Connessione al database PostgreSQL
-        conn = connect_to_db()
-        with conn.cursor() as cursor:
-            cursor.execute("select id, nome_ricetta from dieta.ricetta a order by nome_ricetta asc")
-            ricette = cursor.fetchall()
-        return ricette
-    finally:
-        if conn is not None:
-            conn.close()
+def recupera_ricette(conn):
+    with conn.cursor() as cursor:
+        cursor.execute("select id, nome_ricetta from dieta.ricetta a order by nome_ricetta asc")
+        ricette = cursor.fetchall()
+    return ricette
 
 # Funzione per recuperare gli ingredienti di una ricetta
-def recupera_ingredienti(ricetta_id):
-    conn = None
-    try:
-        # Connessione al database PostgreSQL
-        conn = connect_to_db()
-        with conn.cursor() as cursor:
-            cursor.execute("select a.id, a.nome, qta from dieta.ingredienti_ricetta ir join dieta.alimento a on (ir.id_alimento = a.id ) where id_ricetta = %s order by a.nome asc", (ricetta_id,))
-            ingredienti = cursor.fetchall()
-        return ingredienti
-    finally:
-        if conn is not None:
-            conn.close()
+def recupera_ingredienti(conn, ricetta_id):
+    with conn.cursor() as cursor:
+        cursor.execute("select a.id, a.nome, qta from dieta.ingredienti_ricetta ir join dieta.alimento a on (ir.id_alimento = a.id ) where id_ricetta = %s order by a.nome asc", (ricetta_id,))
+        ingredienti = cursor.fetchall()
+    return ingredienti
 
 # Funzione per mostrare gli ingredienti della ricetta selezionata
-def mostra_ingredienti(event):
+def mostra_ingredienti(event, conn):
     selezione = tree.selection()
     if selezione:
         item = tree.item(selezione)
         ricetta_id = item['values'][1]
-        ingredienti = recupera_ingredienti(ricetta_id)
+        ingredienti = recupera_ingredienti(conn, ricetta_id)
         #ingredienti_listbox.delete(0, tk.END)
         for widget in ingredienti_frame.winfo_children():
             widget.destroy()
@@ -55,13 +41,13 @@ def mostra_ingredienti(event):
             quantity_entry.grid(row=i, column=1, padx=5, pady=5)
 
             salva_button = tk.Button(ingrediente_frame, text="Salva",
-                                     command=lambda id=ingrediente['id'], var=quantita_var: aggiorna_quantita(id, ricetta_id,
+                                     command=lambda id=ingrediente['id'], var=quantita_var: aggiorna_quantita(conn, id, ricetta_id,
                                                                                                            var.get()))
             #salva_button.pack(side=tk.LEFT, padx=10, pady=5)
             salva_button.grid(row=i, column=2, padx=5, pady=5)
 
             delete_button = tk.Button(ingrediente_frame, text="Elimina",
-                                      command=lambda id=ingrediente['id']: delete_ingredient_and_refresh(id,
+                                      command=lambda id=ingrediente['id']: delete_ingredient_and_refresh(conn, id,
                                                                                                       ricetta_id))
             #delete_button.pack(side=tk.LEFT, padx=10, pady=5)
             delete_button.grid(row=i, column=3, padx=5, pady=5)
@@ -71,21 +57,14 @@ def mostra_ingredienti(event):
                                command=lambda: show_add_ingredient_dialog(ricetta_id))
         add_button.pack(side=tk.BOTTOM, padx=10, pady=10)
 
-def delete_ingredient_and_refresh(ingrediente_id, ricetta_id):
-    delete_ingredient(ingrediente_id, ricetta_id)
-    mostra_ingredienti(ricetta_id)
+def delete_ingredient_and_refresh(conn, ingrediente_id, ricetta_id):
+    delete_ingredient(conn, ingrediente_id, ricetta_id)
+    mostra_ingredienti(ricetta_id, conn)
 
-def aggiorna_quantita(id_ingrediente, id_ricetta, nuova_quantita):
-    conn = None
-    try:
-        # Connessione al database PostgreSQL
-        conn = connect_to_db()
-        with conn.cursor() as cursor:
-            cursor.execute("UPDATE dieta.ingredienti_ricetta ir SET qta = %s WHERE id_alimento = %s and id_ricetta = %s", (int(nuova_quantita), id_ingrediente, id_ricetta))
-        conn.commit()
-    finally:
-        if conn is not None:
-            conn.close()
+def aggiorna_quantita(conn, id_ingrediente, id_ricetta, nuova_quantita):
+    with conn.cursor() as cursor:
+        cursor.execute("UPDATE dieta.ingredienti_ricetta ir SET qta = %s WHERE id_alimento = %s and id_ricetta = %s", (int(nuova_quantita), id_ingrediente, id_ricetta))
+    conn.commit()
 
 # Funzione per recuperare l'elenco degli alimenti
 def fetch_alimenti():
@@ -129,35 +108,21 @@ def save_new_ingredient(add_dialog, ricetta_id, nome, quantita):
             return
 
         #printer(f"{ricetta_id}-{nome}-{quantita}")
-        add_ingredient(ricetta_id, nome, quantita)
+        add_ingredient(conn, ricetta_id, nome, quantita)
         add_dialog.destroy()
-        mostra_ingredienti(ricetta_id)
+        mostra_ingredienti(ricetta_id, conn)
 
-def add_ingredient(ricetta_id, nome, quantita):
-    conn = None
-    try:
-        # Connessione al database PostgreSQL
-        conn = connect_to_db()
-        with conn.cursor() as cursor:
-            cursor.execute("INSERT INTO dieta.ingredienti_ricetta (id_ricetta, id_alimento, qta) VALUES (%s, %s, %s)", (ricetta_id, nome, quantita))
+def add_ingredient(conn, ricetta_id, nome, quantita):
+    with conn.cursor() as cursor:
+        cursor.execute("INSERT INTO dieta.ingredienti_ricetta (id_ricetta, id_alimento, qta) VALUES (%s, %s, %s)", (ricetta_id, nome, quantita))
 
-        conn.commit()
-    finally:
-        if conn is not None:
-            conn.close()
+    conn.commit()
 
-def delete_ingredient(ingrediente_id, ricetta_id):
-    conn = None
-    try:
-        # Connessione al database PostgreSQL
-        conn = connect_to_db()
-        with conn.cursor() as cursor:
-            cursor.execute("DELETE FROM dieta.ingredienti_ricetta WHERE id_alimento = %s and id_ricetta = %s", (ingrediente_id, ricetta_id,))
+def delete_ingredient(conn, ingrediente_id, ricetta_id):
+    with conn.cursor() as cursor:
+        cursor.execute("DELETE FROM dieta.ingredienti_ricetta WHERE id_alimento = %s and id_ricetta = %s", (ingrediente_id, ricetta_id,))
 
-        conn.commit()
-    finally:
-        if conn is not None:
-            conn.close()
+    conn.commit()
 
 def show_add_recipe_dialog():
     add_dialog = tk.Toplevel(root)
@@ -179,16 +144,16 @@ def show_add_recipe_dialog():
     tk.Checkbutton(add_dialog, text="Spuntino", variable=spuntino_var).pack(padx=10, pady=5)
     tk.Checkbutton(add_dialog, text="Contorno", variable=contorno_var).pack(padx=10, pady=5)
 
-    save_button = tk.Button(add_dialog, text="Salva", command=lambda: save_new_recipe(add_dialog, nome_var.get(), colazione_var.get(), spuntino_var.get(), principale_var.get(), contorno_var.get(), colazione_sec_var.get()))
+    save_button = tk.Button(add_dialog, text="Salva", command=lambda: save_new_recipe(conn, add_dialog, nome_var.get(), colazione_var.get(), spuntino_var.get(), principale_var.get(), contorno_var.get(), colazione_sec_var.get()))
     save_button.pack(padx=10, pady=10)
 
 # Funzione per salvare la nuova ricetta nel database
-def save_new_recipe(add_dialog, nome, colazione, spuntino, principale, contorno, colazione_sec):
+def save_new_recipe(conn, add_dialog, nome, colazione, spuntino, principale, contorno, colazione_sec):
     if not nome:
         messagebox.showerror("Errore", "Il nome della ricetta non può essere vuoto.")
         return
 
-    ricetta_id = add_recipe(nome, colazione, spuntino, principale, contorno, colazione_sec)
+    ricetta_id = add_recipe(conn, nome, colazione, spuntino, principale, contorno, colazione_sec)
     if ricetta_id:
         add_dialog.destroy()
         refresh_recipes()
@@ -196,27 +161,21 @@ def save_new_recipe(add_dialog, nome, colazione, spuntino, principale, contorno,
 def refresh_recipes():
     for row in tree.get_children():
         tree.delete(row)
-    recipes = recupera_ricette()
+    recipes = recupera_ricette(conn)
     for recipe in recipes:
         tree.insert('', 'end', values=(recipe[1], recipe[0]))
 
-def add_recipe(nome, colazione, spuntino, principale, contorno, colazione_sec):
-    conn = None
-    try:
-        # Connessione al database PostgreSQL
-        conn = connect_to_db(False)
-        with conn.cursor() as cursor:
-            res = cursor.execute("""INSERT INTO dieta.ricetta (nome_ricetta, colazione, spuntino, principale, contorno, colazione_sec)
-    VALUES (%s, %s, %s, %s, %s, %s) RETURNING id""", (nome, colazione, spuntino, principale, contorno, colazione_sec))
+def add_recipe(conn, nome, colazione, spuntino, principale, contorno, colazione_sec):
+    with conn.cursor() as cursor:
+        res = cursor.execute("""INSERT INTO dieta.ricetta (nome_ricetta, colazione, spuntino, principale, contorno, colazione_sec)
+VALUES (%s, %s, %s, %s, %s, %s) RETURNING id""", (nome, colazione, spuntino, principale, contorno, colazione_sec))
 
-        conn.commit()
+    conn.commit()
 
-        return res[0][0] if res else None
-    finally:
-        if conn is not None:
-            conn.close()
+    return res[0][0] if res else None
 
-
+#creazione connessione
+conn = connect_to_db()
 # Creazione della finestra principale
 root = tk.Tk()
 root.title("GESTIONE RICETTE")
@@ -238,7 +197,7 @@ tree.column('ID', width=0, stretch=tk.NO)
 tree.pack(fill=tk.BOTH, expand=True)
 
 # Inserimento delle ricette nella tabella
-ricette = recupera_ricette()
+ricette = recupera_ricette(conn)
 for ricetta in ricette:
     tree.insert('', tk.END, values=(ricetta['nome_ricetta'], ricetta['id']))
 
@@ -257,3 +216,5 @@ add_recipe_button.pack(pady=10)
 
 # Avvio del loop principale di Tkinter
 root.mainloop()
+if conn is not None:
+    conn.close()
