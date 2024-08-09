@@ -112,19 +112,9 @@
                     <td>{{ pasto.replace('_', ' ').capitalize() }}</td>
                     {% for giorno, dati_giorno in menu.day.items() %}
                     <td>
-                        {% if pasto == 'spuntino_mattina' %}
-                            {% if dati_giorno.pasto.spuntino.ricette|length > 0 %}
-                                {{ dati_giorno.pasto.spuntino.ricette[0].nome_ricetta }} ({{ dati_giorno.pasto.spuntino.ricette[0].qta }}x)
-                            {% endif %}
-                        {% elif pasto == 'spuntino_pomeriggio' %}
-                            {% if dati_giorno.pasto.spuntino.ricette|length > 1 %}
-                                {{ dati_giorno.pasto.spuntino.ricette[1].nome_ricetta }} ({{ dati_giorno.pasto.spuntino.ricette[1].qta }}x)
-                            {% endif %}
-                        {% else %}
                             {% for ricetta in dati_giorno.pasto[pasto].ricette %}
                                 {{ ricetta.nome_ricetta }} ({{ ricetta.qta }}x)<br>
                             {% endfor %}
-                        {% endif %}
                     </td>
                     {% endfor %}
                 </tr>

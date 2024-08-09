@@ -36,19 +36,11 @@ function openTab(evt, tabName) {
                 tr.appendChild(tdPasto);
                 Object.keys(menu.day).forEach(giorno => {
                     const td = document.createElement('td');
-                    if (pasto === 'spuntino_mattina' && menu.day[giorno].pasto.spuntino.ricette.length > 0) {
-                        const ricetta = menu.day[giorno].pasto.spuntino.ricette[0];
-                        td.textContent = `${ricetta.nome_ricetta} (${ricetta.qta}x)`;
-                    } else if (pasto === 'spuntino_pomeriggio' && menu.day[giorno].pasto.spuntino.ricette.length > 1) {
-                        const ricetta = menu.day[giorno].pasto.spuntino.ricette[1];
-                        td.textContent = `${ricetta.nome_ricetta} (${ricetta.qta}x)`;
-                    } else {
-                        menu.day[giorno].pasto[pasto].ricette.forEach(ricetta => {
-                            const div = document.createElement('div');
-                            div.textContent = `${ricetta.nome_ricetta} (${ricetta.qta}x)`;
-                            td.appendChild(div);
-                        });
-                    }
+                    menu.day[giorno].pasto[pasto].ricette.forEach(ricetta => {
+                        const div = document.createElement('div');
+                        div.textContent = `${ricetta.nome_ricetta} (${ricetta.qta}x)`;
+                        td.appendChild(div);
+                    });
                     tr.appendChild(td);
                 });
                 tbody.appendChild(tr);
