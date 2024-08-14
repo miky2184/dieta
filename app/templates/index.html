@@ -1,148 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generatore di Menu Settimanale</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-</head>
-<body>
-    <h1>Generatore di Menu Settimanale</h1>
+{% extends "base.html" %}
 
-    <!-- Dropdown per selezionare la settimana -->
-    <select id="settimana_select" onchange="cambiaMenuSettimana()">
-        {% for settimana in settimane %}
-            <option value="{{ settimana.id }}">Settimana dal {{ settimana.data_inizio }} al {{ settimana.data_fine }}</option>
-        {% endfor %}
-    </select>
+{% block content %}
+<h1>Generatore di Menu Settimanale</h1>
 
-    <!-- Tab per le diverse sezioni -->
-    <div class="tab">
-        <button class="tablinks" onclick="openTab(event, 'Macronutrienti')" id="defaultOpen">Macronutrienti</button>
-        <button class="tablinks" onclick="openTab(event, 'Ricette')">Ricette Disponibili</button>
-        <button class="tablinks" onclick="openTab(event, 'Ingredienti')">Ingredienti delle Ricette</button>
-        <button class="tablinks" onclick="openTab(event, 'Menu')">Menu Settimanale</button>
-        <button class="tablinks" onclick="openTab(event, 'ListaSpesa')">Lista della Spesa</button>
-    </div>
+{% include 'week_selector.html' %}
+{% include 'tabs.html' %}
+{% include 'ricette.html' %}
+{% include 'edit_ricette_modal.html' %}
+{% include 'add_ingredienti_modal.html' %}
+{% include 'ingredienti.html' %}
+{% include 'menu.html' %}
+{% include 'lista_spesa.html' %}
 
-    <!-- Contenuto delle schede -->
-    <div id="Macronutrienti" class="tabcontent">
-        <h2>Calorie e Macronutrienti Giornalieri</h2>
-        <ul>
-            <li>Calorie (kcal): {{ macronutrienti.kcal }}</li>
-            <li>Carboidrati (g): {{ macronutrienti.carboidrati }}</li>
-            <li>Proteine (g): {{ macronutrienti.proteine }}</li>
-            <li>Grassi (g): {{ macronutrienti.grassi }}</li>
-        </ul>
-    </div>
-
-    <div id="Ricette" class="tabcontent">
-        <h2>Ricette Disponibili</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Nome Ricetta</th>
-                    <th>Calorie (kcal)</th>
-                    <th>Carboidrati (g)</th>
-                    <th>Proteine (g)</th>
-                    <th>Grassi (g)</th>
-                    <th>Colazione</th>
-                    <th>Colazione/Biscotti</th>
-                    <th>Spuntino</th>
-                    <th>Principale</th>
-                    <th>Contorno</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for ricetta in ricette %}
-                <tr>
-                    <td>{{ ricetta.nome_ricetta }}</td>
-                    <td>{{ ricetta.kcal }}</td>
-                    <td>{{ ricetta.carboidrati }}</td>
-                    <td>{{ ricetta.proteine }}</td>
-                    <td>{{ ricetta.grassi }}</td>
-                     <td>{{ ricetta.colazione }}</td>
-                    <td>{{ ricetta.colazione_sec }}</td>
-                     <td>{{ ricetta.spuntino }}</td>
-                     <td>{{ ricetta.principale }}</td>
-                     <td>{{ ricetta.contorno }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <div id="Ingredienti" class="tabcontent">
-        <h2>Ingredienti delle Ricette</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Nome Ricetta</th>
-                    <th>Alimento</th>
-                    <th>Quantità (g)</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for ingrediente in ingredienti %}
-                <tr>
-                    <td>{{ ingrediente.nome_ricetta }}</td>
-                    <td>{{ ingrediente.nome_alimento }}</td>
-                    <td>{{ ingrediente.qta }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <div id="Menu" class="tabcontent">
-        <h2>Menu Settimanale</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Pasto</th>
-                    {% for giorno in menu.day.keys() %}
-                    <th>{{ giorno.capitalize() }}</th>
-                    {% endfor %}
-                </tr>
-            </thead>
-            <tbody id="menu_tbody">
-                {% for pasto in ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena'] %}
-                <tr>
-                    <td>{{ pasto.replace('_', ' ').capitalize() }}</td>
-                    {% for giorno, dati_giorno in menu.day.items() %}
-                    <td>
-                            {% for ricetta in dati_giorno.pasto[pasto].ricette %}
-                                {{ ricetta.nome_ricetta }} ({{ ricetta.qta }}x)<br>
-                            {% endfor %}
-                    </td>
-                    {% endfor %}
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <div id="ListaSpesa" class="tabcontent">
-        <h2>Lista della Spesa</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Alimento</th>
-                    <th>Quantità Totale (g)</th>
-                </tr>
-            </thead>
-            <tbody id="spesa_tbody">
-                {% for item in lista_spesa %}
-                <tr>
-                    <td>{{ item.alimento }}</td>
-                    <td>{{ item.qta_totale }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <div id="result"></div>
-</body>
-</html>
+{% endblock %}

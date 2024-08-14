@@ -44,3 +44,15 @@ th, td {
 th {
     background-color: #f4f4f4;
 }
+
+text-center {
+    align-content: center;
+}
+
+.filter-text {
+    font-size: 0.7rem !important;
+}
+
+.recipe-text {
+    font-size: 0.8rem !important;
+}

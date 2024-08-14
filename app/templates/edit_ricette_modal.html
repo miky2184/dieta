@@ -1,0 +1,26 @@
+<div class="modal fade" id="editRecipeModal" tabindex="-1" aria-labelledby="editIngredientsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editIngredientsModalLabel">Dettagli Ricetta</h5>
+      </div>
+      <div class="modal-body">
+        <table class="table table-striped table-bordered">
+          <thead class="thead-dark">
+            <tr>
+              <th>Ingredienti</th>
+              <th>Quantità</th>
+              <th>Azioni</th>
+            </tr>
+          </thead>
+          <tbody id="ingredientsBody">
+            <!-- I dati verranno caricati qui tramite JavaScript -->
+          </tbody>
+        </table>
+      </div>
+        <div class="modal-footer">
+        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addIngredientModal">Aggiungi Ingrediente</button>
+      </div>
+    </div>
+  </div>
+</div>

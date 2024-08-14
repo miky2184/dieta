@@ -74,19 +74,20 @@ def scegli_pietanza(settimana, giorno_settimana: str, meal_time: str, tipo: str,
     # Moltiplica i valori nutrizionali per la percentuale
     ricette_modificate = []
     for ricetta in ricette_filtrate:
-        ricetta_modificata = {
-            'id': ricetta['id'],
-            'nome_ricetta': ricetta['nome_ricetta'],
-            'kcal': ricetta['kcal'] * perc_decimal,
-            'carboidrati': ricetta['carboidrati'] * perc_decimal,
-            'proteine': ricetta['proteine'] * perc_decimal,
-            'grassi': ricetta['grassi'] * perc_decimal,
-            'colazione': ricetta['colazione'],
-            'spuntino': ricetta['spuntino'],
-            'principale': ricetta['principale'],
-            'contorno': ricetta['contorno']
-        }
-        ricette_modificate.append(ricetta_modificata)
+        if ricetta['attiva']:
+            ricetta_modificata = {
+                'id': ricetta['id'],
+                'nome_ricetta': ricetta['nome_ricetta'],
+                'kcal': ricetta['kcal'] * perc_decimal,
+                'carboidrati': ricetta['carboidrati'] * perc_decimal,
+                'proteine': ricetta['proteine'] * perc_decimal,
+                'grassi': ricetta['grassi'] * perc_decimal,
+                'colazione': ricetta['colazione'],
+                'spuntino': ricetta['spuntino'],
+                'principale': ricetta['principale'],
+                'contorno': ricetta['contorno']
+            }
+            ricette_modificate.append(ricetta_modificata)
 
     # Invoca select_food con le ricette modificate
     return select_food(ricette_modificate, settimana, giorno_settimana, meal_time, MAX_RETRY, perc, disponibili, False, weekly_check)
@@ -160,12 +161,14 @@ def carica_ricette():
                 round(sum(carboidrati/100*qta) over (partition by ir.id_ricetta), 2) as carboidrati,
                 round(sum(proteine/100*qta) over (partition by ir.id_ricetta), 2) as proteine,
                 round(sum(grassi/100*qta) over (partition by ir.id_ricetta), 2) as grassi,
-                r.colazione, r.spuntino, r.principale, r.contorno, r.colazione_sec
+                r.colazione, r.spuntino, r.principale, r.contorno, r.colazione_sec, r.enabled as attiva
             FROM dieta.ingredienti_ricetta ir 
-            JOIN dieta.ricetta r ON (ir.id_ricetta = r.id)
-            JOIN dieta.alimento a ON (ir.id_alimento = a.id)
-            WHERE r.enabled
+            left JOIN dieta.ricetta r ON (ir.id_ricetta = r.id)
+            left JOIN dieta.alimento a ON (ir.id_alimento = a.id)
+            WHERE 1=1 
+            -- AND r.enabled
             AND (frutta AND extract(month FROM current_date) = ANY(stagionalita) OR NOT frutta)
+            order by enabled desc, r.nome_ricetta
         """)
         ricette = cur.fetchall()
 

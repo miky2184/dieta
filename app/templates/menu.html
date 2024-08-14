@@ -1,0 +1,27 @@
+<div id="Menu" class="tabcontent">
+    <h2>Menu Settimanale</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>Pasto</th>
+            {% for giorno in menu.day.keys() %}
+            <th>{{ giorno.capitalize() }}</th>
+            {% endfor %}
+        </tr>
+        </thead>
+        <tbody id="menu_tbody">
+        {% for pasto in ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena'] %}
+        <tr>
+            <td>{{ pasto.replace('_', ' ').capitalize() }}</td>
+            {% for giorno, dati_giorno in menu.day.items() %}
+            <td>
+                {% for ricetta in dati_giorno.pasto[pasto].ricette %}
+                {{ ricetta.nome_ricetta }} ({{ ricetta.qta }}x)<br>
+                {% endfor %}
+            </td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>

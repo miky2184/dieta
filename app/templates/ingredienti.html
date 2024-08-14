@@ -1,0 +1,21 @@
+<div id="Ingredienti" class="tabcontent">
+    <h2>Ingredienti delle Ricette</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>Nome Ricetta</th>
+            <th>Alimento</th>
+            <th>Quantità (g)</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for ingrediente in ingredienti %}
+        <tr>
+            <td>{{ ingrediente.nome_ricetta }}</td>
+            <td>{{ ingrediente.nome_alimento }}</td>
+            <td>{{ ingrediente.qta }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>

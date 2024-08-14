@@ -1,0 +1,19 @@
+<div id="ListaSpesa" class="tabcontent">
+    <h2>Lista della Spesa</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>Alimento</th>
+            <th>Quantità Totale (g)</th>
+        </tr>
+        </thead>
+        <tbody id="spesa_tbody">
+        {% for item in lista_spesa %}
+        <tr>
+            <td>{{ item.alimento }}</td>
+            <td>{{ item.qta_totale }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
