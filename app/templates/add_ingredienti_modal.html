@@ -1,27 +1,29 @@
-<div class="modal fade" id="addIngredientModal" tabindex="-1" aria-labelledby="addIngredientModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="addIngredientModalLabel">Aggiungi Ingrediente</h5>
-      </div>
-      <div class="modal-body">
-        <form id="addIngredientForm">
-            <input type="hidden" id="modal-recipe-id">
-          <div class="form-group">
-            <label for="ingredient-select">Seleziona Ingrediente</label>
-            <select class="form-control" id="ingredient-select">
-              <!-- Opzioni ingredienti caricati dinamicamente -->
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="ingredient-quantity">Quantità</label>
-            <input type="number" class="form-control" id="ingredient-quantity" placeholder="Inserisci la quantità">
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary btn-sm" onclick="addIngredientToRecipe()">Aggiungi</button>
-      </div>
+<div class="modal fade" id="addIngredientModal" tabindex="-1" aria-labelledby="addIngredientModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addIngredientModalLabel">Aggiungi Ingrediente</h5>
+            </div>
+            <div class="modal-body">
+                <form id="addIngredientForm">
+                    <input type="hidden" id="modal-recipe-id">
+                    <div class="form-group">
+                        <label for="ingredient-select">Seleziona Ingrediente</label>
+                        <select class="form-control" id="ingredient-select">
+                            <!-- Opzioni ingredienti caricati dinamicamente -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="ingredient-quantity">Quantità</label>
+                        <input type="number" class="form-control" id="ingredient-quantity"
+                               placeholder="Inserisci la quantità">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary btn-sm" onclick="addIngredientToRecipe()">Aggiungi</button>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
