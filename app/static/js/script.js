@@ -53,32 +53,194 @@ function aggiornaTabellaListaDellaSpesa(idsAllFood) {
 
     // Esegui una chiamata fetch per ottenere la lista della spesa basata sugli ID degli alimenti
     fetch('/get_lista_spesa', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ ids_all_food: idsAllFood })
-    })
-    .then(response => response.json())
-    .then(data => {
-        data.lista_spesa.forEach(item => {
-            const tr = document.createElement('tr');
-            const tdAlimento = document.createElement('td');
-            const tdQuantita = document.createElement('td');
-            tdAlimento.textContent = item.alimento;
-            tdQuantita.textContent = item.qta_totale;
-            tr.appendChild(tdAlimento);
-            tr.appendChild(tdQuantita);
-            tbody.appendChild(tr);
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                ids_all_food: idsAllFood
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            data.lista_spesa.forEach(item => {
+                const tr = document.createElement('tr');
+                const tdAlimento = document.createElement('td');
+                const tdQuantita = document.createElement('td');
+                tdAlimento.textContent = item.alimento;
+                tdQuantita.textContent = item.qta_totale;
+                tr.appendChild(tdAlimento);
+                tr.appendChild(tdQuantita);
+                tbody.appendChild(tr);
+            });
+        })
+        .catch(error => console.error('Errore nel recupero della lista della spesa:', error));
+}
+
+function saveRicetta(ricettaData) {
+    fetch('/save_recipe', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(ricettaData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            window.location.href = '/';
+        })
+        .catch((error) => {
+            console.error('Error:', error);
         });
-    })
-    .catch(error => console.error('Errore nel recupero della lista della spesa:', error));
+}
+
+function toggleStatusRicetta(ricettaData) {
+    fetch('/toggle_recipe_status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(ricettaData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            window.location.href = '/';
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function filterTable() {
+    const nomeFilter = document.getElementById('filter-nome').value.toLowerCase();
+    const calorieFilter = document.getElementById('filter-calorie').value.toLowerCase();
+    const carboFilter = document.getElementById('filter-carbo').value.toLowerCase();
+    const proteineFilter = document.getElementById('filter-proteine').value.toLowerCase();
+    const grassiFilter = document.getElementById('filter-grassi').value.toLowerCase();
+
+    const table = document.querySelector('.table tbody');
+    const rows = table.getElementsByTagName('tr');
+
+    for (let i = 0; i < rows.length; i++) {
+        const cells = rows[i].getElementsByTagName('td');
+        const nomeCell = cells[0].textContent.toLowerCase();
+        const calorieCell = cells[1].textContent.toLowerCase();
+        const carboCell = cells[2].textContent.toLowerCase();
+        const proteineCell = cells[3].textContent.toLowerCase();
+        const grassiCell = cells[4].textContent.toLowerCase();
+
+        if (nomeCell.includes(nomeFilter) &&
+            proteineCell.includes(calorieFilter) &&
+            carboCell.includes(carboFilter) &&
+            proteineCell.includes(proteineFilter) &&
+            grassiCell.includes(grassiFilter)) {
+            rows[i].style.display = '';
+        } else {
+            rows[i].style.display = 'none';
+        }
+    }
+}
+
+function loadRecipeData(ricettaId) {
+    // Assumi che i dati siano già nella pagina o recuperarli dal server
+    const recipe = document.querySelector(`input[name='nome_${ricettaId}']`).value;
+
+}
+
+function populateIngredientsModal(ingredients) {
+    const tbody = document.getElementById('ingredientsBody');
+    tbody.innerHTML = ''; // Clear existing rows
+    ingredients.forEach(ingredient => {
+        const row = `<tr>
+            <td>${ingredient['nome']}</td>
+            <td><input type="number" class="form-control form-control-sm" id="quantity-${ingredient['id']}" value="${ingredient['qta']}"></td>
+            <td>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-success btn-sm update-ingredient" data-id="${ingredient['id']}" data-recipe-id="${ingredient['id_ricetta']}">Salva</button>
+                    <button type="button" class="btn btn-outline-danger btn-sm delete-ingredient" data-id="${ingredient['id']}" data-recipe-id="${ingredient['id_ricetta']}">Elimina</button>
+                </div>
+            </td>
+        </tr>`;
+        tbody.innerHTML += row;
+    });
+}
+
+
+function deleteIngredient(ingredientId, recipeId, button) {
+    fetch('/delete_ingredient', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                ingredient_id: ingredientId,
+                recipe_id: recipeId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Success:', data.message);
+            if (data.status === 'success') {
+                // Rimuovi la riga della tabella se l'eliminazione è avvenuta con successo
+                button.closest('tr').remove();
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function updateIngredient(ingredientId, recipeId, qta) {
+    fetch('/update_ingredient', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                ingredient_id: ingredientId,
+                recipe_id: recipeId,
+                quantity: qta
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Success:', data.message);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+
+function addIngredientToRecipe() {
+    const ingredientId = document.getElementById('ingredient-select').value;
+    const quantity = document.getElementById('ingredient-quantity').value;
+    const recipeId = document.getElementById('modal-recipe-id').value;
+
+    fetch('/add_ingredient_to_recipe', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                recipe_id: recipeId,
+                ingredient_id: ingredientId,
+                quantity: quantity
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Success:', data.message);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById("defaultOpen").click();
     document.querySelectorAll('.save-btn').forEach(button => {
-        button.addEventListener('click', function () {
+        button.addEventListener('click', function() {
             const ricettaId = this.getAttribute('data-ricetta-id');
             const ricettaData = {
                 id: ricettaId,
@@ -94,7 +256,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.querySelectorAll('.toggle-btn').forEach(button => {
-        button.addEventListener('click', function () {
+        button.addEventListener('click', function() {
             const ricettaId = this.getAttribute('data-ricetta-id');
             const ricettaData = {
                 id: ricettaId
@@ -134,197 +296,40 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     var editRecipeModal = document.getElementById('editRecipeModal');
-editRecipeModal.addEventListener('hidden.bs.modal', function () {
-if (!$('#addIngredientModal').hasClass('show')) {
-  window.location.href = '/';
-  }
-})
+    editRecipeModal.addEventListener('hidden.bs.modal', function() {
+        if (!$('#addIngredientModal').hasClass('show')) {
+            window.location.href = '/';
+        }
+    })
 
     var addIngredientModal = document.getElementById('addIngredientModal');
-addIngredientModal.addEventListener('hidden.bs.modal', function () {
-  window.location.href = '/';
-})
-
+    addIngredientModal.addEventListener('hidden.bs.modal', function() {
+        window.location.href = '/';
+    })
 
 });
 
-
-
-
-
-        // Utility function to capitalize the first letter of a string
-        String.prototype.capitalize = function() {
-            return this.charAt(0).toUpperCase() + this.slice(1);
-        }
-
-
-function saveRicetta(ricettaData) {
-    fetch('/save_recipe', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(ricettaData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        window.location.href = '/';
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-    });
+// Utility function to capitalize the first letter of a string
+String.prototype.capitalize = function() {
+    return this.charAt(0).toUpperCase() + this.slice(1);
 }
-
-function toggleStatusRicetta(ricettaData) {
-    fetch('/toggle_recipe_status', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(ricettaData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        window.location.href = '/';
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-    });
-}
-
-function filterTable() {
-    const nomeFilter = document.getElementById('filter-nome').value.toLowerCase();
-    const calorieFilter = document.getElementById('filter-calorie').value.toLowerCase();
-    const carboFilter = document.getElementById('filter-carbo').value.toLowerCase();
-    const proteineFilter = document.getElementById('filter-proteine').value.toLowerCase();
-    const grassiFilter = document.getElementById('filter-grassi').value.toLowerCase();
-
-    const table = document.querySelector('.table tbody');
-    const rows = table.getElementsByTagName('tr');
-
-    for (let i = 0; i < rows.length; i++) {
-        const cells = rows[i].getElementsByTagName('td');
-        const nomeCell = cells[0].textContent.toLowerCase();
-        const calorieCell = cells[1].textContent.toLowerCase();
-        const carboCell = cells[2].textContent.toLowerCase();
-        const proteineCell = cells[3].textContent.toLowerCase();
-        const grassiCell = cells[4].textContent.toLowerCase();
-
-        if (nomeCell.includes(nomeFilter) &&
-            proteineCell.includes(calorieFilter) &&
-            carboCell.includes(carboFilter) &&
-            proteineCell.includes(proteineFilter) &&
-            grassiCell.includes(grassiFilter)) {
-            rows[i].style.display = '';
-        } else {
-            rows[i].style.display = 'none';
-        }
-    }
-}
-
-function loadRecipeData(ricettaId) {
-  // Assumi che i dati siano già nella pagina o recuperarli dal server
-  const recipe = document.querySelector(`input[name='nome_${ricettaId}']`).value;
-
-}
-
-function populateIngredientsModal(ingredients) {
-    const tbody = document.getElementById('ingredientsBody');
-    tbody.innerHTML = '';  // Clear existing rows
-    ingredients.forEach(ingredient => {
-        const row = `<tr>
-            <td>${ingredient['nome']}</td>
-            <td><input type="number" class="form-control form-control-sm" id="quantity-${ingredient['id']}" value="${ingredient['qta']}"></td>
-            <td>
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-outline-success btn-sm update-ingredient" data-id="${ingredient['id']}" data-recipe-id="${ingredient['id_ricetta']}">Salva</button>
-                    <button type="button" class="btn btn-outline-danger btn-sm delete-ingredient" data-id="${ingredient['id']}" data-recipe-id="${ingredient['id_ricetta']}">Elimina</button>
-                </div>
-            </td>
-        </tr>`;
-        tbody.innerHTML += row;
-    });
-}
-
-
-function deleteIngredient(ingredientId, recipeId, button) {
-    fetch('/delete_ingredient', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ingredient_id: ingredientId, recipe_id: recipeId })
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Success:', data.message);
-        if (data.status === 'success') {
-            // Rimuovi la riga della tabella se l'eliminazione è avvenuta con successo
-            button.closest('tr').remove();
-        }
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-    });
-}
-
-function updateIngredient(ingredientId, recipeId, qta) {
-    fetch('/update_ingredient', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ingredient_id: ingredientId, recipe_id: recipeId, quantity: qta })
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Success:', data.message);
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-    });
-}
-
 
 $(document).ready(function() {
     // Il tuo codice che utilizza jQuery va qui
-   $('#addIngredientModal').on('show.bs.modal', function (event) {
-  // Pulisci il vecchio contenuto
-  const select = document.getElementById('ingredient-select');
-  select.innerHTML = '';
+    $('#addIngredientModal').on('show.bs.modal', function(event) {
+        // Pulisci il vecchio contenuto
+        const select = document.getElementById('ingredient-select');
+        select.innerHTML = '';
 
-  // Carica l'elenco degli ingredienti
-  fetch('/get_all_ingredients')
-    .then(response => response.json())
-    .then(ingredients => {
-      ingredients.forEach(ingredient => {
-        const option = new Option(ingredient.nome, ingredient.id);
-        select.add(option);
-      });
-    })
-    .catch(error => console.error('Error loading ingredients:', error));
+        // Carica l'elenco degli ingredienti
+        fetch('/get_all_ingredients')
+            .then(response => response.json())
+            .then(ingredients => {
+                ingredients.forEach(ingredient => {
+                    const option = new Option(ingredient.nome, ingredient.id);
+                    select.add(option);
+                });
+            })
+            .catch(error => console.error('Error loading ingredients:', error));
+    });
 });
-});
-
-
-
-function addIngredientToRecipe() {
-  const ingredientId = document.getElementById('ingredient-select').value;
-  const quantity = document.getElementById('ingredient-quantity').value;
-  const recipeId = document.getElementById('modal-recipe-id').value;
-
-  fetch('/add_ingredient_to_recipe', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ recipe_id: recipeId, ingredient_id: ingredientId, quantity: quantity })
-  })
-  .then(response => response.json())
-  .then(data => {
-    console.log('Success:', data.message);
-  })
-  .catch((error) => {
-    console.error('Error:', error);
-  });
-}
