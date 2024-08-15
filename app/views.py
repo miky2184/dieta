@@ -12,7 +12,7 @@ def index():
     # Calcola le calorie e i macronutrienti
     macronutrienti = definisci_calorie_macronutrienti()
     # Recupera le ricette dal database
-    ricette = carica_ricette()
+    ricette = carica_ricette(False)
     # Recupera gli ingredienti delle ricette dal database
     ingredienti = stampa_ingredienti_ricetta()
 
@@ -20,15 +20,17 @@ def index():
     menu_corrente = get_menu_corrente()
 
     if not menu_corrente:
+        ricette_menu = carica_ricette(True)
         settimana_corrente = deepcopy(orig_settimana)
-        settimana_corrente = genera_menu(settimana_corrente, False, ricette)
+        settimana_corrente = genera_menu(settimana_corrente, False, ricette_menu)
         genera_menu(settimana_corrente, True, ricette)
         salva_menu_corrente(settimana_corrente)
         menu_corrente = settimana_corrente
 
     if not get_menu_settima_prossima():
+        ricette_menu = carica_ricette(True)
         prossima_settimana = deepcopy(orig_settimana)
-        prossima_settimana =  genera_menu(prossima_settimana, False, ricette)
+        prossima_settimana =  genera_menu(prossima_settimana, False, ricette_menu)
         genera_menu(prossima_settimana, True, ricette)
         salva_menu_settimana_prossima(prossima_settimana)
 
@@ -179,3 +181,41 @@ def update_ingredient():
         conn.commit()
 
     return jsonify({'status': 'success', 'message': 'Quantità aggiornata correttamente.'})
+
+
+@views.route('/new_recipe', methods=['POST'])
+def new_recipe():
+    name = request.form['name']
+    breakfast = 'breakfast' in request.form
+    snack = 'snack' in request.form
+    main = 'main' in request.form
+    side = 'side' in request.form
+    second_breakfast = 'second_breakfast' in request.form
+
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO dieta.ricetta (nome_ricetta, colazione, spuntino, principale, contorno, colazione_sec) VALUES (upper(%s), %s, %s, %s, %s, %s) RETURNING id",
+            (name, breakfast, snack, main, side, second_breakfast))
+        conn.commit()
+
+    return redirect(url_for('views.index'))
+
+
+@views.route('/new_food', methods=['POST'])
+def new_food():
+    name = request.form['name']
+    breakfast = 'breakfast' in request.form
+    snack = 'snack' in request.form
+    main = 'main' in request.form
+    side = 'side' in request.form
+    second_breakfast = 'second_breakfast' in request.form
+
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO dieta.ricetta (nome_ricetta, colazione, spuntino, principale, contorno, colazione_sec) VALUES (upper(%s), %s, %s, %s, %s, %s) RETURNING id",
+            (name, breakfast, snack, main, side, second_breakfast))
+        conn.commit()
+
+    return redirect(url_for('views.index'))

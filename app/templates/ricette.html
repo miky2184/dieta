@@ -1,6 +1,9 @@
 <div id="Ricette" class="tabcontent">
-    <h2>Ricette Disponibili</h2>
-    <table class="table table-striped">
+    <div class="btn-group" role="group">
+    <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addRecipeModal">Aggiungi Ricetta</button>
+    <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addFoodModal">Aggiungi Alimento</button>
+    </div>
+    <table class="table table-striped table-hover table-bordered table-margin">
         <thead>
         <tr>
             <th class="text-center" style="width: 30%;">Nome Ricetta</th>
@@ -65,7 +68,7 @@
                                            %}checked{% endif %} disabled></td>
             <td>
                 <div class="btn-group" role="group">
-                    <button class="btn btn-outline-success btn-sm save-btn" data-ricetta-id="{{ ricetta.id }}"
+                    <button class="btn btn-outline-primary btn-sm save-btn" data-ricetta-id="{{ ricetta.id }}"
                             data-ricetta-nome="{{ ricetta.nome_ricetta }}"
                             data-ricetta-colazione="{{ ricetta.colazione }}"
                             data-ricetta-colazione_sec="{{ ricetta.colazione_sec }}"
@@ -75,12 +78,11 @@
                             data-ricetta-attiva="{{ ricetta.attiva }}">Salva
                     </button>
 
-                    <button class="btn btn-outline-success btn-sm edit-btn" data-ricetta-id="{{ ricetta.id }}"
-                            data-bs-toggle="modal" data-bs-target="#editRecipeModal"
-                            onclick="loadRecipeData({{ ricetta.id }})">Modifica
+                    <button class="btn btn-outline-primary btn-sm edit-btn" data-ricetta-id="{{ ricetta.id }}"
+                            data-bs-toggle="modal" data-bs-target="#editRecipeModal">Modifica
                     </button>
 
-                    <button class="btn btn-outline-success btn-sm toggle-btn" data-ricetta-id="{{ ricetta.id }}">
+                    <button class="btn btn-outline-primary btn-sm toggle-btn" data-ricetta-id="{{ ricetta.id }}">
                         Attiva/Disattiva
                     </button>
                 </div>

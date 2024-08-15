@@ -56,3 +56,7 @@ text-center {
 .recipe-text {
     font-size: 0.8rem !important;
 }
+
+.table-margin {
+    margin-top: 8px;
+}

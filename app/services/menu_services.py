@@ -149,25 +149,28 @@ def select_food(rows, settimana, giorno_settimana, meal_time, max_retry, perc: f
     return found
 
 
-def carica_ricette():
+def carica_ricette(stagionalita: bool):
     """
     Carica tutte le ricette disponibili dal database in memoria.
     """
+    and_stagionalita = ""
+    if stagionalita:
+        and_stagionalita = "AND (frutta AND extract(month FROM current_date) = ANY(stagionalita) OR NOT frutta)"
+
     with get_db_connection() as conn:
         cur = conn.cursor()
-        cur.execute("""
+        cur.execute(f"""
             SELECT distinct r.id, r.nome_ricetta,
                 ceil(sum((carboidrati/100*qta*4)+(proteine/100*qta*4)+(grassi/100*qta*9)) over (partition by ir.id_ricetta)) as kcal,
                 round(sum(carboidrati/100*qta) over (partition by ir.id_ricetta), 2) as carboidrati,
                 round(sum(proteine/100*qta) over (partition by ir.id_ricetta), 2) as proteine,
                 round(sum(grassi/100*qta) over (partition by ir.id_ricetta), 2) as grassi,
                 r.colazione, r.spuntino, r.principale, r.contorno, r.colazione_sec, r.enabled as attiva
-            FROM dieta.ingredienti_ricetta ir 
-            left JOIN dieta.ricetta r ON (ir.id_ricetta = r.id)
+            FROM dieta.ricetta r
+            left JOIN dieta.ingredienti_ricetta ir ON (ir.id_ricetta = r.id)
             left JOIN dieta.alimento a ON (ir.id_alimento = a.id)
-            WHERE 1=1 
-            -- AND r.enabled
-            AND (frutta AND extract(month FROM current_date) = ANY(stagionalita) OR NOT frutta)
+            WHERE 1=1
+            {and_stagionalita}                  
             order by enabled desc, r.nome_ricetta
         """)
         ricette = cur.fetchall()

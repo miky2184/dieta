@@ -1,12 +1,16 @@
 <div id="Menu" class="tabcontent">
-    <h2>Menu Settimanale</h2>
-    <table>
+    {% include 'week_selector.html' %}
+    <table class="table table-striped table-margin  table-bordered table-hover">
         <thead>
         <tr>
             <th>Pasto</th>
-            {% for giorno in menu.day.keys() %}
-            <th>{{ giorno.capitalize() }}</th>
-            {% endfor %}
+            <th>Lunedì</th>
+            <th>Martedì</th>
+            <th>Mercoledì</th>
+            <th>Giovedì</th>
+            <th>Venerdì</th>
+            <th>Sabato</th>
+            <th>Domenica</th>
         </tr>
         </thead>
         <tbody id="menu_tbody">

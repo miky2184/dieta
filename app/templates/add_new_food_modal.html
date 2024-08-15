@@ -1,0 +1,84 @@
+<div class="modal fade" tabindex="-1" id="addFoodModal" aria-labelledby="addFoodModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addFoodModalLabel">Crea Nuovo Alimento</h5>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('views.new_food') }}" method="POST">
+                    <div class="input-group input-group-sm mb-3">
+                        <span class="input-group-text">Nome</span>
+                        <input type="text" class="form-control form-control-sm" id="alimento" name="alimento" aria-label="Nome"
+                               required>
+                    </div>
+                    <div class="input-group input-group-sm mb-3">
+                        <span class="input-group-text">Carboidrati</span>
+                        <input type="number" step=".01" class="form-control form-control-sm" id="carboidrati" name="carboidrati"
+                               aria-label="Carboidrati" required>
+                    </div>
+                    <div class="input-group input-group-sm mb-3">
+                        <span class="input-group-text">Proteine</span>
+                        <input type="number" step=".01" class="form-control form-control-sm" id="proteine" name="proteine"
+                               aria-label="Proteine" required>
+                    </div>
+                    <div class="input-group input-group-sm mb-3">
+                        <span class="input-group-text">Grassi</span>
+                        <input type="number" step=".01" class="form-control form-control-sm" id="grassi" name="grassi"
+                               aria-label="Grassi" required>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="frutta" name="frutta">
+                        <label class="form-check-label" for="frutta">
+                            Frutta
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="verdura" name="verdura">
+                        <label class="form-check-label" for="verdura">
+                            Verdura
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="carne_bianca" name="carne_bianca">
+                        <label class="form-check-label" for="carne_bianca">
+                            Carne Bianca
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="carne_rossa" name="carne_rossa">
+                        <label class="form-check-label" for="carne_rossa">
+                            Carne Rossa
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="pesce" name="pesce">
+                        <label class="form-check-label" for="pesce">
+                            Pesce
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="pane" name="pane">
+                        <label class="form-check-label" for="pane">
+                            Pane
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="confezionato" name="confezionato">
+                        <label class="form-check-label" for="confezionato">
+                            Confezionato
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="vegan" name="vegan">
+                        <label class="form-check-label" for="vegan">
+                            Vegano
+                        </label>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-outline-success btn-sm">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

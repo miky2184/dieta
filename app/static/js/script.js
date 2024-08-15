@@ -141,12 +141,6 @@ function filterTable() {
     }
 }
 
-function loadRecipeData(ricettaId) {
-    // Assumi che i dati siano già nella pagina o recuperarli dal server
-    const recipe = document.querySelector(`input[name='nome_${ricettaId}']`).value;
-
-}
-
 function populateIngredientsModal(ingredients) {
     const tbody = document.getElementById('ingredientsBody');
     tbody.innerHTML = ''; // Clear existing rows
