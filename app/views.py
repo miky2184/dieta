@@ -1,11 +1,54 @@
 from flask import Blueprint, render_template, jsonify, request, redirect, url_for
-from .services.menu_services import (definisci_calorie_macronutrienti, save_weight, stampa_ingredienti_ricetta, genera_menu,
-                  stampa_lista_della_spesa, orig_settimana, get_menu_corrente, salva_menu_settimana_prossima, carica_ricette,
-                  get_settimane_salvate, get_menu_settima_prossima, salva_menu_corrente)
+from .services.menu_services import (definisci_calorie_macronutrienti, save_weight, genera_menu,
+                                     stampa_lista_della_spesa, get_menu_corrente, salva_menu_settimana_prossima,
+                                     carica_ricette, get_settimane_salvate, get_menu_settima_prossima,
+                                     salva_menu_corrente)
 from .models.database import get_db_connection
 from .models.common import printer
 from copy import deepcopy
+from decimal import Decimal
+
 views = Blueprint('views', __name__)
+
+
+def get_settimana(macronutrienti):
+    ricetta = {'ids': [], 'ricette': []}
+
+    pasto = {'colazione': deepcopy(ricetta),
+             'spuntino_mattina': deepcopy(ricetta),
+             'pranzo': deepcopy(ricetta),
+             'cena': deepcopy(ricetta),
+             'spuntino_pomeriggio': deepcopy(ricetta),
+             }
+
+    macronutrienti_giornalieri = {
+        'carboidrati': Decimal(macronutrienti['carboidrati']),
+        'proteine': Decimal(macronutrienti['proteine']),
+        'grassi': Decimal(macronutrienti['grassi']),
+        'kcal': Decimal(macronutrienti['kcal']),
+        'pasto': deepcopy(pasto)
+    }
+
+    macronutrienti_settimali = {
+        'carboidrati': Decimal(macronutrienti['carboidrati']) * 7,
+        'proteine': Decimal(macronutrienti['proteine']) * 7,
+        'grassi': Decimal(macronutrienti['grassi']) * 7,
+        'kcal': Decimal(macronutrienti['kcal']) * 7
+    }
+
+    return {'weekly': macronutrienti_settimali,
+            'day': {
+                'lunedi': deepcopy(macronutrienti_giornalieri),
+                'martedi': deepcopy(macronutrienti_giornalieri),
+                'mercoledi': deepcopy(macronutrienti_giornalieri),
+                'giovedi': deepcopy(macronutrienti_giornalieri),
+                'venerdi': deepcopy(macronutrienti_giornalieri),
+                'sabato': deepcopy(macronutrienti_giornalieri),
+                'domenica': deepcopy(macronutrienti_giornalieri)
+            },
+            'all_food': []
+            }
+
 
 @views.route('/')
 def index():
@@ -14,23 +57,24 @@ def index():
     # Recupera le ricette dal database
     ricette = carica_ricette(False)
     # Recupera gli ingredienti delle ricette dal database
-    ingredienti = stampa_ingredienti_ricetta()
+    # ingredienti = stampa_ingredienti_ricetta()
 
     # Recupera il menu corrente
     menu_corrente = get_menu_corrente()
 
     if not menu_corrente:
         ricette_menu = carica_ricette(True)
-        settimana_corrente = deepcopy(orig_settimana)
-        settimana_corrente = genera_menu(settimana_corrente, False, ricette_menu)
+        printer(f"macronutrienti:{macronutrienti}")
+        settimana_corrente = deepcopy(get_settimana(macronutrienti))
+        genera_menu(settimana_corrente, False, ricette_menu)
         genera_menu(settimana_corrente, True, ricette)
         salva_menu_corrente(settimana_corrente)
         menu_corrente = settimana_corrente
 
     if not get_menu_settima_prossima():
         ricette_menu = carica_ricette(True)
-        prossima_settimana = deepcopy(orig_settimana)
-        prossima_settimana =  genera_menu(prossima_settimana, False, ricette_menu)
+        prossima_settimana = deepcopy(get_settimana(macronutrienti))
+        genera_menu(prossima_settimana, False, ricette_menu)
         genera_menu(prossima_settimana, True, ricette)
         salva_menu_settimana_prossima(prossima_settimana)
 
@@ -52,7 +96,6 @@ def index():
 
 @views.route('/menu_settimana/<int:settimana_id>')
 def menu_settimana(settimana_id):
-
     menu_selezionato = None
     with get_db_connection() as conn:
         cur = conn.cursor()
@@ -91,11 +134,13 @@ def save_recipe():
     with get_db_connection() as conn:
         cur = conn.cursor()
         cur.execute(
-            "UPDATE dieta.ricetta SET nome_ricetta = upper(%s), colazione = %s, colazione_sec = %s, spuntino = %s, principale = %s, contorno = %s WHERE id = %s",
+            "UPDATE dieta.ricetta SET nome_ricetta = upper(%s), colazione = %s, colazione_sec = %s, spuntino = %s, "
+            "principale = %s, contorno = %s WHERE id = %s",
             (nome, colazione, colazione_sec, spuntino, principale, contorno, ricetta_id))
         conn.commit()
 
     return jsonify({'status': 'success', 'message': 'Ricetta salvata con successo!'})
+
 
 @views.route('/toggle_recipe_status', methods=['POST'])
 def toggle_recipe_status():
@@ -114,13 +159,16 @@ def recipe(recipe_id):
     with get_db_connection() as conn:
         cur = conn.cursor()
         cur.execute(
-            "SELECT a.id, a.nome, qta, ir.id_ricetta FROM dieta.ingredienti_ricetta ir JOIN dieta.alimento a ON (ir.id_alimento = a.id) WHERE id_ricetta = %s",
+            "SELECT a.id, a.nome, qta, ir.id_ricetta "
+            "  FROM      dieta.ingredienti_ricetta ir "
+            "       JOIN dieta.alimento a ON (ir.id_alimento = a.id) "
+            " WHERE id_ricetta = %s",
             (recipe_id,))
         ingredients = cur.fetchall()
-        #cur.execute("SELECT id, nome FROM dieta.alimento ORDER BY nome;")
-        #foods = cur.fetchall()
-        #cur.execute("SELECT nome_ricetta FROM dieta.ricetta WHERE id = %s", (recipe_id,))
-        #recipe_name = cur.fetchone()[0]
+        # cur.execute("SELECT id, nome FROM dieta.alimento ORDER BY nome;")
+        # foods = cur.fetchall()
+        # cur.execute("SELECT nome_ricetta FROM dieta.ricetta WHERE id = %s", (recipe_id,))
+        # recipe_name = cur.fetchone()[0]
 
     return jsonify(ingredients)
 
@@ -134,13 +182,13 @@ def delete_ingredient():
     with get_db_connection() as conn:
         cur = conn.cursor()
         cur.execute("DELETE FROM dieta.ingredienti_ricetta WHERE id_alimento = %s AND id_ricetta = %s",
-                (ingredient_id, recipe_id))
+                    (ingredient_id, recipe_id))
         conn.commit()
 
     return jsonify({'status': 'success', 'message': 'Ingrediente eliminato correttamente.'})
 
 
-@views.route('/get_all_ingredients',)
+@views.route('/get_all_ingredients', )
 def get_all_ingredients():
     with get_db_connection() as conn:
         cur = conn.cursor()
@@ -194,8 +242,9 @@ def new_recipe():
     with get_db_connection() as conn:
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO dieta.ricetta (nome_ricetta, colazione, spuntino, principale, contorno, colazione_sec) VALUES (upper(%s), %s, %s, %s, %s, %s) RETURNING id",
-            (name, breakfast, snack, main, side, second_breakfast))
+            "INSERT INTO dieta.ricetta (nome_ricetta, colazione, spuntino, principale, contorno, colazione_sec) "
+            "    VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
+            (name.upper(), breakfast, snack, main, side, second_breakfast))
         conn.commit()
 
     return redirect(url_for('views.index'))
@@ -213,8 +262,9 @@ def new_food():
     with get_db_connection() as conn:
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO dieta.ricetta (nome_ricetta, colazione, spuntino, principale, contorno, colazione_sec) VALUES (upper(%s), %s, %s, %s, %s, %s) RETURNING id",
-            (name, breakfast, snack, main, side, second_breakfast))
+            "INSERT INTO dieta.ricetta (nome_ricetta, colazione, spuntino, principale, contorno, colazione_sec) "
+            "     VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
+            (name.upper(), breakfast, snack, main, side, second_breakfast))
         conn.commit()
 
     return redirect(url_for('views.index'))
@@ -224,9 +274,9 @@ def new_food():
 def submit_weight():
     data = request.json
     # Salva i dati del peso nel database
-    # Assumi di avere una funzione per farlo
     peso = save_weight(data['date'], data['weight'])
     return jsonify(peso)
+
 
 @views.route('/salva-dati', methods=['POST'])
 def salva_dati():
@@ -259,8 +309,8 @@ def salva_dati():
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
         params = (nome.upper(), cognome.upper(), sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
-                          meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, carboidrati,
-                          proteine, grassi)
+                  meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, carboidrati,
+                  proteine, grassi)
 
         # Stampa la query con parametri
         printer(cur.mogrify(query, params).decode('utf-8'))

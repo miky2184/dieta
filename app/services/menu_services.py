@@ -2,63 +2,13 @@ import os
 import random
 import psycopg2.extras
 import psycopg2
-from copy import deepcopy
 from psycopg2.extras import Json
 from datetime import datetime, timedelta
 from decimal import Decimal
 from app.models.database import get_db_connection
 from app.models.common import printer
 
-
-BOT_TOKEN = os.getenv('BOT_TOKEN')
-USER_CHAT_ID = os.getenv('USER_CHAT_ID')
-GS_URL = os.getenv('GS_URL')
-MAX_KCAL = int(os.getenv('MAX_KCAL'))
-CARBOIDRATI_MAX_GIORNALIERI = float(os.getenv('CARBOIDRATI_MAX_GIORNALIERI'))
-PROTEINE_MAX_GIORNALIERI = float(os.getenv('PROTEINE_MAX_GIORNALIERI'))
-GRASSI_MAX_GIORNALIERI = float(os.getenv('GRASSI_MAX_GIORNALIERI'))
 MAX_RETRY = int(os.getenv('MAX_RETRY'))
-WIDTH_COLS_QTA = int(os.getenv('WIDTH_COLS_QTA'))
-SLEEP_TIME = int(os.getenv('SLEEP_TIME', 20))
-SA = os.getenv('SA')
-
-ingredienti_ricetta = {}
-ricetta = {'ids': [], 'ricette': []}
-
-pasto = {'colazione': deepcopy(ricetta),
-         'spuntino_mattina': deepcopy(ricetta),
-         'pranzo': deepcopy(ricetta),
-         'cena': deepcopy(ricetta),
-        'spuntino_pomeriggio': deepcopy(ricetta),
-         }
-
-macronutrienti_giornalieri = {
-    'carboidrati': Decimal(CARBOIDRATI_MAX_GIORNALIERI),
-    'proteine': Decimal(PROTEINE_MAX_GIORNALIERI),
-    'grassi': Decimal(GRASSI_MAX_GIORNALIERI),
-    'kcal': Decimal(MAX_KCAL),
-    'pasto': deepcopy(pasto)
-}
-
-macronutrienti_settimali = {
-    'carboidrati': Decimal(CARBOIDRATI_MAX_GIORNALIERI) * 7,
-    'proteine': Decimal(PROTEINE_MAX_GIORNALIERI) * 7,
-    'grassi': Decimal(GRASSI_MAX_GIORNALIERI) * 7,
-    'kcal': Decimal(MAX_KCAL) * 7
-}
-
-orig_settimana = {'weekly': macronutrienti_settimali,
-             'day': {
-                 'lunedi': deepcopy(macronutrienti_giornalieri),
-                 'martedi': deepcopy(macronutrienti_giornalieri),
-                 'mercoledi': deepcopy(macronutrienti_giornalieri),
-                 'giovedi': deepcopy(macronutrienti_giornalieri),
-                 'venerdi': deepcopy(macronutrienti_giornalieri),
-                 'sabato': deepcopy(macronutrienti_giornalieri),
-                 'domenica': deepcopy(macronutrienti_giornalieri)
-             },
-             'all_food': []
-             }
 
 
 def scegli_pietanza(settimana, giorno_settimana: str, meal_time: str, tipo: str, perc: float, disponibili: bool,
@@ -71,7 +21,7 @@ def scegli_pietanza(settimana, giorno_settimana: str, meal_time: str, tipo: str,
     printer(f"Ricette prima del filtro: {ricette}")
     ricette_filtrate = [r for r in ricette if r[tipo]]
     printer(f"Ricette dopo il filtro: {ricette_filtrate}")
-    #printer(f"ricette_filtrate{ricette_filtrate}")
+    # printer(f"ricette_filtrate{ricette_filtrate}")
     # Moltiplica i valori nutrizionali per la percentuale
     ricette_modificate = []
     for ricetta in ricette_filtrate:
@@ -91,7 +41,9 @@ def scegli_pietanza(settimana, giorno_settimana: str, meal_time: str, tipo: str,
             ricette_modificate.append(ricetta_modificata)
 
     # Invoca select_food con le ricette modificate
-    return select_food(ricette_modificate, settimana, giorno_settimana, meal_time, MAX_RETRY, perc, disponibili, False, weekly_check)
+    return select_food(ricette_modificate, settimana, giorno_settimana, meal_time, MAX_RETRY, perc, disponibili,
+                       False, weekly_check)
+
 
 def select_food(rows, settimana, giorno_settimana, meal_time, max_retry, perc: float, disponibili: bool, found: bool,
                 weekly_check: bool):
@@ -119,16 +71,20 @@ def select_food(rows, settimana, giorno_settimana, meal_time, max_retry, perc: f
                  (day.get('proteine') - ricetta_selezionata.get('proteine')) > 0 and
                  (day.get('grassi') - ricetta_selezionata.get('grassi')) > 0) or (weekly_check and
                                                                                   (weekly_nut.get(
-                                                                                      'kcal') - ricetta_selezionata.get(
+                                                                                      'kcal') -
+                                                                                   ricetta_selezionata.get(
                                                                                       'kcal') > 0 and
                                                                                    (weekly_nut.get(
-                                                                                       'carboidrati') - ricetta_selezionata.get(
+                                                                                       'carboidrati') -
+                                                                                    ricetta_selezionata.get(
                                                                                        'carboidrati')) > 0 and
                                                                                    (weekly_nut.get(
-                                                                                       'proteine') - ricetta_selezionata.get(
+                                                                                       'proteine') -
+                                                                                    ricetta_selezionata.get(
                                                                                        'proteine')) > 0 and
                                                                                    (weekly_nut.get(
-                                                                                       'grassi') - ricetta_selezionata.get(
+                                                                                       'grassi') -
+                                                                                    ricetta_selezionata.get(
                                                                                        'grassi')) > 0))
         ):
             settimana.get('all_food').append(id_selezionato)
@@ -162,7 +118,9 @@ def carica_ricette(stagionalita: bool):
         cur = conn.cursor()
         cur.execute(f"""
             SELECT distinct r.id, r.nome_ricetta,
-                ceil(sum((carboidrati/100*qta*4)+(proteine/100*qta*4)+(grassi/100*qta*9)) over (partition by ir.id_ricetta)) as kcal,
+                ceil(sum((carboidrati/100*qta*4)+
+                         (proteine/100*qta*4)+
+                        (grassi/100*qta*9)) over (partition by ir.id_ricetta)) as kcal,
                 round(sum(carboidrati/100*qta) over (partition by ir.id_ricetta), 2) as carboidrati,
                 round(sum(proteine/100*qta) over (partition by ir.id_ricetta), 2) as proteine,
                 round(sum(grassi/100*qta) over (partition by ir.id_ricetta), 2) as grassi,
@@ -178,75 +136,46 @@ def carica_ricette(stagionalita: bool):
 
     return ricette
 
+
 def genera_menu(settimana, check_weekly: bool, ricette) -> None:
-    percentuali = [1, 2, 0.75, 0.5]
+    percentuali = [1, 2, 0.75, 0.5, 0.25]
     for perc in percentuali:
         for _ in range(MAX_RETRY):
             printer(f"settimana::{settimana}")
             for giorno in settimana['day']:
                 p = settimana['day'][giorno]['pasto']
                 if len(p['pranzo']['ricette']) < 1:
-                    scegli_pietanza(settimana, giorno, 'pranzo', 'principale', perc, True, check_weekly, ricette)
+                    scegli_pietanza(settimana, giorno, 'pranzo', 'principale', perc,
+                                    True, check_weekly, ricette)
                 if len(p['cena']['ricette']) < 1:
-                    scegli_pietanza(settimana, giorno, 'cena', 'principale', perc, True, check_weekly, ricette)
+                    scegli_pietanza(settimana, giorno, 'cena', 'principale', perc,
+                                    True, check_weekly, ricette)
                 if len(p['colazione']['ricette']) < 2:
-                    scegli_pietanza(settimana, giorno, 'colazione', 'colazione', perc, False, check_weekly, ricette)
-                    scegli_pietanza(settimana, giorno, 'colazione', 'colazione_sec', perc, False, check_weekly, ricette)
-                scegli_pietanza(settimana, giorno, 'pranzo', 'contorno', perc, True, check_weekly, ricette)
-                scegli_pietanza(settimana, giorno, 'cena', 'contorno', perc, True, check_weekly, ricette)
+                    scegli_pietanza(settimana, giorno, 'colazione', 'colazione', perc,
+                                    False, check_weekly, ricette)
+                    scegli_pietanza(settimana, giorno, 'colazione', 'colazione_sec', perc,
+                                    False, check_weekly, ricette)
+                scegli_pietanza(settimana, giorno, 'pranzo', 'contorno', perc,
+                                True, check_weekly, ricette)
+                scegli_pietanza(settimana, giorno, 'cena', 'contorno', perc,
+                                True, check_weekly, ricette)
                 if len(p['spuntino_mattina']['ricette']) < 1:
-                    scegli_pietanza(settimana, giorno, 'spuntino_mattina', 'spuntino', perc, False, check_weekly, ricette)
+                    scegli_pietanza(settimana, giorno, 'spuntino_mattina', 'spuntino', perc,
+                                    False, check_weekly, ricette)
                 if len(p['spuntino_pomeriggio']['ricette']) < 1:
-                    scegli_pietanza(settimana, giorno, 'spuntino_pomeriggio', 'spuntino', perc, False, check_weekly, ricette)
+                    scegli_pietanza(settimana, giorno, 'spuntino_pomeriggio', 'spuntino', perc,
+                                    False, check_weekly, ricette)
 
-    return settimana
 
 def definisci_calorie_macronutrienti():
     """Calcola le calorie e i macronutrienti giornalieri e li restituisce."""
 
-    # Prepara i dati da restituire
-    data_to_write = {
-        "kcal": MAX_KCAL,
-        "carboidrati": CARBOIDRATI_MAX_GIORNALIERI,
-        "proteine": PROTEINE_MAX_GIORNALIERI,
-        "grassi": GRASSI_MAX_GIORNALIERI
-    }
-
-    return data_to_write
-
-
-def stampa_ricette():
-    """
-    Recupera le ricette dal database e restituisce i dati come lista di dizionari.
-    """
-
-    ricette = []
     with get_db_connection() as conn:
         cur = conn.cursor()
-        cur.execute("""
-            SELECT DISTINCT r.nome_ricetta,
-                            ceil(sum((carboidrati/100*qta*4) + (proteine/100*qta*4) + (grassi/100*qta*9)) OVER (PARTITION BY ir.id_ricetta)) AS kcal,
-                            round(sum(carboidrati/100*qta) OVER (PARTITION BY ir.id_ricetta), 2) AS carboidrati,
-                            round(sum(proteine/100*qta) OVER (PARTITION BY ir.id_ricetta), 2) AS proteine,
-                            round(sum(grassi/100*qta) OVER (PARTITION BY ir.id_ricetta), 2) AS grassi
-            FROM dieta.ingredienti_ricetta ir
-            JOIN dieta.ricetta r ON (ir.id_ricetta = r.id)
-            JOIN dieta.alimento a ON (ir.id_alimento = a.id)
-            WHERE 1=1
-            ORDER BY nome_ricetta
-        """)
-        rows = cur.fetchall()
+        cur.execute("""select calorie_giornaliere as kcal , carboidrati , proteine , grassi from dieta.utenti u """, )
+        rows = cur.fetchone()
 
-        for row in rows:
-            ricette.append({
-                'nome_ricetta': row['nome_ricetta'],
-                'kcal': float(row['kcal']),
-                'carboidrati': float(row['carboidrati']),
-                'proteine': float(row['proteine']),
-                'grassi': float(row['grassi'])
-            })
-
-    return ricette
+    return rows
 
 
 def stampa_ingredienti_ricetta():
@@ -280,7 +209,6 @@ def stampa_lista_della_spesa(ids_all_food: list):
     """
     Recupera la lista della spesa basata sugli ID degli alimenti e restituisce i dati come lista di dizionari.
     """
-    conn = None
     lista_della_spesa = []
 
     with get_db_connection() as conn:
@@ -317,6 +245,7 @@ def stampa_lista_della_spesa(ids_all_food: list):
 
     return lista_della_spesa
 
+
 def convert_decimal_to_float(data):
     """
     Convert all Decimal instances in a data structure to float.
@@ -330,6 +259,7 @@ def convert_decimal_to_float(data):
         return float(data)
     else:
         return data
+
 
 def salva_menu_corrente(menu):
 
@@ -441,7 +371,6 @@ def get_menu_settima_prossima():
     return False
 
 
-
 def get_settimane_salvate():
     with get_db_connection() as conn:
         # Esegui le operazioni con la connessione
@@ -468,7 +397,9 @@ def save_weight(date, weight):
 
         conn.commit()
 
-        cur.execute("""select data_rilevazione as date, peso as weight from dieta.registro_peso order by data_rilevazione""")
+        cur.execute("""select data_rilevazione as date, peso as weight 
+                         from dieta.registro_peso 
+                     order by data_rilevazione""")
 
         peso = cur.fetchall()
 

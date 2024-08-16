@@ -17,10 +17,10 @@
         {% for pasto in ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena'] %}
         <tr>
             <td>{{ pasto.replace('_', ' ').capitalize() }}</td>
-            {% for giorno, dati_giorno in menu.day.items() %}
+            {% for dati_giorno in ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'] %}
             <td>
-                {% for ricetta in dati_giorno.pasto[pasto].ricette %}
-                {{ ricetta.nome_ricetta }} ({{ ricetta.qta }}x)<br>
+                {% for ricetta in menu.day[dati_giorno].pasto[pasto].ricette %}
+                <div>{{ ricetta.nome_ricetta }} ({{ ricetta.qta }}x)</div>
                 {% endfor %}
             </td>
             {% endfor %}

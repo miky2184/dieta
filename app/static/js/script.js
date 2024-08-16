@@ -34,7 +34,7 @@ function aggiornaTabellaMenu(menu) {
         const tdPasto = document.createElement('td');
         tdPasto.textContent = pasto.replace('_', ' ').capitalize();
         tr.appendChild(tdPasto);
-        Object.keys(menu.day).forEach(giorno => {
+        ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'].forEach(giorno => {
             const td = document.createElement('td');
             if (menu.day[giorno].pasto[pasto].ricette && menu.day[giorno].pasto[pasto].ricette.length > 0){
                 menu.day[giorno].pasto[pasto].ricette.forEach(ricetta => {
@@ -554,7 +554,8 @@ function updateWeightChart(weights) {
         options: {
             scales: {
                 y: {
-                    beginAtZero: false
+                    beginAtZero: true,
+                    max: 100
                 }
             }
         }

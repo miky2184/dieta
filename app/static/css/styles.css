@@ -60,3 +60,13 @@ text-center {
 .table-margin {
     margin-top: 8px;
 }
+
+td div {
+    border-bottom: 1px solid #ccc; /* Cambia il colore e lo spessore del bordo come preferisci */
+    padding: 5px 0; /* Aggiungi un po' di spazio intorno al contenuto se necessario */
+  }
+
+  /* Rimuove il bordo dall'ultimo <div> */
+  td div:last-child {
+    border-bottom: none;
+  }
