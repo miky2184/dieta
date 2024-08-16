@@ -303,6 +303,179 @@ document.addEventListener('DOMContentLoaded', function() {
         window.location.href = '/';
     })
 
+    function synchronizeFields() {
+        // Copia i valori dai campi visibili/disabilitati ai campi nascosti
+        const bmiVisible = document.getElementById('bmi');
+        const bmiHidden = document.getElementById('bmi_hidden');
+        bmiHidden.value = bmiVisible.value;
+
+        const pesoIdealeVisible = document.getElementById('peso_ideale');
+        const pesoIdealeHidden = document.getElementById('peso_ideale_hidden');
+        pesoIdealeHidden.value = pesoIdealeVisible.value;
+
+        // Aggiungi altre sincronizzazioni qui
+        const metaBasaleVisible = document.getElementById('meta_basale');
+        const metaBasaleHidden = document.getElementById('meta_basale_hidden');
+        metaBasaleHidden.value = metaBasaleVisible.value;
+
+        const metaGiornalieroVisible = document.getElementById('meta_giornaliero');
+        const metaGiornalieroHidden = document.getElementById('meta_giornaliero_hidden');
+        metaGiornalieroHidden.value = metaGiornalieroVisible.value;
+
+        const calorieGiornaliereVisible = document.getElementById('calorie_giornaliere');
+        const calorieGiornaliereHidden = document.getElementById('calorie_giornaliere_hidden');
+        calorieGiornaliereHidden.value = calorieGiornaliereVisible.value;
+
+        const calorieSettimanaliVisible = document.getElementById('calorie_settimanali');
+        const calorieSettimanaliHidden = document.getElementById('calorie_settimanali_hidden');
+        calorieSettimanaliHidden.value = calorieSettimanaliVisible.value;
+
+        const carboidratiVisible = document.getElementById('carboidrati_input');
+        const carboidratiHidden = document.getElementById('carboidrati_hidden');
+        carboidratiHidden.value = carboidratiVisible.value;
+
+        const proteineVisible = document.getElementById('proteine_input');
+        const proteineHidden = document.getElementById('proteine_hidden');
+        proteineHidden.value = proteineVisible.value;
+
+        const grassiVisible = document.getElementById('grassi_input');
+        const grassiHidden = document.getElementById('grassi_hidden');
+        grassiHidden.value = grassiVisible.value;
+    }
+
+    synchronizeFields();
+    document.getElementById('personalInfoForm').addEventListener('submit', synchronizeFields);
+
+    const form = document.getElementById('personalInfoForm');
+    const resultsContainer = document.getElementById('results');
+    //const calculatedResults = document.getElementById('calculatedResults');
+
+    const bmiInput = document.getElementById('bmi');
+    const idealWeightInput = document.getElementById('peso_ideale');
+    const metaBasale = document.getElementById('meta_basale');
+    const metaDaily = document.getElementById('meta_giornaliero');
+    const calorieGiornaliere = document.getElementById('calorie_giornaliere');
+    const calorieSettimanali = document.getElementById('calorie_settimanali');
+    const carboidrati = document.getElementById('carboidrati_input');
+    const proteine = document.getElementById('proteine_input');
+    const grassi = document.getElementById('grassi_input');
+
+    function calculateResults() {
+        const formData = new FormData(form);
+        const data = {
+            nome: formData.get('nome'),
+            cognome: formData.get('cognome'),
+            sesso: formData.get('sesso'),
+            eta: formData.get('eta'),
+            peso: formData.get('peso'),
+            altezza: formData.get('altezza'),
+            tdee: formData.get('tdee'),
+            deficit: formData.get('deficit_calorico')
+        };
+
+        // Esegui i calcoli basati sui dati inseriti
+        let bmi = (data.peso / Math.pow(data.altezza/100, 2)).toFixed(1); // esempio di calcolo del BMI, con un'altezza fissa
+        let idealWeight;
+        let formulaLorenz;
+        let formulaBroca;
+        let formulaBerthean;
+        let formulaKeys;
+        if (data.altezza > 0) {
+            if (data.eta > 0) {
+            if (data.sesso === 'M') {
+                formulaLorenz = data.altezza - 100 - (data.altezza - 150)/4;
+                formulaBroca = data.altezza - 100;
+                formulaBerthean = 0.8 * (data.altezza - 100) + data.eta/2;
+                formulaKeys = 22.1 * Math.pow(data.altezza / 100, 2);
+            } else if (data.sesso === 'F') {
+                formulaLorenz = data.altezza - 100 - (data.altezza - 150)/2;
+                formulaBroca = data.altezza - 104;
+                formulaBerthean = 0.8 * (data.altezza - 100) + data.eta/2;
+                formulaKeys = 20.6 * Math.pow(data.altezza / 100, 2);
+            }
+            }
+        }
+
+        idealWeight = ((formulaLorenz + formulaBroca + formulaBerthean + formulaKeys)/4).toFixed(0)
+
+        let harrisBenedict;
+        let mifflinStJeor;
+
+        if (data.sesso === 'M') {
+            harrisBenedict = 88.362 + (13.397 * data.peso) + (4.799 * data.altezza) - (5.677 * data.eta);
+            mifflinStJeor = 10 * data.peso + 6.25 * data.altezza - 5 * data.eta + 5;
+        } else if (data.sesso === 'F') {
+            harrisBenedict = 47.593+(9.247*data.peso)+(3.098*data.altezza)- (4,330*data.eta) ;
+            mifflinStJeor = 10 * data.peso + 6.25 * data.altezza - 5 * data.eta -161;
+        }
+
+        let metaBasaleValue = ((harrisBenedict + mifflinStJeor)/2).toFixed(0);
+
+        let metaDailyValue = (metaBasaleValue * data.tdee).toFixed(0);
+
+        let calorieGiornaliereValue = ((metaDailyValue - (metaDailyValue * data.deficit/100))).toFixed(0);
+
+        let calorieSettimanaliValue = (calorieGiornaliereValue * 7).toFixed(0);
+
+        let carboidratiValue = (calorieGiornaliereValue * 0.6 / 4).toFixed(0);
+        let proteineValue = (calorieGiornaliereValue * 0.15 / 4).toFixed(0);;
+        let grassiValue = (calorieGiornaliereValue * 0.25 / 9).toFixed(0);;
+
+
+        if (isNaN(bmi)) {
+            bmi = 0;  // Imposta un valore di default o gestisci l'errore come necessario
+        }
+
+        if (isNaN(idealWeight)) {
+            idealWeight = 0;  // Imposta un valore di default o gestisci l'errore come necessario
+        }
+
+        if (isNaN(metaBasaleValue)) {
+            metaBasaleValue = 0;  // Imposta un valore di default o gestisci l'errore come necessario
+        }
+
+        if (isNaN(metaDailyValue)) {
+            metaDailyValue = 0;  // Imposta un valore di default o gestisci l'errore come necessario
+        }
+
+        if (isNaN(calorieGiornaliereValue)) {
+            calorieGiornaliereValue = 0;  // Imposta un valore di default o gestisci l'errore come necessario
+        }
+
+        if (isNaN(calorieSettimanaliValue)) {
+            calorieSettimanaliValue = 0;  // Imposta un valore di default o gestisci l'errore come necessario
+        }
+
+        if (isNaN(carboidratiValue)) {
+            carboidratiValue = 0;  // Imposta un valore di default o gestisci l'errore come necessario
+        }
+
+        if (isNaN(proteineValue)) {
+            proteineValue = 0;  // Imposta un valore di default o gestisci l'errore come necessario
+        }
+
+        if (isNaN(grassiValue)) {
+            grassiValue = 0;  // Imposta un valore di default o gestisci l'errore come necessario
+        }
+
+        bmiInput.value = bmi;
+        idealWeightInput.value = idealWeight;
+        metaBasale.value = metaBasaleValue;
+        metaDaily.value = metaDailyValue;
+        calorieGiornaliere.value = calorieGiornaliereValue;
+        calorieSettimanali.value = calorieSettimanaliValue;
+        carboidrati.value = carboidratiValue;
+        proteine.value = proteineValue;
+        grassi.value = grassiValue;
+    }
+
+    form.addEventListener('input', calculateResults);
+
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+  });
+
 });
 
 // Utility function to capitalize the first letter of a string
@@ -329,3 +502,61 @@ $(document).ready(function() {
             .catch(error => console.error('Error loading ingredients:', error));
     });
 });
+
+
+function submitWeight() {
+    const weight = document.getElementById('weightInput').value;
+    const date = new Date().toISOString().slice(0, 10); // Prende la data odierna
+
+    // Invia il peso al server (assumendo che tu abbia un endpoint API)
+    fetch('/submit-weight', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ date: date, weight: weight })
+    })
+    .then(response => response.json())
+    .then(data => {
+        updateWeightChart(data); // Aggiorna il grafico dopo l'invio
+    })
+    .catch(error => console.error('Errore nel salvataggio del peso:', error));
+}
+
+var myChart;
+
+function formatDate(dateStr) {
+    var date = new Date(dateStr);
+    return date.getFullYear() + '-' +
+           ('0' + (date.getMonth() + 1)).slice(-2) + '-' +
+           ('0' + date.getDate()).slice(-2);
+}
+
+function updateWeightChart(weights) {
+    const ctx = document.getElementById('weightChartCanvas').getContext('2d');
+    // Distruggi il grafico esistente se esiste
+    if (myChart) {
+        myChart.destroy();
+    }
+
+    myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: weights.map(item => formatDate(item.date)),
+            datasets: [{
+                label: 'Peso',
+                data: weights.map(item => item.weight),
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: false
+                }
+            }
+        }
+    });
+}

@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, jsonify, request, redirect, url_for
-from .services.menu_services import (definisci_calorie_macronutrienti, stampa_ricette, stampa_ingredienti_ricetta, genera_menu,
+from .services.menu_services import (definisci_calorie_macronutrienti, save_weight, stampa_ingredienti_ricetta, genera_menu,
                   stampa_lista_della_spesa, orig_settimana, get_menu_corrente, salva_menu_settimana_prossima, carica_ricette,
                   get_settimane_salvate, get_menu_settima_prossima, salva_menu_corrente)
 from .models.database import get_db_connection
@@ -215,6 +215,57 @@ def new_food():
         cur.execute(
             "INSERT INTO dieta.ricetta (nome_ricetta, colazione, spuntino, principale, contorno, colazione_sec) VALUES (upper(%s), %s, %s, %s, %s, %s) RETURNING id",
             (name, breakfast, snack, main, side, second_breakfast))
+        conn.commit()
+
+    return redirect(url_for('views.index'))
+
+
+@views.route('/submit-weight', methods=['POST'])
+def submit_weight():
+    data = request.json
+    # Salva i dati del peso nel database
+    # Assumi di avere una funzione per farlo
+    peso = save_weight(data['date'], data['weight'])
+    return jsonify(peso)
+
+@views.route('/salva-dati', methods=['POST'])
+def salva_dati():
+    nome = request.form['nome']
+    cognome = request.form['cognome']
+    sesso = request.form['sesso']
+    eta = int(request.form['eta'])
+    altezza = float(request.form['altezza'])
+    peso = float(request.form['peso'])
+    tdee = float(request.form['tdee'])
+    deficit_calorico = float(request.form['deficit_calorico'])
+    bmi = float(request.form['bmi'])
+    peso_ideale = float(request.form['peso_ideale'])
+    meta_basale = float(request.form['meta_basale'])
+    meta_giornaliero = float(request.form['meta_giornaliero'])
+    calorie_giornaliere = float(request.form['calorie_giornaliere'])
+    calorie_settimanali = float(request.form['calorie_settimanali'])
+    carboidrati = float(request.form['carboidrati'])
+    proteine = float(request.form['proteine'])
+    grassi = float(request.form['grassi'])
+
+    # Connessione al database e inserimento dei dati
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+
+        query = """
+            INSERT INTO dieta.utenti (nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, 
+            peso_ideale, meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, carboidrati,
+            proteine, grassi)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+        params = (nome.upper(), cognome.upper(), sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
+                          meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, carboidrati,
+                          proteine, grassi)
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+
+        cur.execute(query, params)
         conn.commit()
 
     return redirect(url_for('views.index'))

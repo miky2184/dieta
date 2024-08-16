@@ -404,7 +404,7 @@ def get_menu_corrente():
         params = (oggi.date(),)
 
         # Stampa la query con parametri
-        print(cur.mogrify(query, params).decode('utf-8'))
+        printer(cur.mogrify(query, params).decode('utf-8'))
 
         # Recupera il menu per la settimana corrente
         cur.execute(query, params)
@@ -453,3 +453,23 @@ def get_settimane_salvate():
         settimane = cur.fetchall()
 
     return settimane
+
+
+def save_weight(date, weight):
+    # Qui va il codice per salvare i dati nel database
+    with get_db_connection() as conn:
+        # Esegui le operazioni con la connessione
+        cur = conn.cursor()
+
+        cur.execute("""
+            INSERT INTO dieta.registro_peso (data_rilevazione, peso)
+            VALUES (%s, %s)
+        """, (date, weight))
+
+        conn.commit()
+
+        cur.execute("""select data_rilevazione as date, peso as weight from dieta.registro_peso order by data_rilevazione""")
+
+        peso = cur.fetchall()
+
+        return peso
