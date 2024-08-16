@@ -44,7 +44,6 @@ def index():
     return render_template('index.html',
                            macronutrienti=macronutrienti,
                            ricette=ricette,
-                           ingredienti=ingredienti,
                            menu=menu_corrente,
                            lista_spesa=lista_spesa,
                            settimane=settimane_salvate

@@ -36,11 +36,13 @@ function aggiornaTabellaMenu(menu) {
         tr.appendChild(tdPasto);
         Object.keys(menu.day).forEach(giorno => {
             const td = document.createElement('td');
-            menu.day[giorno].pasto[pasto].ricette.forEach(ricetta => {
+            if (menu.day[giorno].pasto[pasto].ricette && menu.day[giorno].pasto[pasto].ricette.length > 0){
+                menu.day[giorno].pasto[pasto].ricette.forEach(ricetta => {
                 const div = document.createElement('div');
                 div.textContent = `${ricetta.nome_ricetta} (${ricetta.qta}x)`;
                 td.appendChild(div);
             });
+            }
             tr.appendChild(td);
         });
         tbody.appendChild(tr);

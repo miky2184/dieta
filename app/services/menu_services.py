@@ -26,9 +26,10 @@ ingredienti_ricetta = {}
 ricetta = {'ids': [], 'ricette': []}
 
 pasto = {'colazione': deepcopy(ricetta),
-         'spuntino': deepcopy(ricetta),
+         'spuntino_mattina': deepcopy(ricetta),
          'pranzo': deepcopy(ricetta),
-         'cena': deepcopy(ricetta)
+         'cena': deepcopy(ricetta),
+        'spuntino_pomeriggio': deepcopy(ricetta),
          }
 
 macronutrienti_giornalieri = {
@@ -193,8 +194,10 @@ def genera_menu(settimana, check_weekly: bool, ricette) -> None:
                     scegli_pietanza(settimana, giorno, 'colazione', 'colazione_sec', perc, False, check_weekly, ricette)
                 scegli_pietanza(settimana, giorno, 'pranzo', 'contorno', perc, True, check_weekly, ricette)
                 scegli_pietanza(settimana, giorno, 'cena', 'contorno', perc, True, check_weekly, ricette)
-                if len(p['spuntino']['ricette']) < 2:
-                    scegli_pietanza(settimana, giorno, 'spuntino', 'spuntino', perc, False, check_weekly, ricette)
+                if len(p['spuntino_mattina']['ricette']) < 1:
+                    scegli_pietanza(settimana, giorno, 'spuntino_mattina', 'spuntino', perc, False, check_weekly, ricette)
+                if len(p['spuntino_pomeriggio']['ricette']) < 1:
+                    scegli_pietanza(settimana, giorno, 'spuntino_pomeriggio', 'spuntino', perc, False, check_weekly, ricette)
 
     return settimana
 
