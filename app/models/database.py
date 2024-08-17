@@ -2,7 +2,6 @@ import psycopg2
 import os
 from psycopg2 import extras
 from contextlib import contextmanager
-from app.models.common import printer
 
 def get_db_config():
     return {
@@ -20,7 +19,8 @@ def get_db_connection():
     try:
         yield conn
     except Exception as e:
-        printer(f"Errore DB: {e}")
+        print(f"Errore DB: {e}")
+        raise e
     finally:
         conn.close()
 

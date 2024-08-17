@@ -7,6 +7,8 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from app.models.database import get_db_connection
 from app.models.common import printer
+from copy import deepcopy
+from decimal import Decimal
 
 MAX_RETRY = int(os.getenv('MAX_RETRY'))
 
@@ -18,10 +20,7 @@ def scegli_pietanza(settimana, giorno_settimana: str, meal_time: str, tipo: str,
     """
     perc_decimal = Decimal(str(perc))
     # Filtra le ricette in base al tipo di pasto richiesto
-    printer(f"Ricette prima del filtro: {ricette}")
     ricette_filtrate = [r for r in ricette if r[tipo]]
-    printer(f"Ricette dopo il filtro: {ricette_filtrate}")
-    # printer(f"ricette_filtrate{ricette_filtrate}")
     # Moltiplica i valori nutrizionali per la percentuale
     ricette_modificate = []
     for ricetta in ricette_filtrate:
@@ -116,7 +115,7 @@ def carica_ricette(stagionalita: bool):
 
     with get_db_connection() as conn:
         cur = conn.cursor()
-        cur.execute(f"""
+        query = f"""
             SELECT distinct r.id, r.nome_ricetta,
                 ceil(sum((carboidrati/100*qta*4)+
                          (proteine/100*qta*4)+
@@ -131,7 +130,14 @@ def carica_ricette(stagionalita: bool):
             WHERE 1=1
             {and_stagionalita}                  
             order by enabled desc, r.nome_ricetta
-        """)
+        """
+
+        params = ()
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+        cur.execute(query, params)
+
         ricette = cur.fetchall()
 
     return ricette
@@ -141,7 +147,6 @@ def genera_menu(settimana, check_weekly: bool, ricette) -> None:
     percentuali = [1, 1.5, 0.75, 0.5, 0.25]
     for perc in percentuali:
         for _ in range(MAX_RETRY):
-            printer(f"settimana::{settimana}")
             for giorno in settimana['day']:
                 p = settimana['day'][giorno]['pasto']
                 if len(p['pranzo']['ricette']) < 1:
@@ -172,7 +177,15 @@ def definisci_calorie_macronutrienti():
 
     with get_db_connection() as conn:
         cur = conn.cursor()
-        cur.execute("""select calorie_giornaliere as kcal , carboidrati , proteine , grassi from dieta.utenti u """, )
+        query = """select calorie_giornaliere as kcal , carboidrati , proteine , grassi 
+                     from dieta.utenti u """
+
+        params = ()
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+        cur.execute(query, params)
+
         rows = cur.fetchone()
 
     return rows
@@ -186,13 +199,20 @@ def stampa_ingredienti_ricetta():
 
     with get_db_connection() as conn:
         cur = conn.cursor()
-        cur.execute("""
+        query = """
             SELECT r.nome_ricetta, a.nome AS nome_alimento, ir.qta
             FROM dieta.ingredienti_ricetta ir
             JOIN dieta.ricetta r ON (ir.id_ricetta = r.id)
             JOIN dieta.alimento a ON (a.id = ir.id_alimento)
             ORDER BY nome_ricetta
-        """)
+        """
+
+        params = ()
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+        cur.execute(query, params)
+
         rows = cur.fetchall()
 
         for row in rows:
@@ -214,27 +234,46 @@ def stampa_lista_della_spesa(ids_all_food: list):
     with get_db_connection() as conn:
         cur = conn.cursor()
         # Crea una tabella temporanea per l'elaborazione
-        cur.execute('''
-            CREATE TEMP TABLE temp_ricetta_id (
+        query = """
+            CREATE TEMP TABLE if not exists temp_ricetta_id (
                 id_ricetta BIGINT NOT NULL
             ) ON COMMIT DROP;
-        ''')
+            """
 
-        # Inserisci gli ID delle ricette nella tabella temporanea
-        psycopg2.extras.execute_values(cur, '''
+        params = ()
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+
+        # Recupera il menu per la settimana corrente
+        cur.execute(query, params)
+
+        query = """
             INSERT INTO temp_ricetta_id (id_ricetta)
             VALUES %s
-        ''', [(value,) for value in ids_all_food])
+        """
+
+        # Inserisci gli ID delle ricette nella tabella temporanea
+        psycopg2.extras.execute_values(cur, query, [(value,) for value in ids_all_food])
 
         # Recupera la lista degli ingredienti e le quantità totali
-        cur.execute('''
+        query = """
             SELECT a.nome AS alimento, SUM(ir.qta) AS qta_totale
             FROM dieta.ingredienti_ricetta ir
             JOIN dieta.alimento a ON ir.id_alimento = a.id
             JOIN temp_ricetta_id t ON t.id_ricetta = ir.id_ricetta
             GROUP BY a.nome
             ORDER BY a.nome;
-        ''')
+        """
+
+        params = ()
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+
+        # Recupera il menu per la settimana corrente
+        cur.execute(query, params)
+
         rows = cur.fetchall()
 
         for row in rows:
@@ -275,10 +314,18 @@ def salva_menu_corrente(menu):
         menu_convertito = convert_decimal_to_float(menu)
 
         # Inserisce un nuovo menu per la prossima settimana
-        cur.execute("""
+        query = """
             INSERT INTO dieta.menu_settimanale (data_inizio, data_fine, menu)
             VALUES (%s, %s, %s)
-        """, (ultimo_lunedi.date(), domenica_prossima.date(), Json(menu_convertito)))
+        """
+
+        params = (ultimo_lunedi.date(), domenica_prossima.date(), Json(menu_convertito))
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+
+        # Recupera il menu per la settimana corrente
+        cur.execute(query, params)
 
         conn.commit()
 
@@ -297,24 +344,52 @@ def salva_menu_settimana_prossima(menu):
         menu_convertito = convert_decimal_to_float(menu)
 
         # Verifica se un menu per la prossima settimana esiste già
-        cur.execute("""
-            SELECT id FROM dieta.menu_settimanale WHERE data_inizio = %s AND data_fine = %s
-        """, (lunedi_prossimo.date(), domenica_prossima.date()))
+        query = """ SELECT id 
+                      FROM dieta.menu_settimanale 
+                     WHERE data_inizio = %s 
+                       AND data_fine = %s
+                """
+
+        params = (lunedi_prossimo.date(), domenica_prossima.date())
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+
+        # Recupera il menu per la settimana corrente
+        cur.execute(query, params)
+
         result = cur.fetchone()
 
         if result:
             # Aggiorna il menu esistente
-            cur.execute("""
+            query = """
                 UPDATE dieta.menu_settimanale
                 SET menu = %s
                 WHERE id = %s
-            """, (Json(menu_convertito), result[0]))
+            """
+
+            params = (Json(menu_convertito), result[0])
+
+            # Stampa la query con parametri
+            printer(cur.mogrify(query, params).decode('utf-8'))
+
+            # Recupera il menu per la settimana corrente
+            cur.execute(query, params)
+
         else:
             # Inserisce un nuovo menu per la prossima settimana
-            cur.execute("""
+            query = """
                 INSERT INTO dieta.menu_settimanale (data_inizio, data_fine, menu)
                 VALUES (%s, %s, %s)
-            """, (lunedi_prossimo.date(), domenica_prossima.date(), Json(menu_convertito)))
+            """
+
+            params = (lunedi_prossimo.date(), domenica_prossima.date(), Json(menu_convertito))
+
+            # Stampa la query con parametri
+            printer(cur.mogrify(query, params).decode('utf-8'))
+
+            # Recupera il menu per la settimana corrente
+            cur.execute(query, params)
 
         conn.commit()
 
@@ -328,7 +403,8 @@ def get_menu_corrente():
         oggi = datetime.now()
 
         query = """
-            SELECT menu FROM dieta.menu_settimanale
+            SELECT menu 
+              FROM dieta.menu_settimanale
             WHERE %s between data_inizio AND data_fine 
         """
         params = (oggi.date(),)
@@ -356,7 +432,9 @@ def get_menu_settima_prossima():
         domenica_prossima = lunedi_prossimo + timedelta(days=6)
 
         query = """
-            SELECT id FROM dieta.menu_settimanale WHERE data_inizio = %s AND data_fine = %s
+            SELECT id 
+              FROM dieta.menu_settimanale 
+             WHERE data_inizio = %s AND data_fine = %s
         """
 
         params = (lunedi_prossimo.date(), domenica_prossima.date(),)
@@ -375,10 +453,18 @@ def get_settimane_salvate():
     with get_db_connection() as conn:
         # Esegui le operazioni con la connessione
         cur = conn.cursor()
-        cur.execute("""
-            SELECT id, data_inizio, data_fine FROM dieta.menu_settimanale
-            ORDER BY data_inizio DESC
-        """)
+        query = """
+            SELECT id, data_inizio, data_fine 
+              FROM dieta.menu_settimanale
+             ORDER BY data_inizio DESC
+        """
+
+        params = ()
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+        cur.execute(query, params)
+
         settimane = cur.fetchall()
 
     return settimane
@@ -390,17 +476,239 @@ def save_weight(date, weight):
         # Esegui le operazioni con la connessione
         cur = conn.cursor()
 
-        cur.execute("""
+        query = """
             INSERT INTO dieta.registro_peso (data_rilevazione, peso)
             VALUES (%s, %s)
-        """, (date, weight))
+        """
+
+        params = (date, weight)
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+        cur.execute(query, params)
 
         conn.commit()
 
-        cur.execute("""select data_rilevazione as date, peso as weight 
+        query = """select data_rilevazione as date, peso as weight 
                          from dieta.registro_peso 
-                     order by data_rilevazione""")
+                     order by data_rilevazione"""
+
+        params = ()
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+        cur.execute(query, params)
 
         peso = cur.fetchall()
 
         return peso
+
+
+def get_menu_settimana(settimana_id):
+    menu_selezionato = None
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        query = """ SELECT menu 
+                      FROM dieta.menu_settimanale 
+                     WHERE id = %s
+            """
+
+        params = (settimana_id,)
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+        cur.execute(query, params)
+
+        result = cur.fetchone()
+        if result:
+            menu_selezionato = result['menu']
+
+    return menu_selezionato
+
+
+def get_settimana(macronutrienti):
+    ricetta = {'ids': [], 'ricette': []}
+
+    pasto = {'colazione': deepcopy(ricetta),
+             'spuntino_mattina': deepcopy(ricetta),
+             'pranzo': deepcopy(ricetta),
+             'cena': deepcopy(ricetta),
+             'spuntino_pomeriggio': deepcopy(ricetta),
+             }
+
+    macronutrienti_giornalieri = {
+        'carboidrati': Decimal(macronutrienti['carboidrati']),
+        'proteine': Decimal(macronutrienti['proteine']),
+        'grassi': Decimal(macronutrienti['grassi']),
+        'kcal': Decimal(macronutrienti['kcal']),
+        'pasto': deepcopy(pasto)
+    }
+
+    macronutrienti_settimali = {
+        'carboidrati': Decimal(macronutrienti['carboidrati']) * 7,
+        'proteine': Decimal(macronutrienti['proteine']) * 7,
+        'grassi': Decimal(macronutrienti['grassi']) * 7,
+        'kcal': Decimal(macronutrienti['kcal']) * 7
+    }
+
+    return {'weekly': macronutrienti_settimali,
+            'day': {
+                'lunedi': deepcopy(macronutrienti_giornalieri),
+                'martedi': deepcopy(macronutrienti_giornalieri),
+                'mercoledi': deepcopy(macronutrienti_giornalieri),
+                'giovedi': deepcopy(macronutrienti_giornalieri),
+                'venerdi': deepcopy(macronutrienti_giornalieri),
+                'sabato': deepcopy(macronutrienti_giornalieri),
+                'domenica': deepcopy(macronutrienti_giornalieri)
+            },
+            'all_food': []
+            }
+
+
+def salva_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, ricetta_id):
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        query = """ UPDATE dieta.ricetta SET nome_ricetta = upper(%s), 
+                                             colazione = %s, 
+                                             colazione_sec = %s, 
+                                             spuntino = %s, 
+                                             principale = %s, 
+                                             contorno = %s 
+                    WHERE id = %s """
+
+        params = (nome, colazione, colazione_sec, spuntino, principale, contorno, ricetta_id)
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+        cur.execute(query, params)
+
+        conn.commit()
+
+
+def attiva_disattiva_ricetta(ricetta_id):
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        query = "UPDATE dieta.ricetta SET enabled = not enabled WHERE id = %s"
+
+        params = (ricetta_id,)
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+        cur.execute(query, params)
+
+        conn.commit()
+
+
+def get_ricette(recipe_id):
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        query = """SELECT a.id, a.nome, qta, ir.id_ricetta 
+                     FROM      dieta.ingredienti_ricetta ir 
+                          JOIN dieta.alimento a ON (ir.id_alimento = a.id) 
+                    WHERE id_ricetta = %s"""
+
+        params = (recipe_id,)
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+        cur.execute(query, params)
+
+        ricette = cur.fetchall()
+
+    return ricette
+
+
+def elimina_ingredienti(ingredient_id, recipe_id):
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        query = "DELETE FROM dieta.ingredienti_ricetta WHERE id_alimento = %s AND id_ricetta = %s"
+
+        params = (ingredient_id, recipe_id)
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+        cur.execute(query, params)
+
+        conn.commit()
+
+
+def salva_utente_dieta(nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
+                  meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, carboidrati,
+                  proteine, grassi):
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+
+        query = """
+            INSERT INTO dieta.utenti (nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, 
+            peso_ideale, meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, carboidrati,
+            proteine, grassi)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+        params = (nome.upper(), cognome.upper(), sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
+                  meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, carboidrati,
+                  proteine, grassi)
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+
+        cur.execute(query, params)
+        conn.commit()
+
+
+def salva_nuova_ricetta(name, breakfast, snack, main, side, second_breakfast):
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        query = """INSERT INTO dieta.ricetta (nome_ricetta, colazione, spuntino, principale, contorno, colazione_sec) 
+                 VALUES (%s, %s, %s, %s, %s, %s) RETURNING id"""
+
+        params = (name.upper(), breakfast, snack, main, side, second_breakfast)
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+        cur.execute(query, params)
+
+        conn.commit()
+
+
+def aggiorna_ingredienti(recipe_id, ingredient_id, quantity):
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        query = "UPDATE dieta.ingredienti_ricetta SET qta = %s WHERE id_alimento = %s AND id_ricetta = %s"
+
+        params = (quantity, ingredient_id, recipe_id)
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+        cur.execute(query, params)
+
+        conn.commit()
+
+
+def aggiungi_ingredienti(recipe_id, ingredient_id, quantity):
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        query = "INSERT INTO dieta.ingredienti_ricetta (id_ricetta, id_alimento, qta) VALUES (%s, %s, %s)"
+
+        params = (recipe_id, ingredient_id, quantity)
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+        cur.execute(query, params)
+
+        conn.commit()
+
+
+def recupera_ingredienti():
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        query = "SELECT id, nome FROM dieta.alimento ORDER BY nome;"
+
+        params = ()
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+        cur.execute(query, params)
+
+        foods = cur.fetchall()
+
+    return foods
