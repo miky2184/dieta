@@ -106,7 +106,7 @@ function toggleStatusRicetta(ricettaData) {
         })
         .then(response => response.json())
         .then(data => {
-            window.location.href = '/';
+            // window.location.href = '/';
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -254,8 +254,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.toggle-btn').forEach(button => {
         button.addEventListener('click', function() {
             const ricettaId = this.getAttribute('data-ricetta-id');
+            const ricettaAttiva = this.getAttribute('data-ricetta-attiva');
             const ricettaData = {
-                id: ricettaId
+                id: ricettaId,
+                attiva: ricettaAttiva
             };
             toggleStatusRicetta(ricettaData);
         });
@@ -291,12 +293,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    var editRecipeModal = document.getElementById('editRecipeModal');
+    /*var editRecipeModal = document.getElementById('editRecipeModal');
     editRecipeModal.addEventListener('hidden.bs.modal', function() {
         if (!$('#addIngredientModal').hasClass('show')) {
             window.location.href = '/';
         }
-    })
+    })*/
 
     var addIngredientModal = document.getElementById('addIngredientModal');
     addIngredientModal.addEventListener('hidden.bs.modal', function() {

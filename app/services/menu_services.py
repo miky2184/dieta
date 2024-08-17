@@ -138,7 +138,7 @@ def carica_ricette(stagionalita: bool):
 
 
 def genera_menu(settimana, check_weekly: bool, ricette) -> None:
-    percentuali = [1, 2, 0.75, 0.5, 0.25]
+    percentuali = [1, 1.5, 0.75, 0.5, 0.25]
     for perc in percentuali:
         for _ in range(MAX_RETRY):
             printer(f"settimana::{settimana}")
