@@ -307,7 +307,8 @@ def salva_menu_corrente(menu):
         cur = conn.cursor()
         # Calcola l'inizio e la fine della prossima settimana
         oggi = datetime.now()
-        ultimo_lunedi = oggi - timedelta(days=(7 - oggi.weekday()+1))
+        giorni_indietro = (oggi.weekday() - 0) % 7
+        ultimo_lunedi = oggi - timedelta(days=giorni_indietro)
         domenica_prossima = ultimo_lunedi + timedelta(days=6)
 
         # Converti tutti i Decimals a float
@@ -337,6 +338,9 @@ def salva_menu_settimana_prossima(menu):
         cur = conn.cursor()
         # Calcola l'inizio e la fine della prossima settimana
         oggi = datetime.now()
+        lunedi_prossimo = oggi + timedelta(days=(7 - oggi.weekday()))
+        domenica_prossima = lunedi_prossimo + timedelta(days=6)
+
         lunedi_prossimo = oggi + timedelta(days=(7 - oggi.weekday()))
         domenica_prossima = lunedi_prossimo + timedelta(days=6)
 
