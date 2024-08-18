@@ -26,26 +26,48 @@
         <tr>
             <th><input type="text" id="filter-nome" class="form-control filter-text"
                        placeholder="Filtra per nome" onkeyup="filterTable()"></th>
-            <th><input type="text" id="filter-calorie" class="form-control filter-text"
-                       placeholder="Filtra per calorie" onkeyup="filterTable()"></th>
-            <th><input type="text" id="filter-carbo" class="form-control filter-text"
-                       placeholder="Filtra per carboidrati" onkeyup="filterTable()"></th>
-            <th><input type="text" id="filter-proteine" class="form-control filter-text"
-                       placeholder="Filtra per protein" onkeyup="filterTable()"></th>
-            <th><input type="text" id="filter-grassi" class="form-control filter-text"
-                       placeholder="Filtra per grassi" onkeyup="filterTable()"></th>
-            <th><input type="text" id="filter-colazione" class="form-control filter-text"
-                       placeholder="t/f" onkeyup="filterTable()"></th>
-            <th><input type="text" id="filter-colazione-sec" class="form-control filter-text"
-                       placeholder="t/f" onkeyup="filterTable()"></th>
-            <th><input type="text" id="filter-spuntino" class="form-control filter-text"
-                       placeholder="t/f" onkeyup="filterTable()"></th>
-            <th><input type="text" id="filter-principale" class="form-control filter-text"
-                       placeholder="t/f" onkeyup="filterTable()"></th>
-            <th><input type="text" id="filter-contorno" class="form-control filter-text"
-                       placeholder="t/f" onkeyup="filterTable()"></th>
-            <th><input type="text" id="filter-attiva" class="form-control filter-text"
-                       placeholder="t/f" onkeyup="filterTable()"></th>
+            <th>     <input type="number" id="filter-calorie-min" class="form-control form-control-sm filter-number  filter-text" placeholder="Min" oninput="filterTable()">
+            <input type="number" id="filter-calorie-max" class="form-control form-control-sm filter-number  filter-text" placeholder="Max" oninput="filterTable()">
+       </th>
+            <th><input type="number" id="filter-carbo-min" class="form-control form-control-sm filter-number  filter-text" placeholder="Min" oninput="filterTable()">
+            <input type="number" id="filter-carbo-max" class="form-control form-control-sm filter-number  filter-text" placeholder="Max" oninput="filterTable()">
+       </th>
+            <th><input type="number" id="filter-proteine-min" class="form-control form-control-sm filter-number  filter-text" placeholder="Min" oninput="filterTable()">
+            <input type="number" id="filter-proteine-max" class="form-control form-control-sm filter-number  filter-text" placeholder="Max" oninput="filterTable()"></th>
+            <th><input type="number" id="filter-grassi-min" class="form-control form-control-sm filter-number  filter-text" placeholder="Min" oninput="filterTable()">
+            <input type="number" id="filter-grassi-max" class="form-control form-control-sm filter-number  filter-text" placeholder="Max" oninput="filterTable()"></th>
+            <th>
+                <select id="filter-colazione" class="form-select form-select-sm" onchange="filterTable()">
+                <option value="all"></option>
+                <option value="true">T</option>
+                <option value="false">F</option>
+            </select>
+            </th>
+            <th><select id="filter-colazione-sec" class="form-select form-select-sm" onchange="filterTable()">
+                <option value="all"></option>
+                <option value="true">T</option>
+                <option value="false">F</option>
+            </select></th>
+            <th><select id="filter-spuntino" class="form-select form-select-sm" onchange="filterTable()">
+                <option value="all"></option>
+                <option value="true">T</option>
+                <option value="false">F</option>
+            </select></th>
+            <th><select id="filter-principale" class="form-select form-select-sm" onchange="filterTable()">
+                <option value="all"></option>
+                <option value="true">T</option>
+                <option value="false">F</option>
+            </select></th>
+            <th><select id="filter-contorno" class="form-select form-select-sm" onchange="filterTable()">
+                <option value="all"></option>
+                <option value="true">T</option>
+                <option value="false">F</option>
+            </select></th>
+            <th><select id="filter-attiva" class="form-select form-select-sm" onchange="filterTable()">
+                <option value="all"></option>
+                <option value="true">T</option>
+                <option value="false">F</option>
+            </select></th>
             <th></th>
         </tr>
         </thead>

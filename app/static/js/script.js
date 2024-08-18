@@ -1,13 +1,8 @@
 function openTab(evt, tabName) {
-    var i, tabcontent, tablinks;
-    tabcontent = document.getElementsByClassName("tabcontent");
-    for (i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].style.display = "none";
-    }
-    tablinks = document.getElementsByClassName("tablinks");
-    for (i = 0; i < tablinks.length; i++) {
-        tablinks[i].className = tablinks[i].className.replace(" active", "");
-    }
+    const tabcontent = document.querySelectorAll(".tabcontent");
+    tabcontent.forEach(tab => tab.style.display = "none");
+    const tablinks = document.querySelectorAll(".tablinks");
+    tablinks.forEach(link => link.className = link.className.replace(" active", ""));
     document.getElementById(tabName).style.display = "block";
     evt.currentTarget.className += " active";
 }
@@ -115,16 +110,22 @@ function toggleStatusRicetta(ricettaData) {
 
 function filterTable() {
     const nomeFilter = document.getElementById('filter-nome').value.toLowerCase();
-    const calorieFilter = document.getElementById('filter-calorie').value.toLowerCase();
-    const carboFilter = document.getElementById('filter-carbo').value.toLowerCase();
-    const proteineFilter = document.getElementById('filter-proteine').value.toLowerCase();
-    const grassiFilter = document.getElementById('filter-grassi').value.toLowerCase();
-    const colazioneFilter = document.getElementById('filter-colazione').value.toLowerCase();
-    const colazioneSecFilter = document.getElementById('filter-colazione-sec').value.toLowerCase();
-    const spuntinoFilter = document.getElementById('filter-spuntino').value.toLowerCase();
-    const principaleFilter = document.getElementById('filter-principale').value.toLowerCase();
-    const contornoFilter = document.getElementById('filter-contorno').value.toLowerCase();
-    const attivaFilter = document.getElementById('filter-attiva').value.toLowerCase();
+
+    const calorieMin = parseFloat(document.getElementById('filter-calorie-min').value) || -Infinity;
+    const calorieMax = parseFloat(document.getElementById('filter-calorie-max').value) || Infinity;
+    const carboMin = parseFloat(document.getElementById('filter-carbo-min').value) || -Infinity;
+    const carboMax = parseFloat(document.getElementById('filter-carbo-max').value) || Infinity;
+    const proteineMin = parseFloat(document.getElementById('filter-proteine-min').value) || -Infinity;
+    const proteineMax = parseFloat(document.getElementById('filter-proteine-max').value) || Infinity;
+    const grassiMin = parseFloat(document.getElementById('filter-grassi-min').value) || -Infinity;
+    const grassiMax = parseFloat(document.getElementById('filter-grassi-max').value) || Infinity;
+
+    const colazioneFilter = document.getElementById('filter-colazione').value;
+    const colazioneSecFilter = document.getElementById('filter-colazione-sec').value;
+    const spuntinoFilter = document.getElementById('filter-spuntino').value;
+    const principaleFilter = document.getElementById('filter-principale').value;
+    const contornoFilter = document.getElementById('filter-contorno').value;
+    const attivaFilter = document.getElementById('filter-attiva').value;
 
     const table = document.querySelector('.table tbody');
     const rows = table.getElementsByTagName('tr');
@@ -132,28 +133,44 @@ function filterTable() {
     for (let i = 0; i < rows.length; i++) {
         const cells = rows[i].getElementsByTagName('td');
         const nomeCell = cells[0].textContent.toLowerCase();
-        const calorieCell = cells[1].textContent.toLowerCase();
-        const carboCell = cells[2].textContent.toLowerCase();
-        const proteineCell = cells[3].textContent.toLowerCase();
-        const grassiCell = cells[4].textContent.toLowerCase();
-        const colazioneCell = cells[5].textContent.toLowerCase();
-        const colazioneSecCell = cells[6].textContent.toLowerCase()
-        const spuntinoCell = cells[7].textContent.toLowerCase()
-        const principaleCell = cells[8].textContent.toLowerCase()
-        const contornoCell = cells[9].textContent.toLowerCase()
-        const attivaCell = cells[10].textContent.toLowerCase();
+
+        const calorieCell = parseFloat(cells[1].textContent) || 0;
+        const carboCell = parseFloat(cells[2].textContent) || 0;
+        const proteineCell = parseFloat(cells[3].textContent) || 0;
+        const grassiCell = parseFloat(cells[4].textContent) || 0;
+
+        const colazioneCell = cells[5].querySelector('input').checked.toString();
+        const colazioneSecCell = cells[6].querySelector('input').checked.toString();
+        const spuntinoCell = cells[7].querySelector('input').checked.toString();
+        const principaleCell = cells[8].querySelector('input').checked.toString();
+        const contornoCell = cells[9].querySelector('input').checked.toString();
+        const attivaCell = cells[10].querySelector('input').checked.toString();
+
+        const colazioneMatch = (colazioneFilter === 'all') || (colazioneFilter === colazioneCell);
+        const colazioneSecMatch = (colazioneSecFilter === 'all') || (colazioneSecFilter === colazioneSecCell);
+        const spuntinoMatch = (spuntinoFilter === 'all') || (spuntinoFilter === spuntinoCell);
+        const principaleMatch = (principaleFilter === 'all') || (principaleFilter === principaleCell);
+        const contornoMatch = (contornoFilter === 'all') || (contornoFilter === contornoCell);
+        const attivaMatch = (attivaFilter === 'all') || (attivaFilter === attivaCell);
+
+        const calorieMatch = calorieCell >= calorieMin && calorieCell <= calorieMax;
+        const carboMatch = carboCell >= carboMin && carboCell <= carboMax;
+        const proteineMatch = proteineCell >= proteineMin && proteineCell <= proteineMax;
+        const grassiMatch = grassiCell >= grassiMin && grassiCell <= grassiMax;
+
+
 
         if (nomeCell.includes(nomeFilter) &&
-            proteineCell.includes(calorieFilter) &&
-            carboCell.includes(carboFilter) &&
-            proteineCell.includes(proteineFilter) &&
-            grassiCell.includes(grassiFilter) &&
-            colazioneCell.includes(colazioneFilter) &&
-            colazioneSecCell.includes(colazioneSecFilter) &&
-            spuntinoCell.includes(spuntinoFilter) &&
-            principaleCell.includes(principaleFilter) &&
-            contornoCell.includes(contornoFilter) &&
-            attivaCell.includes(attivaFilter)) {
+            calorieMatch &&
+            carboMatch &&
+            proteineMatch &&
+            grassiMatch &&
+            colazioneMatch &&
+            colazioneSecMatch &&
+            spuntinoMatch &&
+            principaleMatch &&
+            contornoMatch &&
+            attivaMatch) {
             rows[i].style.display = '';
         } else {
             rows[i].style.display = 'none';
@@ -277,6 +294,7 @@ function populateDietaForm(data) {
 
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById("defaultOpen").click();
+
     document.querySelectorAll('.save-btn').forEach(button => {
         button.addEventListener('click', function() {
             const ricettaId = this.getAttribute('data-ricetta-id');
@@ -296,16 +314,16 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.toggle-btn').forEach(button => {
         button.addEventListener('click', function() {
             const ricettaId = this.getAttribute('data-ricetta-id');
-            const ricettaAttiva = this.getAttribute('data-ricetta-attiva');
+            const ricettaAttiva = this.getAttribute('data-ricetta-attiva') === 'true';
             const ricettaData = {
                 id: ricettaId,
-                attiva: ricettaAttiva
+                attiva: !ricettaAttiva
             };
             toggleStatusRicetta(ricettaData);
-            var checkbox = document.querySelector('.attiva-checkbox[data-ricetta-id="' + ricettaId + '"]');
+            const checkbox = document.querySelector(`.attiva-checkbox[data-ricetta-id='${ricettaId}']`);
             if (checkbox) {
                 checkbox.checked = !checkbox.checked;
-           }
+            }
         });
     });
 
@@ -338,13 +356,6 @@ document.addEventListener('DOMContentLoaded', function() {
             updateIngredient(ingredientId, recipeId, qta);
         }
     });
-
-    /*var editRecipeModal = document.getElementById('editRecipeModal');
-    editRecipeModal.addEventListener('hidden.bs.modal', function() {
-        if (!$('#addIngredientModal').hasClass('show')) {
-            window.location.href = '/';
-        }
-    })*/
 
     var addIngredientModal = document.getElementById('addIngredientModal');
     addIngredientModal.addEventListener('hidden.bs.modal', function() {
@@ -524,8 +535,7 @@ document.addEventListener('DOMContentLoaded', function() {
     return new bootstrap.Tooltip(tooltipTriggerEl)
   });
 
-    document.getElementById("peso-tab").addEventListener("click", function() {
-        // Effettua la chiamata AJAX per ottenere i dati del peso
+    document.getElementById("peso-tab").addEventListener("click", () => {
         fetch('/get_peso_data')
             .then(response => response.json())
             .then(data => {
@@ -536,13 +546,11 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => console.error('Errore nel caricamento dei dati:', error));
     });
 
-    document.getElementById("dieta-tab").addEventListener("click", function() {
-        // Effettua la chiamata AJAX per ottenere i dati della dieta
+    document.getElementById("dieta-tab").addEventListener("click", () => {
         fetch('/get_data_utente')
             .then(response => response.json())
             .then(data => {
                 if (data) {
-                    // Popola il form con i dati ricevuti
                     populateDietaForm(data);
                 }
             })
@@ -557,13 +565,10 @@ String.prototype.capitalize = function() {
 }
 
 $(document).ready(function() {
-    // Il tuo codice che utilizza jQuery va qui
     $('#addIngredientModal').on('show.bs.modal', function(event) {
-        // Pulisci il vecchio contenuto
         const select = document.getElementById('ingredient-select');
         select.innerHTML = '';
 
-        // Carica l'elenco degli ingredienti
         fetch('/get_all_ingredients')
             .then(response => response.json())
             .then(ingredients => {
