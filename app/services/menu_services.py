@@ -486,6 +486,8 @@ def save_weight(date, weight):
         query = """
             INSERT INTO dieta.registro_peso (data_rilevazione, peso)
             VALUES (%s, %s)
+            ON CONFLICT (data_rilevazione) 
+            DO UPDATE SET peso = EXCLUDED.peso;
         """
 
         params = (date, weight)
