@@ -24,23 +24,36 @@ function cambiaMenuSettimana() {
 function aggiornaTabellaMenu(menu) {
     const tbody = document.getElementById('menu_tbody');
     tbody.innerHTML = ''; // Pulisci la tabella
+
+    const days = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
+    const macroNutrients = ['kcal', 'carboidrati', 'proteine', 'grassi'];
+
+    // Itera su ogni pasto e giorno
     ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena'].forEach(pasto => {
         const tr = document.createElement('tr');
         const tdPasto = document.createElement('td');
         tdPasto.textContent = pasto.replace('_', ' ').capitalize();
         tr.appendChild(tdPasto);
-        ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'].forEach(giorno => {
+        days.forEach(giorno => {
             const td = document.createElement('td');
             if (menu.day[giorno].pasto[pasto].ricette && menu.day[giorno].pasto[pasto].ricette.length > 0){
                 menu.day[giorno].pasto[pasto].ricette.forEach(ricetta => {
-                const div = document.createElement('div');
-                div.textContent = `${ricetta.nome_ricetta} (${ricetta.qta}x)`;
-                td.appendChild(div);
-            });
+                    const div = document.createElement('div');
+                    div.textContent = `${ricetta.nome_ricetta} (${ricetta.qta}x)`;
+                    td.appendChild(div);
+                });
             }
             tr.appendChild(td);
         });
         tbody.appendChild(tr);
+    });
+
+    // Aggiorna le informazioni rimanenti
+    days.forEach(giorno => {
+        macroNutrients.forEach(macro => {
+            const remainingValue = menu.day[giorno][macro];
+            document.getElementById(`remaining-${macro}-${giorno}`).textContent = remainingValue.toFixed(0);
+        });
     });
 }
 
