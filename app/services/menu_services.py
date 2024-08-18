@@ -13,12 +13,12 @@ from decimal import Decimal
 MAX_RETRY = int(os.getenv('MAX_RETRY'))
 
 
-def scegli_pietanza(settimana, giorno_settimana: str, meal_time: str, tipo: str, perc: float, disponibili: bool,
-                    weekly_check: bool, ricette):
+def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, percentuale_pietanza: float, ripetibile: bool,
+                    controllo_macro_settimanale: bool, ricette):
     """
     Seleziona una pietanza dalla lista di ricette pre-caricate in memoria.
     """
-    perc_decimal = Decimal(str(perc))
+    perc_decimal = Decimal(str(percentuale_pietanza))
     # Filtra le ricette in base al tipo di pasto richiesto
     ricette_filtrate = [r for r in ricette if r[tipo]]
     # Moltiplica i valori nutrizionali per la percentuale
@@ -40,18 +40,18 @@ def scegli_pietanza(settimana, giorno_settimana: str, meal_time: str, tipo: str,
             ricette_modificate.append(ricetta_modificata)
 
     # Invoca select_food con le ricette modificate
-    return select_food(ricette_modificate, settimana, giorno_settimana, meal_time, MAX_RETRY, perc, disponibili,
-                       False, weekly_check)
+    return select_food(ricette_modificate, settimana, giorno_settimana, pasto, MAX_RETRY, percentuale_pietanza, ripetibile,
+                       False, controllo_macro_settimanale)
 
 
-def select_food(rows, settimana, giorno_settimana, meal_time, max_retry, perc: float, disponibili: bool, found: bool,
-                weekly_check: bool):
-    if disponibili:
+def select_food(rows, settimana, giorno_settimana, pasto, max_retry, perc: float, ripetibile: bool, found: bool,
+                controllo_macro_settimanale: bool):
+    if not ripetibile:
         ids_disponibili = [oggetto['id'] for oggetto in rows if oggetto['id'] not in settimana['all_food']]
     else:
         ids_disponibili = [oggetto['id'] for oggetto in rows if
                            oggetto['id'] not in settimana.get('day').get(giorno_settimana).get('pasto').get(
-                               meal_time).get('ids')]
+                               pasto).get('ids')]
 
     if ids_disponibili and max_retry > 0:
         # Seleziona casualmente un ID dalla lista dei disponibili
@@ -61,30 +61,23 @@ def select_food(rows, settimana, giorno_settimana, meal_time, max_retry, perc: f
         # Trova l'oggetto corrispondente all'ID selezionato
         ricetta_selezionata = next(oggetto for oggetto in rows if oggetto['id'] == id_selezionato)
 
-        mt = settimana.get('day').get(giorno_settimana).get('pasto').get(meal_time)
+        mt = settimana.get('day').get(giorno_settimana).get('pasto').get(pasto)
         day = settimana.get('day').get(giorno_settimana)
-        weekly_nut = settimana.get('weekly')
+        macronutrienti_settimali = settimana.get('weekly')
         if (
-                ((day.get('kcal') - ricetta_selezionata.get('kcal')) > 0 and
-                 (day.get('carboidrati') - ricetta_selezionata.get('carboidrati')) > 0 and
-                 (day.get('proteine') - ricetta_selezionata.get('proteine')) > 0 and
-                 (day.get('grassi') - ricetta_selezionata.get('grassi')) > 0) or (weekly_check and
-                                                                                  (weekly_nut.get(
-                                                                                      'kcal') -
-                                                                                   ricetta_selezionata.get(
-                                                                                      'kcal') > 0 and
-                                                                                   (weekly_nut.get(
-                                                                                       'carboidrati') -
-                                                                                    ricetta_selezionata.get(
-                                                                                       'carboidrati')) > 0 and
-                                                                                   (weekly_nut.get(
-                                                                                       'proteine') -
-                                                                                    ricetta_selezionata.get(
-                                                                                       'proteine')) > 0 and
-                                                                                   (weekly_nut.get(
-                                                                                       'grassi') -
-                                                                                    ricetta_selezionata.get(
-                                                                                       'grassi')) > 0))
+                (
+                    (day.get('kcal') - ricetta_selezionata.get('kcal')) > 0 and
+                    (day.get('carboidrati') - ricetta_selezionata.get('carboidrati')) > 0 and
+                    (day.get('proteine') - ricetta_selezionata.get('proteine')) > 0 and
+                    (day.get('grassi') - ricetta_selezionata.get('grassi')) > 0
+                )
+                or
+                    (controllo_macro_settimanale and
+                     (macronutrienti_settimali.get('kcal') - ricetta_selezionata.get('kcal') > 0 and
+                    (macronutrienti_settimali.get('carboidrati') - ricetta_selezionata.get('carboidrati')) > 0 and
+                    (macronutrienti_settimali.get('proteine') - ricetta_selezionata.get('proteine')) > 0 and
+                    (macronutrienti_settimali.get('grassi') - ricetta_selezionata.get('grassi')) > 0)
+                )
         ):
             settimana.get('all_food').append(id_selezionato)
             mt.get('ids').append(id_selezionato)
@@ -94,13 +87,13 @@ def select_food(rows, settimana, giorno_settimana, meal_time, max_retry, perc: f
             day['carboidrati'] = day.get('carboidrati') - ricetta_selezionata.get('carboidrati')
             day['proteine'] = day.get('proteine') - ricetta_selezionata.get('proteine')
             day['grassi'] = day.get('grassi') - ricetta_selezionata.get('grassi')
-            weekly_nut['kcal'] = weekly_nut.get('kcal') - ricetta_selezionata.get('kcal')
-            weekly_nut['carboidrati'] = weekly_nut.get('carboidrati') - ricetta_selezionata.get('carboidrati')
-            weekly_nut['proteine'] = weekly_nut.get('proteine') - ricetta_selezionata.get('proteine')
-            weekly_nut['grassi'] = weekly_nut.get('grassi') - ricetta_selezionata.get('grassi')
+            macronutrienti_settimali['kcal'] = macronutrienti_settimali.get('kcal') - ricetta_selezionata.get('kcal')
+            macronutrienti_settimali['carboidrati'] = macronutrienti_settimali.get('carboidrati') - ricetta_selezionata.get('carboidrati')
+            macronutrienti_settimali['proteine'] = macronutrienti_settimali.get('proteine') - ricetta_selezionata.get('proteine')
+            macronutrienti_settimali['grassi'] = macronutrienti_settimali.get('grassi') - ricetta_selezionata.get('grassi')
             found = True
         else:
-            select_food(rows, settimana, giorno_settimana, meal_time, max_retry, perc, disponibili, False, weekly_check)
+            select_food(rows, settimana, giorno_settimana, pasto, max_retry, perc, ripetibile, False, controllo_macro_settimanale)
 
     return found
 
@@ -143,33 +136,25 @@ def carica_ricette(stagionalita: bool):
     return ricette
 
 
-def genera_menu(settimana, check_weekly: bool, ricette) -> None:
-    percentuali = [1, 1.5, 0.75, 0.5, 0.25]
-    for perc in percentuali:
+def genera_menu(settimana, controllo_macro_settimanale: bool, ricette) -> None:
+    percentuali = [1, 0.75, 0.5]
+    for percentuale_pietanza in percentuali:
         for _ in range(MAX_RETRY):
             for giorno in settimana['day']:
                 p = settimana['day'][giorno]['pasto']
                 if len(p['pranzo']['ricette']) < 1:
-                    scegli_pietanza(settimana, giorno, 'pranzo', 'principale', perc,
-                                    True, check_weekly, ricette)
+                    scegli_pietanza(settimana, giorno, 'pranzo', 'principale', percentuale_pietanza, False, controllo_macro_settimanale, ricette)
                 if len(p['cena']['ricette']) < 1:
-                    scegli_pietanza(settimana, giorno, 'cena', 'principale', perc,
-                                    True, check_weekly, ricette)
+                    scegli_pietanza(settimana, giorno, 'cena', 'principale', percentuale_pietanza, False, controllo_macro_settimanale, ricette)
                 if len(p['colazione']['ricette']) < 2:
-                    scegli_pietanza(settimana, giorno, 'colazione', 'colazione', perc,
-                                    False, check_weekly, ricette)
-                    scegli_pietanza(settimana, giorno, 'colazione', 'colazione_sec', perc,
-                                    False, check_weekly, ricette)
-                scegli_pietanza(settimana, giorno, 'pranzo', 'contorno', perc,
-                                True, check_weekly, ricette)
-                scegli_pietanza(settimana, giorno, 'cena', 'contorno', perc,
-                                True, check_weekly, ricette)
+                    scegli_pietanza(settimana, giorno, 'colazione', 'colazione', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
+                    scegli_pietanza(settimana, giorno, 'colazione', 'colazione_sec', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
+                scegli_pietanza(settimana, giorno, 'pranzo', 'contorno', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
+                scegli_pietanza(settimana, giorno, 'cena', 'contorno', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
                 if len(p['spuntino_mattina']['ricette']) < 1:
-                    scegli_pietanza(settimana, giorno, 'spuntino_mattina', 'spuntino', perc,
-                                    False, check_weekly, ricette)
+                    scegli_pietanza(settimana, giorno, 'spuntino_mattina', 'spuntino', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
                 if len(p['spuntino_pomeriggio']['ricette']) < 1:
-                    scegli_pietanza(settimana, giorno, 'spuntino_pomeriggio', 'spuntino', perc,
-                                    False, check_weekly, ricette)
+                    scegli_pietanza(settimana, giorno, 'spuntino_pomeriggio', 'spuntino', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
 
 
 def definisci_calorie_macronutrienti():
@@ -301,7 +286,6 @@ def convert_decimal_to_float(data):
 
 
 def salva_menu_corrente(menu):
-
     with get_db_connection() as conn:
         # Esegui le operazioni con la connessione
         cur = conn.cursor()
@@ -332,7 +316,6 @@ def salva_menu_corrente(menu):
 
 
 def salva_menu_settimana_prossima(menu):
-
     with get_db_connection() as conn:
         # Esegui le operazioni con la connessione
         cur = conn.cursor()
@@ -649,8 +632,8 @@ def elimina_ingredienti(ingredient_id, recipe_id):
 
 
 def salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
-                  meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, carboidrati,
-                  proteine, grassi):
+                       meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, carboidrati,
+                       proteine, grassi):
     with get_db_connection() as conn:
         cur = conn.cursor()
 
@@ -684,9 +667,10 @@ def salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, defic
                     proteine = EXCLUDED.proteine,
                     grassi = EXCLUDED.grassi           
             """
-        params = (id, nome.upper(), cognome.upper(), sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
-                  meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, carboidrati,
-                  proteine, grassi)
+        params = (
+        id, nome.upper(), cognome.upper(), sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
+        meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, carboidrati,
+        proteine, grassi)
 
         # Stampa la query con parametri
         printer(cur.mogrify(query, params).decode('utf-8'))
