@@ -1,17 +1,17 @@
-<!DOCTYPE html>
 {% extends "base.html" %}
 
 {% block content %}
+<div class="tab">
+    {% include 'tabs.html' %}
+</div>
 
-{% include 'tabs.html' %}
-{% include 'ricette.html' %}
-{% include 'edit_ricette_modal.html' %}
-{% include 'add_ingredient_modal.html' %}
-{% include 'menu.html' %}
-{% include 'lista_spesa.html' %}
-{% include 'add_new_recipe_modal.html' %}
-{% include 'add_new_food_modal.html' %}
-{% include 'registro_peso.html' %}
-{% include 'dieta.html' %}
+<div id="main-content">
+    {% include 'ricette.html' %}
+    {% include 'menu.html' %}
+    {% include 'lista_spesa.html' %}
+    {% include 'registro_peso.html' %}
+    {% include 'dieta.html' %}
+</div>
 
+{% include 'modals.html' %}
 {% endblock %}

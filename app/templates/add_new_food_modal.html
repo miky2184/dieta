@@ -8,47 +8,17 @@
                 <form action="{{ url_for('views.new_recipe') }}" method="POST">
                     <div class="input-group input-group-sm mb-3">
                         <span class="input-group-text">Nome</span>
-                        <input type="text" class="form-control form-control-sm" id="alimento" name="alimento" aria-label="Nome"
-                               required>
+                        <input type="text" class="form-control" name="alimento" placeholder="Inserisci nome alimento" required>
                     </div>
+                    {% for field in ['Carboidrati', 'Proteine', 'Grassi'] %}
                     <div class="input-group input-group-sm mb-3">
-                        <span class="input-group-text">Carboidrati</span>
-                        <input type="number" step=".01" class="form-control form-control-sm" id="carboidrati" name="carboidrati"
-                               aria-label="Carboidrati" required>
+                        <span class="input-group-text">{{ field }}</span>
+                        <input type="number" step=".01" class="form-control" name="{{ field | lower }}" placeholder="Inserisci {{ field | lower }}" required>
                     </div>
-                    <div class="input-group input-group-sm mb-3">
-                        <span class="input-group-text">Proteine</span>
-                        <input type="number" step=".01" class="form-control form-control-sm" id="proteine" name="proteine"
-                               aria-label="Proteine" required>
-                    </div>
-                    <div class="input-group input-group-sm mb-3">
-                        <span class="input-group-text">Grassi</span>
-                        <input type="number" step=".01" class="form-control form-control-sm" id="grassi" name="grassi"
-                               aria-label="Grassi" required>
-                    </div>
+                    {% endfor %}
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" value="" id="frutta" name="frutta">
-                        <label class="form-check-label" for="frutta">
-                            Frutta
-                        </label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="" id="verdura" name="verdura">
-                        <label class="form-check-label" for="verdura">
-                            Verdura
-                        </label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="" id="carne_bianca" name="carne_bianca">
-                        <label class="form-check-label" for="carne_bianca">
-                            Carne Bianca
-                        </label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="" id="carne_rossa" name="carne_rossa">
-                        <label class="form-check-label" for="carne_rossa">
-                            Carne Rossa
-                        </label>
+                        <label class="form-check-label" for="frutta">Frutta</label>
                     </div>
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" value="" id="pesce" name="pesce">
@@ -75,7 +45,7 @@
                         </label>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-outline-success btn-sm">Save</button>
+                        <button type="submit" class="btn btn-outline-success btn-sm">Salva</button>
                     </div>
                 </form>
             </div>

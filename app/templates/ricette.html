@@ -1,23 +1,27 @@
 <div id="Ricette" class="tabcontent">
-    <div class="btn-group" role="group">
-    <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addRecipeModal">Aggiungi Ricetta</button>
-    <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addFoodModal">Aggiungi Alimento</button>
+    <div class="btn-group table-margin" role="group">
+        <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addRecipeModal">Aggiungi
+            Ricetta
+        </button>
+        <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addFoodModal">Aggiungi
+            Alimento
+        </button>
     </div>
-    <table class="table table-striped table-hover table-bordered table-margin">
+    <table class="table table-striped table-hover table-margin">
         <thead>
         <tr>
-            <th class="text-center" style="width: 30%;">Nome Ricetta</th>
-            <th class="text-center" style="width: 9%;">Calorie (kcal)</th>
-            <th class="text-center" style="width: 9%;">Carboidrati (g)</th>
-            <th class="text-center" style="width: 9%;">Proteine (g)</th>
-            <th class="text-center" style="width: 9%;">Grassi (g)</th>
-            <th class="text-center" style="width: 4%;">Colazione</th>
-            <th class="text-center" style="width: 4%;">Colazione/Biscotti</th>
-            <th class="text-center" style="width: 4%;">Spuntino</th>
-            <th class="text-center" style="width: 4%;">Principale</th>
-            <th class="text-center" style="width: 4%;">Contorno</th>
-            <th class="text-center" style="width: 4%;">Attiva</th>
-            <th class="text-center" style="width: 10%;">Azioni</th>
+            <th class="nome-ricetta">Nome Ricetta</th>
+            <th class="calorie">Calorie (kcal)</th>
+            <th class="carboidrati">Carboidrati (g)</th>
+            <th class="proteine">Proteine (g)</th>
+            <th class="grassi">Grassi (g)</th>
+            <th class="colazione">Colazione</th>
+            <th class="colazione-sec">Colazione/Biscotti</th>
+            <th class="spuntino">Spuntino</th>
+            <th class="principale">Principale</th>
+            <th class="contorno">Contorno</th>
+            <th class="attiva">Attiva</th>
+            <th class="azione">Azioni</th>
         </tr>
         <tr>
             <th><input type="text" id="filter-nome" class="form-control filter-text"
@@ -30,43 +34,76 @@
                        placeholder="Filtra per protein" onkeyup="filterTable()"></th>
             <th><input type="text" id="filter-grassi" class="form-control filter-text"
                        placeholder="Filtra per grassi" onkeyup="filterTable()"></th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
+            <th><input type="text" id="filter-colazione" class="form-control filter-text"
+                       placeholder="t/f" onkeyup="filterTable()"></th>
+            <th><input type="text" id="filter-colazione-sec" class="form-control filter-text"
+                       placeholder="t/f" onkeyup="filterTable()"></th>
+            <th><input type="text" id="filter-spuntino" class="form-control filter-text"
+                       placeholder="t/f" onkeyup="filterTable()"></th>
+            <th><input type="text" id="filter-principale" class="form-control filter-text"
+                       placeholder="t/f" onkeyup="filterTable()"></th>
+            <th><input type="text" id="filter-contorno" class="form-control filter-text"
+                       placeholder="t/f" onkeyup="filterTable()"></th>
+            <th><input type="text" id="filter-attiva" class="form-control filter-text"
+                       placeholder="t/f" onkeyup="filterTable()"></th>
             <th></th>
         </tr>
         </thead>
         <tbody>
         {% for ricetta in ricette %}
         <tr>
-            <td>
+            <td class="nome-ricetta">
                 <div>
-                    <input type="text" class="form-control recipe-text" data-ricetta-id="{{ ricetta.id }}"
+                    <input type="text" class="form-control filter-text" data-ricetta-id="{{ ricetta.id }}"
                            name="nome_{{ ricetta.id }}"
                            value="{{ ricetta.nome_ricetta }}">
                     <label hidden class="form-control form-control-sm">{{ ricetta.nome_ricetta }}</label>
                 </div>
             </td>
-            <td class="text-center">{{ ricetta.kcal }}</td>
-            <td class="text-center">{{ ricetta.carboidrati }}</td>
-            <td class="text-center">{{ ricetta.proteine }}</td>
-            <td class="text-center">{{ ricetta.grassi }}</td>
-            <td class="text-center"><input type="checkbox" name="colazione_{{ ricetta.id }}" {% if ricetta.colazione
-                                           %}checked{% endif %}></td>
-            <td class="text-center"><input type="checkbox" name="colazione_sec_{{ ricetta.id }}" {% if
-                                           ricetta.colazione_sec %}checked{% endif %}></td>
-            <td class="text-center"><input type="checkbox" name="spuntino_{{ ricetta.id }}" {% if ricetta.spuntino
-                                           %}checked{% endif %}></td>
-            <td class="text-center"><input type="checkbox" name="principale_{{ ricetta.id }}" {% if ricetta.principale
-                                           %}checked{% endif %}></td>
-            <td class="text-center"><input type="checkbox" name="contorno_{{ ricetta.id }}" {% if ricetta.contorno
-                                           %}checked{% endif %}></td>
-            <td class="text-center"><input type="checkbox" name="attiva_{{ ricetta.id }}" {% if ricetta.attiva
-                                           %}checked{% endif %} disabled></td>
-            <td>
+            <td class="calorie">{{ ricetta.kcal }}</td>
+            <td class="carboidrati">{{ ricetta.carboidrati }}</td>
+            <td class="proteine">{{ ricetta.proteine }}</td>
+            <td class="grassi">{{ ricetta.grassi }}</td>
+
+            <td class="colazione">
+                <div>
+                    <input type="checkbox" name="colazione_{{ ricetta.id }}" {% if ricetta.colazione %}checked{% endif %}>
+                    <label hidden class="form-control form-control-sm">{{ ricetta.colazione }}</label>
+                </div>
+            </td>
+            <td class="colazione-sec">
+                <div>
+                    <input type="checkbox" name="colazione_sec_{{ ricetta.id }}" {% if ricetta.colazione_sec %}checked{% endif %}>
+                    <label hidden class="form-control form-control-sm">{{ ricetta.colazione_sec }}</label>
+                </div>
+            </td>
+            <td class="spuntino">
+                <div>
+                    <input type="checkbox" name="spuntino_{{ ricetta.id }}" {% if ricetta.spuntino %}checked{% endif %}>
+                    <label hidden class="form-control form-control-sm">{{ ricetta.spuntino }}</label>
+                </div>
+            </td>
+            <td class="principale">
+                <div>
+                    <input type="checkbox" name="principale_{{ ricetta.id }}" {% if ricetta.principale %}checked{% endif %}>
+                    <label hidden class="form-control form-control-sm">{{ ricetta.principale }}</label>
+                </div>
+            </td>
+            <td class="contorno">
+                <div>
+                    <input type="checkbox" name="contorno_{{ ricetta.id }}" {% if ricetta.contorno %}checked{% endif %}>
+                    <label hidden class="form-control form-control-sm">{{ ricetta.contorno }}</label>
+                </div>
+            </td>
+            <td class="attiva">
+                <div>
+                    <label hidden class="form-control form-control-sm">{{ ricetta.attiva }}</label>
+                    <input type="checkbox" class="attiva-checkbox" name="attiva_{{ ricetta.id }}"
+                           data-ricetta-id="{{ ricetta.id }}" {% if ricetta.attiva
+                           %}checked{% endif %} disabled>
+                </div>
+            </td>
+            <td class="azione">
                 <div class="btn-group" role="group">
                     <button class="btn btn-outline-primary btn-sm save-btn" data-ricetta-id="{{ ricetta.id }}"
                             data-ricetta-nome="{{ ricetta.nome_ricetta }}"
@@ -82,7 +119,8 @@
                             data-bs-toggle="modal" data-bs-target="#editRecipeModal">Modifica
                     </button>
 
-                    <button class="btn btn-outline-primary btn-sm toggle-btn" data-ricetta-id="{{ ricetta.id }}" data-ricetta-attiva="{{ ricetta.attiva }}">
+                    <button class="btn btn-outline-primary btn-sm toggle-btn" data-ricetta-id="{{ ricetta.id }}"
+                            data-ricetta-attiva="{{ ricetta.attiva }}">
                         Attiva/Disattiva
                     </button>
                 </div>

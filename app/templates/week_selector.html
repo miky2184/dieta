@@ -1,6 +1,8 @@
 <!-- Dropdown per selezionare la settimana -->
+<div class="table-margin">
 <select class="form-select form-select-sm" id="settimana_select" onchange="cambiaMenuSettimana()">
     {% for settimana in settimane %}
     <option value="{{ settimana.id }}">Settimana dal {{ settimana.data_inizio }} al {{ settimana.data_fine }}</option>
     {% endfor %}
 </select>
+    </div>

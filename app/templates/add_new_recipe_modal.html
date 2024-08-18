@@ -8,41 +8,16 @@
                 <form action="{{ url_for('views.new_recipe') }}" method="POST">
                     <div class="input-group input-group-sm mb-3">
                         <span class="input-group-text">Nome</span>
-                        <input type="text" class="form-control form-control-sm" id="name" name="name" aria-label="Nome" required>
+                        <input type="text" class="form-control" name="name" placeholder="Inserisci nome ricetta" required>
                     </div>
+                    {% for field in ['Colazione', 'Colazione/Biscotti', 'Spuntino', 'Principale', 'Contorno'] %}
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="" id="breakfast" name="breakfast">
-                        <label class="form-check-label" for="breakfast">
-                            Colazione
-                        </label>
+                        <input class="form-check-input" type="checkbox" value="" id="{{ field | lower }}" name="{{ field | lower }}">
+                        <label class="form-check-label" for="{{ field | lower }}">{{ field }}</label>
                     </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="" id="second_breakfast"
-                               name="second_breakfast">
-                        <label class="form-check-label" for="second_breakfast">
-                            Colazione/Biscotti
-                        </label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="" id="snack" name="snack">
-                        <label class="form-check-label" for="snack">
-                            Spuntino
-                        </label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="" id="main" name="main">
-                        <label class="form-check-label" for="main">
-                            Principale
-                        </label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="" id="side" name="side">
-                        <label class="form-check-label" for="side">
-                            Contorno
-                        </label>
-                    </div>
+                    {% endfor %}
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-outline-success btn-sm">Save</button>
+                        <button type="submit" class="btn btn-outline-success btn-sm">Salva</button>
                     </div>
                 </form>
             </div>

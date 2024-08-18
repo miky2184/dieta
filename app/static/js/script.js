@@ -89,7 +89,7 @@ function saveRicetta(ricettaData) {
         })
         .then(response => response.json())
         .then(data => {
-            window.location.href = '/';
+            // window.location.href = '/';
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -119,6 +119,12 @@ function filterTable() {
     const carboFilter = document.getElementById('filter-carbo').value.toLowerCase();
     const proteineFilter = document.getElementById('filter-proteine').value.toLowerCase();
     const grassiFilter = document.getElementById('filter-grassi').value.toLowerCase();
+    const colazioneFilter = document.getElementById('filter-colazione').value.toLowerCase();
+    const colazioneSecFilter = document.getElementById('filter-colazione-sec').value.toLowerCase();
+    const spuntinoFilter = document.getElementById('filter-spuntino').value.toLowerCase();
+    const principaleFilter = document.getElementById('filter-principale').value.toLowerCase();
+    const contornoFilter = document.getElementById('filter-contorno').value.toLowerCase();
+    const attivaFilter = document.getElementById('filter-attiva').value.toLowerCase();
 
     const table = document.querySelector('.table tbody');
     const rows = table.getElementsByTagName('tr');
@@ -130,12 +136,24 @@ function filterTable() {
         const carboCell = cells[2].textContent.toLowerCase();
         const proteineCell = cells[3].textContent.toLowerCase();
         const grassiCell = cells[4].textContent.toLowerCase();
+        const colazioneCell = cells[5].textContent.toLowerCase();
+        const colazioneSecCell = cells[6].textContent.toLowerCase()
+        const spuntinoCell = cells[7].textContent.toLowerCase()
+        const principaleCell = cells[8].textContent.toLowerCase()
+        const contornoCell = cells[9].textContent.toLowerCase()
+        const attivaCell = cells[10].textContent.toLowerCase();
 
         if (nomeCell.includes(nomeFilter) &&
             proteineCell.includes(calorieFilter) &&
             carboCell.includes(carboFilter) &&
             proteineCell.includes(proteineFilter) &&
-            grassiCell.includes(grassiFilter)) {
+            grassiCell.includes(grassiFilter) &&
+            colazioneCell.includes(colazioneFilter) &&
+            colazioneSecCell.includes(colazioneSecFilter) &&
+            spuntinoCell.includes(spuntinoFilter) &&
+            principaleCell.includes(principaleFilter) &&
+            contornoCell.includes(contornoFilter) &&
+            attivaCell.includes(attivaFilter)) {
             rows[i].style.display = '';
         } else {
             rows[i].style.display = 'none';
@@ -260,6 +278,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 attiva: ricettaAttiva
             };
             toggleStatusRicetta(ricettaData);
+            var checkbox = document.querySelector('.attiva-checkbox[data-ricetta-id="' + ricettaId + '"]');
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+           }
         });
     });
 
