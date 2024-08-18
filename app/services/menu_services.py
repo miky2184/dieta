@@ -451,15 +451,18 @@ def get_menu_settima_prossima():
 
 def get_settimane_salvate():
     with get_db_connection() as conn:
+        oggi = datetime.now()
+
         # Esegui le operazioni con la connessione
         cur = conn.cursor()
         query = """
             SELECT id, data_inizio, data_fine 
               FROM dieta.menu_settimanale
-             ORDER BY data_inizio DESC
+              WHERE data_fine >= %s
+             ORDER BY data_inizio ASC
         """
 
-        params = ()
+        params = (oggi.date(),)
 
         # Stampa la query con parametri
         printer(cur.mogrify(query, params).decode('utf-8'))
