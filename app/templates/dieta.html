@@ -2,6 +2,7 @@
     <div class="container mt-4">
         <form id="personalInfoForm" action="{{ url_for('views.salva_dati') }}" method="POST">
             <div class="input-group mb-3">
+                <input type="text" hidden class="form-control" name="id">
                 <span class="input-group-text">Nome</span>
                 <input type="text" class="form-control" name="nome" placeholder="Inserisci il tuo nome" required>
             </div>
@@ -33,22 +34,22 @@
             </div>
             <div class="input-group mb-3">
             <span class="input-group-text">TDEE</span>
-                <select class="form-control" name="tdee" required>
+                <select class="form-control" name="tdee" id="tdee" required>
                     <option selected disabled>Scegli...</option>
-                    <option value="1.2">Sedentario</option>
+                    <option value="1.200">Sedentario</option>
                     <option value="1.375">Leggermente attivo</option>
-                    <option value="1.55">Moderatamente attivo</option>
+                    <option value="1.550">Moderatamente attivo</option>
                     <option value="1.725">Molto attivo</option>
-                    <option value="1.9">Super attivo</option>
+                    <option value="1.900">Super attivo</option>
                  </select>
             </div>
              <div class="input-group mb-3">
                 <span class="input-group-text" id="deficit_calorico-span">Deficit Calorico</span>
                 <select class="form-control" id="deficit_calorico" name="deficit_calorico" required>
-                    <option selected>Choose...</option>
-                    <option value="12.5">Leggero</option>
-                    <option value="22.5">Moderato</option>
-                    <option value="32.5">Aggressivo</option>
+                    <option selected disabled>Scegli...</option>
+                    <option value="12.50">Leggero</option>
+                    <option value="22.50">Moderato</option>
+                    <option value="32.50">Aggressivo</option>
                 </select>
             </div>
             <div class="input-group mb-3">

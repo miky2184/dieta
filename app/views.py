@@ -5,7 +5,7 @@ from .services.menu_services import (definisci_calorie_macronutrienti, save_weig
                                      salva_menu_corrente, get_menu_settimana, get_settimana, salva_ricetta,
                                      attiva_disattiva_ricetta, get_ricette, elimina_ingredienti, salva_utente_dieta,
                                      salva_nuova_ricetta, aggiorna_ingredienti, aggiungi_ingredienti,
-                                     recupera_ingredienti)
+                                     recupera_ingredienti, get_peso_hist, get_dati_utente)
 from copy import deepcopy
 
 views = Blueprint('views', __name__)
@@ -166,6 +166,7 @@ def submit_weight():
 
 @views.route('/salva-dati', methods=['POST'])
 def salva_dati():
+    id = request.form['id']
     nome = request.form['nome']
     cognome = request.form['cognome']
     sesso = request.form['sesso']
@@ -184,8 +185,23 @@ def salva_dati():
     proteine = float(request.form['proteine'])
     grassi = float(request.form['grassi'])
 
-    salva_utente_dieta(nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
+    salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
     meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, carboidrati,
     proteine, grassi)
 
     return redirect(url_for('views.index'))
+
+
+@views.route('/get_peso_data')
+def get_peso_data():
+    peso = get_peso_hist()
+    return jsonify(peso)
+
+
+from flask import jsonify
+
+
+@views.route('/get_data_utente', methods=['GET'])
+def get_data_utente():
+    utente = get_dati_utente()
+    return jsonify(utente)

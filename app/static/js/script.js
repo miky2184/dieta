@@ -251,6 +251,30 @@ function addIngredientToRecipe() {
         });
 }
 
+function populateDietaForm(data) {
+    // Popola i campi del form con i dati ricevuti
+    document.querySelector('[name="id"]').value = data.id || '';
+    document.querySelector('[name="nome"]').value = data.nome || '';
+    document.querySelector('[name="cognome"]').value = data.cognome || '';
+    document.querySelector('[name="sesso"]').value = data.sesso || '';
+    document.querySelector('[name="eta"]').value = data.eta || '';
+    document.querySelector('[name="altezza"]').value = data.altezza || '';
+    document.querySelector('[name="peso"]').value = data.peso || '';
+    document.getElementById('tdee').value = data.tdee || '';
+    console.log('Set TDEE to:', data.tdee);
+    document.getElementById('deficit_calorico').value = data.deficit_calorico || '';
+    console.log('Set TDEE to:', data.deficit_calorico);
+    document.getElementById('bmi').value = data.bmi || '';
+    document.getElementById('peso_ideale').value = data.peso_ideale || '';
+    document.getElementById('meta_basale').value = data.meta_basale || '';
+    document.getElementById('meta_giornaliero').value = data.meta_giornaliero || '';
+    document.getElementById('calorie_giornaliere').value = data.calorie_giornaliere || '';
+    document.getElementById('calorie_settimanali').value = data.calorie_settimanali || '';
+    document.getElementById('carboidrati_input').value = data.carboidrati || '';
+    document.getElementById('proteine_input').value = data.proteine || '';
+    document.getElementById('grassi_input').value = data.grassi || '';
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById("defaultOpen").click();
     document.querySelectorAll('.save-btn').forEach(button => {
@@ -499,6 +523,31 @@ document.addEventListener('DOMContentLoaded', function() {
   var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
     return new bootstrap.Tooltip(tooltipTriggerEl)
   });
+
+    document.getElementById("peso-tab").addEventListener("click", function() {
+        // Effettua la chiamata AJAX per ottenere i dati del peso
+        fetch('/get_peso_data')
+            .then(response => response.json())
+            .then(data => {
+                if (data.length > 0) {
+                    updateWeightChart(data);
+                }
+            })
+            .catch(error => console.error('Errore nel caricamento dei dati:', error));
+    });
+
+    document.getElementById("dieta-tab").addEventListener("click", function() {
+        // Effettua la chiamata AJAX per ottenere i dati della dieta
+        fetch('/get_data_utente')
+            .then(response => response.json())
+            .then(data => {
+                if (data) {
+                    // Popola il form con i dati ricevuti
+                    populateDietaForm(data);
+                }
+            })
+            .catch(error => console.error('Errore nel caricamento dei dati:', error));
+    });
 
 });
 

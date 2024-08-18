@@ -498,9 +498,16 @@ def save_weight(date, weight):
 
         conn.commit()
 
+        return get_peso_hist()
+
+
+def get_peso_hist():
+    with get_db_connection() as conn:
+        # Esegui le operazioni con la connessione
+        cur = conn.cursor()
         query = """select data_rilevazione as date, peso as weight 
-                         from dieta.registro_peso 
-                     order by data_rilevazione"""
+                                 from dieta.registro_peso 
+                             order by data_rilevazione"""
 
         params = ()
 
@@ -641,19 +648,43 @@ def elimina_ingredienti(ingredient_id, recipe_id):
         conn.commit()
 
 
-def salva_utente_dieta(nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
+def salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
                   meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, carboidrati,
                   proteine, grassi):
     with get_db_connection() as conn:
         cur = conn.cursor()
 
-        query = """
-            INSERT INTO dieta.utenti (nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, 
-            peso_ideale, meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, carboidrati,
-            proteine, grassi)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        query = """        
+            INSERT INTO dieta.utenti (
+                id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, 
+                peso_ideale, meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, 
+                carboidrati, proteine, grassi
+                ) VALUES (    
+                     %s, %s, %s, %s, %s,  %s,  %s,  %s,  %s,  %s, 
+                     %s,  %s,  %s,  %s,  %s, 
+                     %s,  %s,  %s
+                )
+                ON CONFLICT (id) 
+                DO UPDATE SET 
+                    nome = EXCLUDED.nome,
+                    cognome = EXCLUDED.cognome,
+                    sesso = EXCLUDED.sesso,
+                    eta = EXCLUDED.eta,
+                    altezza = EXCLUDED.altezza,
+                    peso = EXCLUDED.peso,
+                    tdee = EXCLUDED.tdee,
+                    deficit_calorico = EXCLUDED.deficit_calorico,
+                    bmi = EXCLUDED.bmi,
+                    peso_ideale = EXCLUDED.peso_ideale,
+                    meta_basale = EXCLUDED.meta_basale,
+                    meta_giornaliero = EXCLUDED.meta_giornaliero,
+                    calorie_giornaliere = EXCLUDED.calorie_giornaliere,
+                    calorie_settimanali = EXCLUDED.calorie_settimanali,
+                    carboidrati = EXCLUDED.carboidrati,
+                    proteine = EXCLUDED.proteine,
+                    grassi = EXCLUDED.grassi           
             """
-        params = (nome.upper(), cognome.upper(), sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
+        params = (id, nome.upper(), cognome.upper(), sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
                   meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, carboidrati,
                   proteine, grassi)
 
@@ -721,3 +752,25 @@ def recupera_ingredienti():
         foods = cur.fetchall()
 
     return foods
+
+
+def get_dati_utente():
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        query = """
+                SELECT id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, 
+                peso_ideale, meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, 
+                carboidrati, proteine, grassi 
+                FROM dieta.utenti
+                limit 1;  
+            """
+
+        params = ()
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+        cur.execute(query, params)
+
+        row = cur.fetchone()
+
+    return row
