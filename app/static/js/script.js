@@ -52,7 +52,7 @@ function aggiornaTabellaMenu(menu) {
     days.forEach(giorno => {
         macroNutrients.forEach(macro => {
             const remainingValue = menu.day[giorno][macro];
-            document.getElementById(`remaining-${macro}-${giorno}`).textContent = remainingValue.toFixed(0);
+            document.getElementById(`remaining-${macro}-${giorno}`).textContent = remainingValue.toFixed(2);
         });
     });
 }

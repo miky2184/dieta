@@ -4,8 +4,8 @@ from .services.menu_services import (definisci_calorie_macronutrienti, save_weig
                                      carica_ricette, get_settimane_salvate, get_menu_settima_prossima,
                                      salva_menu_corrente, get_menu_settimana, get_settimana, salva_ricetta,
                                      attiva_disattiva_ricetta, get_ricette, elimina_ingredienti, salva_utente_dieta,
-                                     salva_nuova_ricetta, aggiorna_ingredienti, aggiungi_ingredienti,
-                                     recupera_ingredienti, get_peso_hist, get_dati_utente)
+                                     salva_nuova_ricetta, salva_ingredienti,
+                                     recupera_ingredienti, get_peso_hist, get_dati_utente, calcola_macronutrienti_rimanenti)
 from copy import deepcopy
 
 views = Blueprint('views', __name__)
@@ -39,15 +39,19 @@ def index():
     settimane_salvate = get_settimane_salvate()
 
     # Recupera la lista della spesa
-    #lista_spesa = stampa_lista_della_spesa(menu_corrente.get('all_food'))
+    lista_spesa = stampa_lista_della_spesa(menu_corrente.get('all_food'))
+
+    # Calcola i macronutrienti rimanenti per ogni giorno
+    remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente, macronutrienti)
 
     # Questa sarà la pagina principale, passa i dati al template
     return render_template('index.html',
                            macronutrienti=macronutrienti,
                            ricette=ricette,
                            menu=menu_corrente,
-                           #lista_spesa=lista_spesa,
-                           settimane=settimane_salvate
+                           lista_spesa=lista_spesa,
+                           settimane=settimane_salvate,
+                           remaining_macronutrienti=remaining_macronutrienti
                            )
 
 
@@ -125,7 +129,7 @@ def add_ingredient_to_recipe():
     recipe_id = data['recipe_id']
     quantity = data['quantity']
 
-    aggiungi_ingredienti(recipe_id, ingredient_id, quantity)
+    salva_ingredienti(recipe_id, ingredient_id, quantity)
 
     return jsonify({'status': 'success', 'message': 'Ingrediente inserito correttamente.'})
 
@@ -137,7 +141,7 @@ def update_ingredient():
     recipe_id = data['recipe_id']
     quantity = data['quantity']
 
-    aggiorna_ingredienti(recipe_id, ingredient_id, quantity)
+    salva_ingredienti(recipe_id, ingredient_id, quantity)
 
     return jsonify({'status': 'success', 'message': 'Quantità aggiornata correttamente.'})
 

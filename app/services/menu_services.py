@@ -14,7 +14,7 @@ MAX_RETRY = int(os.getenv('MAX_RETRY'))
 
 
 def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, percentuale_pietanza: float, ripetibile: bool,
-                    controllo_macro_settimanale: bool, ricette, ids_specifici=None):
+                    controllo_macro_settimanale: bool, ricette, ids_specifici=None, skip_check=False):
     """
     Seleziona una pietanza dalla lista di ricette pre-caricate in memoria.
     Se ids_specifici è fornito, filtra le ricette solo per quegli ID.
@@ -48,15 +48,15 @@ def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, per
 
     # Invoca select_food con le ricette modificate
     return select_food(ricette_modificate, settimana, giorno_settimana, pasto, MAX_RETRY, percentuale_pietanza, ripetibile,
-                       False, controllo_macro_settimanale)
+                       False, controllo_macro_settimanale, skip_check)
 
 
-def select_food(rows, settimana, giorno_settimana, pasto, max_retry, perc: float, ripetibile: bool, found: bool,
-                controllo_macro_settimanale: bool):
+def select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc: float, ripetibile: bool, found: bool,
+                controllo_macro_settimanale: bool, skip_check: bool=False):
     if not ripetibile:
-        ids_disponibili = [oggetto['id'] for oggetto in rows if oggetto['id'] not in settimana['all_food']]
+        ids_disponibili = [oggetto['id'] for oggetto in ricette if oggetto['id'] not in settimana['all_food']]
     else:
-        ids_disponibili = [oggetto['id'] for oggetto in rows if
+        ids_disponibili = [oggetto['id'] for oggetto in ricette if
                            oggetto['id'] not in settimana.get('day').get(giorno_settimana).get('pasto').get(
                                pasto).get('ids')]
 
@@ -66,12 +66,12 @@ def select_food(rows, settimana, giorno_settimana, pasto, max_retry, perc: float
         max_retry = max_retry - 1
 
         # Trova l'oggetto corrispondente all'ID selezionato
-        ricetta_selezionata = next(oggetto for oggetto in rows if oggetto['id'] == id_selezionato)
+        ricetta_selezionata = next(oggetto for oggetto in ricette if oggetto['id'] == id_selezionato)
 
         mt = settimana.get('day').get(giorno_settimana).get('pasto').get(pasto)
         day = settimana.get('day').get(giorno_settimana)
         macronutrienti_settimali = settimana.get('weekly')
-        if (
+        if (    skip_check or
                 (
                     (day.get('kcal') - ricetta_selezionata.get('kcal')) > 0 and
                     (day.get('carboidrati') - ricetta_selezionata.get('carboidrati')) > 0 and
@@ -100,7 +100,7 @@ def select_food(rows, settimana, giorno_settimana, pasto, max_retry, perc: float
             macronutrienti_settimali['grassi'] = macronutrienti_settimali.get('grassi') - ricetta_selezionata.get('grassi')
             found = True
         else:
-            select_food(rows, settimana, giorno_settimana, pasto, max_retry, perc, ripetibile, False, controllo_macro_settimanale)
+            select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc, ripetibile, False, controllo_macro_settimanale)
 
     return found
 
@@ -152,22 +152,28 @@ def genera_menu(settimana, controllo_macro_settimanale: bool, ricette) -> None:
             for giorno in settimana['day']:
                 p = settimana['day'][giorno]['pasto']
 
-                if len(p['pranzo']['ricette']) < 1:
+                if len(p['pranzo']['ricette']) == 0:
                     scegli_pietanza(settimana, giorno, 'pranzo', 'principale', percentuale_pietanza, False, controllo_macro_settimanale, ricette)
-                if len(p['cena']['ricette']) < 1:
+                if len(p['cena']['ricette']) == 0:
                     scegli_pietanza(settimana, giorno, 'cena', 'principale', percentuale_pietanza, False, controllo_macro_settimanale, ricette)
-                if len(p['colazione']['ricette']) < 2:
+                if len(p['colazione']['ricette']) <= 1:
                     scegli_pietanza(settimana, giorno, 'colazione', 'colazione', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
                     scegli_pietanza(settimana, giorno, 'colazione', 'colazione_sec', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
-                    # Aggiungi il pane sia a pranzo che a cena
-                scegli_pietanza(settimana, giorno, 'pranzo', 'contorno', 1, False, controllo_macro_settimanale, ricette, ids_specifici=[id_pane])
-                scegli_pietanza(settimana, giorno, 'cena', 'contorno', 1, False, controllo_macro_settimanale, ricette, ids_specifici=[id_pane])
-                scegli_pietanza(settimana, giorno, 'pranzo', 'contorno', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
-                scegli_pietanza(settimana, giorno, 'cena', 'contorno', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
-                if len(p['spuntino_mattina']['ricette']) < 1:
-                    scegli_pietanza(settimana, giorno, 'spuntino_mattina', 'spuntino', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
-                if len(p['spuntino_pomeriggio']['ricette']) < 1:
-                    scegli_pietanza(settimana, giorno, 'spuntino_pomeriggio', 'spuntino', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
+
+                # Aggiungi il pane sia a pranzo che a cena
+                scegli_pietanza(settimana, giorno, 'pranzo', 'contorno', 1, True, controllo_macro_settimanale, ricette, ids_specifici=[id_pane], skip_check=True)
+                scegli_pietanza(settimana, giorno, 'cena', 'contorno', 1, True, controllo_macro_settimanale, ricette, ids_specifici=[id_pane], skip_check=True)
+
+                if len(p['pranzo']['ricette']) < 3:
+                    scegli_pietanza(settimana, giorno, 'pranzo', 'contorno', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
+
+                if len(p['cena']['ricette']) < 3:
+                    scegli_pietanza(settimana, giorno, 'cena', 'contorno', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
+
+                if len(p['spuntino_mattina']['ricette']) == 0:
+                    scegli_pietanza(settimana, giorno, 'spuntino_mattina', 'spuntino', percentuale_pietanza, True, controllo_macro_settimanale, ricette, skip_check=True)
+                if len(p['spuntino_pomeriggio']['ricette']) == 0:
+                    scegli_pietanza(settimana, giorno, 'spuntino_pomeriggio', 'spuntino', percentuale_pietanza, True, controllo_macro_settimanale, ricette, skip_check=True)
 
 
 def definisci_calorie_macronutrienti():
@@ -176,7 +182,7 @@ def definisci_calorie_macronutrienti():
     with get_db_connection() as conn:
         cur = conn.cursor()
         query = """select calorie_giornaliere as kcal , carboidrati , proteine , grassi 
-                     from dieta.utenti u """
+                     from dieta.utenti u limit 1"""
 
         params = ()
 
@@ -707,31 +713,25 @@ def salva_nuova_ricetta(name, breakfast, snack, main, side, second_breakfast):
         conn.commit()
 
 
-def aggiorna_ingredienti(recipe_id, ingredient_id, quantity):
+def salva_ingredienti(recipe_id, ingredient_id, quantity):
     with get_db_connection() as conn:
         cur = conn.cursor()
-        query = "UPDATE dieta.ingredienti_ricetta SET qta = %s WHERE id_alimento = %s AND id_ricetta = %s"
+
+        query = "SELECT COUNT(*) as cnt FROM dieta.ingredienti_ricetta WHERE id_ricetta = %s AND id_alimento = %s"
+        params = (recipe_id, ingredient_id)
+        cur.execute(query, params)
+        count = cur.fetchone()['cnt']
+
+        if count > 0:
+            # Se esiste, esegui un aggiornamento
+            query = "UPDATE dieta.ingredienti_ricetta SET qta = %s WHERE id_alimento = %s AND id_ricetta = %s"
+        else:
+            # Altrimenti, esegui un inserimento
+            query = "INSERT INTO dieta.ingredienti_ricetta (qta, id_alimento, id_ricetta) VALUES (%s, %s, %s)"
 
         params = (quantity, ingredient_id, recipe_id)
-
-        # Stampa la query con parametri
         printer(cur.mogrify(query, params).decode('utf-8'))
         cur.execute(query, params)
-
-        conn.commit()
-
-
-def aggiungi_ingredienti(recipe_id, ingredient_id, quantity):
-    with get_db_connection() as conn:
-        cur = conn.cursor()
-        query = "INSERT INTO dieta.ingredienti_ricetta (id_ricetta, id_alimento, qta) VALUES (%s, %s, %s)"
-
-        params = (recipe_id, ingredient_id, quantity)
-
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-        cur.execute(query, params)
-
         conn.commit()
 
 
@@ -771,3 +771,20 @@ def get_dati_utente():
         row = cur.fetchone()
 
     return row
+
+
+def calcola_macronutrienti_rimanenti(menu, macronutrienti):
+    remaining_macronutrienti = {}
+    for giorno, dati_giorno in menu['day'].items():
+        remaining_kcal = float(dati_giorno['kcal'])
+        remaining_carboidrati = float(dati_giorno['carboidrati'])
+        remaining_proteine = float(dati_giorno['proteine'])
+        remaining_grassi = float(dati_giorno['grassi'])
+
+        remaining_macronutrienti[giorno] = {
+            'kcal': max(remaining_kcal, 0),
+            'carboidrati': max(remaining_carboidrati, 0),
+            'proteine': max(remaining_proteine, 0),
+            'grassi': max(remaining_grassi, 0)
+        }
+    return remaining_macronutrienti
