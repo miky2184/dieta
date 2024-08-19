@@ -14,13 +14,20 @@ MAX_RETRY = int(os.getenv('MAX_RETRY'))
 
 
 def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, percentuale_pietanza: float, ripetibile: bool,
-                    controllo_macro_settimanale: bool, ricette):
+                    controllo_macro_settimanale: bool, ricette, ids_specifici=None):
     """
     Seleziona una pietanza dalla lista di ricette pre-caricate in memoria.
+    Se ids_specifici è fornito, filtra le ricette solo per quegli ID.
     """
     perc_decimal = Decimal(str(percentuale_pietanza))
+
     # Filtra le ricette in base al tipo di pasto richiesto
     ricette_filtrate = [r for r in ricette if r[tipo]]
+
+    # Se ids_specifici è fornito, filtra ulteriormente le ricette
+    if ids_specifici:
+        ricette_filtrate = [r for r in ricette_filtrate if r['id'] in ids_specifici]
+
     # Moltiplica i valori nutrizionali per la percentuale
     ricette_modificate = []
     for ricetta in ricette_filtrate:
@@ -138,10 +145,13 @@ def carica_ricette(stagionalita: bool):
 
 def genera_menu(settimana, controllo_macro_settimanale: bool, ricette) -> None:
     percentuali = [1, 0.75, 0.5]
+    id_pane = 272
+
     for percentuale_pietanza in percentuali:
         for _ in range(MAX_RETRY):
             for giorno in settimana['day']:
                 p = settimana['day'][giorno]['pasto']
+
                 if len(p['pranzo']['ricette']) < 1:
                     scegli_pietanza(settimana, giorno, 'pranzo', 'principale', percentuale_pietanza, False, controllo_macro_settimanale, ricette)
                 if len(p['cena']['ricette']) < 1:
@@ -149,6 +159,9 @@ def genera_menu(settimana, controllo_macro_settimanale: bool, ricette) -> None:
                 if len(p['colazione']['ricette']) < 2:
                     scegli_pietanza(settimana, giorno, 'colazione', 'colazione', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
                     scegli_pietanza(settimana, giorno, 'colazione', 'colazione_sec', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
+                    # Aggiungi il pane sia a pranzo che a cena
+                scegli_pietanza(settimana, giorno, 'pranzo', 'contorno', 1, False, controllo_macro_settimanale, ricette, ids_specifici=[id_pane])
+                scegli_pietanza(settimana, giorno, 'cena', 'contorno', 1, False, controllo_macro_settimanale, ricette, ids_specifici=[id_pane])
                 scegli_pietanza(settimana, giorno, 'pranzo', 'contorno', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
                 scegli_pietanza(settimana, giorno, 'cena', 'contorno', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
                 if len(p['spuntino_mattina']['ricette']) < 1:
