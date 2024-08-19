@@ -8,7 +8,7 @@
                 <form action="{{ url_for('views.new_recipe') }}" method="POST">
                     <div class="input-group input-group-sm mb-3">
                         <span class="input-group-text">Nome</span>
-                        <input type="text" class="form-control" name="name" placeholder="Inserisci nome ricetta" required>
+                        <input type="text" class="form-control form-control-sm" name="name" placeholder="Inserisci nome ricetta" required>
                     </div>
                     {% for field in ['Colazione', 'Colazione/Biscotti', 'Spuntino', 'Principale', 'Contorno'] %}
                     <div class="form-check">

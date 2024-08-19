@@ -67,7 +67,7 @@ def menu_settimana(settimana_id):
 
     macronutrienti_rimanenti = calcola_macronutrienti_rimanenti(menu_selezionato)
 
-    return jsonify({'menu':menu_selezionato, 'remaining_macronutrients': macronutrienti_rimanenti})
+    return jsonify({'menu':menu_selezionato, 'remaining_macronutrienti': macronutrienti_rimanenti})
 
 
 @views.route('/get_lista_spesa', methods=['POST'])
@@ -344,6 +344,7 @@ def remove_meal(week_id):
 
     return jsonify({
         'status': 'success',
+        'menu': menu_corrente,
         'remaining_macronutrienti': remaining_macronutrienti
     })
 
@@ -369,8 +370,8 @@ def update_meal_quantity():
             # Ricalcola i macronutrienti per il giorno e la settimana
             for macro in ['kcal', 'carboidrati', 'proteine', 'grassi']:
                 # Calcola la differenza in base alla nuova quantità rispetto alla vecchia
-                new_value = (ricetta[macro] / old_qta) * quantity
-                old_value = ricetta[macro]
+                new_value = (float(ricetta[macro]) / old_qta) * quantity
+                old_value = float(ricetta[macro])
 
                 difference = new_value - old_value
 
@@ -386,5 +387,6 @@ def update_meal_quantity():
 
     return jsonify({
         'status': 'success',
+        'menu': menu_corrente,
         'remaining_macronutrienti': remaining_macronutrienti
     })

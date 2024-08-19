@@ -904,7 +904,12 @@ def aggiungi_ricetta_al_menu(menu, day, meal, meal_id):
     menu['day'][day]['pasto'][meal]['ricette'].append({
         'id': ricetta[0]['id'],
         'nome_ricetta': ricetta[0]['nome_ricetta'],
-        'qta': 1  # Puoi gestire la quantità come preferisci
+        'qta': 1,
+        'ricetta': ricetta[0]['ricetta'],
+        'kcal':ricetta[0]['kcal'],
+        'carboidrati': ricetta[0]['carboidrati'],
+        'grassi': ricetta[0]['grassi'],
+        'proteine': ricetta[0]['proteine']
     })
 
     # Aggiorna i macronutrienti per il giorno

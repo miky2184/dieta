@@ -788,12 +788,12 @@ function renderMenuEditor(data) {
     const meals = ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena'];
 
     days.forEach(day => {
-        const remaining = data.remaining_macronutrients[day];
+        const remaining = data['remaining_macronutrienti'][day];
 
         const dayContainer = document.createElement('div');
         dayContainer.classList.add('day-container');
         const dayTitle = document.createElement('h4');
-        dayTitle.textContent = `${capitalize(day)} - Calorie rimanenti: ${remaining.kcal.toFixed(2)}, Carboidrati: ${remaining.carboidrati.toFixed(2)}g, Proteine: ${remaining.proteine.toFixed(2)}g, Grassi: ${remaining.grassi.toFixed(2)}g`;
+        dayTitle.textContent = `${capitalize(day)} - [Rimanenti] Calorie: ${remaining.kcal.toFixed(2)}, Carboidrati: ${remaining.carboidrati.toFixed(2)}g, Proteine: ${remaining.proteine.toFixed(2)}g, Grassi: ${remaining.grassi.toFixed(2)}g`;
         dayContainer.appendChild(dayTitle);
 
         meals.forEach(meal => {
@@ -810,9 +810,9 @@ function renderMenuEditor(data) {
                     ricettaDiv.id = dynamicId;
                     ricettaDiv.classList.add('ricetta');
                     ricettaDiv.innerHTML = `
-                        <input hidden type="text" class="form-control" value="${ricetta.id}">
-                        <input type="text" class="form-control" value="${ricetta.nome_ricetta}" readonly>
-                        <input type="number" class="form-control" value="${ricetta.qta}" min="0.1" step="0.1" onchange="updateMealQuantity('${day}', '${meal}', '${ricetta.id}', this.value)">
+                        <input hidden type="text" class="form-control form-control-sm" value="${ricetta.id}">
+                        <input type="text" class="form-control form-control-sm" value="${ricetta.nome_ricetta} - KCAL: ${ricetta.kcal} - CARB: ${ricetta.carboidrati} - PROT: ${ricetta.proteine} - GRAS: ${ricetta.grassi}" readonly>
+                        <input type="number" class="form-control form-control-sm" style="width: 10%" value="${ricetta.qta}" min="0.1" step="0.1" onchange="updateMealQuantity('${day}', '${meal}', '${ricetta.id}', this.value)">
                         <button class="btn btn-danger btn-sm" onclick="removeMeal('${day}', '${meal}', '${ricetta.id}')">Rimuovi</button>
                     `;
                     mealContainer.appendChild(ricettaDiv);
@@ -852,9 +852,8 @@ function updateMealQuantity(day, meal, ricettaId, newQuantity) {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.status === 'success') {
-            aggiornaMacronutrientiRimanenti(data.remaining_macronutrienti);
-        }
+            renderMenuEditor(data);
+          //aggiornaMacronutrientiRimanenti(data.remaining_macronutrienti);
     })
     .catch(error => console.error('Error:', error));
 }
@@ -873,13 +872,11 @@ function removeMeal(day, meal, mealId) {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.status === 'success') {
-            // Rimuovi il pasto dalla visualizzazione
-            document.getElementById(`meal-${mealId}-${day}-${meal}`).remove();
-
-            // Aggiorna i macronutrienti rimanenti nella visualizzazione
-            aggiornaMacronutrientiRimanenti(data.remaining_macronutrienti);
-        }
+        // Rimuovi il pasto dalla visualizzazione
+        document.getElementById(`meal-${mealId}-${day}-${meal}`).remove();
+        renderMenuEditor(data);
+        // Aggiorna i macronutrienti rimanenti nella visualizzazione
+        //aggiornaMacronutrientiRimanenti(data.remaining_macronutrienti);
     })
     .catch(error => console.error('Error:', error));
 }
@@ -933,12 +930,10 @@ function addMealsToMenu(day, meal, selectedMeals) {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.status === 'success') {
-            // Aggiorna la vista del menu
-            aggiornaTabellaMenu(data.menu);
-            // Aggiorna i macronutrienti rimanenti
-            aggiornaMacronutrientiRimanenti(data.remaining_macronutrienti);
-        }
+        // Aggiorna la vista del menu
+        renderMenuEditor(data);
+        // Aggiorna i macronutrienti rimanenti
+        //aggiornaMacronutrientiRimanenti(data.remaining_macronutrienti);
     })
     .catch((error) => {
         console.error('Error:', error);

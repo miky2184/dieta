@@ -8,12 +8,12 @@
                 <form action="{{ url_for('views.new_food') }}" method="POST">
                     <div class="input-group input-group-sm mb-3">
                         <span class="input-group-text">Nome</span>
-                        <input type="text" class="form-control" name="alimento" placeholder="Inserisci nome alimento" required>
+                        <input type="text" class="form-control form-control-sm" name="alimento" placeholder="Inserisci nome alimento" required>
                     </div>
                     {% for field in ['Carboidrati', 'Proteine', 'Grassi'] %}
                     <div class="input-group input-group-sm mb-3">
                         <span class="input-group-text">{{ field }}</span>
-                        <input type="number" step=".01" class="form-control" name="{{ field | lower }}" placeholder="Inserisci {{ field | lower }}" required>
+                        <input type="number" step=".01" class="form-control form-control-sm" name="{{ field | lower }}" placeholder="Inserisci {{ field | lower }}" required>
                     </div>
                     {% endfor %}
                     <div class="form-check">
