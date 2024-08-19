@@ -697,7 +697,6 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            alert('Alimento salvato con successo!');
         })
         .catch((error) => {
             console.error('Errore:', error);
@@ -715,7 +714,6 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            alert('Alimento eliminato con successo!');
             window.location.reload(); // Ricarica la pagina per aggiornare la lista
         })
         .catch((error) => {

@@ -6,7 +6,7 @@ from .services.menu_services import (definisci_calorie_macronutrienti, save_weig
                                      attiva_disattiva_ricetta, get_ricette, elimina_ingredienti, salva_utente_dieta,
                                      salva_nuova_ricetta, salva_ingredienti,
                                      recupera_ingredienti, get_peso_hist, get_dati_utente, calcola_macronutrienti_rimanenti,
-                                     recupera_alimenti, salva_alimento, elimina_alimento)
+                                     recupera_alimenti, salva_alimento, elimina_alimento, salva_nuovo_alimento)
 from copy import deepcopy
 
 views = Blueprint('views', __name__)
@@ -160,6 +160,26 @@ def new_recipe():
     second_breakfast = 'second_breakfast' in request.form
 
     salva_nuova_ricetta(name.upper(), breakfast, snack, main, side, second_breakfast)
+
+    return redirect(url_for('views.index'))
+
+
+@views.route('/new_food', methods=['POST'])
+def new_food():
+    name = request.form['alimento']
+    carboidrati = request.form['carboidrati']
+    proteine = request.form['proteine']
+    grassi = request.form['grassi']
+    verdura = 'verdura' in request.form
+    frutta = 'frutta' in request.form
+    pesce = 'pesce' in request.form
+    pane = 'pane' in request.form
+    confezionato = 'confezionato' in request.form
+    vegan = 'vegan' in request.form
+    carne_bianca = 'carne-bianca' in request.form
+    carne_rossa = 'carne-rossa' in request.form
+
+    salva_nuovo_alimento(name, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura, confezionato, vegan, pesce)
 
     return redirect(url_for('views.index'))
 

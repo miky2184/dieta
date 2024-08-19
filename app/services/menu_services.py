@@ -827,3 +827,31 @@ def elimina_alimento(alimento_id):
         cur.execute(query, (alimento_id,))
         conn.commit()
 
+
+def salva_nuovo_alimento(name, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura, confezionato, vegan, pesce):
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        query = """INSERT INTO dieta.alimento (nome, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura, confezionato, vegan, pesce) 
+                        VALUES (upper(%s), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id"""
+
+        params = (name, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura, confezionato, vegan, pesce)
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+        cur.execute(query, params)
+
+        alimento_id = cur.fetchone()
+
+        if confezionato:
+            cur.execute(
+                "INSERT INTO dieta.ricetta (nome_ricetta) VALUES (upper(%s)) RETURNING id",
+                (name,))
+            ricetta_id = cur.fetchone()
+            conn.commit()
+
+            cur.execute(
+                "INSERT INTO dieta.ingredienti_ricetta (id_ricetta, id_alimento, qta) VALUES (%s, %s, %s)",
+                (ricetta_id['id'], alimento_id['id'], 100))
+            conn.commit()
+
+        conn.commit()
