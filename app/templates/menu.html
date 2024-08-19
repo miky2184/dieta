@@ -20,7 +20,7 @@
             {% for dati_giorno in ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'] %}
             <td>
                 {% for ricetta in menu.day[dati_giorno].pasto[pasto].ricette %}
-                <div>{{ ricetta.nome_ricetta }} ({{ ricetta.qta }}x)</div>
+                <div data-bs-toggle="popover" data-bs-title="{{ ricetta.ricetta }}" class="recipe-cell">{{ ricetta.nome_ricetta }} ({{ ricetta.qta }}x)</div>
                 {% endfor %}
             </td>
             {% endfor %}

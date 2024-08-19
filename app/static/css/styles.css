@@ -95,6 +95,21 @@ td div:last-child {
     border-bottom: none;
 }
 
+#tooltip {
+    display: none;
+    position: absolute;
+    background-color: #333;
+    color: #fff;
+    padding: 5px;
+    border-radius: 5px;
+    pointer-events: none;
+    z-index: 1000;
+    font-size: 0.8rem;
+    max-width: 200px; /* Limita la larghezza massima del tooltip */
+    word-wrap: break-word; /* Assicurati che il testo vada a capo se troppo lungo */
+}
+
+
 /* Aggiungi una media query per una migliore visualizzazione su schermi piccoli */
 @media (max-width: 768px) {
     th, td {

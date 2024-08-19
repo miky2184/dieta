@@ -42,7 +42,8 @@ def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, per
                 'colazione': ricetta['colazione'],
                 'spuntino': ricetta['spuntino'],
                 'principale': ricetta['principale'],
-                'contorno': ricetta['contorno']
+                'contorno': ricetta['contorno'],
+                'ricetta': ricetta['ricetta']
             }
             ricette_modificate.append(ricetta_modificata)
 
@@ -88,7 +89,7 @@ def select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc: fl
         ):
             settimana.get('all_food').append(id_selezionato)
             mt.get('ids').append(id_selezionato)
-            r = {'qta': perc, 'nome_ricetta': ricetta_selezionata.get('nome_ricetta')}
+            r = {'qta': perc, 'nome_ricetta': ricetta_selezionata.get('nome_ricetta'), 'ricetta': ricetta_selezionata.get('ricetta')}
             mt.get('ricette').append(r)
             day['kcal'] = day.get('kcal') - ricetta_selezionata.get('kcal')
             day['carboidrati'] = day.get('carboidrati') - ricetta_selezionata.get('carboidrati')
@@ -116,20 +117,38 @@ def carica_ricette(stagionalita: bool):
     with get_db_connection() as conn:
         cur = conn.cursor()
         query = f"""
-            SELECT distinct r.id, r.nome_ricetta,
-                ceil(sum((carboidrati/100*qta*4)+
-                         (proteine/100*qta*4)+
-                        (grassi/100*qta*9)) over (partition by ir.id_ricetta)) as kcal,
-                round(sum(carboidrati/100*qta) over (partition by ir.id_ricetta), 2) as carboidrati,
-                round(sum(proteine/100*qta) over (partition by ir.id_ricetta), 2) as proteine,
-                round(sum(grassi/100*qta) over (partition by ir.id_ricetta), 2) as grassi,
-                r.colazione, r.spuntino, r.principale, r.contorno, r.colazione_sec, r.enabled as attiva
-            FROM dieta.ricetta r
-            left JOIN dieta.ingredienti_ricetta ir ON (ir.id_ricetta = r.id)
-            left JOIN dieta.alimento a ON (ir.id_alimento = a.id)
-            WHERE 1=1
-            {and_stagionalita}                  
-            order by enabled desc, r.nome_ricetta
+            SELECT distinct
+    r.id, 
+    r.nome_ricetta,
+    CEIL(SUM((carboidrati/100 * qta * 4) + 
+             (proteine/100 * qta * 4) + 
+             (grassi/100 * qta * 9)) OVER (PARTITION BY r.id)) AS kcal,
+    ROUND(SUM(carboidrati/100 * qta) OVER (PARTITION BY r.id), 2) AS carboidrati,
+    ROUND(SUM(proteine/100 * qta) OVER (PARTITION BY r.id), 2) AS proteine,
+    ROUND(SUM(grassi/100 * qta) OVER (PARTITION BY r.id), 2) AS grassi,
+    r.colazione, 
+    r.spuntino, 
+    r.principale, 
+    r.contorno, 
+    r.colazione_sec, 
+    r.enabled AS attiva,
+    COALESCE(i.ricetta, '') AS ricetta
+FROM dieta.ricetta r
+LEFT JOIN (
+    SELECT 
+        ir.id_ricetta, 
+        string_agg(a.nome || ': ' || ir.qta || 'g', ', ') AS ricetta
+    FROM dieta.ingredienti_ricetta ir
+    LEFT JOIN dieta.alimento a ON ir.id_alimento = a.id
+    GROUP BY ir.id_ricetta
+) i ON r.id = i.id_ricetta
+LEFT JOIN dieta.ingredienti_ricetta ir ON ir.id_ricetta = r.id
+LEFT JOIN dieta.alimento a ON ir.id_alimento = a.id
+where 1=1
+{and_stagionalita}
+GROUP BY r.id, r.nome_ricetta,carboidrati, proteine, grassi, qta, r.colazione, r.spuntino, r.principale, r.contorno, r.colazione_sec, r.enabled, i.ricetta
+ order by enabled desc, r.nome_ricetta
+
         """
 
         params = ()

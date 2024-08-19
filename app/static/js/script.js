@@ -393,6 +393,11 @@ function populateDietaForm(data) {
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById("defaultOpen").click();
 
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+      return new bootstrap.Popover(popoverTriggerEl);
+    });
+
     document.querySelectorAll('.save-btn').forEach(button => {
         button.addEventListener('click', function() {
             const ricettaId = this.getAttribute('data-ricetta-id');
