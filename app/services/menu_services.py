@@ -89,7 +89,15 @@ def select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc: fl
         ):
             settimana.get('all_food').append(id_selezionato)
             mt.get('ids').append(id_selezionato)
-            r = {'qta': perc, 'id': ricetta_selezionata.get('id'), 'nome_ricetta': ricetta_selezionata.get('nome_ricetta'), 'ricetta': ricetta_selezionata.get('ricetta')}
+            r = {'qta': perc,
+                 'id': ricetta_selezionata.get('id'),
+                 'nome_ricetta': ricetta_selezionata.get('nome_ricetta'),
+                 'ricetta': ricetta_selezionata.get('ricetta'),
+                 'kcal': ricetta_selezionata.get('kcal'),
+                 'carboidrati': ricetta_selezionata.get('carboidrati'),
+                'proteine':  ricetta_selezionata.get('proteine'),
+                'grassi': ricetta_selezionata.get('grassi'),
+                }
             mt.get('ricette').append(r)
             day['kcal'] = day.get('kcal') - ricetta_selezionata.get('kcal')
             day['carboidrati'] = day.get('carboidrati') - ricetta_selezionata.get('carboidrati')
@@ -427,20 +435,27 @@ def salva_menu_settimana_prossima(menu):
         conn.commit()
 
 
-def get_menu_corrente():
+def get_menu_corrente(ids=None):
     menu_corrente = None
+    where_cond = "%s between data_inizio AND data_fine "
+    oggi = datetime.now()
+    params = (oggi.date(),)
+
+    if ids:
+        where_cond = "id = %s"
+        params = (ids,)
 
     with get_db_connection() as conn:
         # Esegui le operazioni con la connessione
         cur = conn.cursor()
-        oggi = datetime.now()
 
-        query = """
+
+        query = f"""
             SELECT menu 
               FROM dieta.menu_settimanale
-            WHERE %s between data_inizio AND data_fine 
+            WHERE {where_cond}
         """
-        params = (oggi.date(),)
+
 
         # Stampa la query con parametri
         printer(cur.mogrify(query, params).decode('utf-8'))

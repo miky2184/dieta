@@ -304,7 +304,7 @@ def add_meals_to_menu(week_id):
     selected_meals = data['selectedMeals']
 
     # Recupera il menu corrente
-    menu_corrente = get_menu_corrente()
+    menu_corrente = get_menu_corrente(week_id)
 
     # Aggiungi i pasti selezionati al menu corrente
     for meal_id in selected_meals:
@@ -331,7 +331,7 @@ def remove_meal(week_id):
     meal_id = data['meal_id']
 
     # Recupera il menu corrente
-    menu_corrente = get_menu_corrente()
+    menu_corrente = get_menu_corrente(week_id)
 
     # Rimuovi il pasto
     updated_menu = remove_meal_from_menu(menu_corrente, day, meal, meal_id)
@@ -341,6 +341,48 @@ def remove_meal(week_id):
 
     # Ricalcola i macronutrienti rimanenti
     remaining_macronutrienti = calcola_macronutrienti_rimanenti(updated_menu)
+
+    return jsonify({
+        'status': 'success',
+        'remaining_macronutrienti': remaining_macronutrienti
+    })
+
+
+@views.route('/update_meal_quantity', methods=['POST'])
+def update_meal_quantity():
+    data = request.get_json()
+    day = data['day']
+    meal = data['meal']
+    meal_id = data['meal_id']
+    quantity = float(data['quantity'])
+    week_id = data['week_id']
+
+    # Recupera il menu corrente
+    menu_corrente = get_menu_settimana(week_id)
+
+    # Aggiorna la quantità del pasto
+    for ricetta in menu_corrente['day'][day]['pasto'][meal]['ricette']:
+        if float(ricetta['id']) == float(meal_id):
+            old_qta = ricetta['qta']
+            ricetta['qta'] = quantity
+
+            # Ricalcola i macronutrienti per il giorno e la settimana
+            for macro in ['kcal', 'carboidrati', 'proteine', 'grassi']:
+                # Calcola la differenza in base alla nuova quantità rispetto alla vecchia
+                new_value = (ricetta[macro] / old_qta) * quantity
+                old_value = ricetta[macro]
+
+                difference = new_value - old_value
+
+                # Aggiorna i valori giornalieri e settimanali
+                menu_corrente['day'][day][macro] -= difference
+                menu_corrente['weekly'][macro] -= difference
+
+    # Salva il menu aggiornato
+    update_menu_corrente(menu_corrente, week_id)
+
+    # Ricalcola i macronutrienti rimanenti
+    remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente)
 
     return jsonify({
         'status': 'success',

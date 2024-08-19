@@ -32,7 +32,7 @@ function aggiornaTabellaMenu(menu) {
     ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena'].forEach(pasto => {
         const tr = document.createElement('tr');
         const tdPasto = document.createElement('td');
-        tdPasto.textContent = pasto.replace('_', ' ').capitalize();
+        tdPasto.textContent = capitalize(pasto.replace('_', ' '));
         tr.appendChild(tdPasto);
         days.forEach(giorno => {
             const td = document.createElement('td');
@@ -407,8 +407,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (selectedMeals.length > 0) {
         // Aggiungi le ricette selezionate al menu
         addMealsToMenu(currentDay, currentMeal, selectedMeals);
-    } else {
-        alert("Seleziona almeno una ricetta per aggiungerla al menu.");
     }
 
     // Chiudi il modal
@@ -816,7 +814,6 @@ function renderMenuEditor(data) {
                         <input type="text" class="form-control" value="${ricetta.nome_ricetta}" readonly>
                         <input type="number" class="form-control" value="${ricetta.qta}" min="0.1" step="0.1" onchange="updateMealQuantity('${day}', '${meal}', '${ricetta.id}', this.value)">
                         <button class="btn btn-danger btn-sm" onclick="removeMeal('${day}', '${meal}', '${ricetta.id}')">Rimuovi</button>
-                        <button class="btn btn-outline-success btn-sm" onclick="updateMealQuantity('${day}', '${meal}', '${ricetta.id}')">Salva</button>
                     `;
                     mealContainer.appendChild(ricettaDiv);
                 });
@@ -837,8 +834,29 @@ function renderMenuEditor(data) {
     });
 }
 
-function updateMealQuantity(day, meal, nomeRicetta, newQuantity) {
-    // Logica per aggiornare la quantità della ricetta nel menu
+function updateMealQuantity(day, meal, ricettaId, newQuantity) {
+    const data = {
+        day: day,
+        meal: meal,
+        meal_id: ricettaId,
+        quantity: newQuantity,
+        week_id: selectedWeekId
+    };
+
+    fetch(`/update_meal_quantity`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            aggiornaMacronutrientiRimanenti(data.remaining_macronutrienti);
+        }
+    })
+    .catch(error => console.error('Error:', error));
 }
 
 function removeMeal(day, meal, mealId) {
@@ -916,14 +934,10 @@ function addMealsToMenu(day, meal, selectedMeals) {
     .then(response => response.json())
     .then(data => {
         if (data.status === 'success') {
-            alert('I pasti sono stati aggiunti al menu con successo!');
             // Aggiorna la vista del menu
-            aggiornaTabellaMenu(data.menu); // Assicurati di avere questa funzione che aggiorna la tabella del menu
-
+            aggiornaTabellaMenu(data.menu);
             // Aggiorna i macronutrienti rimanenti
             aggiornaMacronutrientiRimanenti(data.remaining_macronutrienti);
-        } else {
-            alert('Si è verificato un errore durante l\'aggiunta dei pasti al menu.');
         }
     })
     .catch((error) => {
