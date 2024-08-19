@@ -824,10 +824,10 @@ def calcola_macronutrienti_rimanenti(menu):
         remaining_grassi = float(dati_giorno['grassi'])
 
         remaining_macronutrienti[giorno] = {
-            'kcal': max(remaining_kcal, 0),
-            'carboidrati': max(remaining_carboidrati, 0),
-            'proteine': max(remaining_proteine, 0),
-            'grassi': max(remaining_grassi, 0)
+            'kcal': remaining_kcal,
+            'carboidrati': remaining_carboidrati,
+            'proteine': remaining_proteine,
+            'grassi': remaining_grassi
         }
     return remaining_macronutrienti
 
