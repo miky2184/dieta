@@ -5,7 +5,8 @@ from .services.menu_services import (definisci_calorie_macronutrienti, save_weig
                                      salva_menu_corrente, get_menu_settimana, get_settimana, salva_ricetta,
                                      attiva_disattiva_ricetta, get_ricette, elimina_ingredienti, salva_utente_dieta,
                                      salva_nuova_ricetta, salva_ingredienti,
-                                     recupera_ingredienti, get_peso_hist, get_dati_utente, calcola_macronutrienti_rimanenti)
+                                     recupera_ingredienti, get_peso_hist, get_dati_utente, calcola_macronutrienti_rimanenti,
+                                     recupera_alimenti, salva_alimento, elimina_alimento)
 from copy import deepcopy
 
 views = Blueprint('views', __name__)
@@ -44,6 +45,8 @@ def index():
     # Calcola i macronutrienti rimanenti per ogni giorno
     remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente, macronutrienti)
 
+    alimenti = recupera_alimenti()
+
     # Questa sarà la pagina principale, passa i dati al template
     return render_template('index.html',
                            macronutrienti=macronutrienti,
@@ -51,7 +54,8 @@ def index():
                            menu=menu_corrente,
                            lista_spesa=lista_spesa,
                            settimane=settimane_salvate,
-                           remaining_macronutrienti=remaining_macronutrienti
+                           remaining_macronutrienti=remaining_macronutrienti,
+                           alimenti=alimenti
                            )
 
 
@@ -209,3 +213,35 @@ from flask import jsonify
 def get_data_utente():
     utente = get_dati_utente()
     return jsonify(utente)
+
+
+@views.route('/save_alimento', methods=['POST'])
+def save_alimento():
+    data = request.get_json()
+    alimento_id = data.get('id')
+    nome = data.get('nome')
+    carboidrati = data.get('carboidrati')
+    proteine = data.get('proteine')
+    grassi = data.get('grassi')
+    frutta = data.get('frutta')
+    carne_bianca = data.get('carne_bianca')
+    carne_rossa = data.get('carne_rossa')
+    pane = data.get('pane')
+    verdura = data.get('verdura')
+    confezionato = data.get('confezionato')
+    vegan = data.get('vegan')
+    pesce = data.get('pesce')
+
+    salva_alimento(alimento_id, nome, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura, confezionato, vegan, pesce)
+
+    return jsonify({'status': 'success', 'message': 'Alimento salvato con successo!'})
+
+
+@views.route('/delete_alimento', methods=['POST'])
+def delete_alimento():
+    data = request.get_json()
+    alimento_id = data.get('id')
+
+    elimina_alimento(alimento_id)
+
+    return jsonify({'status': 'success', 'message': 'Alimento eliminato con successo!'})

@@ -788,3 +788,42 @@ def calcola_macronutrienti_rimanenti(menu, macronutrienti):
             'grassi': max(remaining_grassi, 0)
         }
     return remaining_macronutrienti
+
+
+def recupera_alimenti():
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        query = "SELECT * FROM dieta.alimento ORDER BY nome;"
+        cur.execute(query)
+        alimenti = cur.fetchall()
+    return alimenti
+
+
+def salva_alimento(id, nome, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura, confezionato, vegan, pesce):
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        if id:
+            query = """
+                UPDATE dieta.alimento
+                SET nome = %s, carboidrati = %s, proteine = %s, grassi = %s, frutta = %s, carne_bianca = %s,
+                    carne_rossa = %s, pane = %s, verdura = %s, confezionato = %s, vegan = %s, pesce = %s
+                WHERE id = %s
+            """
+            params = (nome, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura, confezionato, vegan, pesce, id)
+        else:
+            query = """
+                INSERT INTO dieta.alimento (nome, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura, confezionato, vegan, pesce)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            params = (nome, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura, confezionato, vegan, pesce)
+        cur.execute(query, params)
+        conn.commit()
+
+
+def elimina_alimento(alimento_id):
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        query = "DELETE FROM dieta.alimento WHERE id = %s"
+        cur.execute(query, (alimento_id,))
+        conn.commit()
+

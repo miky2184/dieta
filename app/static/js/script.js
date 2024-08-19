@@ -140,7 +140,8 @@ function filterTable() {
     const contornoFilter = document.getElementById('filter-contorno').value;
     const attivaFilter = document.getElementById('filter-attiva').value;
 
-    const table = document.querySelector('.table tbody');
+    const table = document.getElementById('ricette-table').querySelector('tbody');
+
     const rows = table.getElementsByTagName('tr');
 
     for (let i = 0; i < rows.length; i++) {
@@ -183,7 +184,91 @@ function filterTable() {
             spuntinoMatch &&
             principaleMatch &&
             contornoMatch &&
-            attivaMatch) {
+            attivaMatch)
+        {
+            rows[i].style.display = '';
+        } else {
+            rows[i].style.display = 'none';
+        }
+    }
+}
+
+// Funzione per filtrare la tabella degli alimenti
+function filterAlimentiTable() {
+    const nomeFilter = document.getElementById('filter-nome-alimento').value.toLowerCase();
+
+    const calorieMin = parseFloat(document.getElementById('filter-calorie-min').value) || -Infinity;
+    const calorieMax = parseFloat(document.getElementById('filter-calorie-max').value) || Infinity;
+    const carboMin = parseFloat(document.getElementById('filter-carbo-min').value) || -Infinity;
+    const carboMax = parseFloat(document.getElementById('filter-carbo-max').value) || Infinity;
+    const proteineMin = parseFloat(document.getElementById('filter-proteine-min').value) || -Infinity;
+    const proteineMax = parseFloat(document.getElementById('filter-proteine-max').value) || Infinity;
+    const grassiMin = parseFloat(document.getElementById('filter-grassi-min').value) || -Infinity;
+    const grassiMax = parseFloat(document.getElementById('filter-grassi-max').value) || Infinity;
+
+    const macroFilter = document.getElementById('filter-macro').value;
+    const fruttaFilter = document.getElementById('filter-frutta').value;
+    const carneBiancaFilter = document.getElementById('filter-carne-bianca').value;
+    const carneRossaFilter = document.getElementById('filter-carne-rossa').value;
+    const paneFilter = document.getElementById('filter-pane').value;
+    const verduraFilter = document.getElementById('filter-verdura').value;
+    const confezionatoFilter = document.getElementById('filter-confezionato').value;
+    const veganFilter = document.getElementById('filter-vegan').value;
+    const pesceFilter = document.getElementById('filter-pesce').value;
+
+    const table = document.getElementById('alimenti-table').querySelector('tbody');
+    const rows = table.getElementsByTagName('tr');
+
+    for (let i = 0; i < rows.length; i++) {
+        const cells = rows[i].getElementsByTagName('td');
+        const nomeCell = cells[0].textContent.toLowerCase();
+
+        const calorieCell = parseFloat(cells[1].textContent) || 0;
+        const carboCell = parseFloat(cells[2].textContent) || 0;
+        const proteineCell = parseFloat(cells[3].textContent) || 0;
+        const grassiCell = parseFloat(cells[4].textContent) || 0;
+
+        const macroCell = cells[5].textContent;
+        const fruttaCell = cells[6].querySelector('input').checked.toString();
+        const carneBiancaCell = cells[7].querySelector('input').checked.toString();
+        const carneRossaCell = cells[8].querySelector('input').checked.toString();
+        const paneCell = cells[9].querySelector('input').checked.toString();
+        const verduraCell = cells[10].querySelector('input').checked.toString();
+        const confezionatoCell = cells[11].querySelector('input').checked.toString();
+        const veganCell = cells[12].querySelector('input').checked.toString();
+        const pesceCell = cells[13].querySelector('input').checked.toString();
+
+        const calorieMatch = calorieCell >= calorieMin && calorieCell <= calorieMax;
+        const carboMatch = carboCell >= carboMin && carboCell <= carboMax;
+        const proteineMatch = proteineCell >= proteineMin && proteineCell <= proteineMax;
+        const grassiMatch = grassiCell >= grassiMin && grassiCell <= grassiMax;
+
+        const macroMatch = (macroFilter === 'all') || (macroFilter === macroCell);
+        const fruttaMatch = (fruttaFilter === 'all') || (fruttaFilter === fruttaCell);
+        const carneBiancaMatch = (carneBiancaFilter === 'all') || (carneBiancaFilter === carneBiancaCell);
+        const carneRossaMatch = (carneRossaFilter === 'all') || (carneRossaFilter === carneRossaCell);
+        const paneMatch = (paneFilter === 'all') || (paneFilter === paneCell);
+        const verduraMatch = (verduraFilter === 'all') || (verduraFilter === verduraCell);
+        const confezionatoMatch = (confezionatoFilter === 'all') || (confezionatoFilter === confezionatoCell);
+        const veganMatch = (veganFilter === 'all') || (veganFilter === veganCell);
+        const pesceMatch = (pesceFilter === 'all') || (pesceFilter === pesceCell);
+
+        if (
+            nomeCell.includes(nomeFilter) &&
+            calorieMatch &&
+            carboMatch &&
+            proteineMatch &&
+            grassiMatch &&
+            macroMatch &&
+            fruttaMatch &&
+            carneBiancaMatch &&
+            carneRossaMatch &&
+            paneMatch &&
+            verduraMatch &&
+            confezionatoMatch &&
+            veganMatch &&
+            pesceMatch
+        ) {
             rows[i].style.display = '';
         } else {
             rows[i].style.display = 'none';
@@ -570,6 +655,73 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => console.error('Errore nel caricamento dei dati:', error));
     });
 
+    // Event listener per il salvataggio degli alimenti
+    document.querySelectorAll('.save-alimento-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const alimentoId = this.getAttribute('data-alimento-id');
+            const alimentoData = {
+                id: alimentoId,
+                nome: document.querySelector(`input[name='nome_${alimentoId}']`).value,
+                carboidrati: parseFloat(document.querySelector(`input[name='carboidrati_${alimentoId}']`).value),
+                proteine: parseFloat(document.querySelector(`input[name='proteine_${alimentoId}']`).value),
+                grassi: parseFloat(document.querySelector(`input[name='grassi_${alimentoId}']`).value),
+                frutta: document.querySelector(`input[name='frutta_${alimentoId}']`).checked,
+                carne_bianca: document.querySelector(`input[name='carne_bianca_${alimentoId}']`).checked,
+                carne_rossa: document.querySelector(`input[name='carne_rossa_${alimentoId}']`).checked,
+                pane: document.querySelector(`input[name='pane_${alimentoId}']`).checked,
+                verdura: document.querySelector(`input[name='verdura_${alimentoId}']`).checked,
+                confezionato: document.querySelector(`input[name='confezionato_${alimentoId}']`).checked,
+                vegan: document.querySelector(`input[name='vegan_${alimentoId}']`).checked,
+                pesce: document.querySelector(`input[name='pesce_${alimentoId}']`).checked
+            };
+            saveAlimento(alimentoData);
+        });
+    });
+
+    // Event listener per l'eliminazione degli alimenti
+    document.querySelectorAll('.delete-alimento-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const alimentoId = this.getAttribute('data-alimento-id');
+            deleteAlimento(alimentoId);
+        });
+    });
+
+    // Funzione per salvare l'alimento
+    function saveAlimento(alimentoData) {
+        fetch('/save_alimento', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(alimentoData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert('Alimento salvato con successo!');
+        })
+        .catch((error) => {
+            console.error('Errore:', error);
+        });
+    }
+
+    // Funzione per eliminare l'alimento
+    function deleteAlimento(alimentoId) {
+        fetch('/delete_alimento', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ id: alimentoId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert('Alimento eliminato con successo!');
+            window.location.reload(); // Ricarica la pagina per aggiornare la lista
+        })
+        .catch((error) => {
+            console.error('Errore:', error);
+        });
+    }
 });
 
 // Utility function to capitalize the first letter of a string

@@ -1,0 +1,149 @@
+<div id="Alimenti" class="tabcontent">
+    <table id="alimenti-table" class="table table-striped table-hover table-margin">
+        <thead>
+        <tr>
+            <th class="nome-alimento"><button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addFoodModal">Alimento +
+            </button></th>
+            <th class="calorie">Calorie (kcal)</th>
+            <th class="carboidrati">Carboidrati (g)</th>
+            <th class="proteine">Proteine (g)</th>
+            <th class="grassi">Grassi (g)</th>
+            <th class="macro">Macro</th>
+            <th class="frutta">Frutta</th>
+            <th class="carne-bianca">Carne Bianca</th>
+            <th class="carne-rossa">Carne Rossa</th>
+            <th class="pane">Pane</th>
+            <th class="verdura">Verdura</th>
+            <th class="confezionato">Confezionato</th>
+            <th class="vegan">Vegan</th>
+            <th class="pesce">Pesce</th>
+            <th class="azione">Azioni</th>
+        </tr>
+        <tr>
+            <th><input type="text" id="filter-nome-alimento" class="form-control form-control-sm filter-text"
+                       placeholder="Filtra per nome" onkeyup="filterAlimentiTable()"></th>
+            <th><input type="number" id="filter-calorie-min" class="form-control form-control-sm filter-number"
+                       placeholder="Min" oninput="filterAlimentiTable()">
+                <input type="number" id="filter-calorie-max" class="form-control form-control-sm filter-number"
+                       placeholder="Max" oninput="filterAlimentiTable()">
+            </th>
+            <th><input type="number" id="filter-carbo-min" class="form-control form-control-sm filter-number"
+                       placeholder="Min" oninput="filterAlimentiTable()">
+                <input type="number" id="filter-carbo-max" class="form-control form-control-sm filter-number"
+                       placeholder="Max" oninput="filterAlimentiTable()">
+            </th>
+            <th><input type="number" id="filter-proteine-min" class="form-control form-control-sm filter-number"
+                       placeholder="Min" oninput="filterAlimentiTable()">
+                <input type="number" id="filter-proteine-max" class="form-control form-control-sm filter-number"
+                       placeholder="Max" oninput="filterAlimentiTable()">
+            </th>
+            <th><input type="number" id="filter-grassi-min" class="form-control form-control-sm filter-number"
+                       placeholder="Min" oninput="filterAlimentiTable()">
+                <input type="number" id="filter-grassi-max" class="form-control form-control-sm filter-number"
+                       placeholder="Max" oninput="filterAlimentiTable()">
+            </th>
+            <th><select id="filter-macro" class="form-select form-select-sm" onchange="filterAlimentiTable()">
+                <option value="all"></option>
+                <option value="C">C</option>
+                <option value="P">P</option>
+                <option value="G">G</option>
+            </select></th>
+            <th><select id="filter-frutta" class="form-select form-select-sm" onchange="filterAlimentiTable()">
+                <option value="all"></option>
+                <option value="true">T</option>
+                <option value="false">F</option>
+            </select></th>
+            <th><select id="filter-carne-bianca" class="form-select form-select-sm" onchange="filterAlimentiTable()">
+                <option value="all"></option>
+                <option value="true">T</option>
+                <option value="false">F</option>
+            </select></th>
+            <th><select id="filter-carne-rossa" class="form-select form-select-sm" onchange="filterAlimentiTable()">
+                <option value="all"></option>
+                <option value="true">T</option>
+                <option value="false">F</option>
+            </select></th>
+            <th><select id="filter-pane" class="form-select form-select-sm" onchange="filterAlimentiTable()">
+                <option value="all"></option>
+                <option value="true">T</option>
+                <option value="false">F</option>
+            </select></th>
+            <th><select id="filter-verdura" class="form-select form-select-sm" onchange="filterAlimentiTable()">
+                <option value="all"></option>
+                <option value="true">T</option>
+                <option value="false">F</option>
+            </select></th>
+            <th><select id="filter-confezionato" class="form-select form-select-sm" onchange="filterAlimentiTable()">
+                <option value="all"></option>
+                <option value="true">T</option>
+                <option value="false">F</option>
+            </select></th>
+            <th><select id="filter-vegan" class="form-select form-select-sm" onchange="filterAlimentiTable()">
+                <option value="all"></option>
+                <option value="true">T</option>
+                <option value="false">F</option>
+            </select></th>
+            <th><select id="filter-pesce" class="form-select form-select-sm" onchange="filterAlimentiTable()">
+                <option value="all"></option>
+                <option value="true">T</option>
+                <option value="false">F</option>
+            </select></th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for alimento in alimenti %}
+        <tr>
+            <td class="nome-alimento">
+                <div>
+                    <input type="text" class="form-control filter-text" data-alimento-id="{{ alimento.id }}"
+                           name="nome_{{ alimento.id }}" value="{{ alimento.nome }}">
+                    <label hidden class="form-control form-control-sm">{{ alimento.nome }}</label>
+                </div>
+            </td>
+            <td class="calorie">{{ alimento.kcal }}</td>
+            <td class="carboidrati">
+                <div>
+                    <input type="text" class="form-control filter-text" data-alimento-id="{{ alimento.id }}"
+                           name="carboidrati_{{ alimento.id }}" value="{{ alimento.carboidrati }}">
+                    <label hidden class="form-control form-control-sm">{{ alimento.carboidrati }}</label>
+                </div>
+                </td>
+            <td class="proteine">
+                <div>
+                    <input type="text" class="form-control filter-text" data-alimento-id="{{ alimento.id }}"
+                           name="proteine_{{ alimento.id }}" value="{{ alimento.proteine }}">
+                    <label hidden class="form-control form-control-sm">{{ alimento.proteine }}</label>
+                </div>
+                </td>
+            <td class="grassi">
+                <div>
+                    <input type="text" class="form-control filter-text" data-alimento-id="{{ alimento.id }}"
+                           name="grassi_{{ alimento.id }}" value="{{ alimento.grassi }}">
+                    <label hidden class="form-control form-control-sm">{{ alimento.grassi }}</label>
+                </div>
+                </td>
+            <td class="macro">{{ alimento.macro }}</td>
+            <td class="frutta"><div><input type="checkbox" name="frutta_{{ alimento.id }}" {% if alimento.frutta %}checked{% endif %}><label hidden class="form-control form-control-sm">{{ alimento.frutta }}</label></div></td>
+            <td class="carne-bianca"><div><input type="checkbox" name="carne_bianca_{{ alimento.id }}" {% if alimento.carne_bianca %}checked{% endif %}><label hidden class="form-control form-control-sm">{{ alimento.carne_bianca }}</label></div></td>
+            <td class="carne-rossa"><div><input type="checkbox" name="carne_rossa_{{ alimento.id }}" {% if alimento.carne_rossa %}checked{% endif %}><label hidden class="form-control form-control-sm">{{ alimento.carne_rossa }}</label></div></td>
+            <td class="pane"><div><input type="checkbox" name="pane_{{ alimento.id }}" {% if alimento.pane %}checked{% endif %}><label hidden class="form-control form-control-sm">{{ alimento.pane }}</label></div></td>
+            <td class="verdura"><div><input type="checkbox" name="verdura_{{ alimento.id }}" {% if alimento.verdura %}checked{% endif %}><label hidden class="form-control form-control-sm">{{ alimento.verdura }}</label></div></td>
+            <td class="confezionato"><div><input type="checkbox" name="confezionato_{{ alimento.id }}" {% if alimento.confezionato %}checked{% endif %}><label hidden class="form-control form-control-sm">{{ alimento.confezionato }}</label></div></td>
+            <td class="vegan"><div><input type="checkbox" name="vegan_{{ alimento.id }}" {% if alimento.vegan %}checked{% endif %}><label hidden class="form-control form-control-sm">{{ alimento.vegan }}</label></div></td>
+            <td class="pesce"><div><input type="checkbox" name="pesce_{{ alimento.id }}" {% if alimento.pesce %}checked{% endif %}><label hidden class="form-control form-control-sm">{{ alimento.pesce }}</label></div></td>
+            <td class="azione">
+                <div class="btn-group" role="group">
+                    <button class="btn btn-outline-primary btn-sm save-alimento-btn"
+                            data-alimento-id="{{ alimento.id }}">Salva
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm delete-alimento-btn"
+                            data-alimento-id="{{ alimento.id }}">Elimina
+                    </button>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>

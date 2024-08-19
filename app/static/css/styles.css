@@ -2,6 +2,7 @@ body {
   background-color: #f8f9fa !important;
   font-family: Arial, sans-serif !important;
   font-size: 0.8rem !important;
+  padding: 1em;
 }
 
 .tab {
@@ -42,9 +43,10 @@ th, td {
     vertical-align: middle;
 }
 
-th.nome-ricetta, td.nome-ricetta {
+th.nome-alimento, td.nome-alimento,
+ th.nome-ricetta, td.nome-ricetta{
     text-align: center;
-    width: 30%; /* Definisci la larghezza maggiore per la colonna Nome Ricetta */
+    width: 30%; /* Definisci la larghezza maggiore per la colonna Nome */
     min-width: 200px; /* Aggiungi una larghezza minima */
 }
 
@@ -62,7 +64,16 @@ th.colazione-sec, td.colazione-sec,
 th.spuntino, td.spuntino,
 th.principale, td.principale,
 th.contorno, td.contorno,
-th.attiva, td.attiva {
+th.attiva, td.attiva,
+th.frutta, td.frutta,
+th.macro, td.macro,
+th.carne-bianca, td.carne-bianca,
+th.carne-rossa, td.carne-rossa,
+th.pane, td.pane,
+th.verdura, td.verdura,
+th.confezionato, td.confezionato,
+th.vegan, td.vegan,
+th.pesce, td.pesce {
     text-align: center;
     width: 6%; /* Puoi regolare questa larghezza */
 }
@@ -91,8 +102,9 @@ td div:last-child {
         padding: 6px;
     }
 
-    th.nome-ricetta, td.nome-ricetta {
-        width: 50%; /* Rendi la colonna Nome Ricetta più larga su dispositivi mobili */
+    th.nome-alimento, td.nome-alimento,
+     th.nome-ricetta, td.nome-ricetta{
+        width: 50%; /* Rendi la colonna Nome Alimento più larga su dispositivi mobili */
     }
 
     th.calorie, td.calorie,
@@ -104,7 +116,15 @@ td div:last-child {
     th.spuntino, td.spuntino,
     th.principale, td.principale,
     th.contorno, td.contorno,
-    th.attiva, td.attiva {
+    th.attiva, td.attiva,
+    th.frutta, td.frutta,
+    th.carne_bianca, td.carne_bianca,
+    th.carne_rossa, td.carne_rossa,
+    th.pane, td.pane,
+    th.verdura, td.verdura,
+    th.confezionato, td.confezionato,
+    th.vegan, td.vegan,
+    th.pesce, td.pesce {
         width: 10%;
     }
 
