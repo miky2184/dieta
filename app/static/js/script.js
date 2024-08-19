@@ -398,6 +398,24 @@ document.addEventListener('DOMContentLoaded', function() {
       return new bootstrap.Popover(popoverTriggerEl);
     });
 
+    document.getElementById('confirmAddMeal').addEventListener('click', function() {
+    const selectedMeals = [];
+    document.querySelectorAll('.meal-checkbox:checked').forEach(checkbox => {
+        selectedMeals.push(checkbox.value);
+    });
+
+    if (selectedMeals.length > 0) {
+        // Aggiungi le ricette selezionate al menu
+        addMealsToMenu(currentDay, currentMeal, selectedMeals);
+    } else {
+        alert("Seleziona almeno una ricetta per aggiungerla al menu.");
+    }
+
+    // Chiudi il modal
+    const addMealModal = bootstrap.Modal.getInstance(document.getElementById('addMealModal'));
+    addMealModal.hide();
+});
+
     document.querySelectorAll('.save-btn').forEach(button => {
         button.addEventListener('click', function() {
             const ricettaId = this.getAttribute('data-ricetta-id');
@@ -728,8 +746,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Utility function to capitalize the first letter of a string
-String.prototype.capitalize = function() {
-    return this.charAt(0).toUpperCase() + this.slice(1);
+function capitalize(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 $(document).ready(function() {
@@ -748,6 +766,182 @@ $(document).ready(function() {
             .catch(error => console.error('Error loading ingredients:', error));
     });
 });
+
+let selectedWeekId = null;
+
+function loadMenuData() {
+    selectedWeekId = document.getElementById('selectMenu').value;
+    // Fai il fetch per caricare i dati del menu per la settimana selezionata
+    fetch(`/menu_settimana/${selectedWeekId}`)
+        .then(response => response.json())
+        .then(data => {
+            // Qui inserisci la logica per caricare i dati del menu nel div #menuEditor
+            renderMenuEditor(data);
+        })
+        .catch(error => console.error('Errore nel caricamento del menu:', error));
+}
+
+function renderMenuEditor(data) {
+    const menuEditor = document.getElementById("menuEditor");
+    menuEditor.innerHTML = ''; // Pulisce l'editor
+    const menu = data.menu;
+
+    const days = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
+    const meals = ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena'];
+
+    days.forEach(day => {
+        const remaining = data.remaining_macronutrients[day];
+
+        const dayContainer = document.createElement('div');
+        dayContainer.classList.add('day-container');
+        const dayTitle = document.createElement('h4');
+        dayTitle.textContent = `${capitalize(day)} - Calorie rimanenti: ${remaining.kcal.toFixed(2)}, Carboidrati: ${remaining.carboidrati.toFixed(2)}g, Proteine: ${remaining.proteine.toFixed(2)}g, Grassi: ${remaining.grassi.toFixed(2)}g`;
+        dayContainer.appendChild(dayTitle);
+
+        meals.forEach(meal => {
+            const mealContainer = document.createElement('div');
+            mealContainer.classList.add('meal-container');
+            const mealTitle = document.createElement('h5');
+            mealTitle.textContent = capitalize(meal);
+            mealContainer.appendChild(mealTitle);
+
+            if (menu.day[day].pasto[meal].ricette.length > 0) {
+                menu.day[day].pasto[meal].ricette.forEach(ricetta => {
+                    const ricettaDiv = document.createElement('div');
+                    const dynamicId = `meal-${ricetta.id}-${day}-${meal}`;
+                    ricettaDiv.id = dynamicId;
+                    ricettaDiv.classList.add('ricetta');
+                    ricettaDiv.innerHTML = `
+                        <input hidden type="text" class="form-control" value="${ricetta.id}">
+                        <input type="text" class="form-control" value="${ricetta.nome_ricetta}" readonly>
+                        <input type="number" class="form-control" value="${ricetta.qta}" min="0.1" step="0.1" onchange="updateMealQuantity('${day}', '${meal}', '${ricetta.id}', this.value)">
+                        <button class="btn btn-danger btn-sm" onclick="removeMeal('${day}', '${meal}', '${ricetta.id}')">Rimuovi</button>
+                        <button class="btn btn-outline-success btn-sm" onclick="updateMealQuantity('${day}', '${meal}', '${ricetta.id}')">Salva</button>
+                    `;
+                    mealContainer.appendChild(ricettaDiv);
+                });
+            }
+
+            const addMealBtn = document.createElement('button');
+            addMealBtn.textContent = "Aggiungi Ricetta";
+            addMealBtn.classList.add('btn', 'btn-success', 'btn-sm');
+            addMealBtn.onclick = function() {
+                addNewMeal(day, meal);
+            };
+            mealContainer.appendChild(addMealBtn);
+
+            dayContainer.appendChild(mealContainer);
+        });
+
+        menuEditor.appendChild(dayContainer);
+    });
+}
+
+function updateMealQuantity(day, meal, nomeRicetta, newQuantity) {
+    // Logica per aggiornare la quantità della ricetta nel menu
+}
+
+function removeMeal(day, meal, mealId) {
+    fetch(`/remove_meal/${selectedWeekId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            day: day,
+            meal: meal,
+            meal_id: mealId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Rimuovi il pasto dalla visualizzazione
+            document.getElementById(`meal-${mealId}-${day}-${meal}`).remove();
+
+            // Aggiorna i macronutrienti rimanenti nella visualizzazione
+            aggiornaMacronutrientiRimanenti(data.remaining_macronutrienti);
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+
+let currentDay = '';
+let currentMeal = '';
+
+function addNewMeal(day, meal) {
+    currentDay = day;
+    currentMeal = meal;
+
+    // Fetch delle ricette disponibili per quel pasto
+    fetch(`/get_available_meals?meal=${meal}`)
+        .then(response => response.json())
+        .then(data => {
+            const mealSelectionBody = document.getElementById('mealSelectionBody');
+            mealSelectionBody.innerHTML = ''; // Pulisce la tabella
+
+            data.forEach(ricetta => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${ricetta.nome_ricetta}</td>
+                    <td>${ricetta.kcal}</td>
+                    <td>${ricetta.carboidrati}</td>
+                    <td>${ricetta.proteine}</td>
+                    <td>${ricetta.grassi}</td>
+                    <td><input type="checkbox" value="${ricetta.id}" class="meal-checkbox"></td>
+                `;
+                mealSelectionBody.appendChild(row);
+            });
+
+            // Mostra il modal
+            const addMealModal = new bootstrap.Modal(document.getElementById('addMealModal'));
+            addMealModal.show();
+        });
+}
+
+
+function addMealsToMenu(day, meal, selectedMeals) {
+    fetch(`/add_meals_to_menu/${selectedWeekId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            day: day,
+            meal: meal,
+            selectedMeals: selectedMeals
+        }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('I pasti sono stati aggiunti al menu con successo!');
+            // Aggiorna la vista del menu
+            aggiornaTabellaMenu(data.menu); // Assicurati di avere questa funzione che aggiorna la tabella del menu
+
+            // Aggiorna i macronutrienti rimanenti
+            aggiornaMacronutrientiRimanenti(data.remaining_macronutrienti);
+        } else {
+            alert('Si è verificato un errore durante l\'aggiunta dei pasti al menu.');
+        }
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+}
+
+function aggiornaMacronutrientiRimanenti(remaining_macronutrienti) {
+    const days = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
+    const macroNutrients = ['kcal', 'carboidrati', 'proteine', 'grassi'];
+
+    days.forEach(giorno => {
+        macroNutrients.forEach(macro => {
+            const remainingValue = remaining_macronutrienti[giorno][macro];
+            document.getElementById(`remaining-${macro}-${giorno}`).textContent = remainingValue.toFixed(2);
+        });
+    });
+}
 
 
 function submitWeight() {

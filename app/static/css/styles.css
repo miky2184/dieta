@@ -148,3 +148,43 @@ td div:last-child {
         font-size: 16px;
     }
 }
+
+.day-container {
+    margin-bottom: 20px;
+}
+
+.meal-container {
+    margin-left: 20px;
+    margin-bottom: 15px;
+}
+
+.ricetta {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.ricetta input {
+    margin-right: 10px;
+    width: 60%;
+}
+
+.ricetta button {
+    margin-left: 10px;
+}
+
+#mealSelectionTable {
+    margin-top: 20px;
+}
+
+#mealSelectionTable .table th,
+#mealSelectionTable .table td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.modal-footer .btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+

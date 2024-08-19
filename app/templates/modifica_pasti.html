@@ -1,0 +1,15 @@
+<div id="ModificaPasti" class="tabcontent">
+    <h3>Modifica Pasti</h3>
+    <!-- Dropdown per selezionare la settimana -->
+    <div class="table-margin">
+        <select class="form-select form-select-sm" id="selectMenu" onchange="loadMenuData()">
+            {% for settimana in settimane %}
+            <option value="{{ settimana.id }}">Settimana dal {{ settimana.data_inizio }} al {{ settimana.data_fine }}
+            </option>
+            {% endfor %}
+        </select>
+        <div id="menuEditor">
+            <!-- Editor del menu caricato dinamicamente -->
+        </div>
+    </div>
+</div>

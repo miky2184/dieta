@@ -6,7 +6,8 @@ from .services.menu_services import (definisci_calorie_macronutrienti, save_weig
                                      attiva_disattiva_ricetta, get_ricette, elimina_ingredienti, salva_utente_dieta,
                                      salva_nuova_ricetta, salva_ingredienti,
                                      recupera_ingredienti, get_peso_hist, get_dati_utente, calcola_macronutrienti_rimanenti,
-                                     recupera_alimenti, salva_alimento, elimina_alimento, salva_nuovo_alimento)
+                                     recupera_alimenti, salva_alimento, elimina_alimento, salva_nuovo_alimento,
+                                     aggiungi_ricetta_al_menu, update_menu_corrente, remove_meal_from_menu)
 from copy import deepcopy
 
 views = Blueprint('views', __name__)
@@ -17,12 +18,12 @@ def index():
     # Calcola le calorie e i macronutrienti
     macronutrienti = definisci_calorie_macronutrienti()
     # Recupera le ricette dal database
-    ricette = carica_ricette(False)
+    ricette = carica_ricette(stagionalita=False)
     # Recupera il menu corrente
     menu_corrente = get_menu_corrente()
 
     if not menu_corrente:
-        ricette_menu = carica_ricette(True)
+        ricette_menu = carica_ricette(stagionalita=True)
         settimana_corrente = deepcopy(get_settimana(macronutrienti))
         genera_menu(settimana_corrente, False, ricette_menu)
         genera_menu(settimana_corrente, True, ricette)
@@ -30,7 +31,7 @@ def index():
         menu_corrente = settimana_corrente
 
     if not get_menu_settima_prossima():
-        ricette_menu = carica_ricette(True)
+        ricette_menu = carica_ricette(stagionalita=True)
         prossima_settimana = deepcopy(get_settimana(macronutrienti))
         genera_menu(prossima_settimana, False, ricette_menu)
         genera_menu(prossima_settimana, True, ricette)
@@ -43,7 +44,7 @@ def index():
     lista_spesa = stampa_lista_della_spesa(menu_corrente.get('all_food'))
 
     # Calcola i macronutrienti rimanenti per ogni giorno
-    remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente, macronutrienti)
+    remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente)
 
     alimenti = recupera_alimenti()
 
@@ -64,7 +65,9 @@ def menu_settimana(settimana_id):
 
     menu_selezionato = get_menu_settimana(settimana_id)
 
-    return jsonify(menu=menu_selezionato)
+    macronutrienti_rimanenti = calcola_macronutrienti_rimanenti(menu_selezionato)
+
+    return jsonify({'menu':menu_selezionato, 'remaining_macronutrients': macronutrienti_rimanenti})
 
 
 @views.route('/get_lista_spesa', methods=['POST'])
@@ -265,3 +268,81 @@ def delete_alimento():
     elimina_alimento(alimento_id)
 
     return jsonify({'status': 'success', 'message': 'Alimento eliminato con successo!'})
+
+
+@views.route('/get_available_meals')
+def get_available_meals():
+    meal_type = request.args.get('meal')
+
+    meal_type_mapping = {
+        'colazione': 'colazione',
+        'colazione_sec': 'colazione_sec',
+        'spuntino_mattina': 'spuntino',
+        'pranzo': 'principale',
+        'cena': 'principale',
+        'spuntino_pomeriggio': 'spuntino'
+    }
+
+    generic_meal_type = meal_type_mapping.get(meal_type)
+
+    if not generic_meal_type:
+        return jsonify({'error': 'Tipo di pasto non valido'}), 400
+
+    # Logica per recuperare le ricette disponibili in base al tipo di pasto (colazione, pranzo, cena, ecc.)
+    # Supponiamo che tu abbia una funzione nel tuo menu_services.py che esegue questa logica
+    ricette = carica_ricette(stagionalita=True, attive=True)
+    available_meals = [ricetta for ricetta in ricette if ricetta[generic_meal_type]]
+
+    return jsonify(available_meals)
+
+
+@views.route('/add_meals_to_menu/<int:week_id>', methods=['POST'])
+def add_meals_to_menu(week_id):
+    data = request.get_json()
+    day = data['day']
+    meal = data['meal']
+    selected_meals = data['selectedMeals']
+
+    # Recupera il menu corrente
+    menu_corrente = get_menu_corrente()
+
+    # Aggiungi i pasti selezionati al menu corrente
+    for meal_id in selected_meals:
+        aggiungi_ricetta_al_menu(menu_corrente, day, meal, meal_id)
+
+    # Ricalcola i macronutrienti rimanenti
+    remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente)
+
+    # Salva il menu aggiornato
+    update_menu_corrente(menu_corrente, week_id)
+
+    return jsonify({
+        'status': 'success',
+        'menu': menu_corrente,  # Puoi restituire il menu aggiornato se vuoi aggiornarlo sul client
+        'remaining_macronutrienti': remaining_macronutrienti
+    })
+
+
+@views.route('/remove_meal/<int:week_id>', methods=['POST'])
+def remove_meal(week_id):
+    data = request.get_json()
+    day = data['day']
+    meal = data['meal']
+    meal_id = data['meal_id']
+
+    # Recupera il menu corrente
+    menu_corrente = get_menu_corrente()
+
+    # Rimuovi il pasto
+    updated_menu = remove_meal_from_menu(menu_corrente, day, meal, meal_id)
+
+    # Salva il menu aggiornato
+    update_menu_corrente(updated_menu, week_id)
+
+    # Ricalcola i macronutrienti rimanenti
+    remaining_macronutrienti = calcola_macronutrienti_rimanenti(updated_menu)
+
+    return jsonify({
+        'status': 'success',
+        'remaining_macronutrienti': remaining_macronutrienti
+    })

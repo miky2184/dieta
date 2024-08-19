@@ -89,7 +89,7 @@ def select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc: fl
         ):
             settimana.get('all_food').append(id_selezionato)
             mt.get('ids').append(id_selezionato)
-            r = {'qta': perc, 'nome_ricetta': ricetta_selezionata.get('nome_ricetta'), 'ricetta': ricetta_selezionata.get('ricetta')}
+            r = {'qta': perc, 'id': ricetta_selezionata.get('id'), 'nome_ricetta': ricetta_selezionata.get('nome_ricetta'), 'ricetta': ricetta_selezionata.get('ricetta')}
             mt.get('ricette').append(r)
             day['kcal'] = day.get('kcal') - ricetta_selezionata.get('kcal')
             day['carboidrati'] = day.get('carboidrati') - ricetta_selezionata.get('carboidrati')
@@ -106,13 +106,21 @@ def select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc: fl
     return found
 
 
-def carica_ricette(stagionalita: bool):
+def carica_ricette(ids=None, stagionalita: bool=False, attive:bool=False):
     """
     Carica tutte le ricette disponibili dal database in memoria.
     """
+    and_attive = ""
+    and_ids = ""
     and_stagionalita = ""
     if stagionalita:
-        and_stagionalita = "AND (frutta AND extract(month FROM current_date) = ANY(stagionalita) OR NOT frutta)"
+        and_stagionalita = " AND (frutta AND extract(month FROM current_date) = ANY(stagionalita) OR NOT frutta)"
+
+    if ids:
+        and_ids = f" AND r.id = {ids}"
+
+    if attive:
+        and_attive = " AND r.enabled"
 
     with get_db_connection() as conn:
         cur = conn.cursor()
@@ -145,7 +153,7 @@ LEFT JOIN (
 LEFT JOIN dieta.ingredienti_ricetta ir ON ir.id_ricetta = r.id
 LEFT JOIN dieta.alimento a ON ir.id_alimento = a.id
 where 1=1
-{and_stagionalita}
+{and_stagionalita} {and_ids} {and_attive}
 GROUP BY r.id, r.nome_ricetta,carboidrati, proteine, grassi, qta, r.colazione, r.spuntino, r.principale, r.contorno, r.colazione_sec, r.enabled, i.ricetta
  order by enabled desc, r.nome_ricetta
 
@@ -792,7 +800,7 @@ def get_dati_utente():
     return row
 
 
-def calcola_macronutrienti_rimanenti(menu, macronutrienti):
+def calcola_macronutrienti_rimanenti(menu):
     remaining_macronutrienti = {}
     for giorno, dati_giorno in menu['day'].items():
         remaining_kcal = float(dati_giorno['kcal'])
@@ -874,3 +882,82 @@ def salva_nuovo_alimento(name, carboidrati, proteine, grassi, frutta, carne_bian
             conn.commit()
 
         conn.commit()
+
+
+def aggiungi_ricetta_al_menu(menu, day, meal, meal_id):
+    ricetta = carica_ricette(ids=meal_id)
+    menu['day'][day]['pasto'][meal]['ricette'].append({
+        'id': ricetta[0]['id'],
+        'nome_ricetta': ricetta[0]['nome_ricetta'],
+        'qta': 1  # Puoi gestire la quantità come preferisci
+    })
+
+    # Aggiorna i macronutrienti per il giorno
+    menu['day'][day]['kcal'] -= float(ricetta[0]['kcal'])
+    menu['day'][day]['carboidrati'] -= float(ricetta[0]['carboidrati'])
+    menu['day'][day]['proteine'] -= float(ricetta[0]['proteine'])
+    menu['day'][day]['grassi'] -= float(ricetta[0]['grassi'])
+
+    # Aggiorna i macronutrienti settimanali
+    menu['weekly']['kcal'] -= float(ricetta[0]['kcal'])
+    menu['weekly']['carboidrati'] -= float(ricetta[0]['carboidrati'])
+    menu['weekly']['proteine'] -= float(ricetta[0]['proteine'])
+    menu['weekly']['grassi'] -= float(ricetta[0]['grassi'])
+
+
+def update_menu_corrente(menu, week_id):
+    with get_db_connection() as conn:
+        # Esegui le operazioni con la connessione
+        cur = conn.cursor()
+
+        # Converti tutti i Decimals a float
+        menu_convertito = convert_decimal_to_float(menu)
+
+        # Inserisce un nuovo menu per la prossima settimana
+        query = """
+            UPDATE dieta.menu_settimanale set menu = %s 
+            where id = %s
+        """
+
+        params = (Json(menu_convertito), week_id)
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+
+        # Recupera il menu per la settimana corrente
+        cur.execute(query, params)
+
+        conn.commit()
+
+def remove_meal_from_menu(menu, day, meal, meal_id):
+    # Trova la ricetta da rimuovere
+    ricetta_da_rimuovere = None
+    for ricetta in menu['day'][day]['pasto'][meal]['ricette']:
+        print(f"ricetta-id::{ricetta['id']}")
+        print(f"meal_id::{meal_id}")
+        if int(ricetta['id']) == int(meal_id):
+            print("dentro")
+            ricetta_da_rimuovere = ricetta
+            print(f"ricetta_da_rimuovere::{ricetta_da_rimuovere}")
+            break
+
+    # Se la ricetta è trovata, rimuovila
+    if ricetta_da_rimuovere:
+        menu['day'][day]['pasto'][meal]['ricette'].remove(ricetta_da_rimuovere)
+
+        # Recupera i valori nutrizionali della ricetta rimossa
+        ricetta_valori = carica_ricette(ids=meal_id)
+
+        # Aggiorna i macronutrienti per il giorno
+        menu['day'][day]['kcal'] += float(ricetta_valori[0]['kcal'])
+        menu['day'][day]['carboidrati'] += float(ricetta_valori[0]['carboidrati'])
+        menu['day'][day]['proteine'] += float(ricetta_valori[0]['proteine'])
+        menu['day'][day]['grassi'] += float(ricetta_valori[0]['grassi'])
+
+        # Aggiorna i macronutrienti settimanali
+        menu['weekly']['kcal'] += float(ricetta_valori[0]['kcal'])
+        menu['weekly']['carboidrati'] += float(ricetta_valori[0]['carboidrati'])
+        menu['weekly']['proteine'] += float(ricetta_valori[0]['proteine'])
+        menu['weekly']['grassi'] += float(ricetta_valori[0]['grassi'])
+
+    return menu
