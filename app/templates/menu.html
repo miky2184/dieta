@@ -6,7 +6,7 @@
                 data-bs-target="#generateMenuModal">Genera Menu
         </button>
         <button id="captureButton" class="btn btn-primary btn-sm">Stampa Menu</button>
-        <button id="deleteMenuBtn" class="btn btn-danger btn-sm">Elimina Menu</button>
+        <button id="deleteMenuBtn" class="btn btn-danger btn-sm" {% if settimane|length == 0 %}disabled{% endif %}>Elimina Menu</button>
     </div>
     </div>
     <div id="capture">

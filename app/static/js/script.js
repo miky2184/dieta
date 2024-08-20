@@ -1069,7 +1069,11 @@ function cleanFiltersAlimenti() {
 }
 
 function deleteMenu() {
-    const weekId = selectedWeekId; // Ottieni l'ID della settimana selezionata
+    var weekId = selectedWeekId; // Ottieni l'ID della settimana selezionata
+
+    if (!selectedWeekId) {
+        weekId = document.querySelector('.week-select').value;
+    }
 
     if (confirm("Sei sicuro di voler eliminare questo menu? Questa azione è irreversibile.")) {
         fetch(`/delete_menu/${weekId}`, {

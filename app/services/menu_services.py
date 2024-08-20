@@ -456,13 +456,11 @@ def get_menu_corrente(ids=None):
         # Esegui le operazioni con la connessione
         cur = conn.cursor()
 
-
         query = f"""
             SELECT menu 
               FROM dieta.menu_settimanale
             WHERE {where_cond}
         """
-
 
         # Stampa la query con parametri
         printer(cur.mogrify(query, params).decode('utf-8'))
@@ -988,6 +986,7 @@ def remove_meal_from_menu(menu, day, meal, meal_id):
 
 def delete_week_menu(week_id):
     with get_db_connection() as conn:
+
         # Esegui le operazioni con la connessione
         cur = conn.cursor()
 
