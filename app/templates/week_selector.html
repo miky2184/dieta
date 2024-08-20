@@ -1,14 +1,16 @@
 <!-- Dropdown per selezionare la settimana -->
-<div class="table-margin d-flex align-items-center">
-  <select class="form-select form-select-sm" id="settimana_select" onchange="cambiaMenuSettimana()" style="width: auto; height: 38px;">
+<div class="table-margin d-flex">
+    <div class="input-group mb-3">
+  <select class="form-select form-select-sm" id="settimana_select" onchange="cambiaMenuSettimana()">
       {% for settimana in settimane %}
       <option value="{{ settimana.id }}">Settimana dal {{ settimana.data_inizio }} al {{ settimana.data_fine }}</option>
       {% endfor %}
   </select>
-  <button type="button" class="btn btn-primary btn-sm ms-2" id="generateMenuBtn" data-bs-toggle="modal" data-bs-target="#generateMenuModal" style="height: 38px;">
+  <button type="button" class="btn btn-primary btn-sm" id="generateMenuBtn" data-bs-toggle="modal" data-bs-target="#generateMenuModal">
     Genera Menu
   </button>
-<button type="button" class="btn btn-secondary btn-sm ms-2" id="captureButton">
+<button type="button" class="btn btn-primary btn-sm" id="captureButton">
   Stampa Menu
 </button>
+    </div>
 </div>

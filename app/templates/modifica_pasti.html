@@ -1,29 +1,30 @@
 <div id="ModificaPasti" class="tabcontent">
     <!-- Dropdown per selezionare la settimana -->
-    <div class="table-margin">
-        <select class="form-select form-select-sm" id="selectMenu" onchange="loadMenuData()">
-            <option selected disabled>Scegli...</option>
-            {% for settimana in settimane %}
-            <option value="{{ settimana.id }}">Settimana dal {{ settimana.data_inizio }} al {{ settimana.data_fine }}
-            </option>
-            {% endfor %}
-        </select>
 
-        <div class="table-margin">
-        <select class="form-select form-select-sm" id="selectDay" onchange="filterDayCards()">
-            <option value="all">Tutti i giorni</option>
-            <option value="lunedi">Lunedì</option>
-            <option value="martedi">Martedì</option>
-            <option value="mercoledi">Mercoledì</option>
-            <option value="giovedi">Giovedì</option>
-            <option value="venerdi">Venerdì</option>
-            <option value="sabato">Sabato</option>
-            <option value="domenica">Domenica</option>
-        </select>
-        </div>
+    <div class="table-margin d-flex">
+        <div class="input-group mb-3">
+            <select class="form-select form-select-sm" id="selectMenu" onchange="loadMenuData()">
+                <option selected disabled>Scegli...</option>
+                {% for settimana in settimane %}
+                <option value="{{ settimana.id }}">Settimana dal {{ settimana.data_inizio }} al {{ settimana.data_fine
+                    }}
+                </option>
+                {% endfor %}
+            </select>
 
-        <div id="menuEditor">
-            <!-- Editor del menu caricato dinamicamente -->
+                <select class="form-select form-select-sm" id="selectDay" onchange="filterDayCards()">
+                    <option value="all">Tutti i giorni</option>
+                    <option value="lunedi">Lunedì</option>
+                    <option value="martedi">Martedì</option>
+                    <option value="mercoledi">Mercoledì</option>
+                    <option value="giovedi">Giovedì</option>
+                    <option value="venerdi">Venerdì</option>
+                    <option value="sabato">Sabato</option>
+                    <option value="domenica">Domenica</option>
+                </select>
         </div>
+    </div>
+    <div id="menuEditor">
+        <!-- Editor del menu caricato dinamicamente -->
     </div>
 </div>
