@@ -800,6 +800,9 @@ function filterDayCards() {
 
 
 function renderMenuEditor(data) {
+    const selectedWeek = document.getElementById('settimana_select').value;
+    const selectedDay = document.getElementById('day_select') ? document.getElementById('day_select').value : null;
+
     const menuEditor = document.getElementById("menuEditor");
     menuEditor.innerHTML = ''; // Pulisce l'editor
 
@@ -953,6 +956,12 @@ function renderMenuEditor(data) {
         dayContainer.appendChild(card);
         menuEditor.appendChild(dayContainer);
     });
+
+    // Ripristina lo stato delle selezioni
+    document.getElementById('settimana_select').value = selectedWeek;
+    if (selectedDay) {
+        document.getElementById('day_select').value = selectedDay;
+    }
 }
 
 
@@ -1052,10 +1061,7 @@ function addMealsToMenu(day, meal, selectedMeals) {
     })
     .then(response => response.json())
     .then(data => {
-        // Aggiorna la vista del menu
         renderMenuEditor(data);
-        // Aggiorna i macronutrienti rimanenti
-        //aggiornaMacronutrientiRimanenti(data.remaining_macronutrienti);
     })
     .catch((error) => {
         console.error('Error:', error);
