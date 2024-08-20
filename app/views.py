@@ -9,12 +9,15 @@ from .services.menu_services import (definisci_calorie_macronutrienti, save_weig
                                      recupera_alimenti, salva_alimento, elimina_alimento, salva_nuovo_alimento,
                                      aggiungi_ricetta_al_menu, update_menu_corrente, remove_meal_from_menu)
 from copy import deepcopy
+import time
 
 views = Blueprint('views', __name__)
 
 
 @views.route('/')
 def index():
+    lista_spesa = {}
+    remaining_macronutrienti = {}
     # Calcola le calorie e i macronutrienti
     macronutrienti = definisci_calorie_macronutrienti()
     # Recupera le ricette dal database
@@ -22,20 +25,63 @@ def index():
     # Recupera il menu corrente
     menu_corrente = get_menu_corrente()
 
+    # Se il menu non esiste, crea una struttura vuota con tutti i pasti inizializzati
     if not menu_corrente:
-        ricette_menu = carica_ricette(stagionalita=True)
-        settimana_corrente = deepcopy(get_settimana(macronutrienti))
-        genera_menu(settimana_corrente, False, ricette_menu)
-        genera_menu(settimana_corrente, True, ricette)
-        salva_menu_corrente(settimana_corrente)
-        menu_corrente = settimana_corrente
-
-    if not get_menu_settima_prossima():
-        ricette_menu = carica_ricette(stagionalita=True)
-        prossima_settimana = deepcopy(get_settimana(macronutrienti))
-        genera_menu(prossima_settimana, False, ricette_menu)
-        genera_menu(prossima_settimana, True, ricette)
-        salva_menu_settimana_prossima(prossima_settimana)
+        menu_corrente = {
+            'day': {
+                'lunedi': {'pasto': {
+                    'colazione': {'ricette': []},
+                    'spuntino_mattina': {'ricette': []},
+                    'pranzo': {'ricette': []},
+                    'spuntino_pomeriggio': {'ricette': []},
+                    'cena': {'ricette': []}
+                }, 'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0},
+                'martedi': {'pasto': {
+                    'colazione': {'ricette': []},
+                    'spuntino_mattina': {'ricette': []},
+                    'pranzo': {'ricette': []},
+                    'spuntino_pomeriggio': {'ricette': []},
+                    'cena': {'ricette': []}
+                }, 'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0},
+                'mercoledi': {'pasto': {
+                    'colazione': {'ricette': []},
+                    'spuntino_mattina': {'ricette': []},
+                    'pranzo': {'ricette': []},
+                    'spuntino_pomeriggio': {'ricette': []},
+                    'cena': {'ricette': []}
+                }, 'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0},
+                'giovedi': {'pasto': {
+                    'colazione': {'ricette': []},
+                    'spuntino_mattina': {'ricette': []},
+                    'pranzo': {'ricette': []},
+                    'spuntino_pomeriggio': {'ricette': []},
+                    'cena': {'ricette': []}
+                }, 'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0},
+                'venerdi': {'pasto': {
+                    'colazione': {'ricette': []},
+                    'spuntino_mattina': {'ricette': []},
+                    'pranzo': {'ricette': []},
+                    'spuntino_pomeriggio': {'ricette': []},
+                    'cena': {'ricette': []}
+                }, 'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0},
+                'sabato': {'pasto': {
+                    'colazione': {'ricette': []},
+                    'spuntino_mattina': {'ricette': []},
+                    'pranzo': {'ricette': []},
+                    'spuntino_pomeriggio': {'ricette': []},
+                    'cena': {'ricette': []}
+                }, 'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0},
+                'domenica': {'pasto': {
+                    'colazione': {'ricette': []},
+                    'spuntino_mattina': {'ricette': []},
+                    'pranzo': {'ricette': []},
+                    'spuntino_pomeriggio': {'ricette': []},
+                    'cena': {'ricette': []}
+                }, 'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0},
+            },
+            'weekly': {'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0},
+            'all_food': []
+        }
 
     # Recupera le settimane salvate per il dropdown
     settimane_salvate = get_settimane_salvate()
@@ -58,6 +104,69 @@ def index():
                            remaining_macronutrienti=remaining_macronutrienti,
                            alimenti=alimenti
                            )
+
+# @views.route('/generate_menu', methods=['POST'])
+# def generate_menu():
+#     macronutrienti = definisci_calorie_macronutrienti()
+#     menu_corrente = get_menu_corrente()
+#
+#     if not menu_corrente:
+#         ricette_menu = carica_ricette(stagionalita=True)
+#         settimana_corrente = deepcopy(get_settimana(macronutrienti))
+#         genera_menu(settimana_corrente, False, ricette_menu)
+#         genera_menu(settimana_corrente, True, ricette_menu)
+#         salva_menu_corrente(settimana_corrente)
+#
+#     if not get_menu_settima_prossima():
+#         ricette_menu = carica_ricette(stagionalita=True)
+#         prossima_settimana = deepcopy(get_settimana(macronutrienti))
+#         genera_menu(prossima_settimana, False, ricette_menu)
+#         genera_menu(prossima_settimana, True, ricette_menu)
+#         salva_menu_settimana_prossima(prossima_settimana)
+#
+#     return jsonify({'status': 'success', 'message': 'Menu generato con successo!'})
+#
+#
+# import time
+
+
+@views.route('/generate_menu', methods=['POST'])
+def generate_menu():
+    macronutrienti = definisci_calorie_macronutrienti()
+    ricette_menu = carica_ricette(stagionalita=True)
+
+    progress = 0
+    total_steps = 4  # Numero totale di fasi della generazione del menu
+
+    # Generazione del menu corrente
+    if not get_menu_corrente():
+        settimana_corrente = deepcopy(get_settimana(macronutrienti))
+        genera_menu(settimana_corrente, False, ricette_menu)
+        progress += 1 / total_steps * 100
+        time.sleep(1)  # Simula tempo di elaborazione
+
+        genera_menu(settimana_corrente, True, ricette_menu)
+        progress += 1 / total_steps * 100
+        time.sleep(1)
+
+        salva_menu_corrente(settimana_corrente)
+        progress += 1 / total_steps * 100
+    else:
+        progress += 3 / total_steps * 100
+
+    # Generazione del menu per la settimana successiva
+    if not get_menu_settima_prossima():
+        prossima_settimana = deepcopy(get_settimana(macronutrienti))
+        genera_menu(prossima_settimana, False, ricette_menu)
+        progress += 1 / total_steps * 100
+        time.sleep(1)
+
+        genera_menu(prossima_settimana, True, ricette_menu)
+        salva_menu_settimana_prossima(prossima_settimana)
+    else:
+        progress += 1 / total_steps * 100
+
+    return jsonify({'status': 'success', 'progress': progress})
 
 
 @views.route('/menu_settimana/<int:settimana_id>')
