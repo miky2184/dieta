@@ -451,6 +451,28 @@ function synchronizeFields() {
 }
 
 function calculateResults() {
+
+    const form = document.getElementById('personalInfoForm');
+    const resultsContainer = document.getElementById('results');
+    //const calculatedResults = document.getElementById('calculatedResults');
+
+    const bmiInput = document.getElementById('bmi');
+    const idealWeightInput = document.getElementById('peso_ideale');
+    const metaBasale = document.getElementById('meta_basale');
+    const metaDaily = document.getElementById('meta_giornaliero');
+    const calorieGiornaliere = document.getElementById('calorie_giornaliere');
+    const calorieSettimanali = document.getElementById('calorie_settimanali');
+    const carboidrati = document.getElementById('carboidrati_input');
+    const proteine = document.getElementById('proteine_input');
+    const grassi = document.getElementById('grassi_input');
+
+
+    // Verifica se il form è stato correttamente selezionato
+    if (!form) {
+        console.error('Form non trovato!');
+        return;
+    }
+
     const formData = new FormData(form);
     const data = {
         nome: formData.get('nome'),
@@ -537,6 +559,8 @@ function calculateResults() {
     carboidrati.value = carboidratiValue;
     proteine.value = proteineValue;
     grassi.value = grassiValue;
+
+    synchronizeFields();
 }
 
 // Funzione per salvare l'alimento
@@ -1024,6 +1048,13 @@ function cleanFiltersAlimenti() {
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById("defaultOpen").click();
 
+    const form = document.getElementById('personalInfoForm');
+
+    if (form) {
+        form.addEventListener('input', calculateResults);
+        form.addEventListener('submit', synchronizeFields);
+    }
+
     document.getElementById("captureButton").addEventListener("click", function() {
         const weekId = document.getElementById("settimana_select").value; // Ottieni l'ID della settimana selezionata
         const menuContainer = document.querySelector("#capture");
@@ -1148,25 +1179,6 @@ document.addEventListener('DOMContentLoaded', function() {
     addIngredientModal.addEventListener('hidden.bs.modal', function() {
         window.location.href = '/';
     })
-
-    synchronizeFields();
-    document.getElementById('personalInfoForm').addEventListener('submit', synchronizeFields);
-
-    const form = document.getElementById('personalInfoForm');
-    const resultsContainer = document.getElementById('results');
-    //const calculatedResults = document.getElementById('calculatedResults');
-
-    const bmiInput = document.getElementById('bmi');
-    const idealWeightInput = document.getElementById('peso_ideale');
-    const metaBasale = document.getElementById('meta_basale');
-    const metaDaily = document.getElementById('meta_giornaliero');
-    const calorieGiornaliere = document.getElementById('calorie_giornaliere');
-    const calorieSettimanali = document.getElementById('calorie_settimanali');
-    const carboidrati = document.getElementById('carboidrati_input');
-    const proteine = document.getElementById('proteine_input');
-    const grassi = document.getElementById('grassi_input');
-
-    form.addEventListener('input', calculateResults);
 
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
     var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
