@@ -1,10 +1,12 @@
+/* === Stili Globali === */
 body {
-  background-color: #f8f9fa !important;
-  font-family: Arial, sans-serif !important;
-  font-size: 0.8rem !important;
-  padding: 1em;
+    background-color: #f8f9fa !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 0.8rem !important;
+    padding: 1em;
 }
 
+/* === Tab Stili === */
 .tab {
     overflow: hidden;
     border-bottom: 1px solid #ccc;
@@ -30,10 +32,11 @@ body {
     background-color: #ccc;
 }
 
+/* === Tabelle Stili === */
 table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: auto; /* Cambia a 'auto' per adattare le larghezze in base al contenuto */
+    table-layout: auto; /* Adatta le larghezze in base al contenuto */
 }
 
 th, td {
@@ -44,7 +47,7 @@ th, td {
 }
 
 th.nome-alimento, td.nome-alimento,
-th.nome-ricetta, td.nome-ricetta{
+th.nome-ricetta, td.nome-ricetta {
     text-align: center;
     width: 30%; /* Definisci la larghezza maggiore per la colonna Nome */
     min-width: 200px; /* Aggiungi una larghezza minima */
@@ -78,6 +81,7 @@ th.pesce, td.pesce {
     width: 6%; /* Puoi regolare questa larghezza */
 }
 
+/* === Modifica Macronutrienti === */
 th.calorie-edit, td.calorie-edit,
 th.carboidrati-edit, td.carboidrati-edit,
 th.proteine-edit, td.proteine-edit,
@@ -116,8 +120,7 @@ td div:last-child {
     word-wrap: break-word; /* Assicurati che il testo vada a capo se troppo lungo */
 }
 
-
-/* Aggiungi una media query per una migliore visualizzazione su schermi piccoli */
+/* === Media Queries per dispositivi mobili === */
 @media (max-width: 768px) {
     th, td {
         font-size: 0.7rem;
@@ -125,8 +128,8 @@ td div:last-child {
     }
 
     th.nome-alimento, td.nome-alimento,
-     th.nome-ricetta, td.nome-ricetta{
-        width: 50%; /* Rendi la colonna Nome Alimento più larga su dispositivi mobili */
+    th.nome-ricetta, td.nome-ricetta {
+        width: 50%; /* Rendi la colonna Nome più larga su dispositivi mobili */
     }
 
     th.calorie, td.calorie,
@@ -156,6 +159,7 @@ td div:last-child {
     }
 }
 
+/* === Stili Personalizzati per il Menu === */
 .day-container {
     margin-bottom: 20px;
 }
@@ -180,6 +184,7 @@ td div:last-child {
     margin-left: 10px;
 }
 
+/* === Tabella Selezione Pasti === */
 #mealSelectionTable {
     margin-top: 20px;
 }
@@ -190,8 +195,8 @@ td div:last-child {
     vertical-align: middle;
 }
 
+/* === Modale Footer === */
 .modal-footer .btn-primary {
     background-color: #007bff;
     border-color: #007bff;
 }
-
