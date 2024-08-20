@@ -4,7 +4,7 @@ import psycopg2.extras
 import psycopg2
 from psycopg2.extras import Json
 from datetime import datetime, timedelta
-from decimal import Decimal
+from flask import current_app
 from app.models.database import get_db_connection
 from app.models.common import printer
 from copy import deepcopy
@@ -211,6 +211,7 @@ def genera_menu(settimana, controllo_macro_settimanale: bool, ricette) -> None:
                     scegli_pietanza(settimana, giorno, 'spuntino_pomeriggio', 'spuntino', percentuale_pietanza, True, controllo_macro_settimanale, ricette, skip_check=True)
 
 
+@current_app.cache.cached(timeout=300)
 def definisci_calorie_macronutrienti():
     """Calcola le calorie e i macronutrienti giornalieri e li restituisce."""
 
