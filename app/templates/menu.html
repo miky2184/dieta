@@ -4,14 +4,14 @@
     <table class="table table-striped table-margin table-bordered table-hover table-light">
         <thead>
         <tr>
-            <th>Pasto</th>
-            <th>Lunedì</th>
-            <th>Martedì</th>
-            <th>Mercoledì</th>
-            <th>Giovedì</th>
-            <th>Venerdì</th>
-            <th>Sabato</th>
-            <th>Domenica</th>
+            <th class="text-align-center">Pasto</th>
+            <th class="text-align-center">Lunedì</th>
+            <th class="text-align-center">Martedì</th>
+            <th class="text-align-center">Mercoledì</th>
+            <th class="text-align-center">Giovedì</th>
+            <th class="text-align-center">Venerdì</th>
+            <th class="text-align-center">Sabato</th>
+            <th class="text-align-center">Domenica</th>
         </tr>
         </thead>
         <tbody id="menu_tbody">
@@ -33,7 +33,7 @@
             <td><strong>Rimanente</strong></td>
             {% for dati_giorno in ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'] %}
             <td>
-                <div><strong>Calorie:</strong> <span id="remaining-kcal-{{ dati_giorno }}">{{ remaining_macronutrienti[dati_giorno]['kcal'] }}</span></div>
+                <div><strong>Kcal:</strong> <span id="remaining-kcal-{{ dati_giorno }}">{{ remaining_macronutrienti[dati_giorno]['kcal'] }}</span></div>
                 <div><strong>Carboidrati:</strong> <span id="remaining-carboidrati-{{ dati_giorno }}">{{ remaining_macronutrienti[dati_giorno]['carboidrati'] }}</span></div>
                 <div><strong>Proteine:</strong> <span id="remaining-proteine-{{ dati_giorno }}">{{ remaining_macronutrienti[dati_giorno]['proteine'] }}</span></div>
                 <div><strong>Grassi:</strong> <span id="remaining-grassi-{{ dati_giorno }}">{{ remaining_macronutrienti[dati_giorno]['grassi'] }}</span></div>

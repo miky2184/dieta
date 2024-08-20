@@ -453,8 +453,6 @@ function synchronizeFields() {
 function calculateResults() {
 
     const form = document.getElementById('personalInfoForm');
-    const resultsContainer = document.getElementById('results');
-    //const calculatedResults = document.getElementById('calculatedResults');
 
     const bmiInput = document.getElementById('bmi');
     const idealWeightInput = document.getElementById('peso_ideale');
@@ -677,7 +675,7 @@ function renderMenuEditor(data) {
     remainingTableHeader.innerHTML = `
         <tr>
             <th>Giorno</th>
-            <th class="calorie-edit">Calorie</th>
+            <th class="calorie-edit">Kcal</th>
             <th class="carboidrati-edit">Carboidrati (g)</th>
             <th class="proteine-edit">Proteine (g)</th>
             <th class="grassi-edit">Grassi (g)</th>
@@ -756,24 +754,44 @@ function renderMenuEditor(data) {
             mealContainer.appendChild(mealTitle);
 
             if (menu.day[day].pasto[meal].ricette.length > 0) {
-                menu.day[day].pasto[meal].ricette.forEach(ricetta => {
-                    const ricettaDiv = document.createElement('div');
-                    const dynamicId = `meal-${ricetta.id}-${day}-${meal}`;
-                    ricettaDiv.id = dynamicId;
-                    ricettaDiv.classList.add('ricetta', 'mb-2');
+                // Creare una tabella per ogni pasto
+                const mealTable = document.createElement('table');
 
-                    ricettaDiv.innerHTML = `
-                        <input hidden type="text" class="form-control form-control-sm" value="${ricetta.id}">
-                        <input type="text" class="form-control form-control-sm" value="${ricetta.nome_ricetta}" readonly>
-                        <input type="text" class="form-control form-control-sm" style="width: 10%" value="KCAL: ${ricetta.kcal}" readonly>
-                        <input type="text" class="form-control form-control-sm" style="width: 10%" value="CARB: ${ricetta.carboidrati}" readonly>
-                        <input type="text" class="form-control form-control-sm" style="width: 10%" value="PROT: ${ricetta.proteine}" readonly>
-                        <input type="text" class="form-control form-control-sm" style="width: 10%" value="GRAS: ${ricetta.grassi}" readonly>
-                        <input type="number" class="form-control form-control-sm" style="width: 10%" value="${ricetta.qta}" min="0.1" step="0.1" onchange="updateMealQuantity('${day}', '${meal}', '${ricetta.id}', this.value)">
-                        <button class="btn btn-danger btn-sm mt-2" onclick="removeMeal('${day}', '${meal}', '${ricetta.id}')">Rimuovi</button>
+                mealTable.classList.add('table', 'table-sm', 'table-bordered', 'mb-2', 'table-striped', 'table-margin');
+
+                const mealTableHead = document.createElement('thead');
+                mealTableHead.innerHTML = `
+                    <tr>
+                        <th>Nome Ricetta</th>
+                        <th class="text-align-center">Kcal</th>
+                        <th class="text-align-center">Carboidrati (g)</th>
+                        <th class="text-align-center">Proteine (g)</th>
+                        <th class="text-align-center">Grassi (g)</th>
+                        <th class="text-align-center">Quantità</th>
+                        <th class="text-align-center">Azioni</th>
+                    </tr>
+                `;
+                mealTable.appendChild(mealTableHead);
+
+                const mealTableBody = document.createElement('tbody');
+
+                menu.day[day].pasto[meal].ricette.forEach(ricetta => {
+                    const row = document.createElement('tr');
+                    row.id = `meal-${ricetta.id}-${day}-${meal}`;
+                    row.innerHTML = `
+                        <td>${ricetta.nome_ricetta}</td>
+                        <td class="text-align-center">${ricetta.kcal}</td>
+                        <td class="text-align-center">${ricetta.carboidrati}</td>
+                        <td class="text-align-center">${ricetta.proteine}</td>
+                        <td class="text-align-center">${ricetta.grassi}</td>
+                        <td><input type="number" class="form-control form-control-sm" style="width: 60px;" value="${ricetta.qta}" min="1" step="1" onchange="updateMealQuantity('${day}', '${meal}', '${ricetta.id}', this.value)"></td>
+                        <td><button class="btn btn-danger btn-sm" onclick="removeMeal('${day}', '${meal}', '${ricetta.id}')">Rimuovi</button></td>
                     `;
-                    mealContainer.appendChild(ricettaDiv);
+                    mealTableBody.appendChild(row);
                 });
+
+                mealTable.appendChild(mealTableBody);
+                mealContainer.appendChild(mealTable);
             }
 
             const addMealBtn = document.createElement('button');
@@ -798,6 +816,7 @@ function renderMenuEditor(data) {
         document.getElementById('day_select').value = selectedDay;
     }
 }
+
 
 function updateMealQuantity(day, meal, ricettaId, newQuantity) {
     const data = {
@@ -838,7 +857,13 @@ function removeMeal(day, meal, mealId) {
         .then(response => response.json())
         .then(data => {
             // Rimuovi il pasto dalla visualizzazione
-            document.getElementById(`meal-${mealId}-${day}-${meal}`).remove();
+            const rowId = `meal-${mealId}-${day}-${meal}`;
+            const row = document.getElementById(rowId);
+
+            // Se la riga esiste, rimuovila
+            if (row) {
+                row.parentNode.removeChild(row);
+            }
             renderMenuEditor(data);
             // Aggiorna i macronutrienti rimanenti nella visualizzazione
             //aggiornaMacronutrientiRimanenti(data.remaining_macronutrienti);

@@ -82,6 +82,7 @@ th.pesce, td.pesce {
 }
 
 /* === Modifica Macronutrienti === */
+th.text-align-center, td.text-align-center,
 th.calorie-edit, td.calorie-edit,
 th.carboidrati-edit, td.carboidrati-edit,
 th.proteine-edit, td.proteine-edit,
@@ -199,4 +200,13 @@ td div:last-child {
 .modal-footer .btn-primary {
     background-color: #007bff;
     border-color: #007bff;
+}
+
+.table td input[type="number"] {
+    width: 100%; /* L'input occupa il 100% della larghezza della cella */
+    text-align: right; /* Testo centrato all'interno dell'input */
+    box-sizing: border-box; /* Include padding e bordo all'interno della larghezza e altezza */
+    padding: 0.25rem; /* Aggiungi un po' di padding per migliorare l'aspetto */
+    height: 100%; /* Adatta l'altezza dell'input all'altezza della cella */
+    display: block; /* Assicura che l'input si comporti come un blocco */
 }
