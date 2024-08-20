@@ -52,66 +52,72 @@ def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, per
                        False, controllo_macro_settimanale, skip_check)
 
 
-def select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc: float, ripetibile: bool, found: bool,
-                controllo_macro_settimanale: bool, skip_check: bool=False):
-    if not ripetibile:
-        ids_disponibili = [oggetto['id'] for oggetto in ricette if oggetto['id'] not in settimana['all_food']]
+def select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc, ripetibile, found, controllo_macro_settimanale, skip_check=False):
+    ids_disponibili = [oggetto['id'] for oggetto in ricette if oggetto['id'] not in settimana['all_food']] if not ripetibile else [oggetto['id'] for oggetto in ricette if oggetto['id'] not in settimana['day'][giorno_settimana]['pasto'][pasto]['ids']]
+
+    ricette_filtrate = [ricetta for ricetta in ricette if ricetta['id'] in ids_disponibili and (skip_check or check_macronutrienti(ricetta, settimana['day'][giorno_settimana], settimana['weekly'], controllo_macro_settimanale))]
+
+    if not ricette_filtrate:
+        return found
+
+    id_selezionato = random.choice(ricette_filtrate)['id']
+    ricetta_selezionata = next(oggetto for oggetto in ricette if oggetto['id'] == id_selezionato)
+
+    mt = settimana.get('day').get(giorno_settimana).get('pasto').get(pasto)
+    day = settimana.get('day').get(giorno_settimana)
+    macronutrienti_settimali = settimana.get('weekly')
+    if (    skip_check or
+            (
+                (day.get('kcal') - ricetta_selezionata.get('kcal')) > 0 and
+                (day.get('carboidrati') - ricetta_selezionata.get('carboidrati')) > 0 and
+                (day.get('proteine') - ricetta_selezionata.get('proteine')) > 0 and
+                (day.get('grassi') - ricetta_selezionata.get('grassi')) > 0
+            )
+            or
+                (controllo_macro_settimanale and
+                 (macronutrienti_settimali.get('kcal') - ricetta_selezionata.get('kcal') > 0 and
+                (macronutrienti_settimali.get('carboidrati') - ricetta_selezionata.get('carboidrati')) > 0 and
+                (macronutrienti_settimali.get('proteine') - ricetta_selezionata.get('proteine')) > 0 and
+                (macronutrienti_settimali.get('grassi') - ricetta_selezionata.get('grassi')) > 0)
+            )
+    ):
+        settimana.get('all_food').append(id_selezionato)
+        mt.get('ids').append(id_selezionato)
+        r = {'qta': perc,
+             'id': ricetta_selezionata.get('id'),
+             'nome_ricetta': ricetta_selezionata.get('nome_ricetta'),
+             'ricetta': ricetta_selezionata.get('ricetta'),
+             'kcal': ricetta_selezionata.get('kcal'),
+             'carboidrati': ricetta_selezionata.get('carboidrati'),
+            'proteine':  ricetta_selezionata.get('proteine'),
+            'grassi': ricetta_selezionata.get('grassi'),
+            }
+        mt.get('ricette').append(r)
+        day['kcal'] = day.get('kcal') - ricetta_selezionata.get('kcal')
+        day['carboidrati'] = day.get('carboidrati') - ricetta_selezionata.get('carboidrati')
+        day['proteine'] = day.get('proteine') - ricetta_selezionata.get('proteine')
+        day['grassi'] = day.get('grassi') - ricetta_selezionata.get('grassi')
+        macronutrienti_settimali['kcal'] = macronutrienti_settimali.get('kcal') - ricetta_selezionata.get('kcal')
+        macronutrienti_settimali['carboidrati'] = macronutrienti_settimali.get('carboidrati') - ricetta_selezionata.get('carboidrati')
+        macronutrienti_settimali['proteine'] = macronutrienti_settimali.get('proteine') - ricetta_selezionata.get('proteine')
+        macronutrienti_settimali['grassi'] = macronutrienti_settimali.get('grassi') - ricetta_selezionata.get('grassi')
+        found = True
     else:
-        ids_disponibili = [oggetto['id'] for oggetto in ricette if
-                           oggetto['id'] not in settimana.get('day').get(giorno_settimana).get('pasto').get(
-                               pasto).get('ids')]
-
-    if ids_disponibili and max_retry > 0:
-        # Seleziona casualmente un ID dalla lista dei disponibili
-        id_selezionato = random.choice(ids_disponibili)
-        max_retry = max_retry - 1
-
-        # Trova l'oggetto corrispondente all'ID selezionato
-        ricetta_selezionata = next(oggetto for oggetto in ricette if oggetto['id'] == id_selezionato)
-
-        mt = settimana.get('day').get(giorno_settimana).get('pasto').get(pasto)
-        day = settimana.get('day').get(giorno_settimana)
-        macronutrienti_settimali = settimana.get('weekly')
-        if (    skip_check or
-                (
-                    (day.get('kcal') - ricetta_selezionata.get('kcal')) > 0 and
-                    (day.get('carboidrati') - ricetta_selezionata.get('carboidrati')) > 0 and
-                    (day.get('proteine') - ricetta_selezionata.get('proteine')) > 0 and
-                    (day.get('grassi') - ricetta_selezionata.get('grassi')) > 0
-                )
-                or
-                    (controllo_macro_settimanale and
-                     (macronutrienti_settimali.get('kcal') - ricetta_selezionata.get('kcal') > 0 and
-                    (macronutrienti_settimali.get('carboidrati') - ricetta_selezionata.get('carboidrati')) > 0 and
-                    (macronutrienti_settimali.get('proteine') - ricetta_selezionata.get('proteine')) > 0 and
-                    (macronutrienti_settimali.get('grassi') - ricetta_selezionata.get('grassi')) > 0)
-                )
-        ):
-            settimana.get('all_food').append(id_selezionato)
-            mt.get('ids').append(id_selezionato)
-            r = {'qta': perc,
-                 'id': ricetta_selezionata.get('id'),
-                 'nome_ricetta': ricetta_selezionata.get('nome_ricetta'),
-                 'ricetta': ricetta_selezionata.get('ricetta'),
-                 'kcal': ricetta_selezionata.get('kcal'),
-                 'carboidrati': ricetta_selezionata.get('carboidrati'),
-                'proteine':  ricetta_selezionata.get('proteine'),
-                'grassi': ricetta_selezionata.get('grassi'),
-                }
-            mt.get('ricette').append(r)
-            day['kcal'] = day.get('kcal') - ricetta_selezionata.get('kcal')
-            day['carboidrati'] = day.get('carboidrati') - ricetta_selezionata.get('carboidrati')
-            day['proteine'] = day.get('proteine') - ricetta_selezionata.get('proteine')
-            day['grassi'] = day.get('grassi') - ricetta_selezionata.get('grassi')
-            macronutrienti_settimali['kcal'] = macronutrienti_settimali.get('kcal') - ricetta_selezionata.get('kcal')
-            macronutrienti_settimali['carboidrati'] = macronutrienti_settimali.get('carboidrati') - ricetta_selezionata.get('carboidrati')
-            macronutrienti_settimali['proteine'] = macronutrienti_settimali.get('proteine') - ricetta_selezionata.get('proteine')
-            macronutrienti_settimali['grassi'] = macronutrienti_settimali.get('grassi') - ricetta_selezionata.get('grassi')
-            found = True
-        else:
-            select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc, ripetibile, False, controllo_macro_settimanale)
+        select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc, ripetibile, False, controllo_macro_settimanale)
 
     return found
+
+
+def check_macronutrienti(ricetta, day, weekly, controllo_macro_settimanale):
+    return (day['kcal'] - ricetta['kcal']) > 0 and \
+           (day['carboidrati'] - ricetta['carboidrati']) > 0 and \
+           (day['proteine'] - ricetta['proteine']) > 0 and \
+           (day['grassi'] - ricetta['grassi']) > 0 or \
+           (controllo_macro_settimanale and \
+           (weekly['kcal'] - ricetta['kcal']) > 0 and \
+           (weekly['carboidrati'] - ricetta['carboidrati']) > 0 and \
+           (weekly['proteine'] - ricetta['proteine']) > 0 and \
+           (weekly['grassi'] - ricetta['grassi']) > 0)
 
 
 def carica_ricette(ids=None, stagionalita: bool=False, attive:bool=False):

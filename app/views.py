@@ -414,7 +414,6 @@ def delete_alimento():
 
 
 @views.route('/get_available_meals', methods=['GET'])
-@current_app.cache.cached(timeout=300)
 def get_available_meals():
     """
     Questa funzione restituisce le ricette disponibili per un pasto specifico in un giorno specifico,
@@ -427,8 +426,8 @@ def get_available_meals():
     meal_type_mapping = {
         'colazione': ['colazione', 'colazione_sec'],
         'spuntino_mattina': ['spuntino'],
-        'pranzo': ['principale'],
-        'cena': ['principale'],
+        'pranzo': ['principale', 'contorno'],
+        'cena': ['principale', 'contorno'],
         'spuntino_pomeriggio': ['spuntino']
     }
 
@@ -442,7 +441,7 @@ def get_available_meals():
                        any(ricetta[generic_meal_type] for generic_meal_type in generic_meal_types)]
 
     # Esclude le ricette già presenti nel pasto del giorno specificato
-    menu_corrente = get_menu_corrente()
+    menu_corrente = get_menu_corrente(ids=week_id)
     if menu_corrente:
         ricette_presenti_ids = [r['id'] for r in menu_corrente['day'][day]['pasto'][meal_type]['ricette']]
         available_meals = [ricetta for ricetta in available_meals if ricetta['id'] not in ricette_presenti_ids]

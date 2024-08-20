@@ -44,8 +44,21 @@ function aggiornaTabellaMenu(menu) {
             if (menu.day[giorno].pasto[pasto].ricette && menu.day[giorno].pasto[pasto].ricette.length > 0) {
                 menu.day[giorno].pasto[pasto].ricette.forEach(ricetta => {
                     const div = document.createElement('div');
+                    // Aggiungi il contenuto di testo
                     div.textContent = `${ricetta.nome_ricetta} (${ricetta.qta}x)`;
+
+                    // Aggiungi gli attributi per il popover
+                    div.setAttribute('data-bs-toggle', 'popover');
+                    div.setAttribute('data-bs-title', ricetta.ricetta);
+
+                    // Aggiungi la classe "recipe-cell"
+                    div.classList.add('recipe-cell');
+
+                    // Aggiungi il div all'elemento td (o un altro elemento genitore)
                     td.appendChild(div);
+
+                    // Inizializza il popover sul nuovo elemento
+                    new bootstrap.Popover(div);
                 });
             }
             tr.appendChild(td);
