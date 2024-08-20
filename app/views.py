@@ -8,7 +8,8 @@ from .services.menu_services import (definisci_calorie_macronutrienti, save_weig
                                      recupera_ingredienti, get_peso_hist, get_dati_utente,
                                      calcola_macronutrienti_rimanenti,
                                      recupera_alimenti, salva_alimento, elimina_alimento, salva_nuovo_alimento,
-                                     aggiungi_ricetta_al_menu, update_menu_corrente, remove_meal_from_menu)
+                                     aggiungi_ricetta_al_menu, update_menu_corrente, remove_meal_from_menu,
+                                     delete_week_menu)
 from copy import deepcopy
 import time
 from reportlab.lib.pagesizes import letter, landscape
@@ -608,3 +609,13 @@ def generate_pdf():
     # Ritorna il PDF generato come risposta alla richiesta
     pdf_file.seek(0)
     return send_file(pdf_file, as_attachment=True, download_name='menu_settimanale.pdf', mimetype='application/pdf')
+
+
+@views.route('/delete_menu/<int:week_id>', methods=['DELETE'])
+def delete_menu(week_id):
+    # Elimina il menu dal database
+    delete_week_menu(week_id)
+
+    # Svuota la cache correlata
+    current_app.cache.delete('view//')
+    return jsonify({'status': 'success', 'message': 'Menu eliminato con successo!'}), 200

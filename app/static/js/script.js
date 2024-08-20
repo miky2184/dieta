@@ -1069,9 +1069,30 @@ function cleanFiltersAlimenti() {
     filterAlimentiTable();
 }
 
+function deleteMenu() {
+    const weekId = document.getElementById("settimana_select").value; // Ottieni l'ID della settimana selezionata
+
+    if (confirm("Sei sicuro di voler eliminare questo menu? Questa azione è irreversibile.")) {
+        fetch(`/delete_menu/${weekId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(response => {
+            if (response.ok) {
+                location.reload(); // Ricarica la pagina per aggiornare la selezione dei menu
+            }
+        }).catch(error => {
+            console.error("Errore:", error);
+        });
+    }
+}
+
 
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById("defaultOpen").click();
+
+    document.getElementById('deleteMenuBtn').addEventListener('click', deleteMenu);
 
     const form = document.getElementById('personalInfoForm');
 

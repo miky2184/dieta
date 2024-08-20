@@ -984,3 +984,20 @@ def remove_meal_from_menu(menu, day, meal, meal_id):
         menu['weekly']['grassi'] += float(ricetta_valori[0]['grassi'])
 
     return menu
+
+
+def delete_week_menu(week_id):
+    with get_db_connection() as conn:
+        # Esegui le operazioni con la connessione
+        cur = conn.cursor()
+
+        # Inserisce un nuovo menu per la prossima settimana
+        query = "DELETE FROM dieta.menu_settimanale WHERE id = %s"
+        params = (week_id,)
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+
+        # Recupera il menu per la settimana corrente
+        cur.execute(query, params)
+        conn.commit()
