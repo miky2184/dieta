@@ -779,6 +779,21 @@ function loadMenuData() {
         .catch(error => console.error('Errore nel caricamento del menu:', error));
 }
 
+function filterDayCards() {
+    const selectedDay = document.getElementById('selectDay').value;
+    const cards = document.querySelectorAll('.day-container');
+
+    cards.forEach(card => {
+        const cardDay = card.getAttribute('data-day');
+        if (selectedDay === 'all' || selectedDay === cardDay) {
+            card.style.display = 'block'; // Mostra la card
+        } else {
+            card.style.display = 'none'; // Nascondi la card
+        }
+    });
+}
+
+
 function renderMenuEditor(data) {
     const menuEditor = document.getElementById("menuEditor");
     menuEditor.innerHTML = ''; // Pulisce l'editor
@@ -878,7 +893,8 @@ function renderMenuEditor(data) {
     // Creazione delle card per ogni giorno
     days.forEach(day => {
         const dayContainer = document.createElement('div');
-        dayContainer.classList.add('day-container', 'mb-4'); // Margin bottom per spazio tra i giorni
+        dayContainer.classList.add('day-container', 'mb-4');
+        dayContainer.setAttribute('data-day', day); // Aggiungi l'attributo data-day per il filtraggio
 
         const card = document.createElement('div');
         card.classList.add('card');
@@ -897,7 +913,7 @@ function renderMenuEditor(data) {
             mealContainer.classList.add('meal-container');
             const mealTitle = document.createElement('h6');
             mealTitle.classList.add('card-subtitle', 'mb-2', 'text-muted');
-            mealTitle.textContent = formatMealName(meal); // Usa la funzione per formattare il nome del pasto
+            mealTitle.textContent = formatMealName(meal);
             mealContainer.appendChild(mealTitle);
 
             if (menu.day[day].pasto[meal].ricette.length > 0) {
@@ -905,7 +921,7 @@ function renderMenuEditor(data) {
                     const ricettaDiv = document.createElement('div');
                     const dynamicId = `meal-${ricetta.id}-${day}-${meal}`;
                     ricettaDiv.id = dynamicId;
-                    ricettaDiv.classList.add('ricetta', 'mb-2'); // Margin bottom per spaziatura
+                    ricettaDiv.classList.add('ricetta', 'mb-2');
 
                     ricettaDiv.innerHTML = `
                         <input hidden type="text" class="form-control form-control-sm" value="${ricetta.id}">
