@@ -801,6 +801,22 @@ function renderMenuEditor(data) {
     const days = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
     const meals = ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena'];
 
+    // Funzione per formattare i nomi dei pasti
+    function formatMealName(meal) {
+        switch (meal) {
+            case 'spuntino_mattina':
+                return 'Spuntino Mattina';
+            case 'spuntino_pomeriggio':
+                return 'Spuntino Pomeriggio';
+            default:
+                return capitalize(meal);
+        }
+    }
+
+    // Contenitore per le calorie e macronutrienti rimanenti
+    const remainingTableContainer = document.createElement('div');
+    remainingTableContainer.classList.add('remaining-macros-container');
+
     // Creazione della tabellina per i rimanenti giornalieri
     const remainingTable = document.createElement('table');
     remainingTable.id = 'remainingTable';
@@ -853,20 +869,35 @@ function renderMenuEditor(data) {
     remainingTableBody.appendChild(totalRow);
 
     remainingTable.appendChild(remainingTableBody);
-    macrosContainer.appendChild(remainingTable);
+    remainingTableContainer.appendChild(remainingTable);
 
+    // Aggiungi la tabella sotto al week selector
+    const menuContainer = document.getElementById('menuEditor');
+    menuContainer.parentNode.insertBefore(remainingTableContainer, menuContainer);
+
+    // Creazione delle card per ogni giorno
     days.forEach(day => {
         const dayContainer = document.createElement('div');
-        dayContainer.classList.add('day-container');
-        const dayTitle = document.createElement('h4');
+        dayContainer.classList.add('day-container', 'mb-4'); // Margin bottom per spazio tra i giorni
+
+        const card = document.createElement('div');
+        card.classList.add('card');
+
+        const cardBody = document.createElement('div');
+        cardBody.classList.add('card-body');
+
+        const dayTitle = document.createElement('h5');
+        dayTitle.classList.add('card-title');
         dayTitle.textContent = `${capitalize(day)}`;
-        dayContainer.appendChild(dayTitle);
+
+        cardBody.appendChild(dayTitle);
 
         meals.forEach(meal => {
             const mealContainer = document.createElement('div');
             mealContainer.classList.add('meal-container');
-            const mealTitle = document.createElement('h5');
-            mealTitle.textContent = capitalize(meal);
+            const mealTitle = document.createElement('h6');
+            mealTitle.classList.add('card-subtitle', 'mb-2', 'text-muted');
+            mealTitle.textContent = formatMealName(meal); // Usa la funzione per formattare il nome del pasto
             mealContainer.appendChild(mealTitle);
 
             if (menu.day[day].pasto[meal].ricette.length > 0) {
@@ -874,7 +905,8 @@ function renderMenuEditor(data) {
                     const ricettaDiv = document.createElement('div');
                     const dynamicId = `meal-${ricetta.id}-${day}-${meal}`;
                     ricettaDiv.id = dynamicId;
-                    ricettaDiv.classList.add('ricetta');
+                    ricettaDiv.classList.add('ricetta', 'mb-2'); // Margin bottom per spaziatura
+
                     ricettaDiv.innerHTML = `
                         <input hidden type="text" class="form-control form-control-sm" value="${ricetta.id}">
                         <input type="text" class="form-control form-control-sm" value="${ricetta.nome_ricetta}" readonly>
@@ -883,7 +915,7 @@ function renderMenuEditor(data) {
                         <input type="text" class="form-control form-control-sm" style="width: 10%" value="PROT: ${ricetta.proteine}" readonly>
                         <input type="text" class="form-control form-control-sm" style="width: 10%" value="GRAS: ${ricetta.grassi}" readonly>
                         <input type="number" class="form-control form-control-sm" style="width: 10%" value="${ricetta.qta}" min="0.1" step="0.1" onchange="updateMealQuantity('${day}', '${meal}', '${ricetta.id}', this.value)">
-                        <button class="btn btn-danger btn-sm" onclick="removeMeal('${day}', '${meal}', '${ricetta.id}')">Rimuovi</button>
+                        <button class="btn btn-danger btn-sm mt-2" onclick="removeMeal('${day}', '${meal}', '${ricetta.id}')">Rimuovi</button>
                     `;
                     mealContainer.appendChild(ricettaDiv);
                 });
@@ -891,15 +923,17 @@ function renderMenuEditor(data) {
 
             const addMealBtn = document.createElement('button');
             addMealBtn.textContent = "Aggiungi Ricetta";
-            addMealBtn.classList.add('btn', 'btn-success', 'btn-sm');
+            addMealBtn.classList.add('btn', 'btn-success', 'btn-sm', 'mt-2');
             addMealBtn.onclick = function() {
                 addNewMeal(day, meal);
             };
             mealContainer.appendChild(addMealBtn);
 
-            dayContainer.appendChild(mealContainer);
+            cardBody.appendChild(mealContainer);
         });
 
+        card.appendChild(cardBody);
+        dayContainer.appendChild(card);
         menuEditor.appendChild(dayContainer);
     });
 }
