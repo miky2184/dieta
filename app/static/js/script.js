@@ -1136,8 +1136,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const weekId = selectedWeekId; // Ottieni l'ID della settimana selezionata
         const menuContainer = document.querySelector("#capture");
 
-        html2canvas(document.querySelector("#capture")).then(canvas => {
+        // Imposta temporaneamente l'altezza del div per contenere tutto il contenuto
+        menuContainer.style.height = "auto";
+        menuContainer.style.maxHeight = "none";
+
+        html2canvas(menuContainer, {
+        useCORS: true,
+        scale: 2, // Aumenta la risoluzione per evitare immagini sgranate
+        logging: true,
+        windowWidth: document.documentElement.scrollWidth,
+        windowHeight: document.documentElement.scrollHeight,
+        scrollY: 0 // Impedisci lo scroll
+    }).then(canvas => {
             const imgData = canvas.toDataURL('image/png');
+
+            // Ritorna l'altezza originale dopo la cattura
+        menuContainer.style.height = "";
+        menuContainer.style.maxHeight = "";
+
             // Ora puoi usare imgData per creare un PDF o visualizzare l'immagine
             fetch('/generate_pdf', {
                     method: 'POST',
