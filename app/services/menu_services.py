@@ -318,7 +318,7 @@ def stampa_lista_della_spesa(ids_all_food: list):
         for row in rows:
             lista_della_spesa.append({
                 'alimento': row['alimento'],
-                'qta_totale': float(row['qta_totale'])
+                'qta_totale': int(row['qta_totale'])
             })
 
     return lista_della_spesa
@@ -818,10 +818,10 @@ def get_dati_utente():
 def calcola_macronutrienti_rimanenti(menu):
     remaining_macronutrienti = {}
     for giorno, dati_giorno in menu['day'].items():
-        remaining_kcal = float(dati_giorno['kcal'])
-        remaining_carboidrati = float(dati_giorno['carboidrati'])
-        remaining_proteine = float(dati_giorno['proteine'])
-        remaining_grassi = float(dati_giorno['grassi'])
+        remaining_kcal = round(float(dati_giorno['kcal']),2)
+        remaining_carboidrati = round(float(dati_giorno['carboidrati']),2)
+        remaining_proteine = round(float(dati_giorno['proteine']),2)
+        remaining_grassi = round(float(dati_giorno['grassi']),2)
 
         remaining_macronutrienti[giorno] = {
             'kcal': remaining_kcal,

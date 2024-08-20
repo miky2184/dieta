@@ -318,19 +318,19 @@ def salva_dati():
     cognome = request.form['cognome']
     sesso = request.form['sesso']
     eta = int(request.form['eta'])
-    altezza = float(request.form['altezza'])
-    peso = float(request.form['peso'])
-    tdee = float(request.form['tdee'])
-    deficit_calorico = float(request.form['deficit_calorico'])
-    bmi = float(request.form['bmi'])
-    peso_ideale = float(request.form['peso_ideale'])
-    meta_basale = float(request.form['meta_basale'])
-    meta_giornaliero = float(request.form['meta_giornaliero'])
-    calorie_giornaliere = float(request.form['calorie_giornaliere'])
-    calorie_settimanali = float(request.form['calorie_settimanali'])
-    carboidrati = float(request.form['carboidrati'])
-    proteine = float(request.form['proteine'])
-    grassi = float(request.form['grassi'])
+    altezza = int(request.form['altezza'])
+    peso = int(request.form['peso'])
+    tdee = int(request.form['tdee'])
+    deficit_calorico = int(request.form['deficit_calorico'])
+    bmi = int(request.form['bmi'])
+    peso_ideale = int(request.form['peso_ideale'])
+    meta_basale = int(request.form['meta_basale'])
+    meta_giornaliero = int(request.form['meta_giornaliero'])
+    calorie_giornaliere = int(request.form['calorie_giornaliere'])
+    calorie_settimanali = int(request.form['calorie_settimanali'])
+    carboidrati = int(request.form['carboidrati'])
+    proteine = int(request.form['proteine'])
+    grassi = int(request.form['grassi'])
 
     salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
     meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, carboidrati,
