@@ -322,7 +322,7 @@ def salva_dati():
     peso = int(request.form['peso'])
     tdee = int(request.form['tdee'])
     deficit_calorico = int(request.form['deficit_calorico'])
-    bmi = int(request.form['bmi'])
+    bmi = float(request.form['bmi'])
     peso_ideale = int(request.form['peso_ideale'])
     meta_basale = int(request.form['meta_basale'])
     meta_giornaliero = int(request.form['meta_giornaliero'])

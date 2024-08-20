@@ -308,7 +308,6 @@ function deleteIngredient(ingredientId, recipeId, button) {
         })
         .then(response => response.json())
         .then(data => {
-            console.log('Success:', data.message);
             if (data.status === 'success') {
                 // Rimuovi la riga della tabella se l'eliminazione è avvenuta con successo
                 button.closest('tr').remove();
@@ -332,9 +331,7 @@ function updateIngredient(ingredientId, recipeId, qta) {
             })
         })
         .then(response => response.json())
-        .then(data => {
-            console.log('Success:', data.message);
-        })
+        .then(data => {})
         .catch((error) => {
             console.error('Error:', error);
         });
@@ -358,9 +355,7 @@ function addIngredientToRecipe() {
             })
         })
         .then(response => response.json())
-        .then(data => {
-            console.log('Success:', data.message);
-        })
+        .then(data => {})
         .catch((error) => {
             console.error('Error:', error);
         });
@@ -372,22 +367,20 @@ function populateDietaForm(data) {
     document.querySelector('[name="nome"]').value = data.nome || '';
     document.querySelector('[name="cognome"]').value = data.cognome || '';
     document.querySelector('[name="sesso"]').value = data.sesso || '';
-    document.querySelector('[name="eta"]').value = data.eta || '';
-    document.querySelector('[name="altezza"]').value = data.altezza || '';
-    document.querySelector('[name="peso"]').value = data.peso || '';
+    document.querySelector('[name="eta"]').value = Math.round(data.eta) || '';
+    document.querySelector('[name="altezza"]').value = Math.round(data.altezza) || '';
+    document.querySelector('[name="peso"]').value = Math.round(data.peso) || '';
     document.getElementById('tdee').value = data.tdee || '';
-    console.log('Set TDEE to:', data.tdee);
     document.getElementById('deficit_calorico').value = data.deficit_calorico || '';
-    console.log('Set TDEE to:', data.deficit_calorico);
-    document.getElementById('bmi').value = data.bmi || '';
-    document.getElementById('peso_ideale').value = data.peso_ideale || '';
-    document.getElementById('meta_basale').value = data.meta_basale || '';
-    document.getElementById('meta_giornaliero').value = data.meta_giornaliero || '';
-    document.getElementById('calorie_giornaliere').value = data.calorie_giornaliere || '';
-    document.getElementById('calorie_settimanali').value = data.calorie_settimanali || '';
-    document.getElementById('carboidrati_input').value = data.carboidrati || '';
-    document.getElementById('proteine_input').value = data.proteine || '';
-    document.getElementById('grassi_input').value = data.grassi || '';
+    document.getElementById('bmi').value = Math.round(data.bmi * 100) /100 || '';
+    document.getElementById('peso_ideale').value = Math.round(data.peso_ideale) || '';
+    document.getElementById('meta_basale').value = Math.round(data.meta_basale) || '';
+    document.getElementById('meta_giornaliero').value = Math.round(data.meta_giornaliero) || '';
+    document.getElementById('calorie_giornaliere').value = Math.round(data.calorie_giornaliere) || '';
+    document.getElementById('calorie_settimanali').value = Math.round(data.calorie_settimanali) || '';
+    document.getElementById('carboidrati_input').value = Math.round(data.carboidrati) || '';
+    document.getElementById('proteine_input').value = Math.round(data.proteine) || '';
+    document.getElementById('grassi_input').value = Math.round(data.grassi) || '';
 }
 
 document.addEventListener('DOMContentLoaded', function() {
