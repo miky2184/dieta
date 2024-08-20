@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, redirect, url_for, request, send_file
 from .services.menu_services import (definisci_calorie_macronutrienti, save_weight, genera_menu,
                                      stampa_lista_della_spesa, get_menu_corrente, salva_menu_settimana_prossima,
                                      carica_ricette, get_settimane_salvate, get_menu_settima_prossima,
@@ -10,6 +10,13 @@ from .services.menu_services import (definisci_calorie_macronutrienti, save_weig
                                      aggiungi_ricetta_al_menu, update_menu_corrente, remove_meal_from_menu)
 from copy import deepcopy
 import time
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+from reportlab.lib.units import inch
+from io import BytesIO
+import base64
+from PIL import Image
 
 views = Blueprint('views', __name__)
 
@@ -501,3 +508,57 @@ def update_meal_quantity():
         'menu': menu_corrente,
         'remaining_macronutrienti': remaining_macronutrienti
     })
+
+
+@views.route('/generate_pdf', methods=['POST'])
+def generate_pdf():
+    data = request.get_json()
+    img_data = data['image']
+    week_id = data['week_id']
+
+    # Decodifica l'immagine base64
+    img_data = img_data.split(',')[1]
+    img = Image.open(BytesIO(base64.b64decode(img_data)))
+
+    # Recupera il menu selezionato usando l'ID passato
+    menu_selezionato = get_menu_settimana(week_id)
+
+    # Imposta il PDF in orientamento orizzontale
+    pdf_file = BytesIO()
+    c = canvas.Canvas(pdf_file, pagesize=landscape(letter))
+    width, height = landscape(letter)
+
+    # Aggiungi margini
+    margin_x = inch * 0.5
+    margin_y = inch * 0.5
+
+    # Calcola dimensioni immagine
+    img_width, img_height = img.size
+    aspect = img_height / float(img_width)
+    img_display_width = width - 2 * margin_x
+    img_display_height = img_display_width * aspect
+
+    # Aggiungi immagine al PDF con margini
+    c.drawImage(ImageReader(img), margin_x, height - img_display_height - margin_y,
+                width=img_display_width, height=img_display_height)
+
+    # Aggiungi una nuova pagina per la lista della spesa
+    c.showPage()
+
+    # Aggiungi la lista della spesa
+    y = height - margin_y  # Posiziona sotto l'immagine
+    shopping_list = stampa_lista_della_spesa(menu_selezionato.get('all_food'))
+    c.setFont("Helvetica", 12)
+    c.drawString(margin_x, y, "Lista della Spesa:")
+    y -= 20
+    for item in shopping_list:
+        c.drawString(margin_x + 20, y, f"[ ] {item['alimento']} - {item['qta_totale']}g")
+        y -= 15
+        if y < margin_y:
+            c.showPage()
+            y = height - margin_y
+
+    c.save()
+
+    pdf_file.seek(0)
+    return send_file(pdf_file, as_attachment=True, download_name='menu_settimanale.pdf', mimetype='application/pdf')

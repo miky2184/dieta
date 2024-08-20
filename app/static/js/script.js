@@ -393,6 +393,35 @@ function populateDietaForm(data) {
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById("defaultOpen").click();
 
+    document.getElementById("captureButton").addEventListener("click", function() {
+        const weekId = document.getElementById("settimana_select").value; // Ottieni l'ID della settimana selezionata
+        const menuContainer = document.querySelector("#capture");
+
+        html2canvas(document.querySelector("#capture")).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+                // Ora puoi usare imgData per creare un PDF o visualizzare l'immagine
+                fetch('/generate_pdf', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ image: imgData, week_id: weekId })
+        })
+        .then(response => response.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'menu_settimanale.pdf';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        })
+        .catch(error => console.error('Error:', error));
+        });
+    });
+
     document.getElementById("generateMenuBtn").addEventListener("click", function() {
       // Avvia la generazione del menu al click del bottone
       startMenuGeneration();
@@ -963,7 +992,6 @@ function renderMenuEditor(data) {
         document.getElementById('day_select').value = selectedDay;
     }
 }
-
 
 function updateMealQuantity(day, meal, ricettaId, newQuantity) {
     const data = {

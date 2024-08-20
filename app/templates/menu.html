@@ -1,7 +1,6 @@
-{% if menu.day %}
-<!-- Codice per visualizzare il menu -->
 <div id="Menu" class="tabcontent">
     {% include 'week_selector.html' %}
+    <div id="capture">
     <table class="table table-striped table-margin table-bordered table-hover table-light">
         <thead>
         <tr>
@@ -43,9 +42,5 @@
         </tr>
         </tfoot>
     </table>
+        </div>
 </div>
-{% else %}
-    <div class="alert alert-info">
-    <strong>Benvenuto!</strong> Sembra che non ci sia un menu generato per questa settimana. Clicca su "Genera Menu" per iniziare.
-</div>
-{% endif %}
