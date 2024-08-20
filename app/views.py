@@ -273,25 +273,30 @@ def delete_alimento():
 @views.route('/get_available_meals')
 def get_available_meals():
     meal_type = request.args.get('meal')
+    day = request.args.get('day')
+    week_id = request.args.get('week_id')
 
     meal_type_mapping = {
-        'colazione': 'colazione',
-        'colazione_sec': 'colazione_sec',
-        'spuntino_mattina': 'spuntino',
-        'pranzo': 'principale',
-        'cena': 'principale',
-        'spuntino_pomeriggio': 'spuntino'
+        'colazione': ['colazione', 'colazione_sec'],
+        'spuntino_mattina': ['spuntino'],
+        'pranzo': ['principale'],
+        'cena': ['principale'],
+        'spuntino_pomeriggio': ['spuntino']
     }
 
-    generic_meal_type = meal_type_mapping.get(meal_type)
-
-    if not generic_meal_type:
-        return jsonify({'error': 'Tipo di pasto non valido'}), 400
+    generic_meal_types = meal_type_mapping.get(meal_type)
 
     # Logica per recuperare le ricette disponibili in base al tipo di pasto (colazione, pranzo, cena, ecc.)
-    # Supponiamo che tu abbia una funzione nel tuo menu_services.py che esegue questa logica
     ricette = carica_ricette(stagionalita=True, attive=True)
-    available_meals = [ricetta for ricetta in ricette if ricetta[generic_meal_type]]
+
+    # Filtra le ricette disponibili in base ai tipi di pasto (considerando più tipi se necessario)
+    available_meals = [ricetta for ricetta in ricette if any(ricetta[generic_meal_type] for generic_meal_type in generic_meal_types)]
+
+    # Filtra ulteriormente per escludere le ricette già presenti nel pasto
+    menu_corrente = get_menu_corrente()
+    if menu_corrente:
+        ricette_presenti_ids = [r['id'] for r in menu_corrente['day'][day]['pasto'][meal_type]['ricette']]
+        available_meals = [ricetta for ricetta in available_meals if ricetta['id'] not in ricette_presenti_ids]
 
     return jsonify(available_meals)
 
@@ -370,14 +375,11 @@ def update_meal_quantity():
             # Ricalcola i macronutrienti per il giorno e la settimana
             for macro in ['kcal', 'carboidrati', 'proteine', 'grassi']:
                 # Calcola la differenza in base alla nuova quantità rispetto alla vecchia
-                new_value = (float(ricetta[macro]) / old_qta) * quantity
-                old_value = float(ricetta[macro])
-
-                difference = new_value - old_value
+                difference = float(ricetta[macro]) * (old_qta - quantity)
 
                 # Aggiorna i valori giornalieri e settimanali
-                menu_corrente['day'][day][macro] -= difference
-                menu_corrente['weekly'][macro] -= difference
+                menu_corrente['day'][day][macro] += difference
+                menu_corrente['weekly'][macro] += difference
 
     # Salva il menu aggiornato
     update_menu_corrente(menu_corrente, week_id)

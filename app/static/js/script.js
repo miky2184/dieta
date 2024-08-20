@@ -782,18 +782,84 @@ function loadMenuData() {
 function renderMenuEditor(data) {
     const menuEditor = document.getElementById("menuEditor");
     menuEditor.innerHTML = ''; // Pulisce l'editor
+
+    // Cerca il contenitore esistente dei macronutrienti rimanenti
+    let macrosContainer = document.querySelector('.remaining-macros-container');
+    if (!macrosContainer) {
+        // Se non esiste, creane uno nuovo
+        macrosContainer = document.createElement('div');
+        macrosContainer.classList.add('remaining-macros-container');
+        const menuContainer = document.getElementById('menuEditor');
+        menuContainer.parentNode.insertBefore(macrosContainer, menuContainer);
+    } else {
+        // Se esiste, pulisci il contenitore
+        macrosContainer.innerHTML = '';
+    }
+
     const menu = data.menu;
 
     const days = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
     const meals = ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena'];
 
+    // Creazione della tabellina per i rimanenti giornalieri
+    const remainingTable = document.createElement('table');
+    remainingTable.id = 'remainingTable';
+    remainingTable.classList.add('table', 'table-sm', 'table-bordered');
+
+    const remainingTableHeader = document.createElement('thead');
+    remainingTableHeader.innerHTML = `
+        <tr>
+            <th>Giorno</th>
+            <th class="calorie-edit">Calorie</th>
+            <th class="carboidrati-edit">Carboidrati (g)</th>
+            <th class="proteine-edit">Proteine (g)</th>
+            <th class="grassi-edit">Grassi (g)</th>
+        </tr>
+    `;
+    remainingTable.appendChild(remainingTableHeader);
+
+    const remainingTableBody = document.createElement('tbody');
+
+    let totalKcal = 0, totalCarboidrati = 0, totalProteine = 0, totalGrassi = 0;
+
     days.forEach(day => {
         const remaining = data['remaining_macronutrienti'][day];
 
+        totalKcal += remaining.kcal;
+        totalCarboidrati += remaining.carboidrati;
+        totalProteine += remaining.proteine;
+        totalGrassi += remaining.grassi;
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${capitalize(day)}</td>
+            <td class="calorie-edit">${remaining.kcal.toFixed(2)}</td>
+            <td class="carboidrati-edit">${remaining.carboidrati.toFixed(2)}</td>
+            <td class="proteine-edit">${remaining.proteine.toFixed(2)}</td>
+            <td class="grassi-edit">${remaining.grassi.toFixed(2)}</td>
+        `;
+        remainingTableBody.appendChild(row);
+    });
+
+    // Aggiungi i totali settimanali come ultima riga della tabella
+    const totalRow = document.createElement('tr');
+    totalRow.innerHTML = `
+        <th>Totale</th>
+        <th class="calorie-edit">${totalKcal.toFixed(2)}</th>
+        <th class="carboidrati-edit">${totalCarboidrati.toFixed(2)}</th>
+        <th class="proteine-edit">${totalProteine.toFixed(2)}</th>
+        <th class="grassi-edit">${totalGrassi.toFixed(2)}</th>
+    `;
+    remainingTableBody.appendChild(totalRow);
+
+    remainingTable.appendChild(remainingTableBody);
+    macrosContainer.appendChild(remainingTable);
+
+    days.forEach(day => {
         const dayContainer = document.createElement('div');
         dayContainer.classList.add('day-container');
         const dayTitle = document.createElement('h4');
-        dayTitle.textContent = `${capitalize(day)} - [Rimanenti] Calorie: ${remaining.kcal.toFixed(2)}, Carboidrati: ${remaining.carboidrati.toFixed(2)}g, Proteine: ${remaining.proteine.toFixed(2)}g, Grassi: ${remaining.grassi.toFixed(2)}g`;
+        dayTitle.textContent = `${capitalize(day)}`;
         dayContainer.appendChild(dayTitle);
 
         meals.forEach(meal => {
@@ -811,7 +877,11 @@ function renderMenuEditor(data) {
                     ricettaDiv.classList.add('ricetta');
                     ricettaDiv.innerHTML = `
                         <input hidden type="text" class="form-control form-control-sm" value="${ricetta.id}">
-                        <input type="text" class="form-control form-control-sm" value="${ricetta.nome_ricetta} - KCAL: ${ricetta.kcal} - CARB: ${ricetta.carboidrati} - PROT: ${ricetta.proteine} - GRAS: ${ricetta.grassi}" readonly>
+                        <input type="text" class="form-control form-control-sm" value="${ricetta.nome_ricetta}" readonly>
+                        <input type="text" class="form-control form-control-sm" style="width: 10%" value="KCAL: ${ricetta.kcal}" readonly>
+                        <input type="text" class="form-control form-control-sm" style="width: 10%" value="CARB: ${ricetta.carboidrati}" readonly>
+                        <input type="text" class="form-control form-control-sm" style="width: 10%" value="PROT: ${ricetta.proteine}" readonly>
+                        <input type="text" class="form-control form-control-sm" style="width: 10%" value="GRAS: ${ricetta.grassi}" readonly>
                         <input type="number" class="form-control form-control-sm" style="width: 10%" value="${ricetta.qta}" min="0.1" step="0.1" onchange="updateMealQuantity('${day}', '${meal}', '${ricetta.id}', this.value)">
                         <button class="btn btn-danger btn-sm" onclick="removeMeal('${day}', '${meal}', '${ricetta.id}')">Rimuovi</button>
                     `;
@@ -833,6 +903,7 @@ function renderMenuEditor(data) {
         menuEditor.appendChild(dayContainer);
     });
 }
+
 
 function updateMealQuantity(day, meal, ricettaId, newQuantity) {
     const data = {
@@ -890,7 +961,7 @@ function addNewMeal(day, meal) {
     currentMeal = meal;
 
     // Fetch delle ricette disponibili per quel pasto
-    fetch(`/get_available_meals?meal=${meal}`)
+    fetch(`/get_available_meals?meal=${meal}&day=${day}&week_id=${selectedWeekId}`)
         .then(response => response.json())
         .then(data => {
             const mealSelectionBody = document.getElementById('mealSelectionBody');

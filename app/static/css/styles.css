@@ -44,7 +44,7 @@ th, td {
 }
 
 th.nome-alimento, td.nome-alimento,
- th.nome-ricetta, td.nome-ricetta{
+th.nome-ricetta, td.nome-ricetta{
     text-align: center;
     width: 30%; /* Definisci la larghezza maggiore per la colonna Nome */
     min-width: 200px; /* Aggiungi una larghezza minima */
@@ -76,6 +76,13 @@ th.vegan, td.vegan,
 th.pesce, td.pesce {
     text-align: center;
     width: 6%; /* Puoi regolare questa larghezza */
+}
+
+th.calorie-edit, td.calorie-edit,
+th.carboidrati-edit, td.carboidrati-edit,
+th.proteine-edit, td.proteine-edit,
+th.grassi-edit, td.grassi-edit {
+    text-align: center;
 }
 
 .filter-text {

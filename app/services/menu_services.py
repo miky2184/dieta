@@ -953,12 +953,8 @@ def remove_meal_from_menu(menu, day, meal, meal_id):
     # Trova la ricetta da rimuovere
     ricetta_da_rimuovere = None
     for ricetta in menu['day'][day]['pasto'][meal]['ricette']:
-        print(f"ricetta-id::{ricetta['id']}")
-        print(f"meal_id::{meal_id}")
         if int(ricetta['id']) == int(meal_id):
-            print("dentro")
             ricetta_da_rimuovere = ricetta
-            print(f"ricetta_da_rimuovere::{ricetta_da_rimuovere}")
             break
 
     # Se la ricetta è trovata, rimuovila
