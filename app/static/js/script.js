@@ -806,13 +806,13 @@ function renderMenuEditor(data) {
     // Cerca il contenitore esistente dei macronutrienti rimanenti
     let macrosContainer = document.querySelector('.remaining-macros-container');
     if (!macrosContainer) {
-        // Se non esiste, creane uno nuovo
+        // Se il contenitore non esiste, creane uno nuovo
         macrosContainer = document.createElement('div');
         macrosContainer.classList.add('remaining-macros-container');
         const menuContainer = document.getElementById('menuEditor');
         menuContainer.parentNode.insertBefore(macrosContainer, menuContainer);
     } else {
-        // Se esiste, pulisci il contenitore
+        // Se il contenitore esiste, puliscilo
         macrosContainer.innerHTML = '';
     }
 
@@ -832,10 +832,6 @@ function renderMenuEditor(data) {
                 return capitalize(meal);
         }
     }
-
-    // Contenitore per le calorie e macronutrienti rimanenti
-    const remainingTableContainer = document.createElement('div');
-    remainingTableContainer.classList.add('remaining-macros-container');
 
     // Creazione della tabellina per i rimanenti giornalieri
     const remainingTable = document.createElement('table');
@@ -889,11 +885,11 @@ function renderMenuEditor(data) {
     remainingTableBody.appendChild(totalRow);
 
     remainingTable.appendChild(remainingTableBody);
-    remainingTableContainer.appendChild(remainingTable);
+    macrosContainer.appendChild(remainingTable);
 
     // Aggiungi la tabella sotto al week selector
     const menuContainer = document.getElementById('menuEditor');
-    menuContainer.parentNode.insertBefore(remainingTableContainer, menuContainer);
+    menuContainer.parentNode.insertBefore(macrosContainer, menuContainer);
 
     // Creazione delle card per ogni giorno
     days.forEach(day => {
