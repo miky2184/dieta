@@ -472,7 +472,7 @@ def add_meals_to_menu(week_id):
 
     # Salva il menu aggiornato nel database
     update_menu_corrente(menu_corrente, week_id)
-
+    current_app.cache.delete("view//")
     return jsonify({
         'status': 'success',
         'menu': menu_corrente,  # Restituisce il menu aggiornato

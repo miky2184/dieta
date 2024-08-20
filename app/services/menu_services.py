@@ -185,15 +185,15 @@ GROUP BY r.id, r.nome_ricetta,carboidrati, proteine, grassi, qta, r.colazione, r
 
 
 def genera_menu(settimana, controllo_macro_settimanale: bool, ricette) -> None:
-    percentuali = [1, 0.75, 0.5]
+    percentuali = [1, 0.5, 0.75]
     id_pane = 272
 
-    for percentuale_pietanza in percentuali:
-        for _ in range(MAX_RETRY):
-            for giorno in settimana['day']:
+    for giorno in settimana['day']:
+        for percentuale_pietanza in percentuali:
+            for _ in range(MAX_RETRY):
                 p = settimana['day'][giorno]['pasto']
 
-                if len(p['pranzo']['ricette']) == 0:
+                if len(p['pranzo']['ricette']) < 5:
                     scegli_pietanza(settimana, giorno, 'pranzo', 'principale', percentuale_pietanza, False, controllo_macro_settimanale, ricette)
                 if len(p['cena']['ricette']) == 0:
                     scegli_pietanza(settimana, giorno, 'cena', 'principale', percentuale_pietanza, False, controllo_macro_settimanale, ricette)
