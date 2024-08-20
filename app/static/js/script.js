@@ -1,3 +1,8 @@
+let currentDay = '';
+let currentMeal = '';
+let selectedWeekId = null;
+var myChart;
+
 function openTab(evt, tabName) {
     const tabcontent = document.querySelectorAll(".tabcontent");
     tabcontent.forEach(tab => tab.style.display = "none");
@@ -36,7 +41,7 @@ function aggiornaTabellaMenu(menu) {
         tr.appendChild(tdPasto);
         days.forEach(giorno => {
             const td = document.createElement('td');
-            if (menu.day[giorno].pasto[pasto].ricette && menu.day[giorno].pasto[pasto].ricette.length > 0){
+            if (menu.day[giorno].pasto[pasto].ricette && menu.day[giorno].pasto[pasto].ricette.length > 0) {
                 menu.day[giorno].pasto[pasto].ricette.forEach(ricetta => {
                     const div = document.createElement('div');
                     div.textContent = `${ricetta.nome_ricetta} (${ricetta.qta}x)`;
@@ -172,8 +177,6 @@ function filterTable() {
         const proteineMatch = proteineCell >= proteineMin && proteineCell <= proteineMax;
         const grassiMatch = grassiCell >= grassiMin && grassiCell <= grassiMax;
 
-
-
         if (nomeCell.includes(nomeFilter) &&
             calorieMatch &&
             carboMatch &&
@@ -184,8 +187,7 @@ function filterTable() {
             spuntinoMatch &&
             principaleMatch &&
             contornoMatch &&
-            attivaMatch)
-        {
+            attivaMatch) {
             rows[i].style.display = '';
         } else {
             rows[i].style.display = 'none';
@@ -372,7 +374,7 @@ function populateDietaForm(data) {
     document.querySelector('[name="peso"]').value = Math.round(data.peso) || '';
     document.getElementById('tdee').value = data.tdee || '';
     document.getElementById('deficit_calorico').value = data.deficit_calorico || '';
-    document.getElementById('bmi').value = Math.round(data.bmi * 100) /100 || '';
+    document.getElementById('bmi').value = Math.round(data.bmi * 100) / 100 || '';
     document.getElementById('peso_ideale').value = Math.round(data.peso_ideale) || '';
     document.getElementById('meta_basale').value = Math.round(data.meta_basale) || '';
     document.getElementById('meta_giornaliero').value = Math.round(data.meta_giornaliero) || '';
@@ -383,360 +385,150 @@ function populateDietaForm(data) {
     document.getElementById('grassi_input').value = Math.round(data.grassi) || '';
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById("defaultOpen").click();
+function calcolaPesoIdeale(data) {
+    const formule = {
+        lorenz: (altezza, sesso, eta) => sesso === 'M' ? altezza - 100 - (altezza - 150) / 4 : altezza - 100 - (altezza - 150) / 2,
+        broca: (altezza, sesso, eta) => sesso === 'M' ? altezza - 100 : altezza - 104,
+        berthean: (altezza, sesso, eta) => 0.8 * (altezza - 100) + eta / 2,
+        keys: (altezza, sesso, eta) => sesso === 'M' ? 22.1 * Math.pow(altezza / 100, 2) : 20.6 * Math.pow(altezza / 100, 2),
+    };
 
-    document.getElementById("captureButton").addEventListener("click", function() {
-        const weekId = document.getElementById("settimana_select").value; // Ottieni l'ID della settimana selezionata
-        const menuContainer = document.querySelector("#capture");
+    const risultati = Object.values(formule).map(f => f(data.altezza, data.sesso, data.eta));
+    return (risultati.reduce((a, b) => a + b, 0) / risultati.length).toFixed(0);
+}
 
-        html2canvas(document.querySelector("#capture")).then(canvas => {
-        const imgData = canvas.toDataURL('image/png');
-                // Ora puoi usare imgData per creare un PDF o visualizzare l'immagine
-                fetch('/generate_pdf', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ image: imgData, week_id: weekId })
-        })
-        .then(response => response.blob())
-        .then(blob => {
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = 'menu_settimanale.pdf';
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-        })
-        .catch(error => console.error('Error:', error));
-        });
-    });
+function synchronizeFields() {
+    // Copia i valori dai campi visibili/disabilitati ai campi nascosti
+    const bmiVisible = document.getElementById('bmi');
+    const bmiHidden = document.getElementById('bmi_hidden');
+    bmiHidden.value = bmiVisible.value;
 
-    document.getElementById("generateMenuBtn").addEventListener("click", function() {
-      // Avvia la generazione del menu al click del bottone
-      startMenuGeneration();
-    });
+    const pesoIdealeVisible = document.getElementById('peso_ideale');
+    const pesoIdealeHidden = document.getElementById('peso_ideale_hidden');
+    pesoIdealeHidden.value = pesoIdealeVisible.value;
 
-    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-      return new bootstrap.Popover(popoverTriggerEl);
-    });
+    // Aggiungi altre sincronizzazioni qui
+    const metaBasaleVisible = document.getElementById('meta_basale');
+    const metaBasaleHidden = document.getElementById('meta_basale_hidden');
+    metaBasaleHidden.value = metaBasaleVisible.value;
 
-    document.getElementById('confirmAddMeal').addEventListener('click', function() {
-    const selectedMeals = [];
-    document.querySelectorAll('.meal-checkbox:checked').forEach(checkbox => {
-        selectedMeals.push(checkbox.value);
-    });
+    const metaGiornalieroVisible = document.getElementById('meta_giornaliero');
+    const metaGiornalieroHidden = document.getElementById('meta_giornaliero_hidden');
+    metaGiornalieroHidden.value = metaGiornalieroVisible.value;
 
-    if (selectedMeals.length > 0) {
-        // Aggiungi le ricette selezionate al menu
-        addMealsToMenu(currentDay, currentMeal, selectedMeals);
+    const calorieGiornaliereVisible = document.getElementById('calorie_giornaliere');
+    const calorieGiornaliereHidden = document.getElementById('calorie_giornaliere_hidden');
+    calorieGiornaliereHidden.value = calorieGiornaliereVisible.value;
+
+    const calorieSettimanaliVisible = document.getElementById('calorie_settimanali');
+    const calorieSettimanaliHidden = document.getElementById('calorie_settimanali_hidden');
+    calorieSettimanaliHidden.value = calorieSettimanaliVisible.value;
+
+    const carboidratiVisible = document.getElementById('carboidrati_input');
+    const carboidratiHidden = document.getElementById('carboidrati_hidden');
+    carboidratiHidden.value = carboidratiVisible.value;
+
+    const proteineVisible = document.getElementById('proteine_input');
+    const proteineHidden = document.getElementById('proteine_hidden');
+    proteineHidden.value = proteineVisible.value;
+
+    const grassiVisible = document.getElementById('grassi_input');
+    const grassiHidden = document.getElementById('grassi_hidden');
+    grassiHidden.value = grassiVisible.value;
+}
+
+function calculateResults() {
+    const formData = new FormData(form);
+    const data = {
+        nome: formData.get('nome'),
+        cognome: formData.get('cognome'),
+        sesso: formData.get('sesso'),
+        eta: formData.get('eta'),
+        peso: formData.get('peso'),
+        altezza: formData.get('altezza'),
+        tdee: formData.get('tdee'),
+        deficit: formData.get('deficit_calorico')
+    };
+
+    // Esegui i calcoli basati sui dati inseriti
+    let bmi = (data.peso / Math.pow(data.altezza / 100, 2)).toFixed(1); // esempio di calcolo del BMI, con un'altezza fissa
+
+    idealWeight = calcolaPesoIdeale(data)
+
+    let harrisBenedict;
+    let mifflinStJeor;
+
+    if (data.sesso === 'M') {
+        harrisBenedict = 88.362 + (13.397 * data.peso) + (4.799 * data.altezza) - (5.677 * data.eta);
+        mifflinStJeor = 10 * data.peso + 6.25 * data.altezza - 5 * data.eta + 5;
+    } else if (data.sesso === 'F') {
+        harrisBenedict = 47.593 + (9.247 * data.peso) + (3.098 * data.altezza) - (4, 330 * data.eta);
+        mifflinStJeor = 10 * data.peso + 6.25 * data.altezza - 5 * data.eta - 161;
     }
 
-    // Chiudi il modal
-    const addMealModal = bootstrap.Modal.getInstance(document.getElementById('addMealModal'));
-    addMealModal.hide();
-});
+    let metaBasaleValue = ((harrisBenedict + mifflinStJeor) / 2).toFixed(0);
 
-    document.querySelectorAll('.save-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const ricettaId = this.getAttribute('data-ricetta-id');
-            const ricettaData = {
-                id: ricettaId,
-                nome: document.querySelector(`input[name='nome_${ricettaId}']`).value,
-                colazione: document.querySelector(`input[name='colazione_${ricettaId}']`).checked,
-                colazione_sec: document.querySelector(`input[name='colazione_sec_${ricettaId}']`).checked,
-                spuntino: document.querySelector(`input[name='spuntino_${ricettaId}']`).checked,
-                principale: document.querySelector(`input[name='principale_${ricettaId}']`).checked,
-                contorno: document.querySelector(`input[name='contorno_${ricettaId}']`).checked
-            };
-            saveRicetta(ricettaData);
-        });
-    });
+    let metaDailyValue = (metaBasaleValue * data.tdee).toFixed(0);
 
-    document.querySelectorAll('.toggle-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const ricettaId = this.getAttribute('data-ricetta-id');
-            const ricettaAttiva = this.getAttribute('data-ricetta-attiva') === 'true';
-            const ricettaData = {
-                id: ricettaId,
-                attiva: !ricettaAttiva
-            };
-            toggleStatusRicetta(ricettaData);
-            const checkbox = document.querySelector(`.attiva-checkbox[data-ricetta-id='${ricettaId}']`);
-            if (checkbox) {
-                checkbox.checked = !checkbox.checked;
-            }
-        });
-    });
+    let calorieGiornaliereValue = ((metaDailyValue - (metaDailyValue * data.deficit / 100))).toFixed(0);
 
-    document.querySelectorAll('.edit-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const recipeId = this.getAttribute('data-ricetta-id');
-            fetch(`/recipe/${recipeId}`)
-                .then(response => response.json())
-                .then(data => {
-                    populateIngredientsModal(data);
-                    document.getElementById('modal-recipe-id').value = recipeId;
-                })
-                .catch(error => console.error('Error loading the ingredients:', error));
-        });
-    });
+    let calorieSettimanaliValue = (calorieGiornaliereValue * 7).toFixed(0);
 
-    // Assicurati che gli event listeners siano aggiunti dopo il caricamento dei dati nel modal
-    document.querySelector('#editRecipeModal').addEventListener('click', function(event) {
-        const target = event.target;
-        if (target.classList.contains('delete-ingredient')) {
-            const ingredientId = target.getAttribute('data-id');
-            const recipeId = target.getAttribute('data-recipe-id');
-            deleteIngredient(ingredientId, recipeId, target);
-        }
+    let carboidratiValue = (calorieGiornaliereValue * 0.6 / 4).toFixed(0);
+    let proteineValue = (calorieGiornaliereValue * 0.15 / 4).toFixed(0);;
+    let grassiValue = (calorieGiornaliereValue * 0.25 / 9).toFixed(0);;
 
-        if (target.classList.contains('update-ingredient')) {
-            const ingredientId = target.getAttribute('data-id');
-            const recipeId = target.getAttribute('data-recipe-id');
-            const qta = document.getElementById(`quantity-${ingredientId}`).value
-            updateIngredient(ingredientId, recipeId, qta);
-        }
-    });
 
-    var addIngredientModal = document.getElementById('addIngredientModal');
-    addIngredientModal.addEventListener('hidden.bs.modal', function() {
-        window.location.href = '/';
-    })
-
-    function synchronizeFields() {
-        // Copia i valori dai campi visibili/disabilitati ai campi nascosti
-        const bmiVisible = document.getElementById('bmi');
-        const bmiHidden = document.getElementById('bmi_hidden');
-        bmiHidden.value = bmiVisible.value;
-
-        const pesoIdealeVisible = document.getElementById('peso_ideale');
-        const pesoIdealeHidden = document.getElementById('peso_ideale_hidden');
-        pesoIdealeHidden.value = pesoIdealeVisible.value;
-
-        // Aggiungi altre sincronizzazioni qui
-        const metaBasaleVisible = document.getElementById('meta_basale');
-        const metaBasaleHidden = document.getElementById('meta_basale_hidden');
-        metaBasaleHidden.value = metaBasaleVisible.value;
-
-        const metaGiornalieroVisible = document.getElementById('meta_giornaliero');
-        const metaGiornalieroHidden = document.getElementById('meta_giornaliero_hidden');
-        metaGiornalieroHidden.value = metaGiornalieroVisible.value;
-
-        const calorieGiornaliereVisible = document.getElementById('calorie_giornaliere');
-        const calorieGiornaliereHidden = document.getElementById('calorie_giornaliere_hidden');
-        calorieGiornaliereHidden.value = calorieGiornaliereVisible.value;
-
-        const calorieSettimanaliVisible = document.getElementById('calorie_settimanali');
-        const calorieSettimanaliHidden = document.getElementById('calorie_settimanali_hidden');
-        calorieSettimanaliHidden.value = calorieSettimanaliVisible.value;
-
-        const carboidratiVisible = document.getElementById('carboidrati_input');
-        const carboidratiHidden = document.getElementById('carboidrati_hidden');
-        carboidratiHidden.value = carboidratiVisible.value;
-
-        const proteineVisible = document.getElementById('proteine_input');
-        const proteineHidden = document.getElementById('proteine_hidden');
-        proteineHidden.value = proteineVisible.value;
-
-        const grassiVisible = document.getElementById('grassi_input');
-        const grassiHidden = document.getElementById('grassi_hidden');
-        grassiHidden.value = grassiVisible.value;
+    if (isNaN(bmi)) {
+        bmi = 0; // Imposta un valore di default o gestisci l'errore come necessario
     }
 
-    synchronizeFields();
-    document.getElementById('personalInfoForm').addEventListener('submit', synchronizeFields);
-
-    const form = document.getElementById('personalInfoForm');
-    const resultsContainer = document.getElementById('results');
-    //const calculatedResults = document.getElementById('calculatedResults');
-
-    const bmiInput = document.getElementById('bmi');
-    const idealWeightInput = document.getElementById('peso_ideale');
-    const metaBasale = document.getElementById('meta_basale');
-    const metaDaily = document.getElementById('meta_giornaliero');
-    const calorieGiornaliere = document.getElementById('calorie_giornaliere');
-    const calorieSettimanali = document.getElementById('calorie_settimanali');
-    const carboidrati = document.getElementById('carboidrati_input');
-    const proteine = document.getElementById('proteine_input');
-    const grassi = document.getElementById('grassi_input');
-
-    function calculateResults() {
-        const formData = new FormData(form);
-        const data = {
-            nome: formData.get('nome'),
-            cognome: formData.get('cognome'),
-            sesso: formData.get('sesso'),
-            eta: formData.get('eta'),
-            peso: formData.get('peso'),
-            altezza: formData.get('altezza'),
-            tdee: formData.get('tdee'),
-            deficit: formData.get('deficit_calorico')
-        };
-
-        // Esegui i calcoli basati sui dati inseriti
-        let bmi = (data.peso / Math.pow(data.altezza/100, 2)).toFixed(1); // esempio di calcolo del BMI, con un'altezza fissa
-        let idealWeight;
-        let formulaLorenz;
-        let formulaBroca;
-        let formulaBerthean;
-        let formulaKeys;
-        if (data.altezza > 0) {
-            if (data.eta > 0) {
-            if (data.sesso === 'M') {
-                formulaLorenz = data.altezza - 100 - (data.altezza - 150)/4;
-                formulaBroca = data.altezza - 100;
-                formulaBerthean = 0.8 * (data.altezza - 100) + data.eta/2;
-                formulaKeys = 22.1 * Math.pow(data.altezza / 100, 2);
-            } else if (data.sesso === 'F') {
-                formulaLorenz = data.altezza - 100 - (data.altezza - 150)/2;
-                formulaBroca = data.altezza - 104;
-                formulaBerthean = 0.8 * (data.altezza - 100) + data.eta/2;
-                formulaKeys = 20.6 * Math.pow(data.altezza / 100, 2);
-            }
-            }
-        }
-
-        idealWeight = ((formulaLorenz + formulaBroca + formulaBerthean + formulaKeys)/4).toFixed(0)
-
-        let harrisBenedict;
-        let mifflinStJeor;
-
-        if (data.sesso === 'M') {
-            harrisBenedict = 88.362 + (13.397 * data.peso) + (4.799 * data.altezza) - (5.677 * data.eta);
-            mifflinStJeor = 10 * data.peso + 6.25 * data.altezza - 5 * data.eta + 5;
-        } else if (data.sesso === 'F') {
-            harrisBenedict = 47.593+(9.247*data.peso)+(3.098*data.altezza)- (4,330*data.eta) ;
-            mifflinStJeor = 10 * data.peso + 6.25 * data.altezza - 5 * data.eta -161;
-        }
-
-        let metaBasaleValue = ((harrisBenedict + mifflinStJeor)/2).toFixed(0);
-
-        let metaDailyValue = (metaBasaleValue * data.tdee).toFixed(0);
-
-        let calorieGiornaliereValue = ((metaDailyValue - (metaDailyValue * data.deficit/100))).toFixed(0);
-
-        let calorieSettimanaliValue = (calorieGiornaliereValue * 7).toFixed(0);
-
-        let carboidratiValue = (calorieGiornaliereValue * 0.6 / 4).toFixed(0);
-        let proteineValue = (calorieGiornaliereValue * 0.15 / 4).toFixed(0);;
-        let grassiValue = (calorieGiornaliereValue * 0.25 / 9).toFixed(0);;
-
-
-        if (isNaN(bmi)) {
-            bmi = 0;  // Imposta un valore di default o gestisci l'errore come necessario
-        }
-
-        if (isNaN(idealWeight)) {
-            idealWeight = 0;  // Imposta un valore di default o gestisci l'errore come necessario
-        }
-
-        if (isNaN(metaBasaleValue)) {
-            metaBasaleValue = 0;  // Imposta un valore di default o gestisci l'errore come necessario
-        }
-
-        if (isNaN(metaDailyValue)) {
-            metaDailyValue = 0;  // Imposta un valore di default o gestisci l'errore come necessario
-        }
-
-        if (isNaN(calorieGiornaliereValue)) {
-            calorieGiornaliereValue = 0;  // Imposta un valore di default o gestisci l'errore come necessario
-        }
-
-        if (isNaN(calorieSettimanaliValue)) {
-            calorieSettimanaliValue = 0;  // Imposta un valore di default o gestisci l'errore come necessario
-        }
-
-        if (isNaN(carboidratiValue)) {
-            carboidratiValue = 0;  // Imposta un valore di default o gestisci l'errore come necessario
-        }
-
-        if (isNaN(proteineValue)) {
-            proteineValue = 0;  // Imposta un valore di default o gestisci l'errore come necessario
-        }
-
-        if (isNaN(grassiValue)) {
-            grassiValue = 0;  // Imposta un valore di default o gestisci l'errore come necessario
-        }
-
-        bmiInput.value = bmi;
-        idealWeightInput.value = idealWeight;
-        metaBasale.value = metaBasaleValue;
-        metaDaily.value = metaDailyValue;
-        calorieGiornaliere.value = calorieGiornaliereValue;
-        calorieSettimanali.value = calorieSettimanaliValue;
-        carboidrati.value = carboidratiValue;
-        proteine.value = proteineValue;
-        grassi.value = grassiValue;
+    if (isNaN(idealWeight)) {
+        idealWeight = 0; // Imposta un valore di default o gestisci l'errore come necessario
     }
 
-    form.addEventListener('input', calculateResults);
+    if (isNaN(metaBasaleValue)) {
+        metaBasaleValue = 0; // Imposta un valore di default o gestisci l'errore come necessario
+    }
 
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-    return new bootstrap.Tooltip(tooltipTriggerEl)
-  });
+    if (isNaN(metaDailyValue)) {
+        metaDailyValue = 0; // Imposta un valore di default o gestisci l'errore come necessario
+    }
 
-    document.getElementById("peso-tab").addEventListener("click", () => {
-        fetch('/get_peso_data')
-            .then(response => response.json())
-            .then(data => {
-                if (data.length > 0) {
-                    updateWeightChart(data);
-                }
-            })
-            .catch(error => console.error('Errore nel caricamento dei dati:', error));
-    });
+    if (isNaN(calorieGiornaliereValue)) {
+        calorieGiornaliereValue = 0; // Imposta un valore di default o gestisci l'errore come necessario
+    }
 
-    document.getElementById("dieta-tab").addEventListener("click", () => {
-        fetch('/get_data_utente')
-            .then(response => response.json())
-            .then(data => {
-                if (data) {
-                    populateDietaForm(data);
-                }
-            })
-            .catch(error => console.error('Errore nel caricamento dei dati:', error));
-    });
+    if (isNaN(calorieSettimanaliValue)) {
+        calorieSettimanaliValue = 0; // Imposta un valore di default o gestisci l'errore come necessario
+    }
 
-    // Event listener per il salvataggio degli alimenti
-    document.querySelectorAll('.save-alimento-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const alimentoId = this.getAttribute('data-alimento-id');
-            const alimentoData = {
-                id: alimentoId,
-                nome: document.querySelector(`input[name='nome_${alimentoId}']`).value,
-                carboidrati: parseFloat(document.querySelector(`input[name='carboidrati_${alimentoId}']`).value),
-                proteine: parseFloat(document.querySelector(`input[name='proteine_${alimentoId}']`).value),
-                grassi: parseFloat(document.querySelector(`input[name='grassi_${alimentoId}']`).value),
-                frutta: document.querySelector(`input[name='frutta_${alimentoId}']`).checked,
-                carne_bianca: document.querySelector(`input[name='carne_bianca_${alimentoId}']`).checked,
-                carne_rossa: document.querySelector(`input[name='carne_rossa_${alimentoId}']`).checked,
-                pane: document.querySelector(`input[name='pane_${alimentoId}']`).checked,
-                verdura: document.querySelector(`input[name='verdura_${alimentoId}']`).checked,
-                confezionato: document.querySelector(`input[name='confezionato_${alimentoId}']`).checked,
-                vegan: document.querySelector(`input[name='vegan_${alimentoId}']`).checked,
-                pesce: document.querySelector(`input[name='pesce_${alimentoId}']`).checked
-            };
-            saveAlimento(alimentoData);
-        });
-    });
+    if (isNaN(carboidratiValue)) {
+        carboidratiValue = 0; // Imposta un valore di default o gestisci l'errore come necessario
+    }
 
-    // Event listener per l'eliminazione degli alimenti
-    document.querySelectorAll('.delete-alimento-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const alimentoId = this.getAttribute('data-alimento-id');
-            deleteAlimento(alimentoId);
-        });
-    });
+    if (isNaN(proteineValue)) {
+        proteineValue = 0; // Imposta un valore di default o gestisci l'errore come necessario
+    }
 
-    // Funzione per salvare l'alimento
-    function saveAlimento(alimentoData) {
-        fetch('/save_alimento', {
+    if (isNaN(grassiValue)) {
+        grassiValue = 0; // Imposta un valore di default o gestisci l'errore come necessario
+    }
+
+    bmiInput.value = bmi;
+    idealWeightInput.value = idealWeight;
+    metaBasale.value = metaBasaleValue;
+    metaDaily.value = metaDailyValue;
+    calorieGiornaliere.value = calorieGiornaliereValue;
+    calorieSettimanali.value = calorieSettimanaliValue;
+    carboidrati.value = carboidratiValue;
+    proteine.value = proteineValue;
+    grassi.value = grassiValue;
+}
+
+// Funzione per salvare l'alimento
+function saveAlimento(alimentoData) {
+    fetch('/save_alimento', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -744,21 +536,22 @@ document.addEventListener('DOMContentLoaded', function() {
             body: JSON.stringify(alimentoData)
         })
         .then(response => response.json())
-        .then(data => {
-        })
+        .then(data => {})
         .catch((error) => {
             console.error('Errore:', error);
         });
-    }
+}
 
-    // Funzione per eliminare l'alimento
-    function deleteAlimento(alimentoId) {
-        fetch('/delete_alimento', {
+// Funzione per eliminare l'alimento
+function deleteAlimento(alimentoId) {
+    fetch('/delete_alimento', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ id: alimentoId })
+            body: JSON.stringify({
+                id: alimentoId
+            })
         })
         .then(response => response.json())
         .then(data => {
@@ -767,32 +560,12 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch((error) => {
             console.error('Errore:', error);
         });
-    }
-});
+}
 
 // Utility function to capitalize the first letter of a string
 function capitalize(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
-
-$(document).ready(function() {
-    $('#addIngredientModal').on('show.bs.modal', function(event) {
-        const select = document.getElementById('ingredient-select');
-        select.innerHTML = '';
-
-        fetch('/get_all_ingredients')
-            .then(response => response.json())
-            .then(ingredients => {
-                ingredients.forEach(ingredient => {
-                    const option = new Option(ingredient.nome, ingredient.id);
-                    select.add(option);
-                });
-            })
-            .catch(error => console.error('Error loading ingredients:', error));
-    });
-});
-
-let selectedWeekId = null;
 
 function loadMenuData() {
     selectedWeekId = document.getElementById('selectMenu').value;
@@ -818,6 +591,18 @@ function filterDayCards() {
             card.style.display = 'none'; // Nascondi la card
         }
     });
+}
+
+// Funzione per formattare i nomi dei pasti
+function formatMealName(meal) {
+    switch (meal) {
+        case 'spuntino_mattina':
+            return 'Spuntino Mattina';
+        case 'spuntino_pomeriggio':
+            return 'Spuntino Pomeriggio';
+        default:
+            return capitalize(meal);
+    }
 }
 
 
@@ -846,18 +631,6 @@ function renderMenuEditor(data) {
     const days = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
     const meals = ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena'];
 
-    // Funzione per formattare i nomi dei pasti
-    function formatMealName(meal) {
-        switch (meal) {
-            case 'spuntino_mattina':
-                return 'Spuntino Mattina';
-            case 'spuntino_pomeriggio':
-                return 'Spuntino Pomeriggio';
-            default:
-                return capitalize(meal);
-        }
-    }
-
     // Creazione della tabellina per i rimanenti giornalieri
     const remainingTable = document.createElement('table');
     remainingTable.id = 'remainingTable';
@@ -877,7 +650,10 @@ function renderMenuEditor(data) {
 
     const remainingTableBody = document.createElement('tbody');
 
-    let totalKcal = 0, totalCarboidrati = 0, totalProteine = 0, totalGrassi = 0;
+    let totalKcal = 0,
+        totalCarboidrati = 0,
+        totalProteine = 0,
+        totalGrassi = 0;
 
     days.forEach(day => {
         const remaining = data['remaining_macronutrienti'][day];
@@ -996,46 +772,43 @@ function updateMealQuantity(day, meal, ricettaId, newQuantity) {
     };
 
     fetch(`/update_meal_quantity`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(data => {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
             renderMenuEditor(data);
-          //aggiornaMacronutrientiRimanenti(data.remaining_macronutrienti);
-    })
-    .catch(error => console.error('Error:', error));
+            //aggiornaMacronutrientiRimanenti(data.remaining_macronutrienti);
+        })
+        .catch(error => console.error('Error:', error));
 }
 
 function removeMeal(day, meal, mealId) {
     fetch(`/remove_meal/${selectedWeekId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            day: day,
-            meal: meal,
-            meal_id: mealId
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                day: day,
+                meal: meal,
+                meal_id: mealId
+            })
         })
-    })
-    .then(response => response.json())
-    .then(data => {
-        // Rimuovi il pasto dalla visualizzazione
-        document.getElementById(`meal-${mealId}-${day}-${meal}`).remove();
-        renderMenuEditor(data);
-        // Aggiorna i macronutrienti rimanenti nella visualizzazione
-        //aggiornaMacronutrientiRimanenti(data.remaining_macronutrienti);
-    })
-    .catch(error => console.error('Error:', error));
+        .then(response => response.json())
+        .then(data => {
+            // Rimuovi il pasto dalla visualizzazione
+            document.getElementById(`meal-${mealId}-${day}-${meal}`).remove();
+            renderMenuEditor(data);
+            // Aggiorna i macronutrienti rimanenti nella visualizzazione
+            //aggiornaMacronutrientiRimanenti(data.remaining_macronutrienti);
+        })
+        .catch(error => console.error('Error:', error));
 }
 
-
-let currentDay = '';
-let currentMeal = '';
 
 function addNewMeal(day, meal) {
     currentDay = day;
@@ -1070,23 +843,23 @@ function addNewMeal(day, meal) {
 
 function addMealsToMenu(day, meal, selectedMeals) {
     fetch(`/add_meals_to_menu/${selectedWeekId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            day: day,
-            meal: meal,
-            selectedMeals: selectedMeals
-        }),
-    })
-    .then(response => response.json())
-    .then(data => {
-        renderMenuEditor(data);
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-    });
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                day: day,
+                meal: meal,
+                selectedMeals: selectedMeals
+            }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            renderMenuEditor(data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
 }
 
 function aggiornaMacronutrientiRimanenti(remaining_macronutrienti) {
@@ -1108,26 +881,27 @@ function submitWeight() {
 
     // Invia il peso al server (assumendo che tu abbia un endpoint API)
     fetch('/submit-weight', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ date: date, weight: weight })
-    })
-    .then(response => response.json())
-    .then(data => {
-        updateWeightChart(data); // Aggiorna il grafico dopo l'invio
-    })
-    .catch(error => console.error('Errore nel salvataggio del peso:', error));
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                date: date,
+                weight: weight
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            updateWeightChart(data); // Aggiorna il grafico dopo l'invio
+        })
+        .catch(error => console.error('Errore nel salvataggio del peso:', error));
 }
-
-var myChart;
 
 function formatDate(dateStr) {
     var date = new Date(dateStr);
     return date.getFullYear() + '-' +
-           ('0' + (date.getMonth() + 1)).slice(-2) + '-' +
-           ('0' + date.getDate()).slice(-2);
+        ('0' + (date.getMonth() + 1)).slice(-2) + '-' +
+        ('0' + date.getDate()).slice(-2);
 }
 
 function updateWeightChart(weights) {
@@ -1161,27 +935,298 @@ function updateWeightChart(weights) {
 }
 
 function startMenuGeneration() {
-  // Effettua una richiesta AJAX per avviare la generazione del menu
-  fetch('/generate_menu', {
-    method: 'POST',
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.status === 'success') {
-      updateProgress(100);  // Imposta il progresso al 100%
-      setTimeout(() => {
-        $('#generateMenuModal').modal('hide');  // Chiudi il modal
-        location.reload();  // Ricarica la pagina per visualizzare il nuovo menu
-      }, 1000);
-    }
-  })
-  .catch(error => {
-    console.error('Errore durante la generazione del menu:', error);
-  });
+    // Effettua una richiesta AJAX per avviare la generazione del menu
+    fetch('/generate_menu', {
+            method: 'POST',
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                updateProgress(100); // Imposta il progresso al 100%
+                setTimeout(() => {
+                    $('#generateMenuModal').modal('hide'); // Chiudi il modal
+                    location.reload(); // Ricarica la pagina per visualizzare il nuovo menu
+                }, 1000);
+            }
+        })
+        .catch(error => {
+            console.error('Errore durante la generazione del menu:', error);
+        });
 }
 
 function updateProgress(progress) {
-  const progressBar = document.getElementById("menuGenerationProgress");
-  progressBar.style.width = `${progress}%`;
-  progressBar.setAttribute("aria-valuenow", progress);
+    const progressBar = document.getElementById("menuGenerationProgress");
+    progressBar.style.width = `${progress}%`;
+    progressBar.setAttribute("aria-valuenow", progress);
 }
+
+function cleanFilters() {
+    // Resetta i valori dei filtri
+    document.getElementById('filter-nome').value = '';
+    document.getElementById('filter-calorie-min').value = '';
+    document.getElementById('filter-calorie-max').value = '';
+    document.getElementById('filter-carbo-min').value = '';
+    document.getElementById('filter-carbo-max').value = '';
+    document.getElementById('filter-proteine-min').value = '';
+    document.getElementById('filter-proteine-max').value = '';
+    document.getElementById('filter-grassi-min').value = '';
+    document.getElementById('filter-grassi-max').value = '';
+    document.getElementById('filter-colazione').value = 'all';
+    document.getElementById('filter-colazione-sec').value = 'all';
+    document.getElementById('filter-spuntino').value = 'all';
+    document.getElementById('filter-principale').value = 'all';
+    document.getElementById('filter-contorno').value = 'all';
+    document.getElementById('filter-attiva').value = 'all';
+
+    // Chiama la funzione che filtra la tabella per aggiornare i risultati
+    filterTable();
+}
+
+function cleanFiltersAlimenti() {
+    // Resetta i valori dei filtri
+    document.getElementById('filter-nome-alimento').value = '';
+    document.getElementById('filter-calorie-min').value = '';
+    document.getElementById('filter-calorie-max').value = '';
+    document.getElementById('filter-carbo-min').value = '';
+    document.getElementById('filter-carbo-max').value = '';
+    document.getElementById('filter-proteine-min').value = '';
+    document.getElementById('filter-proteine-max').value = '';
+    document.getElementById('filter-grassi-min').value = '';
+    document.getElementById('filter-grassi-max').value = '';
+    document.getElementById('filter-macro').value = 'all';
+    document.getElementById('filter-frutta').value = 'all';
+    document.getElementById('filter-carne-bianca').value = 'all';
+    document.getElementById('filter-carne-rossa').value = 'all';
+    document.getElementById('filter-pane').value = 'all';
+    document.getElementById('filter-verdura').value = 'all';
+    document.getElementById('filter-confezionato').value = 'all';
+    document.getElementById('filter-vegan').value = 'all';
+    document.getElementById('filter-pesce').value = 'all';
+
+    // Chiama la funzione che filtra la tabella per aggiornare i risultati
+    filterAlimentiTable();
+}
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById("defaultOpen").click();
+
+    document.getElementById("captureButton").addEventListener("click", function() {
+        const weekId = document.getElementById("settimana_select").value; // Ottieni l'ID della settimana selezionata
+        const menuContainer = document.querySelector("#capture");
+
+        html2canvas(document.querySelector("#capture")).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            // Ora puoi usare imgData per creare un PDF o visualizzare l'immagine
+            fetch('/generate_pdf', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        image: imgData,
+                        week_id: weekId
+                    })
+                })
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = 'menu_settimanale.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch(error => console.error('Error:', error));
+        });
+    });
+
+    document.getElementById("generateMenuBtn").addEventListener("click", function() {
+        // Avvia la generazione del menu al click del bottone
+        startMenuGeneration();
+    });
+
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    var popoverList = popoverTriggerList.map(function(popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl);
+    });
+
+    document.getElementById('confirmAddMeal').addEventListener('click', function() {
+        const selectedMeals = [];
+        document.querySelectorAll('.meal-checkbox:checked').forEach(checkbox => {
+            selectedMeals.push(checkbox.value);
+        });
+
+        if (selectedMeals.length > 0) {
+            // Aggiungi le ricette selezionate al menu
+            addMealsToMenu(currentDay, currentMeal, selectedMeals);
+        }
+
+        // Chiudi il modal
+        const addMealModal = bootstrap.Modal.getInstance(document.getElementById('addMealModal'));
+        addMealModal.hide();
+    });
+
+    document.querySelectorAll('.save-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const ricettaId = this.getAttribute('data-ricetta-id');
+            const ricettaData = {
+                id: ricettaId,
+                nome: document.querySelector(`input[name='nome_${ricettaId}']`).value,
+                colazione: document.querySelector(`input[name='colazione_${ricettaId}']`).checked,
+                colazione_sec: document.querySelector(`input[name='colazione_sec_${ricettaId}']`).checked,
+                spuntino: document.querySelector(`input[name='spuntino_${ricettaId}']`).checked,
+                principale: document.querySelector(`input[name='principale_${ricettaId}']`).checked,
+                contorno: document.querySelector(`input[name='contorno_${ricettaId}']`).checked
+            };
+            saveRicetta(ricettaData);
+        });
+    });
+
+    document.querySelectorAll('.toggle-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const ricettaId = this.getAttribute('data-ricetta-id');
+            const ricettaAttiva = this.getAttribute('data-ricetta-attiva') === 'true';
+            const ricettaData = {
+                id: ricettaId,
+                attiva: !ricettaAttiva
+            };
+            toggleStatusRicetta(ricettaData);
+            const checkbox = document.querySelector(`.attiva-checkbox[data-ricetta-id='${ricettaId}']`);
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+            }
+        });
+    });
+
+    document.querySelectorAll('.edit-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const recipeId = this.getAttribute('data-ricetta-id');
+            fetch(`/recipe/${recipeId}`)
+                .then(response => response.json())
+                .then(data => {
+                    populateIngredientsModal(data);
+                    document.getElementById('modal-recipe-id').value = recipeId;
+                })
+                .catch(error => console.error('Error loading the ingredients:', error));
+        });
+    });
+
+    // Assicurati che gli event listeners siano aggiunti dopo il caricamento dei dati nel modal
+    document.querySelector('#editRecipeModal').addEventListener('click', function(event) {
+        const target = event.target;
+        if (target.classList.contains('delete-ingredient')) {
+            const ingredientId = target.getAttribute('data-id');
+            const recipeId = target.getAttribute('data-recipe-id');
+            deleteIngredient(ingredientId, recipeId, target);
+        }
+
+        if (target.classList.contains('update-ingredient')) {
+            const ingredientId = target.getAttribute('data-id');
+            const recipeId = target.getAttribute('data-recipe-id');
+            const qta = document.getElementById(`quantity-${ingredientId}`).value
+            updateIngredient(ingredientId, recipeId, qta);
+        }
+    });
+
+    var addIngredientModal = document.getElementById('addIngredientModal');
+    addIngredientModal.addEventListener('hidden.bs.modal', function() {
+        window.location.href = '/';
+    })
+
+    synchronizeFields();
+    document.getElementById('personalInfoForm').addEventListener('submit', synchronizeFields);
+
+    const form = document.getElementById('personalInfoForm');
+    const resultsContainer = document.getElementById('results');
+    //const calculatedResults = document.getElementById('calculatedResults');
+
+    const bmiInput = document.getElementById('bmi');
+    const idealWeightInput = document.getElementById('peso_ideale');
+    const metaBasale = document.getElementById('meta_basale');
+    const metaDaily = document.getElementById('meta_giornaliero');
+    const calorieGiornaliere = document.getElementById('calorie_giornaliere');
+    const calorieSettimanali = document.getElementById('calorie_settimanali');
+    const carboidrati = document.getElementById('carboidrati_input');
+    const proteine = document.getElementById('proteine_input');
+    const grassi = document.getElementById('grassi_input');
+
+    form.addEventListener('input', calculateResults);
+
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+
+    document.getElementById("peso-tab").addEventListener("click", () => {
+        fetch('/get_peso_data')
+            .then(response => response.json())
+            .then(data => {
+                if (data.length > 0) {
+                    updateWeightChart(data);
+                }
+            })
+            .catch(error => console.error('Errore nel caricamento dei dati:', error));
+    });
+
+    document.getElementById("dieta-tab").addEventListener("click", () => {
+        fetch('/get_data_utente')
+            .then(response => response.json())
+            .then(data => {
+                if (data) {
+                    populateDietaForm(data);
+                }
+            })
+            .catch(error => console.error('Errore nel caricamento dei dati:', error));
+    });
+
+    // Event listener per il salvataggio degli alimenti
+    document.querySelectorAll('.save-alimento-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const alimentoId = this.getAttribute('data-alimento-id');
+            const alimentoData = {
+                id: alimentoId,
+                nome: document.querySelector(`input[name='nome_${alimentoId}']`).value,
+                carboidrati: parseFloat(document.querySelector(`input[name='carboidrati_${alimentoId}']`).value),
+                proteine: parseFloat(document.querySelector(`input[name='proteine_${alimentoId}']`).value),
+                grassi: parseFloat(document.querySelector(`input[name='grassi_${alimentoId}']`).value),
+                frutta: document.querySelector(`input[name='frutta_${alimentoId}']`).checked,
+                carne_bianca: document.querySelector(`input[name='carne_bianca_${alimentoId}']`).checked,
+                carne_rossa: document.querySelector(`input[name='carne_rossa_${alimentoId}']`).checked,
+                pane: document.querySelector(`input[name='pane_${alimentoId}']`).checked,
+                verdura: document.querySelector(`input[name='verdura_${alimentoId}']`).checked,
+                confezionato: document.querySelector(`input[name='confezionato_${alimentoId}']`).checked,
+                vegan: document.querySelector(`input[name='vegan_${alimentoId}']`).checked,
+                pesce: document.querySelector(`input[name='pesce_${alimentoId}']`).checked
+            };
+            saveAlimento(alimentoData);
+        });
+    });
+
+    // Event listener per l'eliminazione degli alimenti
+    document.querySelectorAll('.delete-alimento-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const alimentoId = this.getAttribute('data-alimento-id');
+            deleteAlimento(alimentoId);
+        });
+    });
+
+    $(document).ready(function() {
+        $('#addIngredientModal').on('show.bs.modal', function(event) {
+            const select = document.getElementById('ingredient-select');
+            select.innerHTML = '';
+
+            fetch('/get_all_ingredients')
+                .then(response => response.json())
+                .then(ingredients => {
+                    ingredients.forEach(ingredient => {
+                        const option = new Option(ingredient.nome, ingredient.id);
+                        select.add(option);
+                    });
+                })
+                .catch(error => console.error('Error loading ingredients:', error));
+        });
+    });
+});
