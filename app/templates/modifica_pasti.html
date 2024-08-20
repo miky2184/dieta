@@ -1,17 +1,8 @@
 <div id="ModificaPasti" class="tabcontent">
     <!-- Dropdown per selezionare la settimana -->
-
     <div class="table-margin d-flex">
         <div class="input-group mb-3">
-            <select class="form-select form-select-sm" id="selectMenu" onchange="loadMenuData()">
-                <option selected disabled>Scegli...</option>
-                {% for settimana in settimane %}
-                <option value="{{ settimana.id }}">Settimana dal {{ settimana.data_inizio }} al {{ settimana.data_fine
-                    }}
-                </option>
-                {% endfor %}
-            </select>
-
+                {% include 'week_selector.html' %}
                 <select class="form-select form-select-sm" id="selectDay" onchange="filterDayCards()">
                     <option value="all">Tutti i giorni</option>
                     <option value="lunedi">Lunedì</option>

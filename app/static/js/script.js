@@ -13,8 +13,7 @@ function openTab(evt, tabName) {
 }
 
 function cambiaMenuSettimana() {
-    const select = document.getElementById('settimana_select');
-    const settimanaId = select.value;
+    const settimanaId = selectedWeekId;
     fetch(`/menu_settimana/${settimanaId}`)
         .then(response => response.json())
         .then(data => {
@@ -603,9 +602,9 @@ function capitalize(string) {
 }
 
 function loadMenuData() {
-    selectedWeekId = document.getElementById('selectMenu').value;
+    weekId = selectedWeekId;
     // Fai il fetch per caricare i dati del menu per la settimana selezionata
-    fetch(`/menu_settimana/${selectedWeekId}`)
+    fetch(`/menu_settimana/${weekId}`)
         .then(response => response.json())
         .then(data => {
             // Qui inserisci la logica per caricare i dati del menu nel div #menuEditor
@@ -642,7 +641,7 @@ function formatMealName(meal) {
 
 
 function renderMenuEditor(data) {
-    const selectedWeek = document.getElementById('settimana_select').value;
+    const selectedWeek = selectedWeekId;
     const selectedDay = document.getElementById('day_select') ? document.getElementById('day_select').value : null;
 
     const menuEditor = document.getElementById("menuEditor");
@@ -811,7 +810,7 @@ function renderMenuEditor(data) {
     });
 
     // Ripristina lo stato delle selezioni
-    document.getElementById('settimana_select').value = selectedWeek;
+    document.getElementById('settimana_select').value = selectedWeekId;
     if (selectedDay) {
         document.getElementById('day_select').value = selectedDay;
     }
@@ -1070,7 +1069,7 @@ function cleanFiltersAlimenti() {
 }
 
 function deleteMenu() {
-    const weekId = document.getElementById("settimana_select").value; // Ottieni l'ID della settimana selezionata
+    const weekId = selectedWeekId; // Ottieni l'ID della settimana selezionata
 
     if (confirm("Sei sicuro di voler eliminare questo menu? Questa azione è irreversibile.")) {
         fetch(`/delete_menu/${weekId}`, {
@@ -1088,8 +1087,36 @@ function deleteMenu() {
     }
 }
 
+// Aggiungi l'evento di cambio a tutte le select con la classe 'week-select'
+document.querySelectorAll('.week-select').forEach(select => {
+    select.addEventListener('change', updateSelectedWeek);
+});
+
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Inizializzazione iniziale per impostare il valore globale
+    //updateSelectedWeek();
+
+    // Event Listener per cambiare la settimana
+    document.querySelectorAll('.week-select').forEach(select => {
+        select.addEventListener('change', function() {
+            const newWeekId = this.value;
+
+            // Aggiorna il valore di selectedWeekId globale
+            selectedWeekId = newWeekId;
+
+            // Aggiorna tutte le select con il nuovo valore
+            document.querySelectorAll('.week-select').forEach(sel => {
+                sel.value = newWeekId;
+            });
+
+            // Chiama le funzioni necessarie per aggiornare la vista
+            loadMenuData();
+            filterDayCards();
+            cambiaMenuSettimana();
+        });
+    });
+
     document.getElementById("defaultOpen").click();
 
     document.getElementById('deleteMenuBtn').addEventListener('click', deleteMenu);
@@ -1102,7 +1129,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     document.getElementById("captureButton").addEventListener("click", function() {
-        const weekId = document.getElementById("settimana_select").value; // Ottieni l'ID della settimana selezionata
+        const weekId = selectedWeekId; // Ottieni l'ID della settimana selezionata
         const menuContainer = document.querySelector("#capture");
 
         html2canvas(document.querySelector("#capture")).then(canvas => {

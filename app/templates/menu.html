@@ -1,5 +1,14 @@
 <div id="Menu" class="tabcontent">
-    {% include 'week_selector.html' %}
+    <div class="table-margin d-flex">
+    <div class="input-group mb-3">
+        {% include 'week_selector.html' %}
+        <button id="generateMenuBtn" class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                data-bs-target="#generateMenuModal">Genera Menu
+        </button>
+        <button id="captureButton" class="btn btn-primary btn-sm">Stampa Menu</button>
+        <button id="deleteMenuBtn" class="btn btn-danger btn-sm">Elimina Menu</button>
+    </div>
+    </div>
     <div id="capture">
     <table class="table table-striped table-margin table-bordered table-hover table-light">
         <thead>
