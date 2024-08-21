@@ -15,13 +15,10 @@ def login():
         user = UtenteAuth.query.filter_by(username=username).first()
 
         if not user or not check_password_hash(user.password_hash, password):
-            flash('Credenziali non valide. Riprova.')
             return redirect(url_for('auth.login'))
 
         login_user(user, remember=remember)
-        next_page = request.args.get('next')
-        current_app.cache.clear()
-        return redirect(next_page or url_for('views.dashboard'))
+        return redirect(url_for('views.dashboard'))
 
     return render_template('auth.html')
 
@@ -39,10 +36,12 @@ def register():
     user = UtenteAuth.query.filter_by(username=username).first()
 
     if user:
-        flash('Username già esistente. Per favore, usa un altro username.')
         return redirect(url_for('auth.login'))
 
-    new_user_auth = UtenteAuth(username=username, password=generate_password_hash(password, method='sha256'))
+    new_user_auth = UtenteAuth()
+    new_user_auth.username = username
+    new_user_auth.password_hash = generate_password_hash(password, method='pbkdf2:sha256')
+    new_user_auth.user_id = new_user_auth.id
     db.session.add(new_user_auth)
     db.session.commit()
 
@@ -58,7 +57,7 @@ def register():
     db.session.add(new_user_details)
     db.session.commit()
 
-    flash('Registrazione completata. Ora puoi effettuare il login.')
+    current_app.cache.delete(f'view//get_data_utente')
     return redirect(url_for('auth.login'))
 
 @auth.route('/logout', methods=['GET', 'POST'])
@@ -66,5 +65,4 @@ def register():
 def logout():
     logout_user()
     current_app.cache.clear()
-    flash('You have been logged out.', 'success')
     return redirect(url_for('auth.login'))

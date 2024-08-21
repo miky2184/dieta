@@ -481,7 +481,7 @@ function calculateResults() {
         harrisBenedict = 88.362 + (13.397 * data.peso) + (4.799 * data.altezza) - (5.677 * data.eta);
         mifflinStJeor = 10 * data.peso + 6.25 * data.altezza - 5 * data.eta + 5;
     } else if (data.sesso === 'F') {
-        harrisBenedict = 47.593 + (9.247 * data.peso) + (3.098 * data.altezza) - (4, 330 * data.eta);
+        harrisBenedict = 47.593 + (9.247 * data.peso) + (3.098 * data.altezza) - (4.330 * data.eta);
         mifflinStJeor = 10 * data.peso + 6.25 * data.altezza - 5 * data.eta - 161;
     }
 
@@ -1097,7 +1097,7 @@ function updateSelectedWeek() {
     var weekId = this.value;
 
     if (!weekId) {
-        if (document.querySelector('.week-select').value){
+        if (document.querySelector('.week-select') && document.querySelector('.week-select').value){
             weekId = document.querySelector('.week-select').value;
         }
     }
@@ -1121,7 +1121,9 @@ function updateSelectedWeek() {
 
 
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById("defaultOpen").click();
+    if (document.getElementById("defaultOpen")){
+        document.getElementById("defaultOpen").click();
+    }
 
     // Recupera il valore salvato nel localStorage, se esiste
     const savedWeekId = localStorage.getItem('selectedWeekId');
@@ -1142,7 +1144,9 @@ document.addEventListener('DOMContentLoaded', function() {
         select.addEventListener('change', updateSelectedWeek);
     });
 
-    document.getElementById('deleteMenuBtn').addEventListener('click', deleteMenu);
+    if (document.getElementById('deleteMenuBtn')){
+        document.getElementById('deleteMenuBtn').addEventListener('click', deleteMenu);
+    }
 
     const form = document.getElementById('personalInfoForm');
 
@@ -1151,64 +1155,70 @@ document.addEventListener('DOMContentLoaded', function() {
         form.addEventListener('submit', synchronizeFields);
     }
 
-    document.getElementById("captureButton").addEventListener("click", function() {
-        const weekId = selectedWeekId; // Ottieni l'ID della settimana selezionata
-        const menuContainer = document.querySelector("#capture");
+    if (document.getElementById("captureButton")) {
+        document.getElementById("captureButton").addEventListener("click", function() {
+            const weekId = selectedWeekId; // Ottieni l'ID della settimana selezionata
+            const menuContainer = document.querySelector("#capture");
 
-        // Imposta temporaneamente l'altezza del div per contenere tutto il contenuto
-        menuContainer.style.height = "auto";
-        menuContainer.style.maxHeight = "none";
+            // Imposta temporaneamente l'altezza del div per contenere tutto il contenuto
+            menuContainer.style.height = "auto";
+            menuContainer.style.maxHeight = "none";
 
-        html2canvas(menuContainer, {
-        useCORS: true,
-        scale: 2, // Aumenta la risoluzione per evitare immagini sgranate
-        logging: true,
-        windowWidth: document.documentElement.scrollWidth,
-        windowHeight: document.documentElement.scrollHeight,
-        scrollY: 0 // Impedisci lo scroll
-    }).then(canvas => {
-            const imgData = canvas.toDataURL('image/png');
+            html2canvas(menuContainer, {
+            useCORS: true,
+            scale: 2, // Aumenta la risoluzione per evitare immagini sgranate
+            logging: true,
+            windowWidth: document.documentElement.scrollWidth,
+            windowHeight: document.documentElement.scrollHeight,
+            scrollY: 0 // Impedisci lo scroll
+        }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
 
-            // Ritorna l'altezza originale dopo la cattura
-        menuContainer.style.height = "";
-        menuContainer.style.maxHeight = "";
+                // Ritorna l'altezza originale dopo la cattura
+            menuContainer.style.height = "";
+            menuContainer.style.maxHeight = "";
 
-            // Ora puoi usare imgData per creare un PDF o visualizzare l'immagine
-            fetch('/generate_pdf', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        image: imgData,
-                        week_id: weekId
+                // Ora puoi usare imgData per creare un PDF o visualizzare l'immagine
+                fetch('/generate_pdf', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            image: imgData,
+                            week_id: weekId
+                        })
                     })
-                })
-                .then(response => response.blob())
-                .then(blob => {
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = url;
-                    a.download = 'menu_settimanale.pdf';
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                })
-                .catch(error => console.error('Error:', error));
+                    .then(response => response.blob())
+                    .then(blob => {
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        a.download = 'menu_settimanale.pdf';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                    })
+                    .catch(error => console.error('Error:', error));
+            });
         });
-    });
+    }
 
-    document.getElementById("generateMenuBtn").addEventListener("click", function() {
+    if (document.getElementById("generateMenuBtn")){
+        document.getElementById("generateMenuBtn").addEventListener("click", function() {
         // Avvia la generazione del menu al click del bottone
         startMenuGeneration();
     });
+    }
 
     var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
     var popoverList = popoverTriggerList.map(function(popoverTriggerEl) {
         return new bootstrap.Popover(popoverTriggerEl);
     });
 
+
+    if (document.getElementById('confirmAddMeal')){
     document.getElementById('confirmAddMeal').addEventListener('click', function() {
         const selectedMeals = [];
         document.querySelectorAll('.meal-checkbox:checked').forEach(checkbox => {
@@ -1224,6 +1234,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const addMealModal = bootstrap.Modal.getInstance(document.getElementById('addMealModal'));
         addMealModal.hide();
     });
+    }
 
     document.querySelectorAll('.save-btn').forEach(button => {
         button.addEventListener('click', function() {
@@ -1271,32 +1282,36 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Assicurati che gli event listeners siano aggiunti dopo il caricamento dei dati nel modal
-    document.querySelector('#editRecipeModal').addEventListener('click', function(event) {
-        const target = event.target;
-        if (target.classList.contains('delete-ingredient')) {
-            const ingredientId = target.getAttribute('data-id');
-            const recipeId = target.getAttribute('data-recipe-id');
-            deleteIngredient(ingredientId, recipeId, target);
-        }
+    if (document.querySelector('#editRecipeModal')){
+        document.querySelector('#editRecipeModal').addEventListener('click', function(event) {
+            const target = event.target;
+            if (target.classList.contains('delete-ingredient')) {
+                const ingredientId = target.getAttribute('data-id');
+                const recipeId = target.getAttribute('data-recipe-id');
+                deleteIngredient(ingredientId, recipeId, target);
+            }
 
-        if (target.classList.contains('update-ingredient')) {
-            const ingredientId = target.getAttribute('data-id');
-            const recipeId = target.getAttribute('data-recipe-id');
-            const qta = document.getElementById(`quantity-${ingredientId}`).value
-            updateIngredient(ingredientId, recipeId, qta);
-        }
-    });
+            if (target.classList.contains('update-ingredient')) {
+                const ingredientId = target.getAttribute('data-id');
+                const recipeId = target.getAttribute('data-recipe-id');
+                const qta = document.getElementById(`quantity-${ingredientId}`).value
+                updateIngredient(ingredientId, recipeId, qta);
+            }
+        });
+    }
 
-    var addIngredientModal = document.getElementById('addIngredientModal');
-    addIngredientModal.addEventListener('hidden.bs.modal', function() {
-        window.location.href = '/';
-    })
+    if (document.getElementById('addIngredientModal')){
+        document.getElementById('addIngredientModal').addEventListener('hidden.bs.modal', function() {
+            window.location.href = '/';
+        })
+    }
 
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
     var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl)
     });
 
+    if (document.getElementById("peso-tab")){
     document.getElementById("peso-tab").addEventListener("click", () => {
         fetch('/get_peso_data')
             .then(response => response.json())
@@ -1307,17 +1322,20 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => console.error('Errore nel caricamento dei dati:', error));
     });
+    }
 
-    document.getElementById("dieta-tab").addEventListener("click", () => {
-        fetch('/get_data_utente')
-            .then(response => response.json())
-            .then(data => {
-                if (data) {
-                    populateDietaForm(data);
-                }
-            })
-            .catch(error => console.error('Errore nel caricamento dei dati:', error));
-    });
+    if (document.getElementById("dieta-tab")){
+        document.getElementById("dieta-tab").addEventListener("click", () => {
+            fetch('/get_data_utente')
+                .then(response => response.json())
+                .then(data => {
+                    if (data) {
+                        populateDietaForm(data);
+                    }
+                })
+                .catch(error => console.error('Errore nel caricamento dei dati:', error));
+        });
+    }
 
     // Event listener per il salvataggio degli alimenti
     document.querySelectorAll('.save-alimento-btn').forEach(button => {
