@@ -17,7 +17,7 @@
                 <div class="card-body">
             <form action="{{ url_for('auth.login') }}" method="POST">
                 <div class="input-group input-group-sm mb-3">
-                    <span for="username" class="input-group-text">Username</span>
+                    <span for="login-username" class="input-group-text">Username</span>
                     <input type="text" class="form-control form-control-sm" id="login-username" name="username" required>
                 </div>
                 <div class="input-group input-group-sm mb-3">
@@ -37,6 +37,9 @@
                 <div class="input-group input-group-sm mb-3">
                     <span for="username" class="input-group-text">Username</span>
                     <input type="text" class="form-control form-control-sm" id="username" name="username" required>
+                    <div class="invalid-feedback">
+                        Username già in uso. Scegli un altro username.
+                    </div>
                 </div>
                 <div class="input-group input-group-sm mb-3">
                     <span for="password" class="input-group-text">Password</span>

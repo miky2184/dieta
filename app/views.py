@@ -316,13 +316,15 @@ def new_food():
 
 
 @views.route('/submit-weight', methods=['POST'])
+@login_required
 def submit_weight():
     """
     Questa funzione salva il peso dell'utente nel database.
     """
     data = request.json
+    user_id = current_user.user_id
     # Salva i dati del peso nel database
-    peso = save_weight(data['date'], data['weight'])
+    peso = save_weight(data['date'], data['weight'], user_id)
     # Esempio di svuotamento della cache di una funzione specifica
     current_app.cache.delete(f'view//get_peso_data')
 
@@ -362,11 +364,13 @@ def salva_dati():
 
 @views.route('/get_peso_data', methods=['GET'])
 @current_app.cache.cached(timeout=300)
+@login_required
 def get_peso_data():
     """
     Questa funzione recupera la cronologia del peso dell'utente dal database.
     """
-    peso = get_peso_hist()
+    user_id = current_user.user_id
+    peso = get_peso_hist(user_id)
     return jsonify(peso)
 
 

@@ -530,20 +530,20 @@ def get_settimane_salvate(user_id):
     return settimane
 
 
-def save_weight(date, weight):
+def save_weight(date, weight, user_id):
     # Qui va il codice per salvare i dati nel database
     with get_db_connection() as conn:
         # Esegui le operazioni con la connessione
         cur = conn.cursor()
 
         query = """
-            INSERT INTO dieta.registro_peso (data_rilevazione, peso)
-            VALUES (%s, %s)
+            INSERT INTO dieta.registro_peso (data_rilevazione, peso, user_id)
+            VALUES (%s, %s, %s)
             ON CONFLICT (data_rilevazione) 
             DO UPDATE SET peso = EXCLUDED.peso;
         """
 
-        params = (date, weight)
+        params = (date, weight, user_id)
 
         # Stampa la query con parametri
         printer(cur.mogrify(query, params).decode('utf-8'))
@@ -551,18 +551,19 @@ def save_weight(date, weight):
 
         conn.commit()
 
-        return get_peso_hist()
+        return get_peso_hist(user_id)
 
 
-def get_peso_hist():
+def get_peso_hist(user_id):
     with get_db_connection() as conn:
         # Esegui le operazioni con la connessione
         cur = conn.cursor()
         query = """select data_rilevazione as date, peso as weight 
                                  from dieta.registro_peso 
+                                 where user_id = %s
                              order by data_rilevazione"""
 
-        params = ()
+        params = (user_id,)
 
         # Stampa la query con parametri
         printer(cur.mogrify(query, params).decode('utf-8'))

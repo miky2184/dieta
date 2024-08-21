@@ -2,8 +2,22 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.models.models import db, UtenteAuth, Utenti
+from app.services.menu_services import save_weight
+from datetime import datetime
+from flask import jsonify, request
+from app.models.models import UtenteAuth
 
 auth = Blueprint('auth', __name__)
+
+
+@auth.route('/check_username', methods=['POST'])
+def check_username():
+    username = request.json.get('username')
+    user = UtenteAuth.query.filter_by(username=username.lower()).first()
+    if user:
+        return jsonify({'exists': True})
+    return jsonify({'exists': False})
+
 
 @auth.route('/', methods=['GET', 'POST'])
 def login():
@@ -12,7 +26,7 @@ def login():
         password = request.form.get('password')
         remember = True if request.form.get('remember') else False
 
-        user = UtenteAuth.query.filter_by(username=username).first()
+        user = UtenteAuth.query.filter_by(username=username.lower()).first()
 
         if not user or not check_password_hash(user.password_hash, password):
             return redirect(url_for('auth.login'))
@@ -33,29 +47,36 @@ def register():
     altezza = request.form.get('altezza')
     peso = request.form.get('peso')
 
-    user = UtenteAuth.query.filter_by(username=username).first()
+    user = UtenteAuth.query.filter_by(username=username.lower()).first()
 
     if user:
         return redirect(url_for('auth.login'))
 
-    new_user_auth = UtenteAuth()
-    new_user_auth.username = username
-    new_user_auth.password_hash = generate_password_hash(password, method='pbkdf2:sha256')
-    new_user_auth.user_id = new_user_auth.id
-    db.session.add(new_user_auth)
-    db.session.commit()
-
+    # Crea l'utente nella tabella Utenti
     new_user_details = Utenti(
-        id=new_user_auth.id,
-        nome=nome,
-        cognome=cognome,
+        nome=nome.upper(),
+        cognome=cognome.upper(),
         sesso=sesso,
         eta=eta,
         altezza=altezza,
         peso=peso
     )
+
     db.session.add(new_user_details)
     db.session.commit()
+
+    # Ora l'ID dell'utente è disponibile
+    user_id = new_user_details.id
+
+    new_user_auth = UtenteAuth()
+    new_user_auth.username = username.lower()
+    new_user_auth.password_hash = generate_password_hash(password, method='pbkdf2:sha256')
+    new_user_auth.user_id = user_id
+
+    db.session.add(new_user_auth)
+    db.session.commit()
+
+    save_weight(datetime.now().date(), peso, user_id)
 
     current_app.cache.delete(f'view//get_data_utente')
     return redirect(url_for('auth.login'))

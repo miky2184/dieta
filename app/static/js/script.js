@@ -1125,6 +1125,38 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById("defaultOpen").click();
     }
 
+    const usernameInput = document.getElementById('username');
+    if (usernameInput){
+        let usernameFeedback = usernameInput.parentNode.querySelector('.invalid-feedback');
+        if (!usernameFeedback) {
+            usernameFeedback = document.createElement('div');
+            usernameFeedback.className = 'invalid-feedback';
+            usernameInput.parentNode.appendChild(usernameFeedback);
+        }
+
+        usernameInput.addEventListener('blur', function() {
+            const username = usernameInput.value;
+            fetch('/check_username', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({username: username}),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.exists) {
+                    usernameInput.classList.add('is-invalid');
+                    usernameFeedback.textContent = 'Username già in uso. Scegli un altro username.';
+                } else {
+                    usernameInput.classList.remove('is-invalid');
+                    usernameFeedback.textContent = '';
+                }
+            })
+            .catch(error => console.error('Errore nel controllo dell\'username:', error));
+        });
+    }
+
     // Recupera il valore salvato nel localStorage, se esiste
     const savedWeekId = localStorage.getItem('selectedWeekId');
     if (savedWeekId) {
