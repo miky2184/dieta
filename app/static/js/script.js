@@ -757,13 +757,13 @@ function renderMenuEditor(data) {
                 const mealTableHead = document.createElement('thead');
                 mealTableHead.innerHTML = `
                     <tr>
-                        <th>Nome Ricetta</th>
-                        <th class="text-align-center">Kcal</th>
-                        <th class="text-align-center">Carboidrati (g)</th>
-                        <th class="text-align-center">Proteine (g)</th>
-                        <th class="text-align-center">Grassi (g)</th>
-                        <th class="text-align-center">Quantità</th>
-                        <th class="text-align-center">Azioni</th>
+                        <th style="width:40%">Nome Ricetta</th>
+                        <th style="width:10%" class="text-align-center">Kcal</th>
+                        <th style="width:10%" class="text-align-center">Carboidrati (g)</th>
+                        <th style="width:10%" class="text-align-center">Proteine (g)</th>
+                        <th style="width:10%" class="text-align-center">Grassi (g)</th>
+                        <th style="width:10%" class="text-align-center">Quantità</th>
+                        <th style="width:10%" class="text-align-center">Azioni</th>
                     </tr>
                 `;
                 mealTable.appendChild(mealTableHead);
