@@ -1007,7 +1007,7 @@ def is_valid_email(email):
         return False
 
 
-def copia_alimenti_ricette(user_id):
+def copia_alimenti_ricette(user_id, ricette_vegane, ricette_carne_bianca, ricette_carne_rossa, ricette_pesce):
     with get_db_connection() as conn:
         cur = conn.cursor()
 
@@ -1020,7 +1020,7 @@ def copia_alimenti_ricette(user_id):
         cur.execute(query, params)
 
         query = """insert into dieta.ricetta(id, nome_ricetta, colazione, spuntino, principale, contorno, enabled, colazione_sec, user_id)
-                   SELECT id, nome_ricetta, colazione, spuntino, principale, contorno, enabled, colazione_sec, %s
+                   SELECT id, nome_ricetta, colazione, spuntino, principale, contorno, false, colazione_sec, %s
                      FROM dieta.ricetta_base"""
         printer(cur.mogrify(query, params).decode('utf-8'))
         cur.execute(query, params)
@@ -1030,6 +1030,92 @@ def copia_alimenti_ricette(user_id):
                       FROM dieta.ingredienti_ricetta_base"""
         printer(cur.mogrify(query, params).decode('utf-8'))
         cur.execute(query, params)
+
+        #abilita ricetta con frutta e verdura
+        query = """with ricette_frutta as (SELECT distinct r.id
+                                            FROM dieta.ricetta_base r
+                                            JOIN dieta.ingredienti_ricetta ir ON r.id = ir.id_ricetta 
+                                            JOIN dieta.alimento_base a ON ir.id_alimento = a.id
+                                            GROUP BY r.id, r.nome_ricetta
+                                            HAVING COUNT(*) = SUM(CASE WHEN a.frutta = true THEN 1 ELSE 0 END)
+                                            ) 
+                update dieta.ricetta r set enabled = true
+                   from ricette_frutta rv
+                   where rv.id = r.id
+                    and r.user_id = %s"""
+        printer(cur.mogrify(query, params).decode('utf-8'))
+        cur.execute(query, params)
+
+        query = """with ricette_verdura as (SELECT distinct r.id
+                                                    FROM dieta.ricetta_base r
+                                                    JOIN dieta.ingredienti_ricetta ir ON r.id = ir.id_ricetta 
+                                                    JOIN dieta.alimento_base a ON ir.id_alimento = a.id
+                                                    GROUP BY r.id, r.nome_ricetta
+                                                    HAVING COUNT(*) = SUM(CASE WHEN a.verdura = true THEN 1 ELSE 0 END)
+                                                    ) 
+                        update dieta.ricetta r set enabled = true
+                           from ricette_verdura rv
+                           where rv.id = r.id
+                            and r.user_id = %s"""
+        printer(cur.mogrify(query, params).decode('utf-8'))
+        cur.execute(query, params)
+
+        if ricette_vegane:
+            query = """WITH ricette_vegane AS (SELECT distinct r.id
+                                                 FROM dieta.ricetta_base r
+                                                JOIN dieta.ingredienti_ricetta ir ON r.id = ir.id_ricetta 
+                                                JOIN dieta.alimento_base a ON ir.id_alimento = a.id
+                                                GROUP BY r.id, r.nome_ricetta
+                                                HAVING COUNT(*) = SUM(CASE WHEN a.vegan = true THEN 1 ELSE 0 END)
+                                                ) 
+                    update dieta.ricetta r set enabled = true
+                      from ricette_vegane rv
+                      where rv.id = r.id
+                        and r.user_id = %s"""
+            printer(cur.mogrify(query, params).decode('utf-8'))
+            cur.execute(query, params)
+
+        if ricette_carne_bianca:
+            query = """WITH ricette_carne_bianca AS (SELECT distinct r.id
+                                                     FROM dieta.ricetta_base r
+                                                    JOIN dieta.ingredienti_ricetta ir ON r.id = ir.id_ricetta 
+                                                    JOIN dieta.alimento_base a ON ir.id_alimento = a.id
+                                                    WHERE a.carne_bianca = true
+                                                    ) 
+                                update dieta.ricetta r set enabled = true
+                                  from ricette_carne_bianca rv
+                                  where rv.id = r.id
+                                    and r.user_id = %s"""
+            printer(cur.mogrify(query, params).decode('utf-8'))
+            cur.execute(query, params)
+
+        if ricette_carne_rossa:
+            query = """WITH ricette_carne_rossa AS (SELECT distinct r.id
+                                                     FROM dieta.ricetta_base r
+                                                    JOIN dieta.ingredienti_ricetta ir ON r.id = ir.id_ricetta 
+                                                    JOIN dieta.alimento_base a ON ir.id_alimento = a.id
+                                                    WHERE a.carne_rossa = true
+                                                    ) 
+                                            update dieta.ricetta r set enabled = true
+                                              from ricette_carne_rossa rv
+                                              where rv.id = r.id
+                                                and r.user_id = %s"""
+            printer(cur.mogrify(query, params).decode('utf-8'))
+            cur.execute(query, params)
+
+        if ricette_pesce:
+            query = """WITH ricette_pesce AS (SELECT distinct r.id
+                                                     FROM dieta.ricetta_base r
+                                                    JOIN dieta.ingredienti_ricetta ir ON r.id = ir.id_ricetta 
+                                                    JOIN dieta.alimento_base a ON ir.id_alimento = a.id
+                                                    WHERE a.pesce = true
+                                                    ) 
+                                            update dieta.ricetta r set enabled = true
+                                              from ricette_pesce rv
+                                              where rv.id = r.id
+                                                and r.user_id = %s"""
+            printer(cur.mogrify(query, params).decode('utf-8'))
+            cur.execute(query, params)
 
         # Recupera il menu per la settimana corrente
         conn.commit()
