@@ -9,6 +9,7 @@ from app.models.database import get_db_connection
 from app.models.common import printer
 from copy import deepcopy
 from decimal import Decimal
+import re
 
 MAX_RETRY = int(os.getenv('MAX_RETRY'))
 
@@ -809,7 +810,7 @@ def get_dati_utente(user_id):
         query = """
                 SELECT id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, 
                 peso_ideale, meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, 
-                carboidrati, proteine, grassi 
+                carboidrati, proteine, grassi, email
                 FROM dieta.utenti
                 where id = %s;
             """
@@ -1009,3 +1010,14 @@ def delete_week_menu(week_id, user_id):
         # Recupera il menu per la settimana corrente
         cur.execute(query, params)
         conn.commit()
+
+
+def is_valid_email(email):
+    # Definizione dell'espressione regolare per validare l'email
+    email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+
+    # Utilizzo di re.match per verificare se l'email è valida
+    if re.match(email_regex, email):
+        return True
+    else:
+        return False

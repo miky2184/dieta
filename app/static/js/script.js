@@ -367,6 +367,7 @@ function populateDietaForm(data) {
     document.querySelector('[name="id"]').value = data.id || '';
     document.querySelector('[name="nome"]').value = data.nome || '';
     document.querySelector('[name="cognome"]').value = data.cognome || '';
+    document.querySelector('[name="email"]').value = data.email || '';
     document.querySelector('[name="sesso"]').value = data.sesso || '';
     document.querySelector('[name="eta"]').value = Math.round(data.eta) || '';
     document.querySelector('[name="altezza"]').value = Math.round(data.altezza) || '';
@@ -1123,6 +1124,41 @@ function updateSelectedWeek() {
 document.addEventListener('DOMContentLoaded', function() {
     if (document.getElementById("defaultOpen")){
         document.getElementById("defaultOpen").click();
+    }
+
+    const emailInput = document.getElementById('email');
+    if (emailInput){
+        let emailFeedback = emailInput.parentNode.querySelector('.invalid-feedback');
+        if (!emailFeedback) {
+            emailFeedback = document.createElement('div');
+            emailFeedback.className = 'invalid-feedback';
+            emailInput.parentNode.appendChild(emailFeedback);
+        }
+
+        emailInput.addEventListener('blur', function() {
+            const email = emailInput.value;
+            fetch('/check_email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({email: email}),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.exists) {
+                    emailInput.classList.add('is-invalid');
+                    emailFeedback.textContent = 'Email gia\' in uso. Inserisci una mail differente.';
+                } else if (data.bad) {
+                    emailInput.classList.add('is-invalid');
+                    emailFeedback.textContent = 'Email in un formato errato.';
+                } else {
+                    emailInput.classList.remove('is-invalid');
+                    emailFeedback.textContent = '';
+                }
+            })
+            .catch(error => console.error('Errore nel controllo dell\'email:', error));
+        });
     }
 
     const usernameInput = document.getElementById('username');

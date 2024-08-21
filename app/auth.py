@@ -2,10 +2,9 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.models.models import db, UtenteAuth, Utenti
-from app.services.menu_services import save_weight
+from app.services.menu_services import save_weight, is_valid_email
 from datetime import datetime
 from flask import jsonify, request
-from app.models.models import UtenteAuth
 
 auth = Blueprint('auth', __name__)
 
@@ -18,6 +17,18 @@ def check_username():
         return jsonify({'exists': True})
     return jsonify({'exists': False})
 
+
+@auth.route('/check_email', methods=['POST'])
+def check_email():
+    email = request.json.get('email')
+
+    if not is_valid_email(email):
+        return jsonify({'bad': True})
+
+    user = Utenti.query.filter_by(email=email.lower()).first()
+    if user:
+        return jsonify({'exists': True})
+    return jsonify({'exists': False})
 
 @auth.route('/', methods=['GET', 'POST'])
 def login():
@@ -46,6 +57,7 @@ def register():
     eta = request.form.get('eta')
     altezza = request.form.get('altezza')
     peso = request.form.get('peso')
+    email = request.form.get('email')
 
     user = UtenteAuth.query.filter_by(username=username.lower()).first()
 
@@ -59,7 +71,8 @@ def register():
         sesso=sesso,
         eta=eta,
         altezza=altezza,
-        peso=peso
+        peso=peso,
+        email=email
     )
 
     db.session.add(new_user_details)
