@@ -1005,3 +1005,31 @@ def is_valid_email(email):
         return True
     else:
         return False
+
+
+def copia_alimenti_ricette(user_id):
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+
+        params = (user_id,)
+
+        query = """insert into dieta.alimento(id, nome, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, stagionalita, verdura, confezionato, vegan, pesce, user_id)
+                    SELECT distinct id, nome, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, stagionalita, verdura, confezionato, vegan, pesce, %s
+                    FROM dieta.alimento_base"""
+        printer(cur.mogrify(query, params).decode('utf-8'))
+        cur.execute(query, params)
+
+        query = """insert into dieta.ricetta(id, nome_ricetta, colazione, spuntino, principale, contorno, enabled, colazione_sec, user_id)
+                   SELECT id, nome_ricetta, colazione, spuntino, principale, contorno, enabled, colazione_sec, %s
+                     FROM dieta.ricetta_base"""
+        printer(cur.mogrify(query, params).decode('utf-8'))
+        cur.execute(query, params)
+
+        query = """ insert into dieta.ingredienti_ricetta (id_ricetta, id_alimento, qta, user_id)
+                    SELECT id_ricetta, id_alimento, qta, %s
+                      FROM dieta.ingredienti_ricetta_base"""
+        printer(cur.mogrify(query, params).decode('utf-8'))
+        cur.execute(query, params)
+
+        # Recupera il menu per la settimana corrente
+        conn.commit()

@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.models.models import db, UtenteAuth, Utenti
-from app.services.menu_services import save_weight, is_valid_email
+from app.services.menu_services import save_weight, is_valid_email, copia_alimenti_ricette
 from datetime import datetime
 from flask import jsonify, request
 
@@ -59,11 +59,6 @@ def register():
     peso = request.form.get('peso')
     email = request.form.get('email')
 
-    user = UtenteAuth.query.filter_by(username=username.lower()).first()
-
-    if user:
-        return redirect(url_for('auth.login'))
-
     # Crea l'utente nella tabella Utenti
     new_user_details = Utenti(
         nome=nome.upper(),
@@ -90,6 +85,8 @@ def register():
     db.session.commit()
 
     save_weight(datetime.now().date(), peso, user_id)
+
+    copia_alimenti_ricette(user_id)
 
     current_app.cache.delete(f'get_data_utente_{user_id}')
     return redirect(url_for('auth.login'))
