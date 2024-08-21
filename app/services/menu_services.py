@@ -218,15 +218,15 @@ def genera_menu(settimana, controllo_macro_settimanale: bool, ricette) -> None:
 
 
 @current_app.cache.cached(timeout=300)
-def definisci_calorie_macronutrienti():
+def definisci_calorie_macronutrienti(user_id):
     """Calcola le calorie e i macronutrienti giornalieri e li restituisce."""
 
     with get_db_connection() as conn:
         cur = conn.cursor()
         query = """select calorie_giornaliere as kcal , carboidrati , proteine , grassi 
-                     from dieta.utenti u limit 1"""
+                     from dieta.utenti u where id = %s """
 
-        params = ()
+        params = (user_id,)
 
         # Stampa la query con parametri
         printer(cur.mogrify(query, params).decode('utf-8'))
@@ -433,7 +433,7 @@ def salva_menu_settimana_prossima(menu, user_id):
                 VALUES (%s, %s, %s, %s)
             """
 
-            params = (lunedi_prossimo.date(), domenica_prossima.date(), Json(menu_convertito))
+            params = (lunedi_prossimo.date(), domenica_prossima.date(), Json(menu_convertito), user_id)
 
             # Stampa la query con parametri
             printer(cur.mogrify(query, params).decode('utf-8'))
@@ -826,18 +826,19 @@ def get_dati_utente(user_id):
 
 def calcola_macronutrienti_rimanenti(menu):
     remaining_macronutrienti = {}
-    for giorno, dati_giorno in menu['day'].items():
-        remaining_kcal = round(float(dati_giorno['kcal']),2)
-        remaining_carboidrati = round(float(dati_giorno['carboidrati']),2)
-        remaining_proteine = round(float(dati_giorno['proteine']),2)
-        remaining_grassi = round(float(dati_giorno['grassi']),2)
+    if menu:
+        for giorno, dati_giorno in menu['day'].items():
+            remaining_kcal = round(float(dati_giorno['kcal']),2)
+            remaining_carboidrati = round(float(dati_giorno['carboidrati']),2)
+            remaining_proteine = round(float(dati_giorno['proteine']),2)
+            remaining_grassi = round(float(dati_giorno['grassi']),2)
 
-        remaining_macronutrienti[giorno] = {
-            'kcal': remaining_kcal,
-            'carboidrati': remaining_carboidrati,
-            'proteine': remaining_proteine,
-            'grassi': remaining_grassi
-        }
+            remaining_macronutrienti[giorno] = {
+                'kcal': remaining_kcal,
+                'carboidrati': remaining_carboidrati,
+                'proteine': remaining_proteine,
+                'grassi': remaining_grassi
+            }
     return remaining_macronutrienti
 
 

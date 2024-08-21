@@ -34,7 +34,7 @@ def dashboard():
     """
     user_id = current_user.user_id
     # Calcola le calorie e i macronutrienti giornalieri dell'utente.
-    macronutrienti = definisci_calorie_macronutrienti()
+    macronutrienti = definisci_calorie_macronutrienti(user_id)
 
     # Recupera le ricette disponibili dal database.
     ricette = carica_ricette(stagionalita=False)
@@ -108,9 +108,9 @@ def generate_menu():
     Questa funzione gestisce la generazione del menu per la settimana corrente e quella successiva.
     Viene chiamata tramite una richiesta POST e restituisce un aggiornamento del progresso della generazione.
     """
-    macronutrienti = definisci_calorie_macronutrienti()
-    ricette_menu = carica_ricette(stagionalita=True)
     user_id = current_user.user_id
+    macronutrienti = definisci_calorie_macronutrienti(user_id)
+    ricette_menu = carica_ricette(stagionalita=True)
 
     progress = 0
     total_steps = 4  # Numero totale di passaggi nella generazione del menu
@@ -143,7 +143,7 @@ def generate_menu():
     else:
         progress += 1 / total_steps * 100
 
-    current_app.cache.delete("view//dashboard")
+    current_app.cache.delete('view//dashboard')
     return jsonify({'status': 'success', 'progress': progress})
 
 
@@ -192,7 +192,7 @@ def save_recipe():
     nome = data['nome']
 
     salva_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, ricetta_id)
-    current_app.cache.delete("view//dashboard")
+    current_app.cache.delete('view//dashboard')
 
     return jsonify({'status': 'success', 'message': 'Ricetta salvata con successo!'})
 
@@ -206,7 +206,7 @@ def toggle_recipe_status():
     ricetta_id = data['id']
 
     attiva_disattiva_ricetta(ricetta_id)
-    current_app.cache.delete("view//dashboard")
+    current_app.cache.delete('view//dashboard')
 
     return jsonify({'status': 'success', 'message': 'Ricetta modificata con successo!'})
 
@@ -269,7 +269,7 @@ def update_ingredient():
     quantity = data['quantity']
 
     salva_ingredienti(recipe_id, ingredient_id, quantity)
-    current_app.cache.delete(f"view//recipe/{recipe_id}")
+    current_app.cache.delete(f'view//recipe/{recipe_id}')
 
     return jsonify({'status': 'success', 'message': 'Quantità aggiornata correttamente.'})
 
@@ -324,7 +324,7 @@ def submit_weight():
     # Salva i dati del peso nel database
     peso = save_weight(data['date'], data['weight'])
     # Esempio di svuotamento della cache di una funzione specifica
-    current_app.cache.delete(f"view//get_peso_data")
+    current_app.cache.delete(f'view//get_peso_data')
 
     return jsonify(peso)
 
@@ -356,7 +356,7 @@ def salva_dati():
     salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
                        meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, carboidrati,
                        proteine, grassi)
-    current_app.cache.delete(f"view//get_data_utente")
+    current_app.cache.delete(f'view//get_data_utente')
     return redirect(url_for('views.dashboard'))
 
 
@@ -484,7 +484,7 @@ def add_meals_to_menu(week_id):
 
     # Salva il menu aggiornato nel database
     update_menu_corrente(menu_corrente, week_id, user_id)
-    current_app.cache.delete("view//dashboard")
+    current_app.cache.delete('view//dashboard')
     return jsonify({
         'status': 'success',
         'menu': menu_corrente,  # Restituisce il menu aggiornato
@@ -634,5 +634,7 @@ def delete_menu(week_id):
     delete_week_menu(week_id, user_id)
 
     # Svuota la cache correlata
-    current_app.cache.delete('view//')
+    current_app.cache.delete('view//dashboard')
+    current_app.cache.delete(f'view//menu_settimana/{week_id}')
+    current_app.cache.delete('view//get_lista_spesa')
     return jsonify({'status': 'success', 'message': 'Menu eliminato con successo!'}), 200

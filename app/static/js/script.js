@@ -12,19 +12,6 @@ function openTab(evt, tabName) {
     evt.currentTarget.className += " active";
 }
 
-function cambiaMenuSettimana() {
-    const settimanaId = selectedWeekId;
-    fetch(`/menu_settimana/${settimanaId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.menu) {
-                // Aggiorna il contenuto del menu con i dati ricevuti
-                aggiornaTabellaMenu(data.menu);
-                aggiornaTabellaListaDellaSpesa(data.menu.all_food);
-            }
-        });
-}
-
 function aggiornaTabellaMenu(menu) {
     const tbody = document.getElementById('menu_tbody');
     tbody.innerHTML = ''; // Pulisci la tabella
@@ -300,7 +287,7 @@ function populateIngredientsModal(ingredients) {
             <td>
                 <div class="btn-group" role="group">
                     <button type="button" class="btn btn-outline-success btn-sm update-ingredient" data-id="${ingredient['id']}" data-recipe-id="${ingredient['id_ricetta']}">Salva</button>
-                    <button type="button" class="btn btn-outline-danger btn-sm delete-ingredient" data-id="${ingredient['id']}" data-recipe-id="${ingredient['id_ricetta']}">Elimina</button>
+                    // <button type="button" class="btn btn-outline-danger btn-sm delete-ingredient" data-id="${ingredient['id']}" data-recipe-id="${ingredient['id_ricetta']}">Elimina</button>
                 </div>
             </td>
         </tr>`;
@@ -601,14 +588,23 @@ function capitalize(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-function loadMenuData() {
-    weekId = selectedWeekId;
+function loadAndUpdateMenuData() {
+    var weekId = selectedWeekId; // Ottieni l'ID della settimana selezionata
+
+    if (!selectedWeekId) {
+        weekId = document.querySelector('.week-select').value;
+    }
     // Fai il fetch per caricare i dati del menu per la settimana selezionata
     fetch(`/menu_settimana/${weekId}`)
         .then(response => response.json())
         .then(data => {
-            // Qui inserisci la logica per caricare i dati del menu nel div #menuEditor
-            renderMenuEditor(data);
+            if (data.menu) {
+                // Qui inserisci la logica per caricare i dati del menu nel div #menuEditor
+                renderMenuEditor(data);
+                // Aggiorna il contenuto del menu con i dati ricevuti
+                aggiornaTabellaMenu(data.menu);
+                aggiornaTabellaListaDellaSpesa(data.menu.all_food);
+            }
         })
         .catch(error => console.error('Errore nel caricamento del menu:', error));
 }
@@ -1083,6 +1079,7 @@ function deleteMenu() {
             }
         }).then(response => {
             if (response.ok) {
+                localStorage.removeItem('selectedWeekId');
                 location.reload(); // Ricarica la pagina per aggiornare la selezione dei menu
             }
         }).catch(error => {
@@ -1092,34 +1089,57 @@ function deleteMenu() {
 }
 
 // Aggiungi l'evento di cambio a tutte le select con la classe 'week-select'
-document.querySelectorAll('.week-select').forEach(select => {
-    select.addEventListener('change', updateSelectedWeek);
-});
+//document.querySelectorAll('.week-select').forEach(select => {
+//    select.addEventListener('change', updateSelectedWeek);
+//});
+
+function updateSelectedWeek() {
+    var weekId = this.value;
+
+    if (!weekId) {
+        if (document.querySelector('.week-select').value){
+            weekId = document.querySelector('.week-select').value;
+        }
+    }
+
+    if (weekId) {
+        // Aggiorna il valore di selectedWeekId globale
+        selectedWeekId = weekId;
+
+        // Aggiorna tutte le select con il nuovo valore
+        document.querySelectorAll('.week-select').forEach(sel => {
+            sel.value = weekId;
+        });
+
+        // Chiama la funzione combinata per aggiornare la vista
+        loadAndUpdateMenuData(weekId);
+
+        // Filtra i day cards se necessario
+        filterDayCards();
+    }
+}
 
 
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById("defaultOpen").click();
-    // Inizializzazione iniziale per impostare il valore globale
-    //updateSelectedWeek();
+
+    // Recupera il valore salvato nel localStorage, se esiste
+    const savedWeekId = localStorage.getItem('selectedWeekId');
+    if (savedWeekId) {
+        selectedWeekId = savedWeekId;
+        // Aggiorna tutte le select con il valore salvato
+        document.querySelectorAll('.week-select').forEach(sel => {
+            sel.value = savedWeekId;
+        });
+        // Carica i dati del menu per la settimana selezionata
+        loadAndUpdateMenuData(savedWeekId);
+    } else {
+        updateSelectedWeek();  // Caricamento iniziale della settimana
+    }
 
     // Event Listener per cambiare la settimana
     document.querySelectorAll('.week-select').forEach(select => {
-        select.addEventListener('change', function() {
-            const newWeekId = this.value;
-
-            // Aggiorna il valore di selectedWeekId globale
-            selectedWeekId = newWeekId;
-
-            // Aggiorna tutte le select con il nuovo valore
-            document.querySelectorAll('.week-select').forEach(sel => {
-                sel.value = newWeekId;
-            });
-
-            // Chiama le funzioni necessarie per aggiornare la vista
-            loadMenuData();
-            filterDayCards();
-            cambiaMenuSettimana();
-        });
+        select.addEventListener('change', updateSelectedWeek);
     });
 
     document.getElementById('deleteMenuBtn').addEventListener('click', deleteMenu);
