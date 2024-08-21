@@ -5,7 +5,7 @@ from app.models.models import db, UtenteAuth, Utenti
 
 auth = Blueprint('auth', __name__)
 
-@auth.route('/', methods=['GET', 'POST'])
+@auth.route('/', methods=['GET'])
 def login():
     if request.method == 'POST':
         username = request.form.get('username')

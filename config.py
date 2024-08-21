@@ -12,7 +12,7 @@ class Config:
     SESSION_COOKIE_HTTPONLY = True
     PERMANENT_SESSION_LIFETIME = timedelta(minutes=120)
 
-    CACHE_TYPE = 'SimpleCache'
+    CACHE_TYPE = 'null'
     CACHE_DEFAULT_TIMEOUT = 300
 
     SQLALCHEMY_ENGINE_OPTIONS = {
