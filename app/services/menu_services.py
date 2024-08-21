@@ -346,7 +346,7 @@ def convert_decimal_to_float(data):
         return data
 
 
-def salva_menu_corrente(menu):
+def salva_menu_corrente(menu, user_id):
     with get_db_connection() as conn:
         # Esegui le operazioni con la connessione
         cur = conn.cursor()
@@ -361,11 +361,11 @@ def salva_menu_corrente(menu):
 
         # Inserisce un nuovo menu per la prossima settimana
         query = """
-            INSERT INTO dieta.menu_settimanale (data_inizio, data_fine, menu)
-            VALUES (%s, %s, %s)
+            INSERT INTO dieta.menu_settimanale (data_inizio, data_fine, menu, user_id)
+            VALUES (%s, %s, %s, %s)
         """
 
-        params = (ultimo_lunedi.date(), domenica_prossima.date(), Json(menu_convertito))
+        params = (ultimo_lunedi.date(), domenica_prossima.date(), Json(menu_convertito), user_id,)
 
         # Stampa la query con parametri
         printer(cur.mogrify(query, params).decode('utf-8'))
@@ -376,7 +376,7 @@ def salva_menu_corrente(menu):
         conn.commit()
 
 
-def salva_menu_settimana_prossima(menu):
+def salva_menu_settimana_prossima(menu, user_id):
     with get_db_connection() as conn:
         # Esegui le operazioni con la connessione
         cur = conn.cursor()
@@ -396,9 +396,10 @@ def salva_menu_settimana_prossima(menu):
                       FROM dieta.menu_settimanale 
                      WHERE data_inizio = %s 
                        AND data_fine = %s
+                       and user_id = %s
                 """
 
-        params = (lunedi_prossimo.date(), domenica_prossima.date())
+        params = (lunedi_prossimo.date(), domenica_prossima.date(), user_id)
 
         # Stampa la query con parametri
         printer(cur.mogrify(query, params).decode('utf-8'))
@@ -414,9 +415,10 @@ def salva_menu_settimana_prossima(menu):
                 UPDATE dieta.menu_settimanale
                 SET menu = %s
                 WHERE id = %s
+                 and user_id = %s
             """
 
-            params = (Json(menu_convertito), result[0])
+            params = (Json(menu_convertito), result[0], user_id)
 
             # Stampa la query con parametri
             printer(cur.mogrify(query, params).decode('utf-8'))
@@ -427,8 +429,8 @@ def salva_menu_settimana_prossima(menu):
         else:
             # Inserisce un nuovo menu per la prossima settimana
             query = """
-                INSERT INTO dieta.menu_settimanale (data_inizio, data_fine, menu)
-                VALUES (%s, %s, %s)
+                INSERT INTO dieta.menu_settimanale (data_inizio, data_fine, menu, user_id)
+                VALUES (%s, %s, %s, %s)
             """
 
             params = (lunedi_prossimo.date(), domenica_prossima.date(), Json(menu_convertito))
@@ -442,15 +444,15 @@ def salva_menu_settimana_prossima(menu):
         conn.commit()
 
 
-def get_menu_corrente(ids=None):
+def get_menu_corrente(user_id, ids=None):
     menu_corrente = None
     where_cond = "%s between data_inizio AND data_fine "
     oggi = datetime.now()
-    params = (oggi.date(),)
+    params = (user_id, oggi.date())
 
     if ids:
-        where_cond = "id = %s"
-        params = (ids,)
+        where_cond = "and id = %s"
+        params = (user_id, ids,)
 
     with get_db_connection() as conn:
         # Esegui le operazioni con la connessione
@@ -459,7 +461,7 @@ def get_menu_corrente(ids=None):
         query = f"""
             SELECT menu 
               FROM dieta.menu_settimanale
-            WHERE {where_cond}
+            WHERE user_id = %s and {where_cond}
         """
 
         # Stampa la query con parametri
@@ -475,7 +477,7 @@ def get_menu_corrente(ids=None):
     return menu_corrente
 
 
-def get_menu_settima_prossima():
+def get_menu_settima_prossima(user_id):
     with get_db_connection() as conn:
         # Esegui le operazioni con la connessione
         cur = conn.cursor()
@@ -488,9 +490,10 @@ def get_menu_settima_prossima():
             SELECT id 
               FROM dieta.menu_settimanale 
              WHERE data_inizio = %s AND data_fine = %s
+               and user_id = %s
         """
 
-        params = (lunedi_prossimo.date(), domenica_prossima.date(),)
+        params = (lunedi_prossimo.date(), domenica_prossima.date(), user_id)
 
         # Verifica se un menu per la prossima settimana esiste già
         cur.execute(query, params)
@@ -502,7 +505,7 @@ def get_menu_settima_prossima():
     return False
 
 
-def get_settimane_salvate():
+def get_settimane_salvate(user_id):
     with get_db_connection() as conn:
         oggi = datetime.now()
 
@@ -512,10 +515,11 @@ def get_settimane_salvate():
             SELECT id, data_inizio, data_fine 
               FROM dieta.menu_settimanale
               WHERE data_fine >= %s
+               and user_id = %s
              ORDER BY data_inizio ASC
         """
 
-        params = (oggi.date(),)
+        params = (oggi.date(), user_id)
 
         # Stampa la query con parametri
         printer(cur.mogrify(query, params).decode('utf-8'))
@@ -798,7 +802,7 @@ def recupera_ingredienti():
     return foods
 
 
-def get_dati_utente():
+def get_dati_utente(user_id):
     with get_db_connection() as conn:
         cur = conn.cursor()
         query = """
@@ -806,10 +810,10 @@ def get_dati_utente():
                 peso_ideale, meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, 
                 carboidrati, proteine, grassi 
                 FROM dieta.utenti
-                limit 1;  
+                where id = %s;
             """
 
-        params = ()
+        params = (user_id,)
 
         # Stampa la query con parametri
         printer(cur.mogrify(query, params).decode('utf-8'))
@@ -930,7 +934,7 @@ def aggiungi_ricetta_al_menu(menu, day, meal, meal_id):
     menu['weekly']['grassi'] -= float(ricetta[0]['grassi'])
 
 
-def update_menu_corrente(menu, week_id):
+def update_menu_corrente(menu, week_id, user_id):
     with get_db_connection() as conn:
         # Esegui le operazioni con la connessione
         cur = conn.cursor()
@@ -942,9 +946,10 @@ def update_menu_corrente(menu, week_id):
         query = """
             UPDATE dieta.menu_settimanale set menu = %s 
             where id = %s
+              and user_id = %s
         """
 
-        params = (Json(menu_convertito), week_id)
+        params = (Json(menu_convertito), week_id, user_id)
 
         # Stampa la query con parametri
         printer(cur.mogrify(query, params).decode('utf-8'))
@@ -984,15 +989,17 @@ def remove_meal_from_menu(menu, day, meal, meal_id):
     return menu
 
 
-def delete_week_menu(week_id):
+def delete_week_menu(week_id, user_id):
     with get_db_connection() as conn:
 
         # Esegui le operazioni con la connessione
         cur = conn.cursor()
 
         # Inserisce un nuovo menu per la prossima settimana
-        query = "DELETE FROM dieta.menu_settimanale WHERE id = %s"
-        params = (week_id,)
+        query = """ DELETE FROM dieta.menu_settimanale 
+                     WHERE id = %s 
+                       AND user_id = %s"""
+        params = (week_id, user_id)
 
         # Stampa la query con parametri
         printer(cur.mogrify(query, params).decode('utf-8'))

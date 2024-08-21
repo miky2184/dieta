@@ -1098,6 +1098,7 @@ document.querySelectorAll('.week-select').forEach(select => {
 
 
 document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById("defaultOpen").click();
     // Inizializzazione iniziale per impostare il valore globale
     //updateSelectedWeek();
 
@@ -1120,8 +1121,6 @@ document.addEventListener('DOMContentLoaded', function() {
             cambiaMenuSettimana();
         });
     });
-
-    document.getElementById("defaultOpen").click();
 
     document.getElementById('deleteMenuBtn').addEventListener('click', deleteMenu);
 

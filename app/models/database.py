@@ -19,11 +19,11 @@ def get_db_config():
         ValueError: Se una delle variabili d'ambiente necessarie non è impostata.
     """
     config = {
-        "user": os.getenv("DB_USER"),
-        "password": os.getenv("DB_PASSWORD"),
-        "host": os.getenv("DB_HOST"),
-        "port": os.getenv("DB_PORT"),
-        "database": os.getenv("DB_NAME")
+        "user": os.getenv('DB_USER'),
+        "password": os.getenv('DB_PASSWORD'),
+        "host": os.getenv('DB_HOST'),
+        "port": os.getenv('DB_PORT'),
+        "database": os.getenv('DB_NAME')
     }
 
     # Verifica che tutte le configurazioni siano state fornite

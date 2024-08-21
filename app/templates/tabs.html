@@ -1,4 +1,4 @@
-<div class="tab">
+<div class="tab"  style="display: flex; justify-content: space-between; align-items: center;">
     <button class="tablinks" onclick="openTab(event, 'Menu')" id="defaultOpen">Menu Settimanale</button>
     <button class="tablinks" onclick="openTab(event, 'ModificaPasti')">Modifica Pasti</button>
     <button class="tablinks" onclick="openTab(event, 'Alimenti')" >Alimenti Disponibili</button>
@@ -6,4 +6,10 @@
     <button class="tablinks" onclick="openTab(event, 'ListaSpesa')">Lista della Spesa</button>
     <button class="tablinks" id="peso-tab" onclick="openTab(event, 'Peso')">Registro del Peso</button>
     <button class="tablinks" id="dieta-tab" onclick="openTab(event, 'Dieta')">Dieta</button>
+    <!-- Logout button with icon -->
+    <form action="{{ url_for('auth.logout') }}" method="POST" style="margin-left: auto;">
+        <button type="submit" class="tablinks">
+            <i class="fas fa-sign-out-alt text-dark"></i>
+        </button>
+    </form>
 </div>

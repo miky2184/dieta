@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <ul class="nav nav-tabs" id="authTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab" aria-controls="login" aria-selected="true">Login</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button" role="tab" aria-controls="register" aria-selected="false">Register</button>
+        </li>
+    </ul>
+    <div class="tab-content" id="authTabsContent">
+        <!-- Login Form -->
+        <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
+                        <div class="card">
+                <div class="card-body">
+            <form action="{{ url_for('auth.login') }}" method="POST">
+                <div class="input-group input-group-sm mb-3">
+                    <span for="username" class="input-group-text">Username</span>
+                    <input type="text" class="form-control form-control-sm" id="login-username" name="username" required>
+                </div>
+                <div class="input-group input-group-sm mb-3">
+                    <span for="password" class="input-group-text">Password</span>
+                    <input type="password" class="form-control form-control-sm" id="login-password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Login</button>
+            </form>
+                    </div>
+                            </div>
+        </div>
+        <!-- Register Form -->
+        <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
+            <div class="card">
+                <div class="card-body">
+            <form action="{{ url_for('auth.register') }}" method="POST">
+                <div class="input-group input-group-sm mb-3">
+                    <span for="username" class="input-group-text">Username</span>
+                    <input type="text" class="form-control form-control-sm" id="username" name="username" required>
+                </div>
+                <div class="input-group input-group-sm mb-3">
+                    <span for="password" class="input-group-text">Password</span>
+                    <input type="password" class="form-control form-control-sm" id="password" name="password" required>
+                </div>
+                <div class="input-group input-group-sm mb-3">
+                    <span for="nome" class="input-group-text">Nome</span>
+                    <input type="text" class="form-control form-control-sm" id="nome" name="nome" required>
+                </div>
+                <div class="input-group input-group-sm mb-3">
+                    <span for="cognome" class="input-group-text">Cognome</span>
+                    <input type="text" class="form-control form-control-sm" id="cognome" name="cognome" required>
+                </div>
+                <div class="input-group input-group-sm mb-3">
+                    <span for="sesso" class="input-group-text">Sesso</span>
+                    <select class="form-control form-control-sm" name="sesso" required>
+                        <option value="M">Uomo</option>
+                        <option value="F">Donna</option>
+                    </select>
+                </div>
+                <div class="input-group input-group-sm mb-3">
+                    <span for="eta" class="input-group-text">Età</span>
+                    <input type="number" class="form-control form-control-sm" name="eta" required>
+                </div>
+                <div class="input-group input-group-sm mb-3">
+                    <span for="altezza" class="input-group-text">Altezza (cm)</span>
+                    <input type="number" class="form-control form-control-sm" name="altezza" required>
+                </div>
+                <div class="input-group input-group-sm mb-3">
+                    <span for="peso" class="input-group-text">Peso (kg)</span>
+                    <input type="number" step=".1" class="form-control form-control-sm" name="peso" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Register</button>
+            </form>
+                </div>
+                </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
