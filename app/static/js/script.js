@@ -481,7 +481,7 @@ function calculateResults() {
         harrisBenedict = 88.362 + (13.397 * data.peso) + (4.799 * data.altezza) - (5.677 * data.eta);
         mifflinStJeor = 10 * data.peso + 6.25 * data.altezza - 5 * data.eta + 5;
     } else if (data.sesso === 'F') {
-        harrisBenedict = 47.593 + (9.247 * data.peso) + (3.098 * data.altezza) - (4.330 * data.eta);
+        harrisBenedict = 447.593 + (9.247 * data.peso) + (3.098 * data.altezza) - (4.330 * data.eta);
         mifflinStJeor = 10 * data.peso + 6.25 * data.altezza - 5 * data.eta - 161;
     }
 
