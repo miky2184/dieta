@@ -24,7 +24,7 @@ from flask_login import login_required, current_user
 views = Blueprint('views', __name__)
 
 
-@views.route('/dashboard', methods=['GET', 'POST'])
+@views.route('/dashboard', methods=['GET'])
 @current_app.cache.cached(timeout=300)
 @login_required
 def dashboard():
