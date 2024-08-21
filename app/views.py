@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, send_f
 from .services.menu_services import (definisci_calorie_macronutrienti, save_weight, genera_menu,
                                      stampa_lista_della_spesa, get_menu_corrente, salva_menu_settimana_prossima,
                                      carica_ricette, get_settimane_salvate, get_menu_settima_prossima,
-                                     salva_menu_corrente, get_menu_settimana, get_settimana, salva_ricetta,
+                                     salva_menu_corrente, get_settimana, salva_ricetta,
                                      attiva_disattiva_ricetta, get_ricette, elimina_ingredienti, salva_utente_dieta,
                                      salva_nuova_ricetta, salva_ingredienti,
                                      recupera_ingredienti, get_peso_hist, get_dati_utente,
@@ -25,7 +25,7 @@ views = Blueprint('views', __name__)
 
 
 @views.route('/dashboard', methods=['GET'])
-@current_app.cache.cached(timeout=300)
+@current_app.cache.cached(timeout=300, key_prefix=lambda: f"dashboard_{current_user.user_id}")
 @login_required
 def dashboard():
     """
@@ -37,7 +37,7 @@ def dashboard():
     macronutrienti = definisci_calorie_macronutrienti(user_id)
 
     # Recupera le ricette disponibili dal database.
-    ricette = carica_ricette(stagionalita=False)
+    ricette = carica_ricette(user_id, stagionalita=False)
 
     # Recupera il menu corrente dal database.
     menu_corrente = get_menu_corrente(user_id)
@@ -81,13 +81,13 @@ def dashboard():
     settimane_salvate = get_settimane_salvate(user_id)
 
     # Genera la lista della spesa basata sul menu corrente.
-    lista_spesa = stampa_lista_della_spesa(menu_corrente.get('all_food'))
+    lista_spesa = stampa_lista_della_spesa(user_id, menu_corrente.get('all_food'))
 
     # Calcola i macronutrienti rimanenti per ogni giorno del menu.
     remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente)
 
     # Recupera tutti gli alimenti dal database.
-    alimenti = recupera_alimenti()
+    alimenti = recupera_alimenti(user_id)
 
     # Rende la pagina index con tutti i dati necessari.
     return render_template('index.html',
@@ -110,7 +110,7 @@ def generate_menu():
     """
     user_id = current_user.user_id
     macronutrienti = definisci_calorie_macronutrienti(user_id)
-    ricette_menu = carica_ricette(stagionalita=True)
+    ricette_menu = carica_ricette(user_id, stagionalita=True)
 
     progress = 0
     total_steps = 4  # Numero totale di passaggi nella generazione del menu
@@ -143,18 +143,20 @@ def generate_menu():
     else:
         progress += 1 / total_steps * 100
 
-    current_app.cache.delete('view//dashboard')
+    current_app.cache.delete(f'dashboard_{current_user.user_id}')
     return jsonify({'status': 'success', 'progress': progress})
 
 
 @views.route('/menu_settimana/<int:settimana_id>', methods=['GET'])
 @current_app.cache.cached(timeout=300)
+@login_required
 def menu_settimana(settimana_id):
     """
     Questa funzione gestisce la richiesta di visualizzazione di un menu specifico per una settimana data.
     Restituisce il menu selezionato e i macronutrienti rimanenti per quella settimana.
     """
-    menu_selezionato = get_menu_settimana(settimana_id)
+    user_id = current_user.user_id
+    menu_selezionato = get_menu_corrente(user_id, ids=settimana_id)
 
     macronutrienti_rimanenti = calcola_macronutrienti_rimanenti(menu_selezionato)
 
@@ -162,7 +164,7 @@ def menu_settimana(settimana_id):
 
 
 @views.route('/get_lista_spesa', methods=['POST'])
-@current_app.cache.cached(timeout=300)
+@login_required
 def get_lista_spesa():
     """
     Questa funzione gestisce la richiesta POST per ottenere la lista della spesa basata sugli ID degli alimenti
@@ -170,14 +172,16 @@ def get_lista_spesa():
     """
     data = request.get_json()
     ids_all_food = data.get('ids_all_food', [])
+    user_id = current_user.user_id
 
     # Genera la lista della spesa basata sugli ID degli alimenti.
-    lista_spesa = stampa_lista_della_spesa(ids_all_food)
+    lista_spesa = stampa_lista_della_spesa(user_id, ids_all_food)
 
     return jsonify(lista_spesa=lista_spesa)
 
 
 @views.route('/save_recipe', methods=['POST'])
+@login_required
 def save_recipe():
     """
     Questa funzione salva o aggiorna una ricetta nel database in base ai dati forniti dal client.
@@ -191,36 +195,43 @@ def save_recipe():
     contorno = data['contorno']
     nome = data['nome']
 
-    salva_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, ricetta_id)
-    current_app.cache.delete('view//dashboard')
+    user_id = current_user.user_id
+
+    salva_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, ricetta_id, user_id)
+    current_app.cache.delete(f'dashboard_{current_user.user_id}')
 
     return jsonify({'status': 'success', 'message': 'Ricetta salvata con successo!'})
 
 
 @views.route('/toggle_recipe_status', methods=['POST'])
+@login_required
 def toggle_recipe_status():
     """
     Questa funzione attiva o disattiva una ricetta specifica nel database, basandosi sull'ID della ricetta.
     """
     data = request.get_json()
     ricetta_id = data['id']
+    user_id = current_user.user_id
 
-    attiva_disattiva_ricetta(ricetta_id)
-    current_app.cache.delete('view//dashboard')
+    attiva_disattiva_ricetta(ricetta_id, user_id)
+    current_app.cache.delete(f'dashboard_{current_user.user_id}')
 
     return jsonify({'status': 'success', 'message': 'Ricetta modificata con successo!'})
 
 
 @views.route('/recipe/<int:recipe_id>', methods=['GET'])
 @current_app.cache.cached(timeout=300)
+@login_required
 def recipe(recipe_id):
     """
     Questa funzione restituisce i dettagli di una ricetta specifica basata sul suo ID.
     """
-    return jsonify(get_ricette(recipe_id))
+    user_id = current_user.user_id
+    return jsonify(get_ricette(recipe_id, user_id))
 
 
 @views.route('/delete_ingredient', methods=['POST'])
+@login_required
 def delete_ingredient():
     """
     Questa funzione elimina un ingrediente da una ricetta basata sugli ID forniti.
@@ -228,22 +239,26 @@ def delete_ingredient():
     data = request.get_json()
     ingredient_id = data['ingredient_id']
     recipe_id = data['recipe_id']
+    user_id = current_user.user_id
 
-    elimina_ingredienti(ingredient_id, recipe_id)
+    elimina_ingredienti(ingredient_id, recipe_id, user_id)
 
     return jsonify({'status': 'success', 'message': 'Ingrediente eliminato correttamente.'})
 
 
 @views.route('/get_all_ingredients', methods=['GET'] )
-@current_app.cache.cached(timeout=300)
+@login_required
+@current_app.cache.cached(timeout=300, key_prefix=lambda: f"get_all_ingredients_{current_user.user_id}")
 def get_all_ingredients():
     """
     Questa funzione restituisce tutti gli ingredienti disponibili nel database.
     """
-    return jsonify(recupera_ingredienti())
+    user_id = current_user.user_id
+    return jsonify(recupera_ingredienti(user_id))
 
 
 @views.route('/add_ingredient_to_recipe', methods=['POST'])
+@login_required
 def add_ingredient_to_recipe():
     """
     Questa funzione aggiunge un ingrediente a una ricetta esistente nel database.
@@ -252,8 +267,9 @@ def add_ingredient_to_recipe():
     ingredient_id = data['ingredient_id']
     recipe_id = data['recipe_id']
     quantity = data['quantity']
+    user_id = current_user.user_id
 
-    salva_ingredienti(recipe_id, ingredient_id, quantity)
+    salva_ingredienti(recipe_id, ingredient_id, quantity, user_id)
 
     return jsonify({'status': 'success', 'message': 'Ingrediente inserito correttamente.'})
 
@@ -275,6 +291,7 @@ def update_ingredient():
 
 
 @views.route('/new_recipe', methods=['POST'])
+@login_required
 def new_recipe():
     """
     Questa funzione salva una nuova ricetta basata sui dati forniti dal form.
@@ -286,12 +303,15 @@ def new_recipe():
     side = 'side' in request.form
     second_breakfast = 'second_breakfast' in request.form
 
-    salva_nuova_ricetta(name.upper(), breakfast, snack, main, side, second_breakfast)
+    user_id = current_user.user_id
+
+    salva_nuova_ricetta(name.upper(), breakfast, snack, main, side, second_breakfast, user_id)
 
     return redirect(url_for('views.dashboard'))
 
 
 @views.route('/new_food', methods=['POST'])
+@login_required
 def new_food():
     """
     Questa funzione salva un nuovo alimento basato sui dati forniti dal form.
@@ -309,9 +329,11 @@ def new_food():
     carne_bianca = 'carne-bianca' in request.form
     carne_rossa = 'carne-rossa' in request.form
 
-    salva_nuovo_alimento(name, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura,
-                         confezionato, vegan, pesce)
+    user_id = current_user.user_id
 
+    salva_nuovo_alimento(name, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura,
+                         confezionato, vegan, pesce, user_id)
+    current_app.cache.delete(f'get_all_ingredients_{user_id}')
     return redirect(url_for('views.dashboard'))
 
 
@@ -326,16 +348,20 @@ def submit_weight():
     # Salva i dati del peso nel database
     peso = save_weight(data['date'], data['weight'], user_id)
     # Esempio di svuotamento della cache di una funzione specifica
-    current_app.cache.delete(f'view//get_peso_data')
+    current_app.cache.delete(f'get_peso_data_{user_id}')
 
     return jsonify(peso)
 
 
 @views.route('/salva-dati', methods=['POST'])
+@login_required
 def salva_dati():
     """
     Questa funzione salva i dati personali dell'utente relativi alla dieta nel database.
     """
+
+    user_id = current_user.user_id
+
     id = request.form['id']
     nome = request.form['nome']
     cognome = request.form['cognome']
@@ -358,12 +384,12 @@ def salva_dati():
     salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
                        meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, carboidrati,
                        proteine, grassi)
-    current_app.cache.delete(f'view//get_data_utente')
+    current_app.cache.delete(f'get_data_utente_{user_id}')
     return redirect(url_for('views.dashboard'))
 
 
 @views.route('/get_peso_data', methods=['GET'])
-@current_app.cache.cached(timeout=300)
+@current_app.cache.cached(timeout=300, key_prefix=lambda: f"get_peso_data_{current_user.user_id}")
 @login_required
 def get_peso_data():
     """
@@ -375,7 +401,7 @@ def get_peso_data():
 
 
 @views.route('/get_data_utente', methods=['GET'])
-@current_app.cache.cached(timeout=300)
+@current_app.cache.cached(timeout=300, key_prefix=lambda: f"get_data_utente_{current_user.user_id}")
 @login_required
 def get_data_utente():
     """
@@ -387,6 +413,7 @@ def get_data_utente():
 
 
 @views.route('/save_alimento', methods=['POST'])
+@login_required
 def save_alimento():
     """
     Questa funzione salva un alimento esistente nel database, aggiornandone i dati.
@@ -405,23 +432,26 @@ def save_alimento():
     confezionato = data.get('confezionato')
     vegan = data.get('vegan')
     pesce = data.get('pesce')
+    user_id = current_user.user_id
 
     salva_alimento(alimento_id, nome, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura,
-                   confezionato, vegan, pesce)
-
+                   confezionato, vegan, pesce, user_id)
+    current_app.cache.delete(f'get_all_ingredients_{user_id}')
     return jsonify({'status': 'success', 'message': 'Alimento salvato con successo!'})
 
 
 @views.route('/delete_alimento', methods=['POST'])
+@login_required
 def delete_alimento():
     """
     Questa funzione elimina un alimento dal database basandosi sul suo ID.
     """
     data = request.get_json()
     alimento_id = data.get('id')
+    user_id = current_user.user_id
 
-    elimina_alimento(alimento_id)
-
+    elimina_alimento(alimento_id, user_id)
+    current_app.cache.delete(f'get_all_ingredients_{user_id}')
     return jsonify({'status': 'success', 'message': 'Alimento eliminato con successo!'})
 
 
@@ -448,7 +478,7 @@ def get_available_meals():
     generic_meal_types = meal_type_mapping.get(meal_type)
 
     # Recupera tutte le ricette attive
-    ricette = carica_ricette(stagionalita=True, attive=True)
+    ricette = carica_ricette(user_id, stagionalita=True, attive=True)
 
     # Filtra le ricette disponibili in base al tipo di pasto
     available_meals = [ricetta for ricetta in ricette if
@@ -488,7 +518,7 @@ def add_meals_to_menu(week_id):
 
     # Salva il menu aggiornato nel database
     update_menu_corrente(menu_corrente, week_id, user_id)
-    current_app.cache.delete('view//dashboard')
+    current_app.cache.delete(f'dashboard_{current_user.user_id}')
     return jsonify({
         'status': 'success',
         'menu': menu_corrente,  # Restituisce il menu aggiornato
@@ -513,7 +543,7 @@ def remove_meal(week_id):
     menu_corrente = get_menu_corrente(user_id, ids=week_id)
 
     # Rimuove il pasto dal menu
-    updated_menu = remove_meal_from_menu(menu_corrente, day, meal, meal_id)
+    updated_menu = remove_meal_from_menu(menu_corrente, day, meal, meal_id, user_id)
 
     # Salva il menu aggiornato nel database
     update_menu_corrente(updated_menu, week_id, user_id)
@@ -544,7 +574,7 @@ def update_meal_quantity():
     user_id = current_user.user_id
 
     # Recupera il menu corrente dal database
-    menu_corrente = get_menu_settimana(week_id)
+    menu_corrente = get_menu_corrente(user_id, ids=week_id)
 
     # Aggiorna la quantità del pasto nel menu
     for ricetta in menu_corrente['day'][day]['pasto'][meal]['ricette']:
@@ -572,6 +602,7 @@ def update_meal_quantity():
 
 
 @views.route('/generate_pdf', methods=['POST'])
+@login_required
 def generate_pdf():
     """
     Questa funzione genera un PDF contenente il menu settimanale e la lista della spesa.
@@ -581,12 +612,14 @@ def generate_pdf():
     img_data = data['image']
     week_id = data['week_id']
 
+    user_id = current_user.user_id
+
     # Decodifica l'immagine base64 inviata dal client
     img_data = img_data.split(',')[1]
     img = Image.open(BytesIO(base64.b64decode(img_data)))
 
     # Recupera il menu selezionato dal database
-    menu_selezionato = get_menu_settimana(week_id)
+    menu_selezionato = get_menu_corrente(user_id, ids=week_id)
 
     # Imposta il PDF in orientamento orizzontale
     pdf_file = BytesIO()
@@ -612,7 +645,7 @@ def generate_pdf():
 
     # Aggiungi la lista della spesa al PDF
     y = height - margin_y  # Posiziona la lista sotto l'immagine
-    shopping_list = stampa_lista_della_spesa(menu_selezionato.get('all_food'))
+    shopping_list = stampa_lista_della_spesa(user_id, menu_selezionato.get('all_food'))
     c.setFont("Helvetica", 12)
     c.drawString(margin_x, y, "Lista della Spesa:")
     y -= 20
@@ -638,7 +671,6 @@ def delete_menu(week_id):
     delete_week_menu(week_id, user_id)
 
     # Svuota la cache correlata
-    current_app.cache.delete('view//dashboard')
+    current_app.cache.delete(f'dashboard_{current_user.user_id}')
     current_app.cache.delete(f'view//menu_settimana/{week_id}')
-    current_app.cache.delete('view//get_lista_spesa')
     return jsonify({'status': 'success', 'message': 'Menu eliminato con successo!'}), 200

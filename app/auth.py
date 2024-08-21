@@ -91,7 +91,7 @@ def register():
 
     save_weight(datetime.now().date(), peso, user_id)
 
-    current_app.cache.delete(f'view//get_data_utente')
+    current_app.cache.delete(f'get_data_utente_{user_id}')
     return redirect(url_for('auth.login'))
 
 @auth.route('/logout', methods=['GET', 'POST'])
