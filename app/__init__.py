@@ -20,13 +20,13 @@ def create_app():
     # Inizializza il database con l'app
     db.init_app(app)
 
-    # @app.before_request
-    # def log_before_request():
-    #     if request.endpoint != 'static':  # Escludi richieste ai file statici
-    #         print(f"Requested URL: {request.url}")
-    #         if not current_user.is_authenticated and request.endpoint != 'auth.login':
-    #             print("User is not authenticated, redirecting to login.")
-    #             return redirect(url_for('auth.login', next=request.url))
+    @app.before_request
+    def log_before_request():
+        if request.endpoint != 'static':  # Escludi richieste ai file statici
+            print(f"Requested URL: {request.url}")
+            if not current_user.is_authenticated and request.endpoint != 'auth.login':
+                print("User is not authenticated, redirecting to login.")
+                return redirect(url_for('auth.login', next=request.url))
 
     # Configura Flask-Login
     login_manager = LoginManager()
