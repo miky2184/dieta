@@ -8,7 +8,7 @@ def create_app():
     # Carica le variabili d'ambiente dal file .env
     load_dotenv()
 
-    app = Flask(__name__)
+    app = Flask(__name__, static_url_path='/static')
 
     # Configura l'applicazione
     app.config.from_object('config.Config')
