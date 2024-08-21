@@ -143,7 +143,7 @@ def generate_menu():
     else:
         progress += 1 / total_steps * 100
 
-    current_app.cache.delete(f'dashboard_{current_user.user_id}')
+    current_app.cache.delete(f'dashboard_{user_id}')
     return jsonify({'status': 'success', 'progress': progress})
 
 
@@ -198,7 +198,7 @@ def save_recipe():
     user_id = current_user.user_id
 
     salva_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, ricetta_id, user_id)
-    current_app.cache.delete(f'dashboard_{current_user.user_id}')
+    current_app.cache.delete(f'dashboard_{user_id}')
 
     return jsonify({'status': 'success', 'message': 'Ricetta salvata con successo!'})
 
@@ -214,7 +214,7 @@ def toggle_recipe_status():
     user_id = current_user.user_id
 
     attiva_disattiva_ricetta(ricetta_id, user_id)
-    current_app.cache.delete(f'dashboard_{current_user.user_id}')
+    current_app.cache.delete(f'dashboard_{user_id}')
 
     return jsonify({'status': 'success', 'message': 'Ricetta modificata con successo!'})
 
@@ -290,18 +290,18 @@ def update_ingredient():
     return jsonify({'status': 'success', 'message': 'Quantità aggiornata correttamente.'})
 
 
-@views.route('/new_recipe', methods=['POST'])
+@views.route('/nuova_ricetta', methods=['POST'])
 @login_required
-def new_recipe():
+def nuova_ricetta():
     """
     Questa funzione salva una nuova ricetta basata sui dati forniti dal form.
     """
     name = request.form['name']
-    breakfast = 'breakfast' in request.form
-    snack = 'snack' in request.form
-    main = 'main' in request.form
-    side = 'side' in request.form
-    second_breakfast = 'second_breakfast' in request.form
+    breakfast = 'colazione' in request.form
+    snack = 'spuntino' in request.form
+    main = 'principale' in request.form
+    side = 'contorno' in request.form
+    second_breakfast = 'colazione/biscotti' in request.form
 
     user_id = current_user.user_id
 
@@ -310,9 +310,9 @@ def new_recipe():
     return redirect(url_for('views.dashboard'))
 
 
-@views.route('/new_food', methods=['POST'])
+@views.route('/nuovo_alimento', methods=['POST'])
 @login_required
-def new_food():
+def nuovo_alimento():
     """
     Questa funzione salva un nuovo alimento basato sui dati forniti dal form.
     """
@@ -333,6 +333,7 @@ def new_food():
 
     salva_nuovo_alimento(name, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura,
                          confezionato, vegan, pesce, user_id)
+    current_app.cache.delete(f'dashboard_{user_id}')
     current_app.cache.delete(f'get_all_ingredients_{user_id}')
     return redirect(url_for('views.dashboard'))
 
@@ -511,14 +512,14 @@ def add_meals_to_menu(week_id):
 
     # Aggiunge i pasti selezionati al menu
     for meal_id in selected_meals:
-        aggiungi_ricetta_al_menu(menu_corrente, day, meal, meal_id)
+        aggiungi_ricetta_al_menu(menu_corrente, day, meal, meal_id, user_id)
 
     # Ricalcola i macronutrienti rimanenti
     remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente)
 
     # Salva il menu aggiornato nel database
     update_menu_corrente(menu_corrente, week_id, user_id)
-    current_app.cache.delete(f'dashboard_{current_user.user_id}')
+    current_app.cache.delete(f'dashboard_{user_id}')
     return jsonify({
         'status': 'success',
         'menu': menu_corrente,  # Restituisce il menu aggiornato
@@ -671,6 +672,6 @@ def delete_menu(week_id):
     delete_week_menu(week_id, user_id)
 
     # Svuota la cache correlata
-    current_app.cache.delete(f'dashboard_{current_user.user_id}')
+    current_app.cache.delete(f'dashboard_{user_id}')
     current_app.cache.delete(f'view//menu_settimana/{week_id}')
     return jsonify({'status': 'success', 'message': 'Menu eliminato con successo!'}), 200
