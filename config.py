@@ -6,18 +6,6 @@ class Config:
     SQLALCHEMY_DATABASE_URI = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = False
-    UPLOAD_FOLDER = '/tmp/fantafighettino'
-    ALLOWED_EXTENSIONS = {'csv'}
-    SESSION_COOKIE_SECURE = False
-    SESSION_COOKIE_HTTPONLY = True
-    PERMANENT_SESSION_LIFETIME = timedelta(minutes=120)
 
-    CACHE_TYPE = 'null'
+    CACHE_TYPE = 'SimpleCache'
     CACHE_DEFAULT_TIMEOUT = 300
-
-    SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_size': 40,
-        'max_overflow': 20,
-        'pool_timeout': 30,
-        'pool_recycle': 1800
-    }
