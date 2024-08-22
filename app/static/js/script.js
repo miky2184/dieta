@@ -1126,6 +1126,38 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById("defaultOpen").click();
     }
 
+    var veganCheckbox = document.getElementById('include-vegan');
+    var carniBiancheCheckbox = document.getElementById('include-carni-bianche');
+    var carniRosseCheckbox = document.getElementById('include-carni-rosse');
+    var pesceCheckbox = document.getElementById('include-pesce');
+
+    veganCheckbox.addEventListener('change', function () {
+        if (veganCheckbox.checked) {
+            carniBiancheCheckbox.checked = false;
+            carniRosseCheckbox.checked = false;
+            pesceCheckbox.checked = false;
+        }
+    });
+
+    // Se si selezionano le altre checkbox, la checkbox "Includi Ricette Vegane" si deseleziona
+    carniBiancheCheckbox.addEventListener('change', function () {
+        if (carniBiancheCheckbox.checked) {
+            veganCheckbox.checked = false;
+        }
+    });
+
+    carniRosseCheckbox.addEventListener('change', function () {
+        if (carniRosseCheckbox.checked) {
+            veganCheckbox.checked = false;
+        }
+    });
+
+    pesceCheckbox.addEventListener('change', function () {
+        if (pesceCheckbox.checked) {
+            veganCheckbox.checked = false;
+        }
+    });
+
     const emailInput = document.getElementById('email');
     if (emailInput){
         let emailFeedback = emailInput.parentNode.querySelector('.invalid-feedback');
