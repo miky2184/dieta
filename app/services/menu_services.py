@@ -1035,6 +1035,9 @@ def copia_alimenti_ricette(user_id, ricette_vegane, ricette_carne_bianca, ricett
         printer(cur.mogrify(query, params).decode('utf-8'))
         cur.execute(query, params)
 
+        print(f"ricetta::vegane-->{ricette_vegane}::carni_bianche-->{ricette_carne_bianca}")
+        print(f"ricetta::pesce-->{ricette_pesce}::carni_rosse-->{ricette_carne_rossa}")
+
         if ricette_vegane:
             query = """WITH ricette_vegane AS (SELECT distinct r.id
                                                  FROM dieta.ricetta_base r

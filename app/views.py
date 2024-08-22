@@ -37,9 +37,6 @@ def dashboard():
     # Calcola le calorie e i macronutrienti giornalieri dell'utente.
     macronutrienti = definisci_calorie_macronutrienti(user_id)
 
-    # Recupera le ricette disponibili dal database.
-    ricette = carica_ricette(user_id, stagionalita=False)
-
     # Recupera il menu corrente dal database.
     menu_corrente = get_menu_corrente(user_id)
 
@@ -87,22 +84,36 @@ def dashboard():
     # Calcola i macronutrienti rimanenti per ogni giorno del menu.
     remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente)
 
-    # Recupera tutti gli alimenti dal database.
-    alimenti = recupera_alimenti(user_id)
-
     show_tutorial = not current_user.tutorial_completed
 
     # Rende la pagina index con tutti i dati necessari.
     return render_template('index.html',
                            macronutrienti=macronutrienti,
-                           ricette=ricette,
                            menu=menu_corrente,
                            lista_spesa=lista_spesa,
                            settimane=settimane_salvate,
                            remaining_macronutrienti=remaining_macronutrienti,
-                           alimenti=alimenti,
                            show_tutorial=show_tutorial
                            )
+
+
+@views.route('/recupera_tutti_alimenti')
+@current_app.cache.cached(timeout=300, key_prefix=lambda: f"recupera_tutti_alimenti_{current_user.user_id}")
+@login_required
+def recupera_tutti_alimenti():
+    user_id = current_user.user_id
+    # Recupera tutti gli alimenti dal database.
+    alimenti = recupera_alimenti(user_id)
+    return jsonify(alimenti)
+
+@views.route('/recupera_tutte_ricette')
+@current_app.cache.cached(timeout=300, key_prefix=lambda: f"recupera_tutte_ricette_{current_user.user_id}")
+@login_required
+def recupera_tutte_ricette():
+    user_id = current_user.user_id
+    # Recupera le ricette disponibili dal database.
+    ricette = carica_ricette(user_id, stagionalita=False)
+    return jsonify(ricette)
 
 
 @views.route('/generate_menu', methods=['POST'])
@@ -203,8 +214,8 @@ def save_recipe():
     user_id = current_user.user_id
 
     salva_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, ricetta_id, user_id)
-    current_app.cache.delete(f'dashboard_{user_id}')
 
+    current_app.cache.delete(f'recupera_tutte_ricette_{user_id}')
     return jsonify({'status': 'success', 'message': 'Ricetta salvata con successo!'})
 
 
@@ -219,8 +230,8 @@ def toggle_recipe_status():
     user_id = current_user.user_id
 
     attiva_disattiva_ricetta(ricetta_id, user_id)
-    current_app.cache.delete(f'dashboard_{user_id}')
 
+    current_app.cache.delete(f'recupera_tutte_ricette_{user_id}')
     return jsonify({'status': 'success', 'message': 'Ricetta modificata con successo!'})
 
 
@@ -247,7 +258,7 @@ def delete_ingredient():
     user_id = current_user.user_id
 
     elimina_ingredienti(ingredient_id, recipe_id, user_id)
-
+    current_app.cache.delete(f'recupera_tutte_ricette_{user_id}')
     return jsonify({'status': 'success', 'message': 'Ingrediente eliminato correttamente.'})
 
 
@@ -275,11 +286,12 @@ def add_ingredient_to_recipe():
     user_id = current_user.user_id
 
     salva_ingredienti(recipe_id, ingredient_id, quantity, user_id)
-
+    current_app.cache.delete(f'recupera_tutte_ricette_{user_id}')
     return jsonify({'status': 'success', 'message': 'Ingrediente inserito correttamente.'})
 
 
 @views.route('/update_ingredient', methods=['POST'])
+@login_required
 def update_ingredient():
     """
     Questa funzione aggiorna la quantità di un ingrediente specifico in una ricetta.
@@ -289,9 +301,11 @@ def update_ingredient():
     recipe_id = data['recipe_id']
     quantity = data['quantity']
 
-    salva_ingredienti(recipe_id, ingredient_id, quantity)
-    current_app.cache.delete(f'view//recipe/{recipe_id}')
+    user_id = current_user.user_id
 
+    salva_ingredienti(recipe_id, ingredient_id, quantity, user_id)
+    current_app.cache.delete(f'view//recipe/{recipe_id}')
+    current_app.cache.delete(f'recupera_tutte_ricette_{user_id}')
     return jsonify({'status': 'success', 'message': 'Quantità aggiornata correttamente.'})
 
 

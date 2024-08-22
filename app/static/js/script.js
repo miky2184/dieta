@@ -101,7 +101,7 @@ function saveRicetta(ricettaData) {
         })
         .then(response => response.json())
         .then(data => {
-            // window.location.href = '/';
+            recupera_tutte_le_ricette();
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -118,7 +118,7 @@ function toggleStatusRicetta(ricettaData) {
         })
         .then(response => response.json())
         .then(data => {
-            // window.location.href = '/';
+            recupera_tutte_le_ricette();
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -312,6 +312,7 @@ function deleteIngredient(ingredientId, recipeId, button) {
             if (data.status === 'success') {
                 // Rimuovi la riga della tabella se l'eliminazione è avvenuta con successo
                 button.closest('tr').remove();
+                recupera_tutte_le_ricette();
             }
         })
         .catch((error) => {
@@ -332,7 +333,9 @@ function updateIngredient(ingredientId, recipeId, qta) {
             })
         })
         .then(response => response.json())
-        .then(data => {})
+        .then(data => {
+            recupera_tutte_le_ricette();
+        })
         .catch((error) => {
             console.error('Error:', error);
         });
@@ -356,10 +359,125 @@ function addIngredientToRecipe() {
             })
         })
         .then(response => response.json())
-        .then(data => {})
+        .then(data => {
+            recupera_tutte_le_ricette()
+        })
         .catch((error) => {
             console.error('Error:', error);
         });
+}
+
+function populateRicetteTable(ricette) {
+     const tbody = document.getElementById('ricette-tbody');
+    tbody.innerHTML = ''; // Svuota il contenuto attuale della tabella
+
+    ricette.forEach(ricetta => {
+        const row = document.createElement('tr');
+
+        row.innerHTML = `
+            <td class="nome-ricetta">
+                <div>
+                    <input type="text" class="form-control filter-text" data-ricetta-id="${ricetta.id}" name="nome_${ricetta.id}" value="${ricetta.nome_ricetta}">
+                    <label hidden class="form-control form-control-sm">${ricetta.nome_ricetta}</label>
+                </div>
+            </td>
+            <td class="calorie">${ricetta.kcal}</td>
+            <td class="carboidrati">${ricetta.carboidrati}</td>
+            <td class="proteine">${ricetta.proteine}</td>
+            <td class="grassi">${ricetta.grassi}</td>
+            <td class="colazione">
+                <div>
+                    <input type="checkbox" name="colazione_${ricetta.id}" ${ricetta.colazione ? 'checked' : ''}>
+                    <label hidden class="form-control form-control-sm">${ricetta.colazione}</label>
+                </div>
+            </td>
+            <td class="colazione-sec">
+                <div>
+                    <input type="checkbox" name="colazione_sec_${ricetta.id}" ${ricetta.colazione_sec ? 'checked' : ''}>
+                    <label hidden class="form-control form-control-sm">${ricetta.colazione_sec}</label>
+                </div>
+            </td>
+            <td class="spuntino">
+                <div>
+                    <input type="checkbox" name="spuntino_${ricetta.id}" ${ricetta.spuntino ? 'checked' : ''}>
+                    <label hidden class="form-control form-control-sm">${ricetta.spuntino}</label>
+                </div>
+            </td>
+            <td class="principale">
+                <div>
+                    <input type="checkbox" name="principale_${ricetta.id}" ${ricetta.principale ? 'checked' : ''}>
+                    <label hidden class="form-control form-control-sm">${ricetta.principale}</label>
+                </div>
+            </td>
+            <td class="contorno">
+                <div>
+                    <input type="checkbox" name="contorno_${ricetta.id}" ${ricetta.contorno ? 'checked' : ''}>
+                    <label hidden class="form-control form-control-sm">${ricetta.contorno}</label>
+                </div>
+            </td>
+            <td class="attiva">
+                <div>
+                    <label hidden class="form-control form-control-sm">${ricetta.attiva}</label>
+                    <input type="checkbox" class="attiva-checkbox" name="attiva_${ricetta.id}" data-ricetta-id="${ricetta.id}" ${ricetta.attiva ? 'checked' : ''} disabled>
+                </div>
+            </td>
+            <td class="azione">
+                <div class="btn-group" role="group">
+                    <button class="btn btn-outline-primary btn-sm save-btn" data-ricetta-id="${ricetta.id}" data-ricetta-nome="${ricetta.nome_ricetta}" data-ricetta-colazione="${ricetta.colazione}" data-ricetta-colazione_sec="${ricetta.colazione_sec}" data-ricetta-spuntino="${ricetta.spuntino}" data-ricetta-principale="${ricetta.principale}" data-ricetta-contorno="${ricetta.contorno}" data-ricetta-attiva="${ricetta.attiva}">Salva</button>
+                    <button class="btn btn-outline-primary btn-sm edit-btn" data-ricetta-id="${ricetta.id}" data-bs-toggle="modal" data-bs-target="#editRecipeModal">Modifica</button>
+                    <button class="btn btn-outline-primary btn-sm toggle-btn" data-ricetta-id="${ricetta.id}" data-ricetta-attiva="${ricetta.attiva}">Attiva/Disattiva</button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+
+    document.querySelectorAll('.save-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const ricettaId = this.getAttribute('data-ricetta-id');
+            const ricettaData = {
+                id: ricettaId,
+                nome: document.querySelector(`input[name='nome_${ricettaId}']`).value,
+                colazione: document.querySelector(`input[name='colazione_${ricettaId}']`).checked,
+                colazione_sec: document.querySelector(`input[name='colazione_sec_${ricettaId}']`).checked,
+                spuntino: document.querySelector(`input[name='spuntino_${ricettaId}']`).checked,
+                principale: document.querySelector(`input[name='principale_${ricettaId}']`).checked,
+                contorno: document.querySelector(`input[name='contorno_${ricettaId}']`).checked
+            };
+            saveRicetta(ricettaData);
+        });
+    });
+
+    document.querySelectorAll('.toggle-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const ricettaId = this.getAttribute('data-ricetta-id');
+            const ricettaAttiva = this.getAttribute('data-ricetta-attiva') === 'true';
+            const ricettaData = {
+                id: ricettaId,
+                attiva: !ricettaAttiva
+            };
+            toggleStatusRicetta(ricettaData);
+            const checkbox = document.querySelector(`.attiva-checkbox[data-ricetta-id='${ricettaId}']`);
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+            }
+        });
+    });
+
+    // Riattacca i listener dopo aver aggiornato la tabella
+    document.querySelectorAll('.edit-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const recipeId = this.getAttribute('data-ricetta-id');
+            fetch(`/recipe/${recipeId}`)
+                .then(response => response.json())
+                .then(data => {
+                    populateIngredientsModal(data);
+                    document.getElementById('modal-recipe-id').value = recipeId;
+                })
+                .catch(error => console.error('Error loading the ingredients:', error));
+        });
+    });
+
 }
 
 function populateDietaForm(data) {
@@ -577,7 +695,7 @@ function deleteAlimento(alimentoId) {
         })
         .then(response => response.json())
         .then(data => {
-            window.location.reload(); // Ricarica la pagina per aggiornare la lista
+
         })
         .catch((error) => {
             console.error('Errore:', error);
@@ -780,7 +898,7 @@ function renderMenuEditor(data) {
                         <td class="text-align-center">${ricetta.carboidrati}</td>
                         <td class="text-align-center">${ricetta.proteine}</td>
                         <td class="text-align-center">${ricetta.grassi}</td>
-                        <td><input type="number" class="form-control form-control-sm" style="width: 60px;" value="${ricetta.qta}" min="1" step="1" onchange="updateMealQuantity('${day}', '${meal}', '${ricetta.id}', this.value)"></td>
+                        <td><input type="number" class="form-control form-control-sm" style="width: 60px;" value="${ricetta.qta}" min="0.1" step="0.1" onchange="updateMealQuantity('${day}', '${meal}', '${ricetta.id}', this.value)"></td>
                         <td><button class="btn btn-danger btn-sm" onclick="removeMeal('${day}', '${meal}', '${ricetta.id}')">Rimuovi</button></td>
                     `;
                     mealTableBody.appendChild(row);
@@ -1089,6 +1207,130 @@ function deleteMenu() {
     }
 }
 
+function recupera_tutte_le_ricette()  {
+            fetch('/recupera_tutte_ricette')
+                .then(response => response.json())
+                .then(data => {
+                    if (data) {
+                        populateRicetteTable(data);
+                    }
+                })
+                .catch(error => console.error('Errore nel caricamento dei dati:', error));
+        }
+
+
+function fetchAlimentiData() {
+    fetch('/recupera_tutti_alimenti')
+        .then(response => response.json())
+        .then(data => {
+            populateAlimentiTable(data);
+        })
+        .catch(error => console.error('Errore nel caricamento degli alimenti:', error));
+}
+
+function populateAlimentiTable(alimenti) {
+    const tbody = document.getElementById('alimenti-tbody');
+    tbody.innerHTML = '';
+
+    alimenti.forEach(alimento => {
+        const row = document.createElement('tr');
+
+        row.innerHTML = `
+            <td class="nome-alimento">
+                <div>
+                    <input type="text" class="form-control  form-control-sm filter-text" data-alimento-id="${alimento.id}" name="nome_${alimento.id}" value="${alimento.nome}">
+                    <label hidden class="form-control form-control-sm">${alimento.nome}</label>
+                </div>
+            </td>
+            <td class="calorie">${alimento.kcal}</td>
+            <td class="carboidrati">
+                <div>
+                    <input type="number" class="form-control  form-control-sm filter-text" data-alimento-id="${alimento.id}" name="carboidrati_${alimento.id}" value="${alimento.carboidrati}">
+                    <label hidden class="form-control form-control-sm">${alimento.carboidrati}</label>
+                </div>
+            </td>
+            <td class="proteine">
+                <div>
+                    <input type="number" class="form-control  form-control-sm filter-text" data-alimento-id="${alimento.id}" name="proteine_${alimento.id}" value="${alimento.proteine}">
+                    <label hidden class="form-control form-control-sm">${alimento.proteine}</label>
+                </div>
+            </td>
+            <td class="grassi">
+                <div>
+                    <input type="number" class="form-control  form-control-sm filter-text" data-alimento-id="${alimento.id}" name="grassi_${alimento.id}" value="${alimento.grassi}">
+                    <label hidden class="form-control form-control-sm">${alimento.grassi}</label>
+                </div>
+            </td>
+            <td class="macro">${alimento.macro}</td>
+            <td class="frutta">
+                <div><input type="checkbox" name="frutta_${alimento.id}" ${alimento.frutta ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.frutta}</label></div>
+            </td>
+            <td class="verdura">
+                <div><input type="checkbox" name="verdura_${alimento.id}" ${alimento.verdura ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.verdura}</label></div>
+            </td>
+            <td class="carne-bianca">
+                <div><input type="checkbox" name="carne_bianca_${alimento.id}" ${alimento.carne_bianca ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.carne_bianca}</label></div>
+            </td>
+            <td class="carne-rossa">
+                <div><input type="checkbox" name="carne_rossa_${alimento.id}" ${alimento.carne_rossa ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.carne_rossa}</label></div>
+            </td>
+            <td class="pesce">
+                <div><input type="checkbox" name="pesce_${alimento.id}" ${alimento.pesce ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.pesce}</label></div>
+            </td>
+            <td class="vegan">
+                <div><input type="checkbox" name="vegan_${alimento.id}" ${alimento.vegan ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.vegan}</label></div>
+            </td>
+            <td class="pane">
+                <div><input type="checkbox" name="pane_${alimento.id}" ${alimento.pane ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.pane}</label></div>
+            </td>
+            <td class="confezionato">
+                <div><input type="checkbox" name="confezionato_${alimento.id}" ${alimento.confezionato ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.confezionato}</label></div>
+            </td>
+            <td class="azione">
+                <div class="btn-group" role="group">
+                    <button class="btn btn-outline-primary btn-sm save-alimento-btn" data-alimento-id="${alimento.id}">Salva</button>
+                    <button class="btn btn-outline-danger  btn-sm delete-alimento-btn" data-alimento-id="${alimento.id}">Elimina</button>
+                </div>
+            </td>
+        `;
+
+        tbody.appendChild(row);
+    });
+
+    // Event listener per il salvataggio degli alimenti
+    document.querySelectorAll('.save-alimento-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const alimentoId = this.getAttribute('data-alimento-id');
+            const alimentoData = {
+                id: alimentoId,
+                nome: document.querySelector(`input[name='nome_${alimentoId}']`).value,
+                carboidrati: parseFloat(document.querySelector(`input[name='carboidrati_${alimentoId}']`).value),
+                proteine: parseFloat(document.querySelector(`input[name='proteine_${alimentoId}']`).value),
+                grassi: parseFloat(document.querySelector(`input[name='grassi_${alimentoId}']`).value),
+                frutta: document.querySelector(`input[name='frutta_${alimentoId}']`).checked,
+                carne_bianca: document.querySelector(`input[name='carne_bianca_${alimentoId}']`).checked,
+                carne_rossa: document.querySelector(`input[name='carne_rossa_${alimentoId}']`).checked,
+                pane: document.querySelector(`input[name='pane_${alimentoId}']`).checked,
+                verdura: document.querySelector(`input[name='verdura_${alimentoId}']`).checked,
+                confezionato: document.querySelector(`input[name='confezionato_${alimentoId}']`).checked,
+                vegan: document.querySelector(`input[name='vegan_${alimentoId}']`).checked,
+                pesce: document.querySelector(`input[name='pesce_${alimentoId}']`).checked
+            };
+            saveAlimento(alimentoData);
+        });
+    });
+
+    document.querySelectorAll('.delete-alimento-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const alimentoId = this.getAttribute('data-alimento-id');
+            deleteAlimento(alimentoId);
+        });
+    });
+
+
+
+}
+
 // Aggiungi l'evento di cambio a tutte le select con la classe 'week-select'
 //document.querySelectorAll('.week-select').forEach(select => {
 //    select.addEventListener('change', updateSelectedWeek);
@@ -1113,7 +1355,7 @@ function updateSelectedWeek() {
         });
 
         // Chiama la funzione combinata per aggiornare la vista
-        loadAndUpdateMenuData(weekId);
+        loadAndUpdateMenuData();
 
         // Filtra i day cards se necessario
         filterDayCards();
@@ -1126,105 +1368,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById("defaultOpen").click();
     }
 
-    var veganCheckbox = document.getElementById('include-vegan');
-    var carniBiancheCheckbox = document.getElementById('include-carni-bianche');
-    var carniRosseCheckbox = document.getElementById('include-carni-rosse');
-    var pesceCheckbox = document.getElementById('include-pesce');
-
-    veganCheckbox.addEventListener('change', function () {
-        if (veganCheckbox.checked) {
-            carniBiancheCheckbox.checked = false;
-            carniRosseCheckbox.checked = false;
-            pesceCheckbox.checked = false;
-        }
-    });
-
-    // Se si selezionano le altre checkbox, la checkbox "Includi Ricette Vegane" si deseleziona
-    carniBiancheCheckbox.addEventListener('change', function () {
-        if (carniBiancheCheckbox.checked) {
-            veganCheckbox.checked = false;
-        }
-    });
-
-    carniRosseCheckbox.addEventListener('change', function () {
-        if (carniRosseCheckbox.checked) {
-            veganCheckbox.checked = false;
-        }
-    });
-
-    pesceCheckbox.addEventListener('change', function () {
-        if (pesceCheckbox.checked) {
-            veganCheckbox.checked = false;
-        }
-    });
-
-    const emailInput = document.getElementById('email');
-    if (emailInput){
-        let emailFeedback = emailInput.parentNode.querySelector('.invalid-feedback');
-        if (!emailFeedback) {
-            emailFeedback = document.createElement('div');
-            emailFeedback.className = 'invalid-feedback';
-            emailInput.parentNode.appendChild(emailFeedback);
-        }
-
-        emailInput.addEventListener('blur', function() {
-            const email = emailInput.value;
-            fetch('/check_email', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({email: email}),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.exists) {
-                    emailInput.classList.add('is-invalid');
-                    emailFeedback.textContent = 'Email gia\' in uso. Inserisci una mail differente.';
-                } else if (data.bad) {
-                    emailInput.classList.add('is-invalid');
-                    emailFeedback.textContent = 'Email in un formato errato.';
-                } else {
-                    emailInput.classList.remove('is-invalid');
-                    emailFeedback.textContent = '';
-                }
-            })
-            .catch(error => console.error('Errore nel controllo dell\'email:', error));
-        });
-    }
-
-    const usernameInput = document.getElementById('username');
-    if (usernameInput){
-        let usernameFeedback = usernameInput.parentNode.querySelector('.invalid-feedback');
-        if (!usernameFeedback) {
-            usernameFeedback = document.createElement('div');
-            usernameFeedback.className = 'invalid-feedback';
-            usernameInput.parentNode.appendChild(usernameFeedback);
-        }
-
-        usernameInput.addEventListener('blur', function() {
-            const username = usernameInput.value;
-            fetch('/check_username', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({username: username}),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.exists) {
-                    usernameInput.classList.add('is-invalid');
-                    usernameFeedback.textContent = 'Username già in uso. Scegli un altro username.';
-                } else {
-                    usernameInput.classList.remove('is-invalid');
-                    usernameFeedback.textContent = '';
-                }
-            })
-            .catch(error => console.error('Errore nel controllo dell\'username:', error));
-        });
-    }
-
     // Recupera il valore salvato nel localStorage, se esiste
     const savedWeekId = localStorage.getItem('selectedWeekId');
     if (savedWeekId) {
@@ -1234,7 +1377,7 @@ document.addEventListener('DOMContentLoaded', function() {
             sel.value = savedWeekId;
         });
         // Carica i dati del menu per la settimana selezionata
-        loadAndUpdateMenuData(savedWeekId);
+        loadAndUpdateMenuData();
     } else {
         updateSelectedWeek();  // Caricamento iniziale della settimana
     }
@@ -1336,51 +1479,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     }
 
-    document.querySelectorAll('.save-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const ricettaId = this.getAttribute('data-ricetta-id');
-            const ricettaData = {
-                id: ricettaId,
-                nome: document.querySelector(`input[name='nome_${ricettaId}']`).value,
-                colazione: document.querySelector(`input[name='colazione_${ricettaId}']`).checked,
-                colazione_sec: document.querySelector(`input[name='colazione_sec_${ricettaId}']`).checked,
-                spuntino: document.querySelector(`input[name='spuntino_${ricettaId}']`).checked,
-                principale: document.querySelector(`input[name='principale_${ricettaId}']`).checked,
-                contorno: document.querySelector(`input[name='contorno_${ricettaId}']`).checked
-            };
-            saveRicetta(ricettaData);
-        });
-    });
-
-    document.querySelectorAll('.toggle-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const ricettaId = this.getAttribute('data-ricetta-id');
-            const ricettaAttiva = this.getAttribute('data-ricetta-attiva') === 'true';
-            const ricettaData = {
-                id: ricettaId,
-                attiva: !ricettaAttiva
-            };
-            toggleStatusRicetta(ricettaData);
-            const checkbox = document.querySelector(`.attiva-checkbox[data-ricetta-id='${ricettaId}']`);
-            if (checkbox) {
-                checkbox.checked = !checkbox.checked;
-            }
-        });
-    });
-
-    document.querySelectorAll('.edit-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const recipeId = this.getAttribute('data-ricetta-id');
-            fetch(`/recipe/${recipeId}`)
-                .then(response => response.json())
-                .then(data => {
-                    populateIngredientsModal(data);
-                    document.getElementById('modal-recipe-id').value = recipeId;
-                })
-                .catch(error => console.error('Error loading the ingredients:', error));
-        });
-    });
-
     // Assicurati che gli event listeners siano aggiunti dopo il caricamento dei dati nel modal
     if (document.querySelector('#editRecipeModal')){
         document.querySelector('#editRecipeModal').addEventListener('click', function(event) {
@@ -1398,12 +1496,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateIngredient(ingredientId, recipeId, qta);
             }
         });
-    }
-
-    if (document.getElementById('addIngredientModal')){
-        document.getElementById('addIngredientModal').addEventListener('hidden.bs.modal', function() {
-            window.location.href = '/';
-        })
     }
 
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
@@ -1424,6 +1516,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     }
 
+
+    document.getElementById("ricette-tab").addEventListener("click", function() {
+        recupera_tutte_le_ricette();
+    });
+
+    document.getElementById('alimenti-tab').addEventListener('click', function() {
+        fetchAlimentiData();
+    });
+
+
     if (document.getElementById("dieta-tab")){
         document.getElementById("dieta-tab").addEventListener("click", () => {
             fetch('/get_data_utente')
@@ -1436,37 +1538,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 .catch(error => console.error('Errore nel caricamento dei dati:', error));
         });
     }
-
-    // Event listener per il salvataggio degli alimenti
-    document.querySelectorAll('.save-alimento-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const alimentoId = this.getAttribute('data-alimento-id');
-            const alimentoData = {
-                id: alimentoId,
-                nome: document.querySelector(`input[name='nome_${alimentoId}']`).value,
-                carboidrati: parseFloat(document.querySelector(`input[name='carboidrati_${alimentoId}']`).value),
-                proteine: parseFloat(document.querySelector(`input[name='proteine_${alimentoId}']`).value),
-                grassi: parseFloat(document.querySelector(`input[name='grassi_${alimentoId}']`).value),
-                frutta: document.querySelector(`input[name='frutta_${alimentoId}']`).checked,
-                carne_bianca: document.querySelector(`input[name='carne_bianca_${alimentoId}']`).checked,
-                carne_rossa: document.querySelector(`input[name='carne_rossa_${alimentoId}']`).checked,
-                pane: document.querySelector(`input[name='pane_${alimentoId}']`).checked,
-                verdura: document.querySelector(`input[name='verdura_${alimentoId}']`).checked,
-                confezionato: document.querySelector(`input[name='confezionato_${alimentoId}']`).checked,
-                vegan: document.querySelector(`input[name='vegan_${alimentoId}']`).checked,
-                pesce: document.querySelector(`input[name='pesce_${alimentoId}']`).checked
-            };
-            saveAlimento(alimentoData);
-        });
-    });
-
-    // Event listener per l'eliminazione degli alimenti
-    document.querySelectorAll('.delete-alimento-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const alimentoId = this.getAttribute('data-alimento-id');
-            deleteAlimento(alimentoId);
-        });
-    });
 
     $(document).ready(function() {
         $('#addIngredientModal').on('show.bs.modal', function(event) {
