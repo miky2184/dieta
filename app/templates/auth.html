@@ -17,11 +17,11 @@
                 <div class="card-body">
             <form action="{{ url_for('auth.login') }}" method="POST">
                 <div class="input-group input-group-sm mb-3">
-                    <span for="login-username" class="input-group-text">Username</span>
+                    <span for="login-username" class="input-group-text span-width-20">Username</span>
                     <input type="text" class="form-control form-control-sm" id="login-username" name="username" required>
                 </div>
                 <div class="input-group input-group-sm mb-3">
-                    <span for="password" class="input-group-text">Password</span>
+                    <span  for="password" class="input-group-text span-width-20">Password</span>
                     <input type="password" class="form-control form-control-sm" id="login-password" name="password" required>
                 </div>
                 <button type="submit" class="btn btn-primary btn-sm">Login</button>
@@ -35,45 +35,46 @@
                 <div class="card-body">
             <form action="{{ url_for('auth.register') }}" method="POST">
                 <div class="input-group input-group-sm mb-3">
-                    <span for="username" class="input-group-text">Username</span>
+                    <span   for="username" class="input-group-text span-width-20">Username</span>
                     <input type="text" class="form-control form-control-sm" id="username" name="username" required>
                     <div class="invalid-feedback">
                         Username già in uso. Scegli un altro username.
                     </div>
                 </div>
                 <div class="input-group input-group-sm mb-3">
-                    <span for="password" class="input-group-text">Password</span>
+                    <span  for="password" class="input-group-text span-width-20">Password</span>
                     <input type="password" class="form-control form-control-sm" id="password" name="password" required>
                 </div>
                 <div class="input-group input-group-sm mb-3">
-                    <span for="email" class="input-group-text">Email</span>
+                    <span  for="email" class="input-group-text span-width-20">Email</span>
                     <input type="text" class="form-control form-control-sm" id="email" name="email" required>
                 </div>
-                <div class="input-group input-group-sm mb-3">
-                    <span for="nome" class="input-group-text">Nome</span>
+                <div class="input-group input-group-sm mb-3 ">
+                    <span  for="nome" class="input-group-text span-width-20">Nome</span>
                     <input type="text" class="form-control form-control-sm" id="nome" name="nome" required>
                 </div>
                 <div class="input-group input-group-sm mb-3">
-                    <span for="cognome" class="input-group-text">Cognome</span>
+                    <span   for="cognome" class="input-group-text span-width-20">Cognome</span>
                     <input type="text" class="form-control form-control-sm" id="cognome" name="cognome" required>
                 </div>
                 <div class="input-group input-group-sm mb-3">
-                    <span for="sesso" class="input-group-text">Sesso</span>
+                    <span   for="sesso" class="input-group-text span-width-20">Sesso</span>
                     <select class="form-control form-control-sm" name="sesso" required>
+                        <option value="">Scegli...</option>
                         <option value="M">Uomo</option>
                         <option value="F">Donna</option>
                     </select>
                 </div>
                 <div class="input-group input-group-sm mb-3">
-                    <span for="eta" class="input-group-text">Età</span>
+                    <span   for="eta" class="input-group-text span-width-20">Età</span>
                     <input type="number" class="form-control form-control-sm" name="eta" required>
                 </div>
                 <div class="input-group input-group-sm mb-3">
-                    <span for="altezza" class="input-group-text">Altezza (cm)</span>
+                    <span   for="altezza" class="input-group-text span-width-20">Altezza (cm)</span>
                     <input type="number" class="form-control form-control-sm" name="altezza" required>
                 </div>
                 <div class="input-group input-group-sm mb-3">
-                    <span for="peso" class="input-group-text">Peso (kg)</span>
+                    <span   for="peso" class="input-group-text span-width-20">Peso (kg)</span>
                     <input type="number" step=".1" class="form-control form-control-sm" name="peso" required>
                 </div>
                 <!-- New Checkboxes for Recipe Preferences -->

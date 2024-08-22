@@ -3,19 +3,19 @@
         <form id="personalInfoForm" action="{{ url_for('views.salva_dati') }}" method="POST">
             <input type="text" hidden class="form-control" name="id">
             <div class="input-group input-group-sm mb-3">
-                <span style="width:20%" class="input-group-text">Nome</span>
+                <span  class="input-group-text span-width-20">Nome</span>
                 <input type="text" class="form-control" name="nome" placeholder="Inserisci il tuo nome" required>
             </div>
             <div class="input-group input-group-sm mb-3">
-                <span style="width:20%"  class="input-group-text">Cognome</span>
+                <span   class="input-group-text span-width-20">Cognome</span>
                 <input type="text" class="form-control" name="cognome" placeholder="Inserisci il tuo cognome" required>
             </div>
             <div class="input-group input-group-sm mb-3">
-                <span style="width:20%"  class="input-group-text">Email</span>
+                <span   class="input-group-text span-width-20">Email</span>
                 <input type="text" class="form-control" name="email" disabled>
             </div>
             <div class="input-group input-group-sm mb-3">
-                <span style="width:20%"  class="input-group-text">Sesso</span>
+                <span   class="input-group-text span-width-20">Sesso</span>
                 <select class="form-control" name="sesso" required>
                     <option selected disabled>Scegli...</option>
                     <option value="M">Uomo</option>
@@ -23,21 +23,21 @@
                 </select>
             </div>
             <div class="input-group input-group-sm mb-3">
-                <span style="width:20%"  class="input-group-text">Età</span>
+                <span   class="input-group-text span-width-20">Età</span>
                 <input type="number" class="form-control" name="eta" placeholder="Inserisci la tua età" required>
             </div>
             <div class="input-group input-group-sm mb-3">
-                <span style="width:20%"  class="input-group-text">Altezza</span>
+                <span   class="input-group-text span-width-20">Altezza</span>
                 <input type="number" class="form-control" name="altezza" placeholder="Inserisci la tua altezza" required>
-                <span style="width:10%"  class="input-group-text">cm</span>
+                <span   class="input-group-text span-width-10">cm</span>
             </div>
             <div class="input-group input-group-sm mb-3">
-                <span style="width:20%"  class="input-group-text">Peso</span>
+                <span   class="input-group-text span-width-20">Peso</span>
                 <input type="number" step=".1" class="form-control" name="peso" placeholder="Inserisci il tuo peso" required>
-                <span style="width:10%"  class="input-group-text">kg</span>
+                <span   class="input-group-text span-width-10">kg</span>
             </div>
             <div class="input-group input-group-sm mb-3">
-            <span style="width:20%"  class="input-group-text">Attività Lavorativa/Fisica</span>
+            <span   class="input-group-text span-width-20">Attività Lavorativa/Fisica</span>
                 <select class="form-control" name="tdee" id="tdee" required>
                     <option selected disabled>Scegli...</option>
                     <option value="1.200">Sedentario (poca o nessuna attività fisica):</option>
@@ -48,7 +48,7 @@
                  </select>
             </div>
              <div class="input-group input-group-sm mb-3">
-                <span style="width:20%"  class="input-group-text" id="deficit_calorico-span">Deficit Calorico</span>
+                <span   class="input-group-text span-width-20" id="deficit_calorico-span">Deficit Calorico</span>
                 <select class="form-control" id="deficit_calorico" name="deficit_calorico" required>
                     <option selected disabled>Scegli...</option>
                     <option value="0">Nessuno</option>
@@ -58,53 +58,53 @@
                 </select>
             </div>
             <div class="input-group input-group-sm mb-3">
-                <span style="width:20%"  class="input-group-text" id="bmi-span">BMI</span>
+                <span   class="input-group-text span-width-20" id="bmi-span">BMI</span>
                 <input type="number" step=".1" class="form-control" name="bmi_visible" id="bmi" disabled>
                 <input type="hidden" name="bmi" id="bmi_hidden">
             </div>
             <div class="input-group input-group-sm mb-3">
-                <span style="width:20%"  class="input-group-text" id="peso_ideale-span">Peso Ideale</span>
+                <span   class="input-group-text span-width-20" id="peso_ideale-span">Peso Ideale</span>
                 <input type="number" step=".1" class="form-control" name="peso_ideale_visible" id="peso_ideale" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Peso calcolato utilizzando la media della formula di Lorenz, Broca, Berthean e Keys" disabled>
                 <input type="hidden" name="peso_ideale" id="peso_ideale_hidden">
-                <span style="width:10%"  class="input-group-text">kg</span>
+                <span   class="input-group-text span-width-10">kg</span>
             </div>
             <div class="input-group input-group-sm mb-3">
-                <span style="width:20%"  class="input-group-text" id="meta_basale-span">Metabolismo Basale</span>
+                <span   class="input-group-text span-width-20" id="meta_basale-span">Metabolismo Basale</span>
                 <input type="number" step=".1" class="form-control" name="meta_basale_visible" id="meta_basale" disabled>
                 <input type="hidden" name="meta_basale" id="meta_basale_hidden">
             </div>
             <div class="input-group input-group-sm mb-3">
-                <span style="width:20%"  class="input-group-text" id="meta_giornaliero-span">Metabolismo Giornaliero</span>
+                <span   class="input-group-text span-width-20" id="meta_giornaliero-span">Metabolismo Giornaliero</span>
                 <input type="number" step=".1" class="form-control" name="meta_giornaliero_visible" id="meta_giornaliero" disabled>
                 <input type="hidden" name="meta_giornaliero" id="meta_giornaliero_hidden">
             </div>
             <div class="input-group input-group-sm mb-3">
-                <span style="width:20%"  class="input-group-text" id="calorie_giornaliere-span">Calorie Giornaliere a dieta</span>
+                <span   class="input-group-text span-width-20" id="calorie_giornaliere-span">Calorie Giornaliere a dieta</span>
                 <input type="number" step=".1" class="form-control" name="calorie_giornaliere_visible" id="calorie_giornaliere" disabled>
                 <input type="hidden" name="calorie_giornaliere" id="calorie_giornaliere_hidden">
             </div>
             <div class="input-group input-group-sm mb-3">
-                <span style="width:20%"  class="input-group-text" id="calorie_settimanali-span">Calorie Settimanali a dieta</span>
+                <span   class="input-group-text span-width-20" id="calorie_settimanali-span">Calorie Settimanali a dieta</span>
                 <input type="number" step=".1" class="form-control" name="calorie_settimanali_visible" id="calorie_settimanali" disabled>
                 <input type="hidden" name="calorie_settimanali" id="calorie_settimanali_hidden">
             </div>
              <div class="input-group input-group-sm mb-3">
-                <span style="width:20%"  class="input-group-text" id="carboidrati-span">Carboidrati</span>
+                <span   class="input-group-text span-width-20" id="carboidrati-span">Carboidrati</span>
                 <input type="number" step=".1" class="form-control" name="carboidrati_visible" id="carboidrati_input" disabled>
                  <input type="hidden" name="carboidrati" id="carboidrati_hidden">
-                 <span style="width:10%"  class="input-group-text">gr</span>
+                 <span   class="input-group-text span-width-10">gr</span>
             </div>
             <div class="input-group input-group-sm mb-3">
-                <span style="width:20%"  class="input-group-text" id="proteine-span">Proteine</span>
+                <span   class="input-group-text span-width-20" id="proteine-span">Proteine</span>
                 <input type="number" step=".1" class="form-control" name="proteine_visible" id="proteine_input" disabled>
                  <input type="hidden" name="proteine" id="proteine_hidden">
-                <span style="width:10%"  class="input-group-text">gr</span>
+                <span   class="input-group-text span-width-10">gr</span>
             </div>
             <div class="input-group input-group-sm mb-3">
-                <span style="width:20%"  class="input-group-text" id="grassi-span">Grassi</span>
+                <span   class="input-group-text span-width-20" id="grassi-span">Grassi</span>
                 <input type="number" step=".1" class="form-control" name="grassi_visible" id="grassi_input" disabled>
                 <input type="hidden" name="grassi" id="grassi_hidden">
-                <span style="width:10%"  class="input-group-text">gr</span>
+                <span   class="input-group-text span-width-10">gr</span>
             </div>
               <button type="submit" class="btn btn-primary btn-sm">Salva</button>
         </form>

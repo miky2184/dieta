@@ -210,3 +210,13 @@ td div:last-child {
     height: 100%; /* Adatta l'altezza dell'input all'altezza della cella */
     display: block; /* Assicura che l'input si comporti come un blocco */
 }
+
+.span-width-20 {
+    display: inline-block; /* Garantisce che il width venga applicato correttamente */
+    width: 20%;
+}
+
+.span-width-10 {
+    display: inline-block; /* Garantisce che il width venga applicato correttamente */
+    width: 10%;
+}
