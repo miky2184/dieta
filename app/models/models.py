@@ -14,6 +14,7 @@ class UtenteAuth(UserMixin, db.Model):
     username = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('dieta.utenti.id'), nullable=False)
+    tutorial_completed = db.Column(db.Boolean, default=False)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

@@ -20,6 +20,7 @@ from io import BytesIO
 import base64
 from PIL import Image
 from flask_login import login_required, current_user
+from app.models.models import db
 
 views = Blueprint('views', __name__)
 
@@ -89,6 +90,8 @@ def dashboard():
     # Recupera tutti gli alimenti dal database.
     alimenti = recupera_alimenti(user_id)
 
+    show_tutorial = not current_user.tutorial_completed
+
     # Rende la pagina index con tutti i dati necessari.
     return render_template('index.html',
                            macronutrienti=macronutrienti,
@@ -97,7 +100,8 @@ def dashboard():
                            lista_spesa=lista_spesa,
                            settimane=settimane_salvate,
                            remaining_macronutrienti=remaining_macronutrienti,
-                           alimenti=alimenti
+                           alimenti=alimenti,
+                           show_tutorial=show_tutorial
                            )
 
 
@@ -675,3 +679,11 @@ def delete_menu(week_id):
     current_app.cache.delete(f'dashboard_{user_id}')
     current_app.cache.delete(f'view//menu_settimana/{week_id}')
     return jsonify({'status': 'success', 'message': 'Menu eliminato con successo!'}), 200
+
+
+@views.route('/complete_tutorial', methods=['POST'])
+@login_required
+def complete_tutorial():
+    current_user.tutorial_completed = True
+    db.session.commit()
+    return jsonify({'status': 'success'})

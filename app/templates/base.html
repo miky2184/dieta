@@ -27,6 +27,13 @@
     <!-- Includi la libreria jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tutorial.js') }}"></script>
+
+    {% if show_tutorial %}
+    <script>
+        var showTutorial = {{ show_tutorial|tojson }};
+    </script>
+    {% endif %}
 
     <!-- Additional Head Content -->
     {% block head %}{% endblock %}

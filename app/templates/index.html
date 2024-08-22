@@ -5,6 +5,11 @@
     {% include 'tabs.html' %}
 </div>
 
+{% if show_tutorial %}
+{% include 'tutorial.html' %}
+{% endif %}
+
+
 <div id="main-content">
     {% include 'alimenti.html' %}
     {% include 'ricette.html' %}
