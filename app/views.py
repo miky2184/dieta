@@ -125,7 +125,9 @@ def generate_menu():
     """
     user_id = current_user.user_id
     macronutrienti = definisci_calorie_macronutrienti(user_id)
-    print(f"macronutrienti::{macronutrienti}")
+    if not macronutrienti['kcal']:
+        return jsonify({'status': 'error'}), 500
+
     ricette_menu = carica_ricette(user_id, stagionalita=True)
 
     progress = 0

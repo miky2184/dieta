@@ -1134,6 +1134,9 @@ function startMenuGeneration() {
                     $('#generateMenuModal').modal('hide'); // Chiudi il modal
                     location.reload(); // Ricarica la pagina per visualizzare il nuovo menu
                 }, 1000);
+            } else if (data.status === 'error') {
+                $('#errorModal').modal('show');
+                $('#generateMenuModal').modal('hide');
             }
         })
         .catch(error => {
