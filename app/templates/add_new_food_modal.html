@@ -1,8 +1,11 @@
-<div class="modal fade" tabindex="-1" id="addFoodModal" aria-labelledby="addFoodModalLabel" aria-hidden="true">
+<div class="modal fade" tabindex="-1" id="addFoodModal" aria-labelledby="addFoodModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="addFoodModalLabel">Crea Nuovo Alimento</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
             </div>
             <div class="modal-body">
                 <form action="{{ url_for('views.nuovo_alimento') }}" method="POST">
@@ -49,7 +52,8 @@
                         <label class="form-check-label" for="confezionato">Confezionato</label>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-outline-success btn-sm">Salva</button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Chiudi</button>
+                        <button type="submit" class="btn btn-primary btn-sm">Salva</button>
                     </div>
                 </form>
             </div>
