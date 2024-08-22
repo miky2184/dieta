@@ -187,7 +187,8 @@ GROUP BY r.user_id, r.id, r.nome_ricetta,carboidrati, proteine, grassi, qta, r.c
 
 
 def genera_menu(settimana, controllo_macro_settimanale: bool, ricette) -> None:
-    percentuali = [1, 0.5, 0.75]
+    #percentuali = [1, 0.5, 0.75]
+    percentuali = [1, 1.2, 1.1, 0.9, 0.8, 0.5]
     id_pane = 272
 
     for giorno in settimana['day']:
@@ -952,6 +953,7 @@ def remove_meal_from_menu(menu, day, meal, meal_id, user_id):
     # Trova la ricetta da rimuovere
     ricetta_da_rimuovere = None
     for ricetta in menu['day'][day]['pasto'][meal]['ricette']:
+        qta = ricetta['qta']
         if int(ricetta['id']) == int(meal_id):
             ricetta_da_rimuovere = ricetta
             break
@@ -964,16 +966,16 @@ def remove_meal_from_menu(menu, day, meal, meal_id, user_id):
         ricetta_valori = carica_ricette(user_id, ids=meal_id)
 
         # Aggiorna i macronutrienti per il giorno
-        menu['day'][day]['kcal'] += float(ricetta_valori[0]['kcal'])
-        menu['day'][day]['carboidrati'] += float(ricetta_valori[0]['carboidrati'])
-        menu['day'][day]['proteine'] += float(ricetta_valori[0]['proteine'])
-        menu['day'][day]['grassi'] += float(ricetta_valori[0]['grassi'])
+        menu['day'][day]['kcal'] += float(ricetta_valori[0]['kcal']) * float(qta)
+        menu['day'][day]['carboidrati'] += float(ricetta_valori[0]['carboidrati']) * float(qta)
+        menu['day'][day]['proteine'] += float(ricetta_valori[0]['proteine']) * float(qta)
+        menu['day'][day]['grassi'] += float(ricetta_valori[0]['grassi']) * float(qta)
 
         # Aggiorna i macronutrienti settimanali
-        menu['weekly']['kcal'] += float(ricetta_valori[0]['kcal'])
-        menu['weekly']['carboidrati'] += float(ricetta_valori[0]['carboidrati'])
-        menu['weekly']['proteine'] += float(ricetta_valori[0]['proteine'])
-        menu['weekly']['grassi'] += float(ricetta_valori[0]['grassi'])
+        menu['weekly']['kcal'] += float(ricetta_valori[0]['kcal'])  * float(qta)
+        menu['weekly']['carboidrati'] += float(ricetta_valori[0]['carboidrati'])  * float(qta)
+        menu['weekly']['proteine'] += float(ricetta_valori[0]['proteine'])  * float(qta)
+        menu['weekly']['grassi'] += float(ricetta_valori[0]['grassi'])  * float(qta)
 
     return menu
 

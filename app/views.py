@@ -114,6 +114,7 @@ def generate_menu():
     """
     user_id = current_user.user_id
     macronutrienti = definisci_calorie_macronutrienti(user_id)
+    print(f"macronutrienti::{macronutrienti}")
     ricette_menu = carica_ricette(user_id, stagionalita=True)
 
     progress = 0
@@ -555,7 +556,7 @@ def remove_meal(week_id):
 
     # Ricalcola i macronutrienti rimanenti
     remaining_macronutrienti = calcola_macronutrienti_rimanenti(updated_menu)
-
+    current_app.cache.delete(f'view//menu_settimana/{week_id}')
     return jsonify({
         'status': 'success',
         'menu': menu_corrente,
@@ -598,7 +599,7 @@ def update_meal_quantity():
 
     # Ricalcola i macronutrienti rimanenti
     remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente)
-
+    current_app.cache.delete(f'view//menu_settimana/{week_id}')
     return jsonify({
         'status': 'success',
         'menu': menu_corrente,
