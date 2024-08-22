@@ -5,7 +5,7 @@
                 <h5 class="modal-title" id="addRecipeModalLabel">Crea Nuova Ricetta</h5>
             </div>
             <div class="modal-body">
-                <form action="{{ url_for('views.nuova_ricetta') }}" method="POST">
+                <form action="{{ url_for('views.nuova_ricetta') }}" method="POST" id="createRecipeForm">
                     <div class="input-group input-group-sm mb-3">
                         <span class="input-group-text">Nome</span>
                         <input type="text" class="form-control form-control-sm" name="name" placeholder="Inserisci nome ricetta" required>

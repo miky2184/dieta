@@ -605,7 +605,7 @@ def salva_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno
         conn.commit()
 
 
-def attiva_disattiva_ricetta(ricetta_id, user_id):
+def attiva_o_disattiva_ricetta(ricetta_id, user_id):
     with get_db_connection() as conn:
         cur = conn.cursor()
         query = """UPDATE dieta.ricetta 
@@ -1088,4 +1088,20 @@ def copia_alimenti_ricette(user_id, ricette_vegane, ricette_carne, ricette_pesce
 
         printer(cur.mogrify(query, params).decode('utf-8'))
         cur.execute(query, params)
+        conn.commit()
+
+
+def elimina_ricetta(ricetta_id, user_id):
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        query = """DELETE FROM dieta.ricetta                       
+                    WHERE id = %s 
+                      AND user_id = %s"""
+
+        params = (ricetta_id, user_id)
+
+        # Stampa la query con parametri
+        printer(cur.mogrify(query, params).decode('utf-8'))
+        cur.execute(query, params)
+
         conn.commit()

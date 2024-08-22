@@ -125,6 +125,23 @@ function toggleStatusRicetta(ricettaData) {
         });
 }
 
+function deleteRicetta(ricettaData) {
+        fetch('/delete_ricetta', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(ricettaData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            recupera_tutte_le_ricette();
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
 function filterTable() {
     const nomeFilter = document.getElementById('filter-nome').value.toLowerCase();
 
@@ -286,8 +303,8 @@ function populateIngredientsModal(ingredients) {
             <td><input type="number" class="form-control form-control-sm" id="quantity-${ingredient['id']}" value="${ingredient['qta']}"></td>
             <td>
                 <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-outline-success btn-sm update-ingredient" data-id="${ingredient['id']}" data-recipe-id="${ingredient['id_ricetta']}">Salva</button>
-                    <button type="button" class="btn btn-outline-danger btn-sm delete-ingredient" data-id="${ingredient['id']}" data-recipe-id="${ingredient['id_ricetta']}">Elimina</button>
+                    <button type="button" class="btn btn-primary btn-sm update-ingredient" data-id="${ingredient['id']}" data-recipe-id="${ingredient['id_ricetta']}">Salva</button>
+                    <button type="button" class="btn btn-danger btn-sm delete-ingredient" data-id="${ingredient['id']}" data-recipe-id="${ingredient['id_ricetta']}">Elimina</button>
                 </div>
             </td>
         </tr>`;
@@ -423,9 +440,10 @@ function populateRicetteTable(ricette) {
             </td>
             <td class="azione">
                 <div class="btn-group" role="group">
-                    <button class="btn btn-outline-primary btn-sm save-btn" data-ricetta-id="${ricetta.id}" data-ricetta-nome="${ricetta.nome_ricetta}" data-ricetta-colazione="${ricetta.colazione}" data-ricetta-colazione_sec="${ricetta.colazione_sec}" data-ricetta-spuntino="${ricetta.spuntino}" data-ricetta-principale="${ricetta.principale}" data-ricetta-contorno="${ricetta.contorno}" data-ricetta-attiva="${ricetta.attiva}">Salva</button>
-                    <button class="btn btn-outline-primary btn-sm edit-btn" data-ricetta-id="${ricetta.id}" data-bs-toggle="modal" data-bs-target="#editRecipeModal">Modifica</button>
-                    <button class="btn btn-outline-primary btn-sm toggle-btn" data-ricetta-id="${ricetta.id}" data-ricetta-attiva="${ricetta.attiva}">Attiva/Disattiva</button>
+                    <button class="btn btn-primary btn-sm save-btn" data-ricetta-id="${ricetta.id}" data-ricetta-nome="${ricetta.nome_ricetta}" data-ricetta-colazione="${ricetta.colazione}" data-ricetta-colazione_sec="${ricetta.colazione_sec}" data-ricetta-spuntino="${ricetta.spuntino}" data-ricetta-principale="${ricetta.principale}" data-ricetta-contorno="${ricetta.contorno}" data-ricetta-attiva="${ricetta.attiva}">Salva</button>
+                    <button class="btn btn-primary btn-sm edit-btn" data-ricetta-id="${ricetta.id}" data-bs-toggle="modal" data-bs-target="#editRecipeModal">Modifica</button>
+                    <button class="btn btn-primary btn-sm toggle-btn" data-ricetta-id="${ricetta.id}" data-ricetta-attiva="${ricetta.attiva}">Attiva/Disattiva</button>
+                    <button class="btn btn-danger btn-sm delete-btn" data-ricetta-id="${ricetta.id}">Elimina</button>
                 </div>
             </td>
         `;
@@ -461,6 +479,16 @@ function populateRicetteTable(ricette) {
             if (checkbox) {
                 checkbox.checked = !checkbox.checked;
             }
+        });
+    });
+
+    document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const ricettaId = this.getAttribute('data-ricetta-id');
+            const ricettaData = {
+                id: ricettaId
+            };
+            deleteRicetta(ricettaData);
         });
     });
 
@@ -1224,7 +1252,8 @@ function recupera_tutte_le_ricette()  {
                 .then(response => response.json())
                 .then(data => {
                     if (data) {
-                        populateRicetteTable(data);
+                        populateRicetteTable(data.ricette);
+                        filterTable();
                     }
                 })
                 .catch(error => console.error('Errore nel caricamento dei dati:', error));
@@ -1300,8 +1329,8 @@ function populateAlimentiTable(alimenti) {
             </td>
             <td class="azione">
                 <div class="btn-group" role="group">
-                    <button class="btn btn-outline-primary btn-sm save-alimento-btn" data-alimento-id="${alimento.id}">Salva</button>
-                    <button class="btn btn-outline-danger  btn-sm delete-alimento-btn" data-alimento-id="${alimento.id}">Elimina</button>
+                    <button class="btn btn-primary btn-sm save-alimento-btn" data-alimento-id="${alimento.id}">Salva</button>
+                    <button class="btn btn-danger  btn-sm delete-alimento-btn" data-alimento-id="${alimento.id}">Elimina</button>
                 </div>
             </td>
         `;
@@ -1388,6 +1417,29 @@ function updateSelectedWeek() {
 document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById("defaultOpen").click();
+
+    document.querySelector('#addRecipeModal form').addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    const formData = new FormData(this);
+
+    fetch(this.action, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Aggiorna la tabella delle ricette o ricarica i dati
+            recupera_tutte_le_ricette();
+            // Chiudi il modal
+            $('#addRecipeModal').modal('hide');
+        } else {
+            console.error('Errore durante il salvataggio della ricetta:', data);
+        }
+    })
+    .catch(error => console.error('Errore:', error));
+});
 
     const tutorialActive = document.body.getAttribute('data-tutorial-active') === 'True';
 

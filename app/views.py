@@ -3,13 +3,13 @@ from .services.menu_services import (definisci_calorie_macronutrienti, save_weig
                                      stampa_lista_della_spesa, get_menu_corrente, salva_menu_settimana_prossima,
                                      carica_ricette, get_settimane_salvate, get_menu_settima_prossima,
                                      salva_menu_corrente, get_settimana, salva_ricetta,
-                                     attiva_disattiva_ricetta, get_ricette, elimina_ingredienti, salva_utente_dieta,
+                                     attiva_o_disattiva_ricetta, get_ricette, elimina_ingredienti, salva_utente_dieta,
                                      salva_nuova_ricetta, salva_ingredienti,
                                      recupera_ingredienti, get_peso_hist, get_dati_utente,
                                      calcola_macronutrienti_rimanenti,
                                      carica_alimenti, salva_alimento, elimina_alimento, salva_nuovo_alimento,
                                      aggiungi_ricetta_al_menu, update_menu_corrente, remove_meal_from_menu,
-                                     delete_week_menu)
+                                     delete_week_menu, elimina_ricetta)
 from copy import deepcopy
 import time
 from reportlab.lib.pagesizes import letter, landscape
@@ -106,14 +106,14 @@ def recupera_alimenti():
     alimenti = carica_alimenti(user_id)
     return jsonify(alimenti)
 
-@views.route('/recupera_ricette')
+@views.route('/recupera_ricette', methods=['GET', 'POST'])
 @current_app.cache.cached(timeout=300, key_prefix=lambda: f"recupera_ricette_{current_user.user_id}")
 @login_required
 def recupera_ricette():
     user_id = current_user.user_id
     # Recupera le ricette disponibili dal database.
     ricette = carica_ricette(user_id, stagionalita=False)
-    return jsonify(ricette)
+    return jsonify({"status": 'success', 'ricette': ricette}), 200
 
 
 @views.route('/generate_menu', methods=['POST'])
@@ -231,7 +231,7 @@ def attiva_disattiva_ricetta():
     ricetta_id = data['id']
     user_id = current_user.user_id
 
-    attiva_disattiva_ricetta(ricetta_id, user_id)
+    attiva_o_disattiva_ricetta(ricetta_id, user_id)
 
     current_app.cache.delete(f'recupera_ricette_{user_id}')
     return jsonify({'status': 'success', 'message': 'Ricetta modificata con successo!'})
@@ -329,8 +329,10 @@ def nuova_ricetta():
     user_id = current_user.user_id
 
     salva_nuova_ricetta(name.upper(), breakfast, snack, main, side, second_breakfast, user_id)
+    current_app.cache.delete(f'recupera_ricette_{user_id}')
 
-    return redirect(url_for('views.dashboard'))
+    return jsonify({"status": "success"}), 200
+
 
 
 @views.route('/nuovo_alimento', methods=['POST'])
@@ -709,3 +711,18 @@ def complete_tutorial():
     db.session.commit()
     current_app.cache.delete(f'dashboard_{user_id}')
     return jsonify({'status': 'success'})
+
+@views.route('/delete_ricetta', methods=['POST'])
+@login_required
+def delete_ricetta():
+    """
+    Questa funzione cancella una ricetta basata sui dati forniti dal form.
+    """
+    data = request.get_json()
+    ricetta_id = data['id']
+    user_id = current_user.user_id
+
+    elimina_ricetta(ricetta_id, user_id)
+
+    current_app.cache.delete(f'recupera_ricette_{user_id}')
+    return jsonify({'status': 'success', 'message': 'Ricetta cancellata con successo!'})
