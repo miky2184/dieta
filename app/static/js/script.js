@@ -1190,21 +1190,19 @@ function deleteMenu() {
         weekId = document.querySelector('.week-select').value;
     }
 
-    if (confirm("Sei sicuro di voler eliminare questo menu? Questa azione è irreversibile.")) {
-        fetch(`/delete_menu/${weekId}`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(response => {
-            if (response.ok) {
-                localStorage.removeItem('selectedWeekId');
-                location.reload(); // Ricarica la pagina per aggiornare la selezione dei menu
-            }
-        }).catch(error => {
-            console.error("Errore:", error);
-        });
-    }
+    fetch(`/delete_menu/${weekId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then(response => {
+        if (response.ok) {
+            localStorage.removeItem('selectedWeekId');
+            location.reload(); // Ricarica la pagina per aggiornare la selezione dei menu
+        }
+    }).catch(error => {
+        console.error("Errore:", error);
+    });
 }
 
 function recupera_tutte_le_ricette()  {
@@ -1387,9 +1385,17 @@ document.addEventListener('DOMContentLoaded', function() {
         select.addEventListener('change', updateSelectedWeek);
     });
 
-    if (document.getElementById('deleteMenuBtn')){
-        document.getElementById('deleteMenuBtn').addEventListener('click', deleteMenu);
-    }
+    // Riferimento al modal di conferma
+    const confirmDeleteModal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+
+    // Listener per i pulsanti di eliminazione
+    document.querySelectorAll('.delete-menu-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            confirmDeleteModal.show();
+        });
+    });
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', deleteMenu);
 
     const form = document.getElementById('personalInfoForm');
 
