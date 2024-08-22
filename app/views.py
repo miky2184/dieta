@@ -7,7 +7,7 @@ from .services.menu_services import (definisci_calorie_macronutrienti, save_weig
                                      salva_nuova_ricetta, salva_ingredienti,
                                      recupera_ingredienti, get_peso_hist, get_dati_utente,
                                      calcola_macronutrienti_rimanenti,
-                                     recupera_alimenti, salva_alimento, elimina_alimento, salva_nuovo_alimento,
+                                     carica_alimenti, salva_alimento, elimina_alimento, salva_nuovo_alimento,
                                      aggiungi_ricetta_al_menu, update_menu_corrente, remove_meal_from_menu,
                                      delete_week_menu)
 from copy import deepcopy
@@ -97,19 +97,19 @@ def dashboard():
                            )
 
 
-@views.route('/recupera_tutti_alimenti')
-@current_app.cache.cached(timeout=300, key_prefix=lambda: f"recupera_tutti_alimenti_{current_user.user_id}")
+@views.route('/recupera_alimenti')
+@current_app.cache.cached(timeout=300, key_prefix=lambda: f"recupera_alimenti_{current_user.user_id}")
 @login_required
-def recupera_tutti_alimenti():
+def recupera_alimenti():
     user_id = current_user.user_id
     # Recupera tutti gli alimenti dal database.
-    alimenti = recupera_alimenti(user_id)
+    alimenti = carica_alimenti(user_id)
     return jsonify(alimenti)
 
-@views.route('/recupera_tutte_ricette')
-@current_app.cache.cached(timeout=300, key_prefix=lambda: f"recupera_tutte_ricette_{current_user.user_id}")
+@views.route('/recupera_ricette')
+@current_app.cache.cached(timeout=300, key_prefix=lambda: f"recupera_ricette_{current_user.user_id}")
 @login_required
-def recupera_tutte_ricette():
+def recupera_ricette():
     user_id = current_user.user_id
     # Recupera le ricette disponibili dal database.
     ricette = carica_ricette(user_id, stagionalita=False)
@@ -196,9 +196,9 @@ def get_lista_spesa():
     return jsonify(lista_spesa=lista_spesa)
 
 
-@views.route('/save_recipe', methods=['POST'])
+@views.route('/salva_ricetta', methods=['POST'])
 @login_required
-def save_recipe():
+def salva_ricetta():
     """
     Questa funzione salva o aggiorna una ricetta nel database in base ai dati forniti dal client.
     """
@@ -215,13 +215,13 @@ def save_recipe():
 
     salva_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, ricetta_id, user_id)
 
-    current_app.cache.delete(f'recupera_tutte_ricette_{user_id}')
+    current_app.cache.delete(f'recupera_ricette_{user_id}')
     return jsonify({'status': 'success', 'message': 'Ricetta salvata con successo!'})
 
 
-@views.route('/toggle_recipe_status', methods=['POST'])
+@views.route('/attiva_disattiva_ricetta', methods=['POST'])
 @login_required
-def toggle_recipe_status():
+def attiva_disattiva_ricetta():
     """
     Questa funzione attiva o disattiva una ricetta specifica nel database, basandosi sull'ID della ricetta.
     """
@@ -231,12 +231,12 @@ def toggle_recipe_status():
 
     attiva_disattiva_ricetta(ricetta_id, user_id)
 
-    current_app.cache.delete(f'recupera_tutte_ricette_{user_id}')
+    current_app.cache.delete(f'recupera_ricette_{user_id}')
     return jsonify({'status': 'success', 'message': 'Ricetta modificata con successo!'})
 
 
-@views.route('/recipe/<int:recipe_id>', methods=['GET'])
-@current_app.cache.cached(timeout=300)
+@views.route('/get_ricetta/<int:recipe_id>', methods=['GET'])
+@current_app.cache.cached(timeout=300, key_prefix=lambda: f"recipe_{request.view_args['recipe_id']}_{current_user.user_id}")
 @login_required
 def recipe(recipe_id):
     """
@@ -258,7 +258,8 @@ def delete_ingredient():
     user_id = current_user.user_id
 
     elimina_ingredienti(ingredient_id, recipe_id, user_id)
-    current_app.cache.delete(f'recupera_tutte_ricette_{user_id}')
+    current_app.cache.delete(f'recupera_ricette_{user_id}')
+    current_app.cache.delete(f'recipe_{recipe_id}_{user_id}')
     return jsonify({'status': 'success', 'message': 'Ingrediente eliminato correttamente.'})
 
 
@@ -273,9 +274,9 @@ def get_all_ingredients():
     return jsonify(recupera_ingredienti(user_id))
 
 
-@views.route('/add_ingredient_to_recipe', methods=['POST'])
+@views.route('/modifica_ingredienti_ricetta', methods=['POST'])
 @login_required
-def add_ingredient_to_recipe():
+def modifica_ingredienti_ricetta():
     """
     Questa funzione aggiunge un ingrediente a una ricetta esistente nel database.
     """
@@ -286,7 +287,8 @@ def add_ingredient_to_recipe():
     user_id = current_user.user_id
 
     salva_ingredienti(recipe_id, ingredient_id, quantity, user_id)
-    current_app.cache.delete(f'recupera_tutte_ricette_{user_id}')
+    current_app.cache.delete(f'recupera_ricette_{user_id}')
+    current_app.cache.delete(f'recipe_{recipe_id}_{user_id}')
     return jsonify({'status': 'success', 'message': 'Ingrediente inserito correttamente.'})
 
 
@@ -304,8 +306,8 @@ def update_ingredient():
     user_id = current_user.user_id
 
     salva_ingredienti(recipe_id, ingredient_id, quantity, user_id)
-    current_app.cache.delete(f'view//recipe/{recipe_id}')
-    current_app.cache.delete(f'recupera_tutte_ricette_{user_id}')
+    current_app.cache.delete(f'recipe_{recipe_id}_{recipe_id}')
+    current_app.cache.delete(f'recupera_ricette_{user_id}')
     return jsonify({'status': 'success', 'message': 'Quantità aggiornata correttamente.'})
 
 
@@ -457,7 +459,7 @@ def save_alimento():
     salva_alimento(alimento_id, nome, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura,
                    confezionato, vegan, pesce, user_id)
     current_app.cache.delete(f'get_all_ingredients_{user_id}')
-    current_app.cache.delete(f'recupera_tutti_alimenti_{user_id}')
+    current_app.cache.delete(f'recupera_alimenti_{user_id}')
     return jsonify({'status': 'success', 'message': 'Alimento salvato con successo!'})
 
 
@@ -700,6 +702,8 @@ def delete_menu(week_id):
 @views.route('/complete_tutorial', methods=['POST'])
 @login_required
 def complete_tutorial():
+    user_id = current_user.user_id
     current_user.tutorial_completed = True
     db.session.commit()
+    current_app.cache.delete(f'dashboard_{user_id}')
     return jsonify({'status': 'success'})

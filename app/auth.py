@@ -59,8 +59,7 @@ def register():
     peso = request.form.get('peso')
     email = request.form.get('email')
     vegane = request.form.get('include_vegan')
-    carni_bianche = request.form.get('include_carni_bianche')
-    carni_rosse = request.form.get('include_carni_rosse')
+    carne = request.form.get('include_carne')
     pesce = request.form.get('include_pesce')
 
     # Crea l'utente nella tabella Utenti
@@ -90,7 +89,7 @@ def register():
 
     save_weight(datetime.now().date(), peso, user_id)
 
-    copia_alimenti_ricette(user_id, vegane, carni_bianche, carni_rosse, pesce)
+    copia_alimenti_ricette(user_id, vegane, carne, pesce)
 
     current_app.cache.delete(f'get_data_utente_{user_id}')
     return redirect(url_for('auth.login'))

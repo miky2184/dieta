@@ -92,7 +92,7 @@ function aggiornaTabellaListaDellaSpesa(idsAllFood) {
 }
 
 function saveRicetta(ricettaData) {
-    fetch('/save_recipe', {
+    fetch('/salva_ricetta', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -109,7 +109,7 @@ function saveRicetta(ricettaData) {
 }
 
 function toggleStatusRicetta(ricettaData) {
-    fetch('/toggle_recipe_status', {
+    fetch('/attiva_disattiva_ricetta', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -347,7 +347,7 @@ function addIngredientToRecipe() {
     const quantity = document.getElementById('ingredient-quantity').value;
     const recipeId = document.getElementById('modal-recipe-id').value;
 
-    fetch('/add_ingredient_to_recipe', {
+    fetch('/modifica_ingredienti_ricetta', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -468,7 +468,7 @@ function populateRicetteTable(ricette) {
     document.querySelectorAll('.edit-btn').forEach(button => {
         button.addEventListener('click', function() {
             const recipeId = this.getAttribute('data-ricetta-id');
-            fetch(`/recipe/${recipeId}`)
+            fetch(`/get_ricetta/${recipeId}`)
                 .then(response => response.json())
                 .then(data => {
                     populateIngredientsModal(data);
@@ -1217,7 +1217,7 @@ function deleteMenu() {
 }
 
 function recupera_tutte_le_ricette()  {
-            fetch('/recupera_tutte_ricette')
+            fetch('/recupera_ricette')
                 .then(response => response.json())
                 .then(data => {
                     if (data) {
@@ -1229,7 +1229,7 @@ function recupera_tutte_le_ricette()  {
 
 
 function fetchAlimentiData() {
-    fetch('/recupera_tutti_alimenti')
+    fetch('/recupera_alimenti')
         .then(response => response.json())
         .then(data => {
             populateAlimentiTable(data);
@@ -1383,8 +1383,21 @@ function updateSelectedWeek() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    if (document.getElementById("defaultOpen")){
-        document.getElementById("defaultOpen").click();
+
+    document.getElementById("defaultOpen").click();
+
+    const tutorialActive = document.body.getAttribute('data-tutorial-active') === 'True';
+
+    if (tutorialActive) {
+        document.querySelectorAll('input, select, textarea, button').forEach(function(element) {
+            if (!element.classList.contains('tutorial-ignore')) {
+                element.disabled = true;
+            }
+        });
+
+        document.querySelectorAll('.tutorial-disable').forEach(function(element) {
+            element.disabled = false;
+        });
     }
 
     // Recupera il valore salvato nel localStorage, se esiste

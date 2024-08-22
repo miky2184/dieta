@@ -1,4 +1,4 @@
-<div class="modal fade" id="welcomeModal" tabindex="-1" aria-labelledby="welcomeModalLabel" aria-hidden="true">
+<div class="modal fade" id="welcomeModal" tabindex="-1" aria-labelledby="welcomeModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -9,8 +9,8 @@
         Questo è il tuo primo accesso. Vuoi imparare ad utilizzare l'app?
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Chiudi</button>
-        <button type="button" class="btn btn-primary btn-sm" id="startTutorial">Inizia il Tutorial</button>
+        <button type="button" class="btn btn-secondary btn-sm tutorial-disable" id="closeTutorial" data-bs-dismiss="modal">So già come funziona</button>
+        <button type="button" class="btn btn-primary btn-sm tutorial-disable" id="startTutorial">Inizia il Tutorial</button>
       </div>
     </div>
   </div>

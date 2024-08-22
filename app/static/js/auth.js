@@ -1,27 +1,18 @@
 document.addEventListener('DOMContentLoaded', function() {
 
     var veganCheckbox = document.getElementById('include-vegan');
-    var carniBiancheCheckbox = document.getElementById('include-carni-bianche');
-    var carniRosseCheckbox = document.getElementById('include-carni-rosse');
+    var carneCheckbox = document.getElementById('include-carne');
     var pesceCheckbox = document.getElementById('include-pesce');
 
     veganCheckbox.addEventListener('change', function () {
         if (veganCheckbox.checked) {
-            carniBiancheCheckbox.checked = false;
-            carniRosseCheckbox.checked = false;
+            carneCheckbox.checked = false;
             pesceCheckbox.checked = false;
         }
     });
 
-    // Se si selezionano le altre checkbox, la checkbox "Includi Ricette Vegane" si deseleziona
-    carniBiancheCheckbox.addEventListener('change', function () {
-        if (carniBiancheCheckbox.checked) {
-            veganCheckbox.checked = false;
-        }
-    });
-
-    carniRosseCheckbox.addEventListener('change', function () {
-        if (carniRosseCheckbox.checked) {
+    carneCheckbox.addEventListener('change', function () {
+        if (carneCheckbox.checked) {
             veganCheckbox.checked = false;
         }
     });
