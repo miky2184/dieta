@@ -457,6 +457,7 @@ def save_alimento():
     salva_alimento(alimento_id, nome, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura,
                    confezionato, vegan, pesce, user_id)
     current_app.cache.delete(f'get_all_ingredients_{user_id}')
+    current_app.cache.delete(f'recupera_tutti_alimenti_{user_id}')
     return jsonify({'status': 'success', 'message': 'Alimento salvato con successo!'})
 
 

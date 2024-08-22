@@ -676,7 +676,9 @@ function saveAlimento(alimentoData) {
             body: JSON.stringify(alimentoData)
         })
         .then(response => response.json())
-        .then(data => {})
+        .then(data => {
+            fetchAlimentiData()
+        })
         .catch((error) => {
             console.error('Errore:', error);
         });
@@ -1016,6 +1018,15 @@ function addNewMeal(day, meal) {
         });
 }
 
+function recalculateCalories(alimentoId) {
+    const carboidrati = parseFloat(document.querySelector(`input[name='carboidrati_${alimentoId}']`).value) || 0;
+    const proteine = parseFloat(document.querySelector(`input[name='proteine_${alimentoId}']`).value) || 0;
+    const grassi = parseFloat(document.querySelector(`input[name='grassi_${alimentoId}']`).value) || 0;
+
+    const calorie = (carboidrati * 4) + (proteine * 4) + (grassi * 9);
+
+    document.getElementById(`calorie_${alimentoId}`).textContent = calorie.toFixed(2);
+}
 
 function addMealsToMenu(day, meal, selectedMeals) {
     fetch(`/add_meals_to_menu/${selectedWeekId}`, {
@@ -1240,22 +1251,22 @@ function populateAlimentiTable(alimenti) {
                     <label hidden class="form-control form-control-sm">${alimento.nome}</label>
                 </div>
             </td>
-            <td class="calorie">${alimento.kcal}</td>
+            <td id="calorie_${alimento.id}" class="calorie">${alimento.kcal}</td>
             <td class="carboidrati">
                 <div>
-                    <input type="number" class="form-control  form-control-sm filter-text" data-alimento-id="${alimento.id}" name="carboidrati_${alimento.id}" value="${alimento.carboidrati}">
+                    <input type="number" class="form-control  form-control-sm filter-text"  min="0.1" step="0.1" data-alimento-id="${alimento.id}" name="carboidrati_${alimento.id}" value="${alimento.carboidrati}">
                     <label hidden class="form-control form-control-sm">${alimento.carboidrati}</label>
                 </div>
             </td>
             <td class="proteine">
                 <div>
-                    <input type="number" class="form-control  form-control-sm filter-text" data-alimento-id="${alimento.id}" name="proteine_${alimento.id}" value="${alimento.proteine}">
+                    <input type="number" class="form-control  form-control-sm filter-text"  min="0.1" step="0.1" data-alimento-id="${alimento.id}" name="proteine_${alimento.id}" value="${alimento.proteine}">
                     <label hidden class="form-control form-control-sm">${alimento.proteine}</label>
                 </div>
             </td>
             <td class="grassi">
                 <div>
-                    <input type="number" class="form-control  form-control-sm filter-text" data-alimento-id="${alimento.id}" name="grassi_${alimento.id}" value="${alimento.grassi}">
+                    <input type="number" class="form-control  form-control-sm filter-text"  min="0.1" step="0.1" data-alimento-id="${alimento.id}" name="grassi_${alimento.id}" value="${alimento.grassi}">
                     <label hidden class="form-control form-control-sm">${alimento.grassi}</label>
                 </div>
             </td>
@@ -1293,6 +1304,20 @@ function populateAlimentiTable(alimenti) {
         `;
 
         tbody.appendChild(row);
+
+        // Event listener per ricalcolare le calorie quando uno dei valori cambia
+        document.querySelector(`input[name='carboidrati_${alimento.id}']`).addEventListener('input', () => {
+            recalculateCalories(alimento.id);
+        });
+
+        document.querySelector(`input[name='proteine_${alimento.id}']`).addEventListener('input', () => {
+            recalculateCalories(alimento.id);
+        });
+
+        document.querySelector(`input[name='grassi_${alimento.id}']`).addEventListener('input', () => {
+            recalculateCalories(alimento.id);
+        });
+
     });
 
     // Event listener per il salvataggio degli alimenti
@@ -1324,9 +1349,6 @@ function populateAlimentiTable(alimenti) {
             deleteAlimento(alimentoId);
         });
     });
-
-
-
 }
 
 // Aggiungi l'evento di cambio a tutte le select con la classe 'week-select'
@@ -1359,7 +1381,6 @@ function updateSelectedWeek() {
         filterDayCards();
     }
 }
-
 
 document.addEventListener('DOMContentLoaded', function() {
     if (document.getElementById("defaultOpen")){
