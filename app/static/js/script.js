@@ -287,7 +287,7 @@ function populateIngredientsModal(ingredients) {
             <td>
                 <div class="btn-group" role="group">
                     <button type="button" class="btn btn-outline-success btn-sm update-ingredient" data-id="${ingredient['id']}" data-recipe-id="${ingredient['id_ricetta']}">Salva</button>
-                    // <button type="button" class="btn btn-outline-danger btn-sm delete-ingredient" data-id="${ingredient['id']}" data-recipe-id="${ingredient['id_ricetta']}">Elimina</button>
+                    <button type="button" class="btn btn-outline-danger btn-sm delete-ingredient" data-id="${ingredient['id']}" data-recipe-id="${ingredient['id_ricetta']}">Elimina</button>
                 </div>
             </td>
         </tr>`;
