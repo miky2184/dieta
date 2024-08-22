@@ -17,13 +17,73 @@ function startTutorial() {
     var dietaTab = document.getElementById('dieta-tab');
     dietaTab.click();
 
-    // Aggiungi un piccolo delay per mostrare i dati mancanti
+    // Attendi che il tab si carichi, poi mostra il tooltip
     setTimeout(function () {
-        alert("Per iniziare, completa i dati mancanti nel tab 'Dieta'.");
-    }, 500);
+        var tdeeInput = document.getElementById('tdee');
+        var deficitInput = document.getElementById('deficit_calorico');
+        var saveButton = document.querySelector('#personalInfoForm button[type="submit"]');
 
-    // Aggiungi altre fasi del tutorial come passare al menu settimanale ecc.
+        // Mostra tooltip sul campo TDEE
+        var tooltipTDEE = new bootstrap.Tooltip(tdeeInput, {
+            title: "Inserisci il tuo TDEE (dispendio energetico giornaliero)",
+            trigger: 'manual'
+        });
+        tooltipTDEE.show();
+
+        // Passa al prossimo tooltip
+        setTimeout(function () {
+            tooltipTDEE.hide();
+
+            // Mostra tooltip sul campo Deficit Calorico
+            var tooltipDeficit = new bootstrap.Tooltip(deficitInput, {
+                title: "Inserisci il deficit calorico desiderato",
+                trigger: 'manual'
+            });
+            tooltipDeficit.show();
+
+            // Passa al prossimo tooltip
+            setTimeout(function () {
+                tooltipDeficit.hide();
+
+                // Mostra tooltip sul pulsante di Salva
+                var tooltipSave = new bootstrap.Tooltip(saveButton, {
+                    title: "Clicca qui per salvare i tuoi dati",
+                    trigger: 'manual'
+                });
+                tooltipSave.show();
+
+                // Nascondi l'ultimo tooltip dopo un breve ritardo
+                setTimeout(function () {
+                    tooltipSave.hide();
+                    goToWeeklyMenu();
+                }, 4000); // Mostra il tooltip per 4 secondi
+            }, 4000); // Mostra il tooltip per 4 secondi
+        }, 4000); // Mostra il tooltip per 4 secondi
+    }, 500);
 }
+
+function goToWeeklyMenu() {
+    // Fase 2: Vai al tab 'Menu Settimanale'
+    var menuTab = document.getElementById('defaultOpen');
+    menuTab.click();
+
+    setTimeout(function () {
+        var generateButton = document.getElementById('generateMenuBtn');
+        var generateTooltip = new bootstrap.Tooltip(generateButton, {
+            title: "Clicca qui per generare il menu settimanale",
+            trigger: "manual",
+            placement: "right"
+        });
+
+        generateTooltip.show();
+
+        setTimeout(function () {
+            generateTooltip.hide();
+            completeTutorial();
+        }, 4000);
+    }, 500);
+}
+
 
 // Funzione per aggiornare che il tutorial è stato completato
 function completeTutorial() {
@@ -35,7 +95,7 @@ function completeTutorial() {
         body: JSON.stringify({ tutorial_completed: true })
     }).then(response => {
         if (response.ok) {
-            alert('Tutorial completato!');
+            console.log('Tutorial completato!');
         }
     });
 }

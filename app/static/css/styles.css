@@ -211,6 +211,11 @@ td div:last-child {
     display: block; /* Assicura che l'input si comporti come un blocco */
 }
 
+.span-width-30 {
+    display: inline-block; /* Garantisce che il width venga applicato correttamente */
+    width: 30%;
+}
+
 .span-width-20 {
     display: inline-block; /* Garantisce che il width venga applicato correttamente */
     width: 20%;

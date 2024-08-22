@@ -248,7 +248,7 @@ def stampa_lista_della_spesa(user_id, ids_all_food: list):
         cur = conn.cursor()
         # Crea una tabella temporanea per l'elaborazione
         query = """
-            CREATE TEMP TABLE if not exists temp_ricetta_id (
+            CREATE TEMP TABLE IF NOT EXISTS temp_ricetta_id (
                 id_ricetta BIGINT NOT NULL
             ) ON COMMIT DROP;
             """
@@ -289,6 +289,8 @@ def stampa_lista_della_spesa(user_id, ids_all_food: list):
         cur.execute(query, params)
 
         rows = cur.fetchall()
+
+        conn.commit()
 
         for row in rows:
             lista_della_spesa.append({

@@ -1,0 +1,8 @@
+.tooltip-inner {
+    background-color: #007bff;
+    color: white;
+}
+
+.tooltip-arrow {
+    border-top-color: #007bff;
+}
