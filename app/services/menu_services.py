@@ -10,31 +10,31 @@ from app.models.common import printer
 from copy import deepcopy
 from decimal import Decimal
 import re
+import math
 
 MAX_RETRY = int(os.getenv('MAX_RETRY'))
 
 
-def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, percentuale_pietanza: float, ripetibile: bool,
+def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, ripetibile: bool,
                     controllo_macro_settimanale: bool, ricette, ids_specifici=None, skip_check=False):
     """
     Seleziona una pietanza dalla lista di ricette pre-caricate in memoria.
+    Ora lascia che select_food determini la percentuale ottimale basata sui macronutrienti rimanenti.
     """
-    perc_decimal = Decimal(str(percentuale_pietanza))
-
     # Filtra le ricette in base al tipo di pasto richiesto
     ricette_filtrate = [r for r in ricette if r[tipo]]
 
-    # Moltiplica i valori nutrizionali per la percentuale
+    # Moltiplica i valori nutrizionali per la percentuale, lascia che select_food lo faccia
     ricette_modificate = []
     for ricetta in ricette_filtrate:
         if ricetta['attiva']:
             ricetta_modificata = {
                 'id': ricetta['id'],
                 'nome_ricetta': ricetta['nome_ricetta'],
-                'kcal': ricetta['kcal'] * perc_decimal,
-                'carboidrati': ricetta['carboidrati'] * perc_decimal,
-                'proteine': ricetta['proteine'] * perc_decimal,
-                'grassi': ricetta['grassi'] * perc_decimal,
+                'kcal': ricetta['kcal'],  # Lasciamo la quantità originale per la modifica in select_food
+                'carboidrati': ricetta['carboidrati'],
+                'proteine': ricetta['proteine'],
+                'grassi': ricetta['grassi'],
                 'colazione': ricetta['colazione'],
                 'spuntino': ricetta['spuntino'],
                 'principale': ricetta['principale'],
@@ -44,9 +44,8 @@ def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, per
             ricette_modificate.append(ricetta_modificata)
 
     # Invoca select_food con le ricette modificate e gli ID specifici
-    return select_food(ricette_modificate, settimana, giorno_settimana, pasto, MAX_RETRY, percentuale_pietanza, ripetibile,
+    return select_food(ricette_modificate, settimana, giorno_settimana, pasto, MAX_RETRY, None, ripetibile,
                        False, controllo_macro_settimanale, skip_check, ids_specifici)
-
 
 
 def select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc, ripetibile, found, controllo_macro_settimanale, skip_check, ids_specifici=None):
@@ -62,52 +61,79 @@ def select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc, ri
     if not ricette_filtrate:
         return found
 
-    id_selezionato = random.choice(ricette_filtrate)['id']
-    ricetta_selezionata = next(oggetto for oggetto in ricette if oggetto['id'] == id_selezionato)
+    random.shuffle(ricette_filtrate)
 
-    mt = settimana.get('day').get(giorno_settimana).get('pasto').get(pasto)
-    day = settimana.get('day').get(giorno_settimana)
-    macronutrienti_settimali = settimana.get('weekly')
-    if (skip_check or check_macronutrienti(ricetta_selezionata, settimana['day'][giorno_settimana], settimana['weekly'], controllo_macro_settimanale)):
-        settimana.get('all_food').append(id_selezionato)
-        mt.get('ids').append(id_selezionato)
-        r = {'qta': perc,
-             'id': ricetta_selezionata.get('id'),
-             'nome_ricetta': ricetta_selezionata.get('nome_ricetta'),
-             'ricetta': ricetta_selezionata.get('ricetta'),
-             'kcal': ricetta_selezionata.get('kcal'),
-             'carboidrati': ricetta_selezionata.get('carboidrati'),
-             'proteine':  ricetta_selezionata.get('proteine'),
-             'grassi': ricetta_selezionata.get('grassi'),
-            }
-        mt.get('ricette').append(r)
-        day['kcal'] = day.get('kcal') - ricetta_selezionata.get('kcal')
-        day['carboidrati'] = day.get('carboidrati') - ricetta_selezionata.get('carboidrati')
-        day['proteine'] = day.get('proteine') - ricetta_selezionata.get('proteine')
-        day['grassi'] = day.get('grassi') - ricetta_selezionata.get('grassi')
-        macronutrienti_settimali['kcal'] = macronutrienti_settimali.get('kcal') - ricetta_selezionata.get('kcal')
-        macronutrienti_settimali['carboidrati'] = macronutrienti_settimali.get('carboidrati') - ricetta_selezionata.get('carboidrati')
-        macronutrienti_settimali['proteine'] = macronutrienti_settimali.get('proteine') - ricetta_selezionata.get('proteine')
-        macronutrienti_settimali['grassi'] = macronutrienti_settimali.get('grassi') - ricetta_selezionata.get('grassi')
-        found = True
-    else:
-        select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc, ripetibile, False, controllo_macro_settimanale, skip_check, ids_specifici)
+    for ricetta in ricette_filtrate:
+        # Calcola la percentuale massima che può essere utilizzata per ogni macronutriente
+        percentuali_possibili = []
+
+        if ricetta['kcal'] > 0:
+            percentuali_possibili.append(float(settimana['day'][giorno_settimana]['kcal']) / float(ricetta['kcal']))
+
+        if ricetta['carboidrati'] > 0:
+            percentuali_possibili.append(float(settimana['day'][giorno_settimana]['carboidrati']) / float(ricetta['carboidrati']))
+
+        if ricetta['proteine'] > 0:
+            percentuali_possibili.append(float(settimana['day'][giorno_settimana]['proteine']) / float(ricetta['proteine']))
+
+        if ricetta['grassi'] > 0:
+            percentuali_possibili.append(float(settimana['day'][giorno_settimana]['grassi']) / float(ricetta['grassi']))
+
+        # Se nessuna percentuale è calcolabile, salta questa ricetta
+        if not percentuali_possibili:
+            continue
+
+        # Prendi la percentuale minima trovata, limitata al range 0.5 - 1.0
+        percentuale_effettiva = max(Decimal('0.5'), min(Decimal('1.0'), min(percentuali_possibili)))
+        percentuale_effettiva = math.floor(percentuale_effettiva * 10) / 10
+
+        if percentuale_effettiva >= Decimal('0.5'):  # Considera solo percentuali superiori o uguali al 50%
+            id_selezionato = ricetta['id']
+            ricetta_selezionata = next(oggetto for oggetto in ricette if oggetto['id'] == id_selezionato)
+
+            mt = settimana.get('day').get(giorno_settimana).get('pasto').get(pasto)
+            day = settimana.get('day').get(giorno_settimana)
+            macronutrienti_settimali = settimana.get('weekly')
+
+            if (skip_check or check_macronutrienti(ricetta_selezionata, settimana['day'][giorno_settimana], settimana['weekly'], controllo_macro_settimanale)):
+                settimana.get('all_food').append(id_selezionato)
+                mt.get('ids').append(id_selezionato)
+                r = {'qta': percentuale_effettiva,
+                    'id': ricetta_selezionata.get('id'),
+                    'nome_ricetta': ricetta_selezionata.get('nome_ricetta'),
+                    'ricetta': ricetta_selezionata.get('ricetta'),
+                    'kcal': float(ricetta_selezionata.get('kcal')) * percentuale_effettiva,
+                    'carboidrati': float(ricetta_selezionata.get('carboidrati')) * percentuale_effettiva,
+                    'proteine':  float(ricetta_selezionata.get('proteine')) * percentuale_effettiva,
+                    'grassi': float(ricetta_selezionata.get('grassi')) * percentuale_effettiva,
+                    }
+                mt.get('ricette').append(r)
+                day['kcal'] = float(day.get('kcal')) - r.get('kcal')
+                day['carboidrati'] = float(day.get('carboidrati')) - r.get('carboidrati')
+                day['proteine'] = float(day.get('proteine')) - r.get('proteine')
+                day['grassi'] = float(day.get('grassi')) - r.get('grassi')
+                macronutrienti_settimali['kcal'] = float(macronutrienti_settimali.get('kcal')) - r.get('kcal')
+                macronutrienti_settimali['carboidrati'] = float(macronutrienti_settimali.get('carboidrati')) - r.get('carboidrati')
+                macronutrienti_settimali['proteine'] = float(macronutrienti_settimali.get('proteine')) - r.get('proteine')
+                macronutrienti_settimali['grassi'] = float(macronutrienti_settimali.get('grassi')) - r.get('grassi')
+                found = True
+                break  # Esci dal ciclo una volta trovata una ricetta valida
 
     return found
 
 
 def check_macronutrienti(ricetta, day, weekly, controllo_macro_settimanale):
     return ((
-            (day['kcal'] - ricetta['kcal']) > 0 and
-            (day['carboidrati'] - ricetta['carboidrati']) > 0 and
-            (day['proteine'] - ricetta['proteine']) > 0 and
-            (day['grassi'] - ricetta['grassi']) > 0
+            (float(day['kcal']) - float(ricetta['kcal'])) > 0 and
+            (float(day['carboidrati']) - float(ricetta['carboidrati'])) > 0 and
+            (float(day['proteine']) - float(ricetta['proteine'])) > 0 and
+            (float(day['grassi']) - float(ricetta['grassi'])) > 0
            ) or
            (controllo_macro_settimanale and
-            (weekly['kcal'] - ricetta['kcal']) > 0
-            and (weekly['carboidrati'] - ricetta['carboidrati']) > 0
-            and (weekly['proteine'] - ricetta['proteine']) > 0
-            and (weekly['grassi'] - ricetta['grassi']) > 0))
+            (float(weekly['kcal']) - float(ricetta['kcal'])) > 0
+            and (float(weekly['carboidrati']) - float(ricetta['carboidrati'])) > 0
+            and (float(weekly['proteine']) - float(ricetta['proteine'])) > 0
+            and (float(weekly['grassi']) - float(ricetta['grassi']) > 0)))
 
 
 
@@ -196,40 +222,36 @@ def numero_ricette(p, pasto, tipo_ricetta, ricette):
     cerca_ricette = [r for r in p[pasto]['ricette'] if r['id'] in [ricetta['id'] for ricetta in ricette if ricetta[tipo_ricetta]]]
     return len(cerca_ricette)
 
-def genera_menu(settimana, controllo_macro_settimanale: bool, ricette) -> None:
-    percentuali = [1]
-    id_pane = 272
-
+def genera_menu(settimana, controllo_macro_settimanale, ricette) -> None:
     for giorno in settimana['day']:
-        for percentuale_pietanza in percentuali:
-            for _ in range(MAX_RETRY):
-                p = settimana['day'][giorno]['pasto']
+        for _ in range(MAX_RETRY):
+            p = settimana['day'][giorno]['pasto']
 
-                if numero_ricette(p, 'colazione', 'colazione', ricette) < 1:
-                    scegli_pietanza(settimana, giorno, 'colazione', 'colazione', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
-                    scegli_pietanza(settimana, giorno, 'colazione', 'colazione_sec', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
+            if numero_ricette(p, 'colazione', 'colazione', ricette) < 1:
+                scegli_pietanza(settimana, giorno, 'colazione', 'colazione', True, controllo_macro_settimanale, ricette)
+                scegli_pietanza(settimana, giorno, 'colazione', 'colazione_sec', True, controllo_macro_settimanale, ricette)
 
-                if numero_ricette(p, 'spuntino_mattina', 'spuntino', ricette) < 1:
-                    scegli_pietanza(settimana, giorno, 'spuntino_mattina', 'spuntino', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
+            if numero_ricette(p, 'spuntino_mattina', 'spuntino', ricette) < 1:
+                scegli_pietanza(settimana, giorno, 'spuntino_mattina', 'spuntino', True, controllo_macro_settimanale, ricette)
 
-                if numero_ricette(p, 'spuntino_pomeriggio', 'spuntino', ricette) < 1:
-                    scegli_pietanza(settimana, giorno, 'spuntino_pomeriggio', 'spuntino', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
+            if numero_ricette(p, 'spuntino_pomeriggio', 'spuntino', ricette) < 1:
+                scegli_pietanza(settimana, giorno, 'spuntino_pomeriggio', 'spuntino', True, controllo_macro_settimanale, ricette)
 
-                if numero_ricette(p, 'pranzo', 'principale', ricette) < 2:
-                    scegli_pietanza(settimana, giorno, 'pranzo', 'principale', percentuale_pietanza, False, controllo_macro_settimanale, ricette)
+            if numero_ricette(p, 'pranzo', 'principale', ricette) < 2:
+                scegli_pietanza(settimana, giorno, 'pranzo', 'principale', False, controllo_macro_settimanale, ricette)
 
-                if numero_ricette(p, 'cena', 'principale', ricette) < 1:
-                    scegli_pietanza(settimana, giorno, 'cena', 'principale', percentuale_pietanza, False, controllo_macro_settimanale, ricette)
+            if numero_ricette(p, 'cena', 'principale', ricette) < 1:
+                scegli_pietanza(settimana, giorno, 'cena', 'principale', False, controllo_macro_settimanale, ricette)
 
-                if numero_ricette(p, 'pranzo', 'contorno', ricette) < 1:
-                    scegli_pietanza(settimana, giorno, 'pranzo', 'contorno', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
+            if numero_ricette(p, 'pranzo', 'contorno', ricette) < 1:
+                scegli_pietanza(settimana, giorno, 'pranzo', 'contorno', True, controllo_macro_settimanale, ricette)
 
-                if numero_ricette(p, 'cena', 'contorno', ricette) < 1:
-                    scegli_pietanza(settimana, giorno, 'cena', 'contorno', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
+            if numero_ricette(p, 'cena', 'contorno', ricette) < 1:
+                scegli_pietanza(settimana, giorno, 'cena', 'contorno', True, controllo_macro_settimanale, ricette)
 
-        # Aggiungi il pane
-        if controllo_macro_settimanale and numero_ricette(p, 'cena', 'pane', ricette) < 1:
-            scegli_pietanza(settimana, giorno, 'cena', 'pane', 1, True, controllo_macro_settimanale, ricette, skip_check=controllo_macro_settimanale)
+            # Aggiungi il pane
+            if controllo_macro_settimanale and numero_ricette(p, 'cena', 'pane', ricette) < 1:
+                scegli_pietanza(settimana, giorno, 'cena', 'pane', True, controllo_macro_settimanale, ricette, skip_check=controllo_macro_settimanale)
 
 def definisci_calorie_macronutrienti(user_id):
     """Calcola le calorie e i macronutrienti giornalieri e li restituisce."""
@@ -984,10 +1006,10 @@ def remove_meal_from_menu(menu, day, meal, meal_id, user_id):
         menu['day'][day]['grassi'] += float(ricetta_valori[0]['grassi']) * float(qta)
 
         # Aggiorna i macronutrienti settimanali
-        menu['weekly']['kcal'] += float(ricetta_valori[0]['kcal'])  * float(qta)
-        menu['weekly']['carboidrati'] += float(ricetta_valori[0]['carboidrati'])  * float(qta)
-        menu['weekly']['proteine'] += float(ricetta_valori[0]['proteine'])  * float(qta)
-        menu['weekly']['grassi'] += float(ricetta_valori[0]['grassi'])  * float(qta)
+        menu['weekly']['kcal'] += float(ricetta_valori[0]['kcal']) * float(qta)
+        menu['weekly']['carboidrati'] += float(ricetta_valori[0]['carboidrati']) * float(qta)
+        menu['weekly']['proteine'] += float(ricetta_valori[0]['proteine']) * float(qta)
+        menu['weekly']['grassi'] += float(ricetta_valori[0]['grassi']) * float(qta)
 
     return menu
 

@@ -182,6 +182,7 @@ function filterTable() {
     const spuntinoFilter = document.getElementById('filter-spuntino').value;
     const principaleFilter = document.getElementById('filter-principale').value;
     const contornoFilter = document.getElementById('filter-contorno').value;
+    const paneFilter = document.getElementById('filter-pane-ricette').value;
     const attivaFilter = document.getElementById('filter-attiva').value;
 
     const table = document.getElementById('ricette-table').querySelector('tbody');
@@ -202,13 +203,15 @@ function filterTable() {
         const spuntinoCell = cells[7].querySelector('input').checked.toString();
         const principaleCell = cells[8].querySelector('input').checked.toString();
         const contornoCell = cells[9].querySelector('input').checked.toString();
-        const attivaCell = cells[10].querySelector('input').checked.toString();
+        const paneCell = cells[10].querySelector('input').checked.toString();
+        const attivaCell = cells[11].querySelector('input').checked.toString();
 
         const colazioneMatch = (colazioneFilter === 'all') || (colazioneFilter === colazioneCell);
         const colazioneSecMatch = (colazioneSecFilter === 'all') || (colazioneSecFilter === colazioneSecCell);
         const spuntinoMatch = (spuntinoFilter === 'all') || (spuntinoFilter === spuntinoCell);
         const principaleMatch = (principaleFilter === 'all') || (principaleFilter === principaleCell);
         const contornoMatch = (contornoFilter === 'all') || (contornoFilter === contornoCell);
+        const paneMatch = (paneFilter === 'all') || (paneFilter === paneCell);
         const attivaMatch = (attivaFilter === 'all') || (attivaFilter === attivaCell);
 
         const calorieMatch = calorieCell >= calorieMin && calorieCell <= calorieMax;
@@ -226,6 +229,7 @@ function filterTable() {
             spuntinoMatch &&
             principaleMatch &&
             contornoMatch &&
+            paneMatch &&
             attivaMatch) {
             rows[i].style.display = '';
         } else {
@@ -455,6 +459,12 @@ function populateRicetteTable(ricette) {
                     <label hidden class="form-control form-control-sm">${ricetta.contorno}</label>
                 </div>
             </td>
+            <td class="pane">
+                <div>
+                    <input type="checkbox" name="pane_${ricetta.id}" ${ricetta.pane ? 'checked' : ''}>
+                    <label hidden class="form-control form-control-sm">${ricetta.pane}</label>
+                </div>
+            </td>
             <td class="attiva">
                 <div>
                     <label hidden class="form-control form-control-sm">${ricetta.attiva}</label>
@@ -463,7 +473,7 @@ function populateRicetteTable(ricette) {
             </td>
             <td class="azione">
                 <div class="btn-group" role="group">
-                    <button class="btn btn-primary btn-sm save-btn" data-ricetta-id="${ricetta.id}" data-ricetta-nome="${ricetta.nome_ricetta}" data-ricetta-colazione="${ricetta.colazione}" data-ricetta-colazione_sec="${ricetta.colazione_sec}" data-ricetta-spuntino="${ricetta.spuntino}" data-ricetta-principale="${ricetta.principale}" data-ricetta-contorno="${ricetta.contorno}" data-ricetta-attiva="${ricetta.attiva}">Salva</button>
+                    <button class="btn btn-primary btn-sm save-btn" data-ricetta-id="${ricetta.id}" data-ricetta-nome="${ricetta.nome_ricetta}" data-ricetta-colazione="${ricetta.colazione}" data-ricetta-colazione_sec="${ricetta.colazione_sec}" data-ricetta-spuntino="${ricetta.spuntino}" data-ricetta-principale="${ricetta.principale}" data-ricetta-contorno="${ricetta.contorno}" data-ricetta-pane="${ricetta.pane}" data-ricetta-attiva="${ricetta.attiva}">Salva</button>
                     <button class="btn btn-primary btn-sm edit-btn" data-ricetta-id="${ricetta.id}" data-bs-toggle="modal" data-bs-target="#editRecipeModal">Modifica</button>
                     <button class="btn btn-primary btn-sm toggle-btn" data-ricetta-id="${ricetta.id}" data-ricetta-attiva="${ricetta.attiva}">Attiva/Disattiva</button>
                     <button class="btn btn-danger btn-sm delete-btn" data-ricetta-id="${ricetta.id}">Elimina</button>
@@ -964,10 +974,10 @@ function renderMenuEditor(data) {
                     row.id = `meal-${ricetta.id}-${day}-${meal}`;
                     row.innerHTML = `
                         <td>${ricetta.nome_ricetta}</td>
-                        <td class="text-align-center">${ricetta.kcal}</td>
-                        <td class="text-align-center">${ricetta.carboidrati}</td>
-                        <td class="text-align-center">${ricetta.proteine}</td>
-                        <td class="text-align-center">${ricetta.grassi}</td>
+                        <td class="text-align-center">${ricetta.kcal.toFixed(2)}</td>
+                        <td class="text-align-center">${ricetta.carboidrati.toFixed(2)}</td>
+                        <td class="text-align-center">${ricetta.proteine.toFixed(2)}</td>
+                        <td class="text-align-center">${ricetta.grassi.toFixed(2)}</td>
                         <td><input type="number" class="form-control form-control-sm" style="width: 60px;" value="${ricetta.qta}" min="0.1" step="0.1" onchange="updateMealQuantity('${day}', '${meal}', '${ricetta.id}', this.value)"></td>
                         <td><button class="btn btn-danger btn-sm" onclick="removeMeal('${day}', '${meal}', '${ricetta.id}')">Rimuovi</button></td>
                     `;
@@ -1048,9 +1058,19 @@ function removeMeal(day, meal, mealId) {
             if (row) {
                 row.parentNode.removeChild(row);
             }
+
+            // Se la tabella non ha più righe nel corpo, lascia la `thead` intatta
+            const mealTableBody = row.parentNode;
+            if (mealTableBody.rows.length === 0) {
+                // Verifica se la tabella è ancora presente
+                const mealContainer = mealTableBody.closest('.meal-container');
+                const mealTable = mealContainer.querySelector('table');
+                if (mealTable) {
+                    // Svuota il corpo della tabella ma mantieni la `thead`
+                    mealTableBody.innerHTML = '';
+                }
+            }
             renderMenuEditor(data);
-            // Aggiorna i macronutrienti rimanenti nella visualizzazione
-            //aggiornaMacronutrientiRimanenti(data.remaining_macronutrienti);
         })
         .catch(error => console.error('Error:', error));
 }
@@ -1230,6 +1250,7 @@ function cleanFilters() {
     document.getElementById('filter-grassi-min').value = '';
     document.getElementById('filter-grassi-max').value = '';
     document.getElementById('filter-colazione').value = 'all';
+    document.getElementById('filter-pane-ricette').value = 'all';
     document.getElementById('filter-colazione-sec').value = 'all';
     document.getElementById('filter-spuntino').value = 'all';
     document.getElementById('filter-principale').value = 'all';

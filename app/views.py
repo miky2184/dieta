@@ -137,7 +137,6 @@ def generate_menu():
     if not get_menu_corrente(user_id):
         settimana_corrente = deepcopy(get_settimana(macronutrienti))
         genera_menu(settimana_corrente, False, ricette_menu)
-        print(f"settimana_corrente_1:{settimana_corrente}")
         progress += 1 / total_steps * 100
         time.sleep(1)  # Simula tempo di elaborazione
 
@@ -145,11 +144,10 @@ def generate_menu():
         settimana_corrente_ordinata = ordina_settimana_per_kcal(settimana_corrente)
 
         genera_menu(settimana_corrente_ordinata, True, ricette_menu)
-        print(f"settimana_corrente_2:{settimana_corrente_ordinata}")
         progress += 1 / total_steps * 100
         time.sleep(1)
 
-        salva_menu_corrente(settimana_corrente, user_id)
+        salva_menu_corrente(settimana_corrente_ordinata, user_id)
         progress += 1 / total_steps * 100
     else:
         progress += 3 / total_steps * 100
@@ -165,7 +163,7 @@ def generate_menu():
         prossima_settimana_ordinata = ordina_settimana_per_kcal(prossima_settimana)
 
         genera_menu(prossima_settimana_ordinata, True, ricette_menu)
-        salva_menu_settimana_prossima(prossima_settimana, user_id)
+        salva_menu_settimana_prossima(prossima_settimana_ordinata, user_id)
     else:
         progress += 1 / total_steps * 100
 

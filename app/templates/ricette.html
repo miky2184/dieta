@@ -19,6 +19,7 @@
                     <th class="spuntino">Spuntino</th>
                     <th class="principale">Principale</th>
                     <th class="contorno">Contorno</th>
+                    <th class="pane">Pane</th>
                     <th class="attiva">Attiva</th>
                     <th class="azione">Azioni</th>
                 </tr>
@@ -30,15 +31,13 @@
                                oninput="filterTable()">
                         <input type="number" id="filter-calorie-max"
                                class="form-control form-control-sm filter-number  filter-text" placeholder="Max"
-                               oninput="filterTable()">
-                    </th>
+                               oninput="filterTable()"></th>
                     <th><input type="number" id="filter-carbo-min"
                                class="form-control form-control-sm filter-number  filter-text" placeholder="Min"
                                oninput="filterTable()">
                         <input type="number" id="filter-carbo-max"
                                class="form-control form-control-sm filter-number  filter-text" placeholder="Max"
-                               oninput="filterTable()">
-                    </th>
+                               oninput="filterTable()"></th>
                     <th><input type="number" id="filter-proteine-min"
                                class="form-control form-control-sm filter-number  filter-text" placeholder="Min"
                                oninput="filterTable()">
@@ -56,33 +55,43 @@
                             <option value="all"></option>
                             <option value="true">T</option>
                             <option value="false">F</option>
-                        </select>
-                    </th>
-                    <th><select id="filter-colazione-sec" class="form-select form-select-sm" onchange="filterTable()">
-                        <option value="all"></option>
-                        <option value="true">T</option>
-                        <option value="false">F</option>
-                    </select></th>
-                    <th><select id="filter-spuntino" class="form-select form-select-sm" onchange="filterTable()">
-                        <option value="all"></option>
-                        <option value="true">T</option>
-                        <option value="false">F</option>
-                    </select></th>
-                    <th><select id="filter-principale" class="form-select form-select-sm" onchange="filterTable()">
-                        <option value="all"></option>
-                        <option value="true">T</option>
-                        <option value="false">F</option>
-                    </select></th>
-                    <th><select id="filter-contorno" class="form-select form-select-sm" onchange="filterTable()">
-                        <option value="all"></option>
-                        <option value="true">T</option>
-                        <option value="false">F</option>
-                    </select></th>
-                    <th><select id="filter-attiva" class="form-select form-select-sm" onchange="filterTable()">
-                        <option value="all"></option>
-                        <option value="true">T</option>
-                        <option value="false">F</option>
-                    </select></th>
+                        </select></th>
+                    <th>
+                        <select id="filter-colazione-sec" class="form-select form-select-sm" onchange="filterTable()">
+                            <option value="all"></option>
+                            <option value="true">T</option>
+                            <option value="false">F</option>
+                        </select></th>
+                    <th>
+                        <select id="filter-spuntino" class="form-select form-select-sm" onchange="filterTable()">
+                            <option value="all"></option>
+                            <option value="true">T</option>
+                            <option value="false">F</option>
+                        </select></th>
+                    <th>
+                        <select id="filter-principale" class="form-select form-select-sm" onchange="filterTable()">
+                            <option value="all"></option>
+                            <option value="true">T</option>
+                            <option value="false">F</option>
+                        </select></th>
+                    <th>
+                        <select id="filter-contorno" class="form-select form-select-sm" onchange="filterTable()">
+                            <option value="all"></option>
+                            <option value="true">T</option>
+                            <option value="false">F</option>
+                        </select></th>
+                    <th>
+                        <select id="filter-pane-ricette" class="form-select form-select-sm" onchange="filterTable()">
+                            <option value="all"></option>
+                            <option value="true">T</option>
+                            <option value="false">F</option>
+                        </select></th>
+                    <th>
+                        <select id="filter-attiva" class="form-select form-select-sm" onchange="filterTable()">
+                            <option value="all"></option>
+                            <option value="true">T</option>
+                            <option value="false">F</option>
+                        </select></th>
                     <th>
                         <button id="cleanFiltersBtn" class="btn btn-sm btn-secondary" onclick="cleanFilters()">Clean
                         </button>
