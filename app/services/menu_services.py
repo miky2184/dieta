@@ -53,7 +53,7 @@ def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, per
                        False, controllo_macro_settimanale, skip_check)
 
 
-def select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc, ripetibile, found, controllo_macro_settimanale, skip_check=False):
+def select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc, ripetibile, found, controllo_macro_settimanale, skip_check):
     ids_disponibili = [oggetto['id'] for oggetto in ricette if oggetto['id'] not in settimana['all_food']] if not ripetibile else [oggetto['id'] for oggetto in ricette if oggetto['id'] not in settimana['day'][giorno_settimana]['pasto'][pasto]['ids']]
 
     ricette_filtrate = [ricetta for ricetta in ricette if ricetta['id'] in ids_disponibili and (skip_check or check_macronutrienti(ricetta, settimana['day'][giorno_settimana], settimana['weekly'], controllo_macro_settimanale))]
@@ -67,21 +67,7 @@ def select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc, ri
     mt = settimana.get('day').get(giorno_settimana).get('pasto').get(pasto)
     day = settimana.get('day').get(giorno_settimana)
     macronutrienti_settimali = settimana.get('weekly')
-    if (    skip_check or
-            (
-                (day.get('kcal') - ricetta_selezionata.get('kcal')) > 0 and
-                (day.get('carboidrati') - ricetta_selezionata.get('carboidrati')) > 0 and
-                (day.get('proteine') - ricetta_selezionata.get('proteine')) > 0 and
-                (day.get('grassi') - ricetta_selezionata.get('grassi')) > 0
-            )
-            or
-                (controllo_macro_settimanale and
-                 (macronutrienti_settimali.get('kcal') - ricetta_selezionata.get('kcal') > 0 and
-                (macronutrienti_settimali.get('carboidrati') - ricetta_selezionata.get('carboidrati')) > 0 and
-                (macronutrienti_settimali.get('proteine') - ricetta_selezionata.get('proteine')) > 0 and
-                (macronutrienti_settimali.get('grassi') - ricetta_selezionata.get('grassi')) > 0)
-            )
-    ):
+    if (skip_check or check_macronutrienti(ricetta_selezionata, settimana['day'][giorno_settimana], settimana['weekly'], controllo_macro_settimanale)):
         settimana.get('all_food').append(id_selezionato)
         mt.get('ids').append(id_selezionato)
         r = {'qta': perc,
@@ -104,21 +90,24 @@ def select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc, ri
         macronutrienti_settimali['grassi'] = macronutrienti_settimali.get('grassi') - ricetta_selezionata.get('grassi')
         found = True
     else:
-        select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc, ripetibile, False, controllo_macro_settimanale)
+        select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc, ripetibile, False, controllo_macro_settimanale, skip_check)
 
     return found
 
 
 def check_macronutrienti(ricetta, day, weekly, controllo_macro_settimanale):
-    return (day['kcal'] - ricetta['kcal']) > 0 and \
-           (day['carboidrati'] - ricetta['carboidrati']) > 0 and \
-           (day['proteine'] - ricetta['proteine']) > 0 and \
-           (day['grassi'] - ricetta['grassi']) > 0 or \
-           (controllo_macro_settimanale and \
-           (weekly['kcal'] - ricetta['kcal']) > 0 and \
-           (weekly['carboidrati'] - ricetta['carboidrati']) > 0 and \
-           (weekly['proteine'] - ricetta['proteine']) > 0 and \
-           (weekly['grassi'] - ricetta['grassi']) > 0)
+    return ((
+            (day['kcal'] - ricetta['kcal']) > 0 and
+            (day['carboidrati'] - ricetta['carboidrati']) > 0 and
+            (day['proteine'] - ricetta['proteine']) > 0 and
+            (day['grassi'] - ricetta['grassi']) > 0
+           ) or
+           (controllo_macro_settimanale and
+            (weekly['kcal'] - ricetta['kcal']) > 0 and
+            (weekly['carboidrati'] - ricetta['carboidrati']) > 0 and
+            (weekly['proteine'] - ricetta['proteine']) > 0 and
+            (weekly['grassi'] - ricetta['grassi']) > 0)
+            )
 
 
 def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=False):
