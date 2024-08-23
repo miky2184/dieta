@@ -1036,13 +1036,13 @@ def copia_alimenti_ricette(user_id, ricette_vegane, ricette_carne, ricette_pesce
         cur.execute(query, params)
 
         query = """insert into dieta.ricetta(id, nome_ricetta, colazione, spuntino, principale, contorno, enabled, colazione_sec, pane, user_id)
-                   SELECT id, nome_ricetta, colazione, spuntino, principale, contorno, false, colazione_sec, pane, %s
+                   SELECT id, nome_ricetta, colazione, spuntino, principale, contorno, false as enabled, colazione_sec, pane, %s as user_id
                      FROM dieta.ricetta_base"""
         printer(cur.mogrify(query, params).decode('utf-8'))
         cur.execute(query, params)
 
         query = """ insert into dieta.ingredienti_ricetta (id_ricetta, id_alimento, qta, user_id)
-                    SELECT id_ricetta, id_alimento, qta, %s
+                    SELECT id_ricetta, id_alimento, qta, %s as user_id
                       FROM dieta.ingredienti_ricetta_base"""
         printer(cur.mogrify(query, params).decode('utf-8'))
         cur.execute(query, params)
