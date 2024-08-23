@@ -9,7 +9,7 @@ from .services.menu_services import (definisci_calorie_macronutrienti, save_weig
                                      calcola_macronutrienti_rimanenti,
                                      carica_alimenti, salva_alimento, elimina_alimento, salva_nuovo_alimento,
                                      aggiungi_ricetta_al_menu, update_menu_corrente, remove_meal_from_menu,
-                                     delete_week_menu, elimina_ricetta)
+                                     delete_week_menu, elimina_ricetta, ordina_settimana_per_kcal)
 from copy import deepcopy
 import time
 from reportlab.lib.pagesizes import letter, landscape
@@ -137,10 +137,15 @@ def generate_menu():
     if not get_menu_corrente(user_id):
         settimana_corrente = deepcopy(get_settimana(macronutrienti))
         genera_menu(settimana_corrente, False, ricette_menu)
+        print(f"settimana_corrente_1:{settimana_corrente}")
         progress += 1 / total_steps * 100
         time.sleep(1)  # Simula tempo di elaborazione
 
-        genera_menu(settimana_corrente, True, ricette_menu)
+        # Ordina la settimana in base alle kcal giornaliere rimanenti in ordine decrescente
+        settimana_corrente_ordinata = ordina_settimana_per_kcal(settimana_corrente)
+
+        genera_menu(settimana_corrente_ordinata, True, ricette_menu)
+        print(f"settimana_corrente_2:{settimana_corrente_ordinata}")
         progress += 1 / total_steps * 100
         time.sleep(1)
 

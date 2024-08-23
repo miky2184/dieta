@@ -248,13 +248,13 @@ function filterAlimentiTable() {
 
         const macroCell = cells[5].textContent;
         const fruttaCell = cells[6].querySelector('input').checked.toString();
-        const carneBiancaCell = cells[7].querySelector('input').checked.toString();
-        const carneRossaCell = cells[8].querySelector('input').checked.toString();
-        const paneCell = cells[9].querySelector('input').checked.toString();
-        const verduraCell = cells[10].querySelector('input').checked.toString();
-        const confezionatoCell = cells[11].querySelector('input').checked.toString();
-        const veganCell = cells[12].querySelector('input').checked.toString();
-        const pesceCell = cells[13].querySelector('input').checked.toString();
+        const carneBiancaCell = cells[8].querySelector('input').checked.toString();
+        const carneRossaCell = cells[9].querySelector('input').checked.toString();
+        const paneCell = cells[12].querySelector('input').checked.toString();
+        const verduraCell = cells[7].querySelector('input').checked.toString();
+        const confezionatoCell = cells[13].querySelector('input').checked.toString();
+        const veganCell = cells[11].querySelector('input').checked.toString();
+        const pesceCell = cells[10].querySelector('input').checked.toString();
 
         const calorieMatch = calorieCell >= calorieMin && calorieCell <= calorieMax;
         const carboMatch = carboCell >= carboMin && carboCell <= carboMax;

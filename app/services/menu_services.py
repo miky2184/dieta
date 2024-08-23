@@ -76,8 +76,8 @@ def select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc, ri
              'ricetta': ricetta_selezionata.get('ricetta'),
              'kcal': ricetta_selezionata.get('kcal'),
              'carboidrati': ricetta_selezionata.get('carboidrati'),
-            'proteine':  ricetta_selezionata.get('proteine'),
-            'grassi': ricetta_selezionata.get('grassi'),
+             'proteine':  ricetta_selezionata.get('proteine'),
+             'grassi': ricetta_selezionata.get('grassi'),
             }
         mt.get('ricette').append(r)
         day['kcal'] = day.get('kcal') - ricetta_selezionata.get('kcal')
@@ -103,11 +103,11 @@ def check_macronutrienti(ricetta, day, weekly, controllo_macro_settimanale):
             (day['grassi'] - ricetta['grassi']) > 0
            ) or
            (controllo_macro_settimanale and
-            (weekly['kcal'] - ricetta['kcal']) > 0 and
-            (weekly['carboidrati'] - ricetta['carboidrati']) > 0 and
-            (weekly['proteine'] - ricetta['proteine']) > 0 and
-            (weekly['grassi'] - ricetta['grassi']) > 0)
-            )
+            (weekly['kcal'] - ricetta['kcal']) > 0
+            and (weekly['carboidrati'] - ricetta['carboidrati']) > 0
+            and (weekly['proteine'] - ricetta['proteine']) > 0
+            and (weekly['grassi'] - ricetta['grassi']) > 0))
+
 
 
 def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=False):
@@ -175,9 +175,27 @@ GROUP BY r.user_id, r.id, r.nome_ricetta,carboidrati, proteine, grassi, qta, r.c
     return ricette
 
 
+def ordina_settimana_per_kcal(settimana):
+    """
+    Ordina i giorni della settimana in base alle calorie giornaliere rimanenti in ordine decrescente.
+    """
+    giorni_ordinati = sorted(settimana['day'].keys(), key=lambda giorno: settimana['day'][giorno]['kcal'], reverse=True)
+
+    # Crea una nuova struttura della settimana con i giorni ordinati
+    settimana_ordinata = {
+        'weekly': settimana['weekly'],
+        'day': {giorno: settimana['day'][giorno] for giorno in giorni_ordinati},
+        'all_food': settimana['all_food']
+    }
+
+    return settimana_ordinata
+
+def numero_ricette(p, pasto, tipo_ricetta, ricette):
+    cerca_ricette = [r for r in p[pasto]['ricette'] if r['id'] in [ricetta['id'] for ricetta in ricette if ricetta[tipo_ricetta]]]
+    return len(cerca_ricette)
+
 def genera_menu(settimana, controllo_macro_settimanale: bool, ricette) -> None:
-    #percentuali = [1, 0.5, 0.75]
-    percentuali = [1, 1.2, 1.1, 0.9, 0.8, 0.5]
+    percentuali = [1]
     id_pane = 272
 
     for giorno in settimana['day']:
@@ -185,29 +203,32 @@ def genera_menu(settimana, controllo_macro_settimanale: bool, ricette) -> None:
             for _ in range(MAX_RETRY):
                 p = settimana['day'][giorno]['pasto']
 
-                if len(p['pranzo']['ricette']) < 5:
-                    scegli_pietanza(settimana, giorno, 'pranzo', 'principale', percentuale_pietanza, False, controllo_macro_settimanale, ricette)
-                if len(p['cena']['ricette']) == 0:
-                    scegli_pietanza(settimana, giorno, 'cena', 'principale', percentuale_pietanza, False, controllo_macro_settimanale, ricette)
-                if len(p['colazione']['ricette']) <= 1:
+                if numero_ricette(p, 'colazione', 'colazione', ricette) < 1:
                     scegli_pietanza(settimana, giorno, 'colazione', 'colazione', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
                     scegli_pietanza(settimana, giorno, 'colazione', 'colazione_sec', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
 
-                # Aggiungi il pane sia a pranzo che a cena
-                scegli_pietanza(settimana, giorno, 'pranzo', 'contorno', 1, True, controllo_macro_settimanale, ricette, ids_specifici=[id_pane], skip_check=True)
-                scegli_pietanza(settimana, giorno, 'cena', 'contorno', 1, True, controllo_macro_settimanale, ricette, ids_specifici=[id_pane], skip_check=True)
+                if numero_ricette(p, 'spuntino_mattina', 'spuntino', ricette) < 1:
+                    scegli_pietanza(settimana, giorno, 'spuntino_mattina', 'spuntino', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
 
-                if len(p['pranzo']['ricette']) < 3:
+                if numero_ricette(p, 'spuntino_pomeriggio', 'spuntino', ricette) < 1:
+                    scegli_pietanza(settimana, giorno, 'spuntino_pomeriggio', 'spuntino', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
+
+                if numero_ricette(p, 'pranzo', 'principale', ricette) < 2:
+                    scegli_pietanza(settimana, giorno, 'pranzo', 'principale', percentuale_pietanza, False, controllo_macro_settimanale, ricette)
+
+                if numero_ricette(p, 'cena', 'principale', ricette) < 1:
+                    scegli_pietanza(settimana, giorno, 'cena', 'principale', percentuale_pietanza, False, controllo_macro_settimanale, ricette)
+
+                if numero_ricette(p, 'pranzo', 'contorno', ricette) < 1:
                     scegli_pietanza(settimana, giorno, 'pranzo', 'contorno', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
 
-                if len(p['cena']['ricette']) < 3:
+                if numero_ricette(p, 'cena', 'contorno', ricette) < 1:
                     scegli_pietanza(settimana, giorno, 'cena', 'contorno', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
 
-                if len(p['spuntino_mattina']['ricette']) == 0:
-                    scegli_pietanza(settimana, giorno, 'spuntino_mattina', 'spuntino', percentuale_pietanza, True, controllo_macro_settimanale, ricette, skip_check=True)
-                if len(p['spuntino_pomeriggio']['ricette']) == 0:
-                    scegli_pietanza(settimana, giorno, 'spuntino_pomeriggio', 'spuntino', percentuale_pietanza, True, controllo_macro_settimanale, ricette, skip_check=True)
-
+        # Aggiungi il pane sia a pranzo che a cena
+        if controllo_macro_settimanale:
+            scegli_pietanza(settimana, giorno, 'pranzo', 'contorno', 1, True, controllo_macro_settimanale, ricette, ids_specifici=[id_pane], skip_check=True)
+            scegli_pietanza(settimana, giorno, 'cena', 'contorno', 1, True, controllo_macro_settimanale, ricette, ids_specifici=[id_pane], skip_check=True)
 
 def definisci_calorie_macronutrienti(user_id):
     """Calcola le calorie e i macronutrienti giornalieri e li restituisce."""
