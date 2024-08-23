@@ -161,7 +161,10 @@ def generate_menu():
         progress += 1 / total_steps * 100
         time.sleep(1)
 
-        genera_menu(prossima_settimana, True, ricette_menu)
+        # Ordina la settimana in base alle kcal giornaliere rimanenti in ordine decrescente
+        prossima_settimana_ordinata = ordina_settimana_per_kcal(prossima_settimana)
+
+        genera_menu(prossima_settimana_ordinata, True, ricette_menu)
         salva_menu_settimana_prossima(prossima_settimana, user_id)
     else:
         progress += 1 / total_steps * 100
@@ -217,10 +220,11 @@ def salva_ricetta():
     principale = data['principale']
     contorno = data['contorno']
     nome = data['nome']
+    pane = data['pane']
 
     user_id = current_user.user_id
 
-    salva_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, ricetta_id, user_id)
+    salva_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, pane, ricetta_id, user_id)
 
     current_app.cache.delete(f'recupera_ricette_{user_id}')
     return jsonify({'status': 'success', 'message': 'Ricetta salvata con successo!'})
@@ -330,10 +334,11 @@ def nuova_ricetta():
     main = 'principale' in request.form
     side = 'contorno' in request.form
     second_breakfast = 'colazione/biscotti' in request.form
+    pane = 'pane' in request.form
 
     user_id = current_user.user_id
 
-    salva_nuova_ricetta(name.upper(), breakfast, snack, main, side, second_breakfast, user_id)
+    salva_nuova_ricetta(name.upper(), breakfast, snack, main, side, second_breakfast, pane, user_id)
     current_app.cache.delete(f'recupera_ricette_{user_id}')
 
     return jsonify({"status": "success"}), 200
@@ -551,6 +556,7 @@ def add_meals_to_menu(week_id):
     # Salva il menu aggiornato nel database
     update_menu_corrente(menu_corrente, week_id, user_id)
     current_app.cache.delete(f'dashboard_{user_id}')
+    current_app.cache.delete(f'view//menu_settimana/{week_id}')
     return jsonify({
         'status': 'success',
         'menu': menu_corrente,  # Restituisce il menu aggiornato
@@ -582,6 +588,7 @@ def remove_meal(week_id):
 
     # Ricalcola i macronutrienti rimanenti
     remaining_macronutrienti = calcola_macronutrienti_rimanenti(updated_menu)
+    current_app.cache.delete(f'dashboard_{user_id}')
     current_app.cache.delete(f'view//menu_settimana/{week_id}')
     return jsonify({
         'status': 'success',
@@ -625,6 +632,7 @@ def update_meal_quantity():
 
     # Ricalcola i macronutrienti rimanenti
     remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente)
+    current_app.cache.delete(f'dashboard_{user_id}')
     current_app.cache.delete(f'view//menu_settimana/{week_id}')
     return jsonify({
         'status': 'success',
@@ -731,3 +739,37 @@ def delete_ricetta():
 
     current_app.cache.delete(f'recupera_ricette_{user_id}')
     return jsonify({'status': 'success', 'message': 'Ricetta cancellata con successo!'})
+
+
+@views.route('/invert_meals/<int:week_id>', methods=['POST'])
+@login_required
+def invert_meals(week_id):
+    data = request.json
+    day = data.get('day')
+    user_id = current_user.user_id
+
+    # Recupera il menu della settimana per l'utente
+    settimana = get_menu_corrente(user_id)
+
+    if not settimana:
+        return jsonify({'status': 'error', 'message': 'Menu non trovato'}), 404
+
+    # Inverti i pasti per il giorno specificato
+    pranzo = settimana['day'][day]['pasto']['pranzo']
+    cena = settimana['day'][day]['pasto']['cena']
+
+    settimana['day'][day]['pasto']['pranzo'] = cena
+    settimana['day'][day]['pasto']['cena'] = pranzo
+
+    # Salva le modifiche nel database
+    update_menu_corrente(settimana, week_id, user_id)
+
+    # Ricalcola i macronutrienti rimanenti
+    remaining_macronutrienti = calcola_macronutrienti_rimanenti(settimana)
+    current_app.cache.delete(f'dashboard_{user_id}')
+    current_app.cache.delete(f'view//menu_settimana/{week_id}')
+    return jsonify({
+        'status': 'success',
+        'menu': settimana,
+        'remaining_macronutrienti': remaining_macronutrienti
+    })

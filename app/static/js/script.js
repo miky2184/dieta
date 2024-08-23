@@ -12,6 +12,29 @@ function openTab(evt, tabName) {
     evt.currentTarget.className += " active";
 }
 
+function invertMeals(day) {
+    // Invia la richiesta al backend per salvare l'inversione
+    fetch(`/invert_meals/${selectedWeekId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ day: day })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            renderMenuEditor(data);
+            aggiornaTabellaMenu(data.menu);
+        }
+    })
+    .catch(error => {
+        console.error('Errore di rete:', error);
+        // Puoi aggiungere un'alert o un messaggio di errore qui
+    });
+}
+
+
 function aggiornaTabellaMenu(menu) {
     const tbody = document.getElementById('menu_tbody');
     tbody.innerHTML = ''; // Pulisci la tabella
@@ -883,19 +906,36 @@ function renderMenuEditor(data) {
         const cardBody = document.createElement('div');
         cardBody.classList.add('card-body');
 
+        const dayTitleContainer = document.createElement('div');
+        dayTitleContainer.classList.add('d-flex', 'align-items-center', 'justify-content-between'); // Contenitore flessibile
+
         const dayTitle = document.createElement('h5');
-        dayTitle.classList.add('card-title');
+        dayTitle.classList.add('card-title', 'mb-0'); // Rimuove il margine inferiore
         dayTitle.textContent = `${capitalize(day)}`;
 
-        cardBody.appendChild(dayTitle);
+        const invertMealsBtn = document.createElement('button');
+        invertMealsBtn.textContent = "Inverti Pasti";
+        invertMealsBtn.classList.add('btn', 'btn-warning', 'btn-sm', 'ms-3'); // Margine a sinistra
+
+        // Aggiungi il titolo e il pulsante al contenitore
+        dayTitleContainer.appendChild(dayTitle);
+        dayTitleContainer.appendChild(invertMealsBtn);
+
+        // Aggiungi il contenitore al cardBody
+        cardBody.appendChild(dayTitleContainer);
+
+        // Imposta l'evento clic per il pulsante
+        invertMealsBtn.onclick = function() {
+            invertMeals(day);
+        };
 
         meals.forEach(meal => {
             const mealContainer = document.createElement('div');
             mealContainer.classList.add('meal-container');
-            const mealTitle = document.createElement('h6');
-            mealTitle.classList.add('card-subtitle', 'mb-2', 'text-muted');
-            mealTitle.textContent = formatMealName(meal);
-            mealContainer.appendChild(mealTitle);
+            //const mealTitle = document.createElement('h6');
+            //mealTitle.classList.add('card-subtitle', 'mb-2', 'text-muted');
+            //mealTitle.textContent = formatMealName(meal);
+            //mealContainer.appendChild(mealTitle);
 
             if (menu.day[day].pasto[meal].ricette.length > 0) {
                 // Creare una tabella per ogni pasto
@@ -906,7 +946,7 @@ function renderMenuEditor(data) {
                 const mealTableHead = document.createElement('thead');
                 mealTableHead.innerHTML = `
                     <tr>
-                        <th style="width:40%">Nome Ricetta</th>
+                        <th style="width:40%" class="text-align-center">${formatMealName(meal)}</th>
                         <th style="width:10%" class="text-align-center">Kcal</th>
                         <th style="width:10%" class="text-align-center">Carboidrati (g)</th>
                         <th style="width:10%" class="text-align-center">Proteine (g)</th>

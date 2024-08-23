@@ -18,16 +18,11 @@ def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, per
                     controllo_macro_settimanale: bool, ricette, ids_specifici=None, skip_check=False):
     """
     Seleziona una pietanza dalla lista di ricette pre-caricate in memoria.
-    Se ids_specifici è fornito, filtra le ricette solo per quegli ID.
     """
     perc_decimal = Decimal(str(percentuale_pietanza))
 
     # Filtra le ricette in base al tipo di pasto richiesto
     ricette_filtrate = [r for r in ricette if r[tipo]]
-
-    # Se ids_specifici è fornito, filtra ulteriormente le ricette
-    if ids_specifici:
-        ricette_filtrate = [r for r in ricette_filtrate if r['id'] in ids_specifici]
 
     # Moltiplica i valori nutrizionali per la percentuale
     ricette_modificate = []
@@ -48,14 +43,20 @@ def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, per
             }
             ricette_modificate.append(ricetta_modificata)
 
-    # Invoca select_food con le ricette modificate
+    # Invoca select_food con le ricette modificate e gli ID specifici
     return select_food(ricette_modificate, settimana, giorno_settimana, pasto, MAX_RETRY, percentuale_pietanza, ripetibile,
-                       False, controllo_macro_settimanale, skip_check)
+                       False, controllo_macro_settimanale, skip_check, ids_specifici)
 
 
-def select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc, ripetibile, found, controllo_macro_settimanale, skip_check):
-    ids_disponibili = [oggetto['id'] for oggetto in ricette if oggetto['id'] not in settimana['all_food']] if not ripetibile else [oggetto['id'] for oggetto in ricette if oggetto['id'] not in settimana['day'][giorno_settimana]['pasto'][pasto]['ids']]
 
+def select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc, ripetibile, found, controllo_macro_settimanale, skip_check, ids_specifici=None):
+    # Filtra gli ID disponibili in base alla ripetibilità e agli ID specifici
+    if ids_specifici:
+        ids_disponibili = [oggetto['id'] for oggetto in ricette if oggetto['id'] in ids_specifici and oggetto['id'] not in settimana['all_food']]
+    else:
+        ids_disponibili = [oggetto['id'] for oggetto in ricette if oggetto['id'] not in settimana['all_food']] if not ripetibile else [oggetto['id'] for oggetto in ricette if oggetto['id'] not in settimana['day'][giorno_settimana]['pasto'][pasto]['ids']]
+
+    # Filtra ulteriormente le ricette disponibili in base ai macronutrienti e alle altre condizioni
     ricette_filtrate = [ricetta for ricetta in ricette if ricetta['id'] in ids_disponibili and (skip_check or check_macronutrienti(ricetta, settimana['day'][giorno_settimana], settimana['weekly'], controllo_macro_settimanale))]
 
     if not ricette_filtrate:
@@ -90,7 +91,7 @@ def select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc, ri
         macronutrienti_settimali['grassi'] = macronutrienti_settimali.get('grassi') - ricetta_selezionata.get('grassi')
         found = True
     else:
-        select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc, ripetibile, False, controllo_macro_settimanale, skip_check)
+        select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc, ripetibile, False, controllo_macro_settimanale, skip_check, ids_specifici)
 
     return found
 
@@ -143,7 +144,8 @@ def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=Fals
     r.spuntino, 
     r.principale, 
     r.contorno, 
-    r.colazione_sec, 
+    r.colazione_sec,
+    r.pane,
     r.enabled AS attiva,
     COALESCE(i.ricetta, '') AS ricetta
 FROM dieta.ricetta r
@@ -160,7 +162,7 @@ LEFT JOIN dieta.ingredienti_ricetta ir ON ir.id_ricetta = r.id and ir.user_id = 
 LEFT JOIN dieta.alimento a ON ir.id_alimento = a.id and ir.user_id = a.user_id
 where 1=1
 and r.user_id = %s {and_stagionalita} {and_ids} {and_attive}
-GROUP BY r.user_id, r.id, r.nome_ricetta,carboidrati, proteine, grassi, qta, r.colazione, r.spuntino, r.principale, r.contorno, r.colazione_sec, r.enabled, i.ricetta
+GROUP BY r.user_id, r.id, r.nome_ricetta,carboidrati, proteine, grassi, qta, r.colazione, r.spuntino, r.principale, r.contorno, r.colazione_sec, r.pane, r.enabled, i.ricetta
  order by enabled desc, r.nome_ricetta
 
         """
@@ -225,10 +227,9 @@ def genera_menu(settimana, controllo_macro_settimanale: bool, ricette) -> None:
                 if numero_ricette(p, 'cena', 'contorno', ricette) < 1:
                     scegli_pietanza(settimana, giorno, 'cena', 'contorno', percentuale_pietanza, True, controllo_macro_settimanale, ricette)
 
-        # Aggiungi il pane sia a pranzo che a cena
-        if controllo_macro_settimanale:
-            scegli_pietanza(settimana, giorno, 'pranzo', 'contorno', 1, True, controllo_macro_settimanale, ricette, ids_specifici=[id_pane], skip_check=True)
-            scegli_pietanza(settimana, giorno, 'cena', 'contorno', 1, True, controllo_macro_settimanale, ricette, ids_specifici=[id_pane], skip_check=True)
+        # Aggiungi il pane
+        if controllo_macro_settimanale and numero_ricette(p, 'cena', 'pane', ricette) < 1:
+            scegli_pietanza(settimana, giorno, 'cena', 'pane', 1, True, controllo_macro_settimanale, ricette, skip_check=controllo_macro_settimanale)
 
 def definisci_calorie_macronutrienti(user_id):
     """Calcola le calorie e i macronutrienti giornalieri e li restituisce."""
@@ -594,7 +595,7 @@ def get_settimana(macronutrienti):
             }
 
 
-def salva_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, ricetta_id, user_id):
+def salva_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, pane, ricetta_id, user_id):
     with get_db_connection() as conn:
         cur = conn.cursor()
         query = """ UPDATE dieta.ricetta SET nome_ricetta = upper(%s), 
@@ -602,11 +603,12 @@ def salva_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno
                                              colazione_sec = %s, 
                                              spuntino = %s, 
                                              principale = %s, 
-                                             contorno = %s 
+                                             contorno = %s,
+                                             pane = %s
                     WHERE id = %s 
                       and user_id = %s """
 
-        params = (nome, colazione, colazione_sec, spuntino, principale, contorno, ricetta_id, user_id)
+        params = (nome, colazione, colazione_sec, spuntino, principale, contorno, pane, ricetta_id, user_id)
 
         # Stampa la query con parametri
         printer(cur.mogrify(query, params).decode('utf-8'))
@@ -718,13 +720,13 @@ def salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, defic
         conn.commit()
 
 
-def salva_nuova_ricetta(name, breakfast, snack, main, side, second_breakfast, user_id):
+def salva_nuova_ricetta(name, breakfast, snack, main, side, second_breakfast, pane, user_id):
     with get_db_connection() as conn:
         cur = conn.cursor()
-        query = """INSERT INTO dieta.ricetta (nome_ricetta, colazione, spuntino, principale, contorno, colazione_sec, user_id) 
-                 VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id"""
+        query = """INSERT INTO dieta.ricetta (nome_ricetta, colazione, spuntino, principale, contorno, colazione_sec, pane, user_id) 
+                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id"""
 
-        params = (name.upper(), breakfast, snack, main, side, second_breakfast, user_id)
+        params = (name.upper(), breakfast, snack, main, side, second_breakfast, pane, user_id)
 
         # Stampa la query con parametri
         printer(cur.mogrify(query, params).decode('utf-8'))
@@ -1033,8 +1035,8 @@ def copia_alimenti_ricette(user_id, ricette_vegane, ricette_carne, ricette_pesce
         printer(cur.mogrify(query, params).decode('utf-8'))
         cur.execute(query, params)
 
-        query = """insert into dieta.ricetta(id, nome_ricetta, colazione, spuntino, principale, contorno, enabled, colazione_sec, user_id)
-                   SELECT id, nome_ricetta, colazione, spuntino, principale, contorno, false, colazione_sec, %s
+        query = """insert into dieta.ricetta(id, nome_ricetta, colazione, spuntino, principale, contorno, enabled, colazione_sec, pane, user_id)
+                   SELECT id, nome_ricetta, colazione, spuntino, principale, contorno, false, colazione_sec, pane, %s
                      FROM dieta.ricetta_base"""
         printer(cur.mogrify(query, params).decode('utf-8'))
         cur.execute(query, params)
