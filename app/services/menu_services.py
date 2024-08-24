@@ -217,7 +217,6 @@ def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=Fals
 
     # Esecuzione della query
     results = query.distinct().all()
-    print(results)
     # Conversione dei risultati in una lista di dizionari serializzabili in JSON
     ricette = []
     for row in results:
@@ -492,7 +491,6 @@ def get_settimana(macronutrienti: Utente):
 
 
 def aggiorna_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, pane, ricetta_id, user_id):
-
     ricetta = Ricetta.query.filter_by(id=ricetta_id, user_id=user_id).first()
     ricetta.nome_ricetta = nome.upper()
     ricetta.colazione = colazione
@@ -501,7 +499,6 @@ def aggiorna_ricetta(nome, colazione, colazione_sec, spuntino, principale, conto
     ricetta.principale = principale
     ricetta.contorno = contorno
     ricetta.pane = pane
-
     db.session.commit()
 
 def attiva_o_disattiva_ricetta(ricetta_id, user_id):

@@ -78,7 +78,6 @@ def dashboard():
     # Recupera le settimane salvate per la selezione.
     settimane_salvate = get_settimane_salvate(user_id)
 
-    print(f"menu_corrente::{menu_corrente}")
     # Genera la lista della spesa basata sul menu corrente.
     lista_spesa = stampa_lista_della_spesa(user_id, menu_corrente.get('all_food'))
 
@@ -182,7 +181,6 @@ def menu_settimana(settimana_id):
     """
     user_id = current_user.user_id
     menu_selezionato = get_menu_corrente(user_id, ids=settimana_id)
-    print(menu_selezionato)
     macronutrienti_rimanenti = calcola_macronutrienti_rimanenti(menu_selezionato)
 
     return jsonify({'menu': menu_selezionato, 'remaining_macronutrienti': macronutrienti_rimanenti})
@@ -212,7 +210,6 @@ def salva_ricetta():
     Questa funzione salva o aggiorna una ricetta nel database in base ai dati forniti dal client.
     """
     data = request.get_json()
-    print(data)
     ricetta_id = data['id']
     colazione = data['colazione']
     colazione_sec = data['colazione_sec']
@@ -470,7 +467,6 @@ def save_alimento():
     vegan = data.get('vegan')
     pesce = data.get('pesce')
     user_id = current_user.user_id
-    print(alimento_id)
     salva_alimento(alimento_id, nome, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura,
                    confezionato, vegan, pesce, user_id)
     current_app.cache.delete(f'get_all_ingredients_{user_id}')
@@ -629,14 +625,8 @@ def aggiorna_quantita_ingrediente():
                 menu_corrente['day'][day][macro] += difference
                 menu_corrente['weekly'][macro] += difference
 
-    # Stampa per il debug
-    print("Menu corrente prima dell'aggiornamento:", menu_corrente)
-
     # Salva il menu aggiornato
     update_menu_corrente(menu_corrente, week_id, user_id)
-
-    # Stampa per il debug
-    print("Menu corrente dopo l'aggiornamento:", menu_corrente)
 
     # Ricalcola i macronutrienti rimanenti
     remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente)
