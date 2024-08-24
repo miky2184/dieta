@@ -2,14 +2,13 @@ from flask_caching import Cache
 from flask import Flask, request, redirect, url_for
 from flask_login import LoginManager, current_user
 from dotenv import load_dotenv
-from app.models.models import db, UtenteAuth, Utenti
+from app.models.models import db, UtenteAuth, Utente
+from flask_sqlalchemy import SQLAlchemy
 
 def create_app():
     # Carica le variabili d'ambiente dal file .env
     load_dotenv()
-
     app = Flask(__name__, static_url_path='/static')
-
     # Configura l'applicazione
     app.config.from_object('config.Config')
 
@@ -28,7 +27,6 @@ def create_app():
     @login_manager.user_loader
     def load_user(user_id):
         return UtenteAuth.query.get(int(user_id))
-
 
     with app.app_context():
         cache.clear()

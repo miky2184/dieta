@@ -1,18 +1,24 @@
 import os
 import random
-import psycopg2.extras
-import psycopg2
-from psycopg2.extras import Json
 from datetime import datetime, timedelta
-from flask import current_app
-from app.models.database import get_db_connection
-from app.models.common import printer
 from copy import deepcopy
-from decimal import Decimal
 import re
 import math
+from app.models.models import db, Utente, Alimento, IngredientiRicetta, Ricetta, MenuSettimanale, RegistroPeso, AlimentoBase, RicettaBase, IngredientiRicettaBase
+from sqlalchemy.orm import aliased
+from sqlalchemy.sql import extract
+from sqlalchemy.dialects.postgresql import insert
+import json
+from sqlalchemy import insert, update, and_, case, func, exists, asc, String, true, false, select
 
 MAX_RETRY = int(os.getenv('MAX_RETRY'))
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        from decimal import Decimal
+        if isinstance(obj, Decimal):
+            return float(obj)  # o str(obj) se preferisci
+        return super(DecimalEncoder, self).default(obj)
 
 
 def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, ripetibile: bool,
@@ -84,10 +90,10 @@ def select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc, ri
             continue
 
         # Prendi la percentuale minima trovata, limitata al range 0.5 - 1.0
-        percentuale_effettiva = max(Decimal('0.5'), min(Decimal('1.0'), min(percentuali_possibili)))
-        percentuale_effettiva = math.floor(percentuale_effettiva * 10) / 10
+        percentuale_effettiva = max(0.5, min(1.0, min(percentuali_possibili)))
+        percentuale_effettiva = float(math.floor(percentuale_effettiva * 10) / 10)
 
-        if percentuale_effettiva >= Decimal('0.5'):  # Considera solo percentuali superiori o uguali al 50%
+        if percentuale_effettiva >= 0.5:  # Considera solo percentuali superiori o uguali al 50%
             id_selezionato = ricetta['id']
             ricetta_selezionata = next(oggetto for oggetto in ricette if oggetto['id'] == id_selezionato)
 
@@ -102,20 +108,20 @@ def select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc, ri
                     'id': ricetta_selezionata.get('id'),
                     'nome_ricetta': ricetta_selezionata.get('nome_ricetta'),
                     'ricetta': ricetta_selezionata.get('ricetta'),
-                    'kcal': float(ricetta_selezionata.get('kcal')) * percentuale_effettiva,
-                    'carboidrati': float(ricetta_selezionata.get('carboidrati')) * percentuale_effettiva,
-                    'proteine':  float(ricetta_selezionata.get('proteine')) * percentuale_effettiva,
-                    'grassi': float(ricetta_selezionata.get('grassi')) * percentuale_effettiva,
+                    'kcal': ricetta_selezionata.get('kcal') * percentuale_effettiva,
+                    'carboidrati': ricetta_selezionata.get('carboidrati') * percentuale_effettiva,
+                    'proteine':  ricetta_selezionata.get('proteine') * percentuale_effettiva,
+                    'grassi': ricetta_selezionata.get('grassi') * percentuale_effettiva,
                     }
                 mt.get('ricette').append(r)
-                day['kcal'] = float(day.get('kcal')) - r.get('kcal')
-                day['carboidrati'] = float(day.get('carboidrati')) - r.get('carboidrati')
-                day['proteine'] = float(day.get('proteine')) - r.get('proteine')
-                day['grassi'] = float(day.get('grassi')) - r.get('grassi')
-                macronutrienti_settimali['kcal'] = float(macronutrienti_settimali.get('kcal')) - r.get('kcal')
-                macronutrienti_settimali['carboidrati'] = float(macronutrienti_settimali.get('carboidrati')) - r.get('carboidrati')
-                macronutrienti_settimali['proteine'] = float(macronutrienti_settimali.get('proteine')) - r.get('proteine')
-                macronutrienti_settimali['grassi'] = float(macronutrienti_settimali.get('grassi')) - r.get('grassi')
+                day['kcal'] = day.get('kcal') - r.get('kcal')
+                day['carboidrati'] = day.get('carboidrati') - r.get('carboidrati')
+                day['proteine'] = day.get('proteine') - r.get('proteine')
+                day['grassi'] = day.get('grassi') - r.get('grassi')
+                macronutrienti_settimali['kcal'] = macronutrienti_settimali.get('kcal') - r.get('kcal')
+                macronutrienti_settimali['carboidrati'] = macronutrienti_settimali.get('carboidrati') - r.get('carboidrati')
+                macronutrienti_settimali['proteine'] = macronutrienti_settimali.get('proteine') - r.get('proteine')
+                macronutrienti_settimali['grassi'] = macronutrienti_settimali.get('grassi') - r.get('grassi')
                 found = True
                 break  # Esci dal ciclo una volta trovata una ricetta valida
 
@@ -123,82 +129,122 @@ def select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc, ri
 
 
 def check_macronutrienti(ricetta, day, weekly, controllo_macro_settimanale):
-    return ((
-            (float(day['kcal']) - float(ricetta['kcal'])) > 0 and
-            (float(day['carboidrati']) - float(ricetta['carboidrati'])) > 0 and
-            (float(day['proteine']) - float(ricetta['proteine'])) > 0 and
-            (float(day['grassi']) - float(ricetta['grassi'])) > 0
-           ) or
-           (controllo_macro_settimanale and
-            (float(weekly['kcal']) - float(ricetta['kcal'])) > 0
-            and (float(weekly['carboidrati']) - float(ricetta['carboidrati'])) > 0
-            and (float(weekly['proteine']) - float(ricetta['proteine'])) > 0
-            and (float(weekly['grassi']) - float(ricetta['grassi']) > 0)))
-
+    return (
+            float(day['kcal']) - ricetta['kcal'] > 0 and
+            float(day['carboidrati']) - ricetta['carboidrati'] > 0 and
+            float(day['proteine']) - ricetta['proteine'] > 0 and
+            float(day['grassi']) - ricetta['grassi'] > 0
+           ) or (controllo_macro_settimanale and
+            float(weekly['kcal']) - ricetta['kcal'] > 0
+            and float(weekly['carboidrati']) - ricetta['carboidrati'] > 0
+            and float(weekly['proteine']) - ricetta['proteine'] > 0
+            and float(weekly['grassi']) - ricetta['grassi'] > 0)
 
 
 def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=False):
     """
     Carica tutte le ricette disponibili dal database in memoria.
     """
-    and_attive = ""
-    and_ids = ""
-    and_stagionalita = ""
+    # Alias per le tabelle
+    ir = aliased(IngredientiRicetta)
+    a = aliased(Alimento)
+
+    # Subquery per calcolare 'ricetta'
+    ricetta_subquery = (
+        db.session.query(
+            func.string_agg(a.nome + ': ' + func.cast(ir.qta, String) + 'g', ', ')
+        )
+        .join(ir, ir.id_alimento == a.id)  # Join condizionato correttamente
+        .filter(ir.id_ricetta == Ricetta.id, ir.user_id == a.user_id)
+        .correlate(Ricetta)  # Correggere la correlazione automatica
+        .label('ricetta')
+    )
+
+    # Base query
+    query = db.session.query(
+        Ricetta.user_id,
+        Ricetta.id,
+        Ricetta.nome_ricetta,
+        func.ceil(func.sum(
+            (a.carboidrati / 100 * ir.qta * 4) +
+            (a.proteine / 100 * ir.qta * 4) +
+            (a.grassi / 100 * ir.qta * 9)
+        ).over(partition_by=Ricetta.id)).label('kcal'),
+        func.round(func.sum(a.carboidrati / 100 * ir.qta).over(partition_by=Ricetta.id), 2).label('carboidrati'),
+        func.round(func.sum(a.proteine / 100 * ir.qta).over(partition_by=Ricetta.id), 2).label('proteine'),
+        func.round(func.sum(a.grassi / 100 * ir.qta).over(partition_by=Ricetta.id), 2).label('grassi'),
+        Ricetta.colazione,
+        Ricetta.spuntino,
+        Ricetta.principale,
+        Ricetta.contorno,
+        Ricetta.colazione_sec,
+        Ricetta.pane,
+        Ricetta.enabled.label('attiva'),
+        func.coalesce(ricetta_subquery, '').label('ricetta')
+    ).outerjoin(
+        ir, (ir.id_ricetta == Ricetta.id) & (ir.user_id == Ricetta.user_id)
+    ).outerjoin(
+        a, (ir.id_alimento == a.id) & (ir.user_id == a.user_id)
+    ).filter(
+        Ricetta.user_id == user_id
+    )
+
+    # Applicazione dei filtri
     if stagionalita:
-        and_stagionalita = " AND (frutta AND extract(month FROM current_date) = ANY(stagionalita) OR NOT frutta)"
+        query = query.filter(
+            (a.frutta & (extract('month', func.current_date()) == func.any(a.stagionalita))) | (~a.frutta)
+        )
 
     if ids:
-        and_ids = f" AND r.id = {ids}"
+        query = query.filter(Ricetta.id == ids)
 
     if attive:
-        and_attive = " AND r.enabled"
+        query = query.filter(Ricetta.enabled.is_(True))
 
-    with get_db_connection() as conn:
-        cur = conn.cursor()
-        query = f"""
-            SELECT distinct
-    r.user_id,
-    r.id, 
-    r.nome_ricetta,
-    CEIL(SUM((carboidrati/100 * qta * 4) + 
-             (proteine/100 * qta * 4) + 
-             (grassi/100 * qta * 9)) OVER (PARTITION BY r.id)) AS kcal,
-    ROUND(SUM(carboidrati/100 * qta) OVER (PARTITION BY r.id), 2) AS carboidrati,
-    ROUND(SUM(proteine/100 * qta) OVER (PARTITION BY r.id), 2) AS proteine,
-    ROUND(SUM(grassi/100 * qta) OVER (PARTITION BY r.id), 2) AS grassi,
-    r.colazione, 
-    r.spuntino, 
-    r.principale, 
-    r.contorno, 
-    r.colazione_sec,
-    r.pane,
-    r.enabled AS attiva,
-    COALESCE(i.ricetta, '') AS ricetta
-FROM dieta.ricetta r
-LEFT JOIN (
-    SELECT 
-        ir.id_ricetta, 
-        string_agg(a.nome || ': ' || ir.qta || 'g', ', ') AS ricetta
-    FROM dieta.ingredienti_ricetta ir
-    LEFT JOIN dieta.alimento a ON ir.id_alimento = a.id AND ir.user_id = a.user_id
-    where ir.user_id = %s
-    GROUP BY ir.id_ricetta
-) i ON r.id = i.id_ricetta
-LEFT JOIN dieta.ingredienti_ricetta ir ON ir.id_ricetta = r.id and ir.user_id = r.user_id
-LEFT JOIN dieta.alimento a ON ir.id_alimento = a.id and ir.user_id = a.user_id
-where 1=1
-and r.user_id = %s {and_stagionalita} {and_ids} {and_attive}
-GROUP BY r.user_id, r.id, r.nome_ricetta,carboidrati, proteine, grassi, qta, r.colazione, r.spuntino, r.principale, r.contorno, r.colazione_sec, r.pane, r.enabled, i.ricetta
- order by enabled desc, r.nome_ricetta
+    # Raggruppamento e ordinamento
+    query = query.group_by(
+        Ricetta.user_id,
+        Ricetta.id,
+        Ricetta.nome_ricetta,
+        a.carboidrati,
+        a.proteine,
+        a.grassi,
+        ir.qta,
+        Ricetta.colazione,
+        Ricetta.spuntino,
+        Ricetta.principale,
+        Ricetta.contorno,
+        Ricetta.colazione_sec,
+        Ricetta.pane,
+        Ricetta.enabled
+    ).order_by(
+        Ricetta.enabled.desc(),
+        Ricetta.nome_ricetta
+    )
 
-        """
-        params = (user_id,user_id)
-
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-        cur.execute(query, params)
-
-        ricette = cur.fetchall()
+    # Esecuzione della query
+    results = query.distinct().all()
+    print(results)
+    # Conversione dei risultati in una lista di dizionari serializzabili in JSON
+    ricette = []
+    for row in results:
+        ricette.append({
+            'user_id': row.user_id,
+            'id': row.id,
+            'nome_ricetta': row.nome_ricetta,
+            'kcal': float(row.kcal or 0),
+            'carboidrati': float(row.carboidrati or 0),
+            'proteine': float(row.proteine or 0),
+            'grassi': float(row.grassi or 0),
+            'colazione': row.colazione,
+            'spuntino': row.spuntino,
+            'principale': row.principale,
+            'contorno': row.contorno,
+            'colazione_sec': row.colazione_sec,
+            'pane': row.pane,
+            'attiva': row.attiva,
+            'ricetta': row.ricetta
+        })
 
     return ricette
 
@@ -253,21 +299,11 @@ def genera_menu(settimana, controllo_macro_settimanale, ricette) -> None:
             if controllo_macro_settimanale and numero_ricette(p, 'cena', 'pane', ricette) < 1:
                 scegli_pietanza(settimana, giorno, 'cena', 'pane', True, controllo_macro_settimanale, ricette, skip_check=controllo_macro_settimanale)
 
-def definisci_calorie_macronutrienti(user_id):
+
+def definisci_calorie_macronutrienti(user_id) -> Utente:
     """Calcola le calorie e i macronutrienti giornalieri e li restituisce."""
 
-    with get_db_connection() as conn:
-        cur = conn.cursor()
-        query = """select calorie_giornaliere as kcal , carboidrati , proteine , grassi 
-                     from dieta.utenti u where id = %s """
-
-        params = (user_id,)
-
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-        cur.execute(query, params)
-
-        rows = cur.fetchone()
+    rows = Utente.query.filter_by(id=user_id).one()
 
     return rows
 
@@ -276,309 +312,154 @@ def stampa_lista_della_spesa(user_id, ids_all_food: list):
     """
     Recupera la lista della spesa basata sugli ID degli alimenti e restituisce i dati come lista di dizionari.
     """
-    lista_della_spesa = []
 
-    with get_db_connection() as conn:
-        cur = conn.cursor()
-        # Crea una tabella temporanea per l'elaborazione
-        query = """
-            CREATE TEMP TABLE IF NOT EXISTS temp_ricetta_id (
-                id_ricetta BIGINT NOT NULL
-            ) ON COMMIT DROP;
-            """
+    # Alias per le tabelle
+    ir = aliased(IngredientiRicetta)
+    a = aliased(Alimento)
 
-        params = ()
+    # Costruisci la query con SQLAlchemy
+    results = (
+        db.session.query(
+            a.nome.label('alimento'),
+            func.sum(ir.qta).label('qta_totale')
+        )
+        .join(a, (ir.id_alimento == a.id) & (ir.user_id == a.user_id))
+        .filter(ir.user_id == user_id)
+        .filter(ir.id_ricetta.in_(ids_all_food))
+        .group_by(a.nome)
+        .order_by(a.nome)
+        .all()
+    )
 
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-
-        # Recupera il menu per la settimana corrente
-        cur.execute(query, params)
-
-        query = """
-            INSERT INTO temp_ricetta_id (id_ricetta)
-            VALUES %s
-        """
-
-        # Inserisci gli ID delle ricette nella tabella temporanea
-        psycopg2.extras.execute_values(cur, query, [(value,) for value in ids_all_food])
-
-        # Recupera la lista degli ingredienti e le quantità totali
-        query = """
-            SELECT a.nome AS alimento, SUM(ir.qta) AS qta_totale
-            FROM dieta.ingredienti_ricetta ir
-            JOIN dieta.alimento a ON (ir.id_alimento = a.id and ir.user_id = a.user_id)
-            JOIN temp_ricetta_id t ON (t.id_ricetta = ir.id_ricetta)
-            WHERE ir.user_id = %s
-            GROUP BY a.nome
-            ORDER BY a.nome;
-        """
-
-        params = (user_id, )
-
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-
-        # Recupera il menu per la settimana corrente
-        cur.execute(query, params)
-
-        rows = cur.fetchall()
-
-        conn.commit()
-
-        for row in rows:
-            lista_della_spesa.append({
-                'alimento': row['alimento'],
-                'qta_totale': int(row['qta_totale'])
-            })
+    # Trasforma i risultati in una lista di dizionari
+    lista_della_spesa = [
+        {'alimento': result.alimento, 'qta_totale': int(result.qta_totale)}
+        for result in results
+    ]
 
     return lista_della_spesa
 
 
-def convert_decimal_to_float(data):
-    """
-    Convert all Decimal instances in a data structure to float.
-    Works recursively on dictionaries and lists.
-    """
-    if isinstance(data, dict):
-        return {k: convert_decimal_to_float(v) for k, v in data.items()}
-    elif isinstance(data, list):
-        return [convert_decimal_to_float(element) for element in data]
-    elif isinstance(data, Decimal):
-        return float(data)
-    else:
-        return data
-
-
 def salva_menu_corrente(menu, user_id):
-    with get_db_connection() as conn:
-        # Esegui le operazioni con la connessione
-        cur = conn.cursor()
-        # Calcola l'inizio e la fine della prossima settimana
-        oggi = datetime.now()
-        giorni_indietro = (oggi.weekday() - 0) % 7
-        ultimo_lunedi = oggi - timedelta(days=giorni_indietro)
-        domenica_prossima = ultimo_lunedi + timedelta(days=6)
-
-        # Converti tutti i Decimals a float
-        menu_convertito = convert_decimal_to_float(menu)
-
-        # Inserisce un nuovo menu per la prossima settimana
-        query = """
-            INSERT INTO dieta.menu_settimanale (data_inizio, data_fine, menu, user_id)
-            VALUES (%s, %s, %s, %s)
-        """
-
-        params = (ultimo_lunedi.date(), domenica_prossima.date(), Json(menu_convertito), user_id,)
-
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-
-        # Recupera il menu per la settimana corrente
-        cur.execute(query, params)
-
-        conn.commit()
-
-
-def salva_menu_settimana_prossima(menu, user_id):
-    with get_db_connection() as conn:
-        # Esegui le operazioni con la connessione
-        cur = conn.cursor()
-        # Calcola l'inizio e la fine della prossima settimana
-        oggi = datetime.now()
-        lunedi_prossimo = oggi + timedelta(days=(7 - oggi.weekday()))
-        domenica_prossima = lunedi_prossimo + timedelta(days=6)
-
-        lunedi_prossimo = oggi + timedelta(days=(7 - oggi.weekday()))
-        domenica_prossima = lunedi_prossimo + timedelta(days=6)
-
-        # Converti tutti i Decimals a float
-        menu_convertito = convert_decimal_to_float(menu)
-
-        # Verifica se un menu per la prossima settimana esiste già
-        query = """ SELECT id 
-                      FROM dieta.menu_settimanale 
-                     WHERE data_inizio = %s 
-                       AND data_fine = %s
-                       and user_id = %s
-                """
-
-        params = (lunedi_prossimo.date(), domenica_prossima.date(), user_id)
-
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-
-        # Recupera il menu per la settimana corrente
-        cur.execute(query, params)
-
-        result = cur.fetchone()
-
-        if result:
-            # Aggiorna il menu esistente
-            query = """
-                UPDATE dieta.menu_settimanale
-                SET menu = %s
-                WHERE id = %s
-                  AND user_id = %s
-            """
-
-            params = (Json(menu_convertito), result[0], user_id)
-
-            # Stampa la query con parametri
-            printer(cur.mogrify(query, params).decode('utf-8'))
-
-            # Recupera il menu per la settimana corrente
-            cur.execute(query, params)
-
-        else:
-            # Inserisce un nuovo menu per la prossima settimana
-            query = """
-                INSERT INTO dieta.menu_settimanale (data_inizio, data_fine, menu, user_id)
-                VALUES (%s, %s, %s, %s)
-            """
-
-            params = (lunedi_prossimo.date(), domenica_prossima.date(), Json(menu_convertito), user_id)
-
-            # Stampa la query con parametri
-            printer(cur.mogrify(query, params).decode('utf-8'))
-
-            # Recupera il menu per la settimana corrente
-            cur.execute(query, params)
-
-        conn.commit()
-
-
-def get_menu_corrente(user_id, ids=None):
-    menu_corrente = None
-    where_cond = "and %s between data_inizio AND data_fine "
+    # Calcola l'inizio e la fine della prossima settimana
     oggi = datetime.now()
-    params = (user_id, oggi.date())
+    giorni_indietro = (oggi.weekday() - 0) % 7
+    ultimo_lunedi = oggi - timedelta(days=giorni_indietro)
+    domenica_prossima = ultimo_lunedi + timedelta(days=6)
+
+    # Inserisce un nuovo menu per la prossima settimana
+    new_menu_settimanale = MenuSettimanale(
+        data_inizio=ultimo_lunedi.date(),
+        data_fine=domenica_prossima.date(),
+        menu=menu,
+        user_id=user_id
+    )
+
+    db.session.add(new_menu_settimanale)
+    db.session.commit()
+
+
+def salva_menu_settimana_prossima(menu: dict, user_id: int):
+    # Calcola l'inizio e la fine della prossima settimana
+    oggi = datetime.now()
+    lunedi_prossimo = oggi + timedelta(days=(7 - oggi.weekday()))
+    domenica_prossima = lunedi_prossimo + timedelta(days=6)
+
+    # Converti il menu in JSON
+    menu_json = menu  # Usare json.dumps per serializzare il dict in JSON
+
+    # Verifica se un menu per la prossima settimana esiste già
+    existing_menu = MenuSettimanale.query.filter_by(data_inizio=lunedi_prossimo.date(),
+        data_fine=domenica_prossima.date(),
+        user_id=user_id).first()
+
+    if existing_menu:
+        # Aggiorna il menu esistente
+        existing_menu.menu = menu_json
+        db.session.commit()
+    else:
+        # Inserisce un nuovo menu per la prossima settimana
+        nuovo_menu = MenuSettimanale(
+            data_inizio=lunedi_prossimo.date(),
+            data_fine=domenica_prossima.date(),
+            menu=menu_json,
+            user_id=user_id
+        )
+        db.session.add(nuovo_menu)
+        # Commit delle modifiche
+        db.session.commit()
+
+def get_menu_corrente(user_id: int, ids: int = None):
+    oggi = datetime.now().date()
+
+    query = db.session.query(MenuSettimanale.menu).filter_by(user_id=user_id)
 
     if ids:
-        where_cond = "and id = %s"
-        params = (user_id, ids,)
+        query = query.filter(MenuSettimanale.id == ids)
+    else:
+        query = query.filter(and_(MenuSettimanale.data_inizio <= oggi, MenuSettimanale.data_fine >= oggi))
 
-    with get_db_connection() as conn:
-        # Esegui le operazioni con la connessione
-        cur = conn.cursor()
+    result = query.first()
 
-        query = f"""
-            SELECT menu 
-              FROM dieta.menu_settimanale
-             WHERE user_id = %s {where_cond}
-        """
-
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-
-        # Recupera il menu per la settimana corrente
-        cur.execute(query, params)
-        result = cur.fetchone()
-
-        if result:
-            menu_corrente = result['menu']
-
-    return menu_corrente
+    if result:
+        return result.menu
+    else:
+        return None
 
 
 def get_menu_settima_prossima(user_id):
-    with get_db_connection() as conn:
-        # Esegui le operazioni con la connessione
-        cur = conn.cursor()
-        # Calcola l'inizio e la fine della prossima settimana
-        oggi = datetime.now()
-        lunedi_prossimo = oggi + timedelta(days=(7 - oggi.weekday()))
-        domenica_prossima = lunedi_prossimo + timedelta(days=6)
+    # Calcola l'inizio e la fine della prossima settimana
+    oggi = datetime.now()
+    lunedi_prossimo = oggi + timedelta(days=(7 - oggi.weekday()))
+    domenica_prossima = lunedi_prossimo + timedelta(days=6)
 
-        query = """
-            SELECT id 
-              FROM dieta.menu_settimanale 
-             WHERE data_inizio = %s AND data_fine = %s
-               and user_id = %s
-        """
+    menu_settimanale = db.session.query(MenuSettimanale.id).filter(
+        MenuSettimanale.data_inizio == lunedi_prossimo.date(),
+        MenuSettimanale.data_fine == domenica_prossima.date(),
+        MenuSettimanale.user_id == user_id
+    ).first()
 
-        params = (lunedi_prossimo.date(), domenica_prossima.date(), user_id)
-
-        # Verifica se un menu per la prossima settimana esiste già
-        cur.execute(query, params)
-        result = cur.fetchone()
-
-        if result:
-            return True
-
-    return False
-
+    return menu_settimanale is not None
 
 def get_settimane_salvate(user_id):
-    with get_db_connection() as conn:
-        oggi = datetime.now()
+    # Ottieni la data odierna
+    oggi = datetime.now().date()
 
-        # Esegui le operazioni con la connessione
-        cur = conn.cursor()
-        query = """
-            SELECT id, data_inizio, data_fine 
-              FROM dieta.menu_settimanale
-              WHERE data_fine >= %s
-               and user_id = %s
-             ORDER BY data_inizio ASC
-        """
-
-        params = (oggi.date(), user_id)
-
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-        cur.execute(query, params)
-
-        settimane = cur.fetchall()
+    settimane = db.session.query(MenuSettimanale).order_by(MenuSettimanale.data_inizio.asc()).filter(MenuSettimanale.data_fine >= oggi,
+        MenuSettimanale.user_id == user_id).all()
 
     return settimane
 
-
 def save_weight(date, weight, user_id):
-    # Qui va il codice per salvare i dati nel database
-    with get_db_connection() as conn:
-        # Esegui le operazioni con la connessione
-        cur = conn.cursor()
 
-        query = """
-            INSERT INTO dieta.registro_peso (data_rilevazione, peso, user_id)
-            VALUES (%s, %s, %s)
-            ON CONFLICT (data_rilevazione, user_id) 
-            DO UPDATE SET peso = EXCLUDED.peso;
-        """
 
-        params = (date, weight, user_id)
+    registro_peso = RegistroPeso.query.filter_by(data_rilevazione=date,user_id=user_id).first()
 
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-        cur.execute(query, params)
+    if registro_peso:
+        registro_peso.peso = weight
+    else:
+        registro_peso = RegistroPeso(
+            data_rilevazione=date,
+            peso=weight,
+            user_id=user_id
+        )
 
-        conn.commit()
+    db.session.add(registro_peso)
+    db.session.commit()
 
-        return get_peso_hist(user_id)
+    # Richiama la funzione per ottenere lo storico del peso
+    peso_hist = get_peso_hist(user_id)
+
+    return peso_hist
 
 
 def get_peso_hist(user_id):
-    with get_db_connection() as conn:
-        # Esegui le operazioni con la connessione
-        cur = conn.cursor()
-        query = """select data_rilevazione as date, peso as weight 
-                                 from dieta.registro_peso 
-                                 where user_id = %s
-                             order by data_rilevazione"""
-
-        params = (user_id,)
-
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-        cur.execute(query, params)
-
-        peso = cur.fetchall()
-
-        return peso
+    results = RegistroPeso.query.filter_by(user_id=user_id).order_by(asc(RegistroPeso.data_rilevazione)).all()
+    peso = [record.to_dict() for record in results]
+    return peso
 
 
-def get_settimana(macronutrienti):
+def get_settimana(macronutrienti: Utente):
     ricetta = {'ids': [], 'ricette': []}
 
     pasto = {'colazione': deepcopy(ricetta),
@@ -589,18 +470,18 @@ def get_settimana(macronutrienti):
              }
 
     macronutrienti_giornalieri = {
-        'carboidrati': Decimal(macronutrienti['carboidrati']),
-        'proteine': Decimal(macronutrienti['proteine']),
-        'grassi': Decimal(macronutrienti['grassi']),
-        'kcal': Decimal(macronutrienti['kcal']),
+        'carboidrati': float(macronutrienti.carboidrati),
+        'proteine': float(macronutrienti.proteine),
+        'grassi': float(macronutrienti.grassi),
+        'kcal': float(macronutrienti.calorie_giornaliere),
         'pasto': deepcopy(pasto)
     }
 
     macronutrienti_settimali = {
-        'carboidrati': Decimal(macronutrienti['carboidrati']) * 7,
-        'proteine': Decimal(macronutrienti['proteine']) * 7,
-        'grassi': Decimal(macronutrienti['grassi']) * 7,
-        'kcal': Decimal(macronutrienti['kcal']) * 7
+        'carboidrati': float(macronutrienti.carboidrati) * 7,
+        'proteine': float(macronutrienti.proteine) * 7,
+        'grassi': float(macronutrienti.grassi) * 7,
+        'kcal': float(macronutrienti.calorie_giornaliere) * 7
     }
 
     return {'weekly': macronutrienti_settimali,
@@ -617,217 +498,151 @@ def get_settimana(macronutrienti):
             }
 
 
-def salva_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, pane, ricetta_id, user_id):
-    with get_db_connection() as conn:
-        cur = conn.cursor()
-        query = """ UPDATE dieta.ricetta SET nome_ricetta = upper(%s), 
-                                             colazione = %s, 
-                                             colazione_sec = %s, 
-                                             spuntino = %s, 
-                                             principale = %s, 
-                                             contorno = %s,
-                                             pane = %s
-                    WHERE id = %s 
-                      and user_id = %s """
+def aggiorna_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, pane, ricetta_id, user_id):
 
-        params = (nome, colazione, colazione_sec, spuntino, principale, contorno, pane, ricetta_id, user_id)
+    ricetta = Ricetta.query.filter_by(id=ricetta_id, user_id=user_id).first()
+    ricetta.nome_ricetta = nome.upper()
+    ricetta.colazione = colazione
+    ricetta.colazione_sec = colazione_sec
+    ricetta.spuntino = spuntino
+    ricetta.principale = principale
+    ricetta.contorno = contorno
+    ricetta.pane = pane
 
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-        cur.execute(query, params)
-
-        conn.commit()
-
+    db.session.commit()
 
 def attiva_o_disattiva_ricetta(ricetta_id, user_id):
-    with get_db_connection() as conn:
-        cur = conn.cursor()
-        query = """UPDATE dieta.ricetta 
-                      SET enabled = not enabled 
-                    WHERE id = %s 
-                      AND user_id = %s"""
+    ricetta = Ricetta.query.filter_by(id=ricetta_id, user_id=user_id).first()
+    ricetta.enabled = not ricetta.enabled
 
-        params = (ricetta_id, user_id)
-
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-        cur.execute(query, params)
-
-        conn.commit()
+    db.session.commit()
 
 
 def get_ricette(recipe_id, user_id):
-    with get_db_connection() as conn:
-        cur = conn.cursor()
-        query = """SELECT a.id, a.nome, qta, ir.id_ricetta 
-                     FROM      dieta.ingredienti_ricetta ir 
-                          JOIN dieta.alimento a ON (ir.id_alimento = a.id AND ir.user_id = a.user_id) 
-                    WHERE ir.id_ricetta = %s
-                      AND ir.user_id = %s"""
+    results = db.session.query(IngredientiRicetta).filter(IngredientiRicetta.id_ricetta == recipe_id, IngredientiRicetta.user_id == user_id).all()
+    r = []
+    for res in results:
+        r.append({
+            "id": res.alimento.id,
+            "nome": res.alimento.nome,
+            "qta": res.qta,
+            "id_ricetta": res.id_ricetta
+        })
 
-        params = (recipe_id, user_id)
-
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-        cur.execute(query, params)
-
-        ricette = cur.fetchall()
-
-    return ricette
+    return r
 
 
-def elimina_ingredienti(ingredient_id, recipe_id, user_id):
-    with get_db_connection() as conn:
-        cur = conn.cursor()
-        query = """DELETE 
-                     FROM dieta.ingredienti_ricetta 
-                    WHERE id_alimento = %s 
-                      AND id_ricetta = %s 
-                      AND user_id = %s"""
+def elimina_ingredienti(ingredient_id: int, recipe_id: int, user_id: int):
+    # Esegui la query di eliminazione utilizzando SQLAlchemy ORM
+    db.session.query(IngredientiRicetta).filter(
+        IngredientiRicetta.id_alimento == ingredient_id,
+        IngredientiRicetta.id_ricetta == recipe_id,
+        IngredientiRicetta.user_id == user_id
+    ).delete()
 
-        params = (ingredient_id, recipe_id, user_id)
-
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-        cur.execute(query, params)
-
-        conn.commit()
+    # Il commit avviene automaticamente se il sessionmaker è configurato con autocommit=True
+    db.session.commit()
 
 
 def salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
                        meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, carboidrati,
                        proteine, grassi):
-    with get_db_connection() as conn:
-        cur = conn.cursor()
 
-        query = """        
-            INSERT INTO dieta.utenti (
-                id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, 
-                peso_ideale, meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, 
-                carboidrati, proteine, grassi
-                ) VALUES (    
-                     %s, %s, %s, %s, %s,  %s,  %s,  %s,  %s,  %s, 
-                     %s,  %s,  %s,  %s,  %s, 
-                     %s,  %s,  %s
-                )
-                ON CONFLICT (id) 
-                DO UPDATE SET 
-                    nome = EXCLUDED.nome,
-                    cognome = EXCLUDED.cognome,
-                    sesso = EXCLUDED.sesso,
-                    eta = EXCLUDED.eta,
-                    altezza = EXCLUDED.altezza,
-                    peso = EXCLUDED.peso,
-                    tdee = EXCLUDED.tdee,
-                    deficit_calorico = EXCLUDED.deficit_calorico,
-                    bmi = EXCLUDED.bmi,
-                    peso_ideale = EXCLUDED.peso_ideale,
-                    meta_basale = EXCLUDED.meta_basale,
-                    meta_giornaliero = EXCLUDED.meta_giornaliero,
-                    calorie_giornaliere = EXCLUDED.calorie_giornaliere,
-                    calorie_settimanali = EXCLUDED.calorie_settimanali,
-                    carboidrati = EXCLUDED.carboidrati,
-                    proteine = EXCLUDED.proteine,
-                    grassi = EXCLUDED.grassi           
-            """
-        params = (
-        id, nome.upper(), cognome.upper(), sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
-        meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, carboidrati,
-        proteine, grassi)
+    utente = Utente.query.filter_by(id=id).first()
 
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
+    if not utente:
+        utente = Utente(
+            nome=nome,
+            cognome=cognome,
+            sesso=sesso,
+            eta=eta,
+            peso=peso,
+            tdee=tdee,
+            deficit_calorico=deficit_calorico,
+            bmi=bmi,
+            peso_ideale=peso_ideale,
+            meta_basale=meta_basale,
+            meta_giornaliero=meta_giornaliero,
+            calorie_giornaliere=calorie_giornaliere,
+            calorie_settimanali=calorie_settimanali,
+            carboidrati=carboidrati,
+            proteine=proteine,
+            grassi=grassi
+        )
+    else:
+        utente.nome = nome
+        utente.cognome = cognome
+        utente.sesso = sesso
+        utente.eta = eta
+        utente.peso = peso
+        utente.tdee = tdee
+        utente.deficit_calorico = deficit_calorico
+        utente.bmi = bmi
+        utente.peso_ideale = peso_ideale
+        utente.meta_basale = meta_basale
+        utente.meta_giornaliero = meta_giornaliero
+        utente.calorie_giornaliere = calorie_giornaliere
+        utente.calorie_settimanali = calorie_settimanali
+        utente.carboidrati = carboidrati
+        utente.proteine = proteine
+        utente.grassi = grassi
 
-        cur.execute(query, params)
-        conn.commit()
+    db.session.add(utente)
+    db.session.commit()
 
 
 def salva_nuova_ricetta(name, breakfast, snack, main, side, second_breakfast, pane, user_id):
-    with get_db_connection() as conn:
-        cur = conn.cursor()
-        query = """INSERT INTO dieta.ricetta (nome_ricetta, colazione, spuntino, principale, contorno, colazione_sec, pane, user_id) 
-                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id"""
 
-        params = (name.upper(), breakfast, snack, main, side, second_breakfast, pane, user_id)
+    ricetta = Ricetta(
+        id=get_sequence_value('dieta.ricetta_id_seq'),
+        nome_ricetta=name.upper(),
+        colazione=breakfast,
+        spuntino=snack,
+        principale=main,
+        contorno=side,
+        colazione_sec=second_breakfast,
+        pane=pane,
+        user_id=user_id
+    )
 
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-        cur.execute(query, params)
-
-        conn.commit()
-
+    db.session.add(ricetta)
+    db.session.commit()
 
 def salva_ingredienti(recipe_id, ingredient_id, quantity, user_id):
-    with get_db_connection() as conn:
-        cur = conn.cursor()
 
-        query = "SELECT COUNT(*) as cnt FROM dieta.ingredienti_ricetta WHERE id_ricetta = %s AND id_alimento = %s and user_id = %s"
-        params = (recipe_id, ingredient_id, user_id)
-        cur.execute(query, params)
-        count = cur.fetchone()['cnt']
+    ingredienti_ricetta = IngredientiRicetta.query.filter_by(id_ricetta=recipe_id, id_alimento=ingredient_id, user_id=user_id).first()
 
-        if count > 0:
-            # Se esiste, esegui un aggiornamento
-            query = "UPDATE dieta.ingredienti_ricetta SET qta = %s WHERE id_alimento = %s AND id_ricetta = %s AND user_id = %s"
-        else:
-            # Altrimenti, esegui un inserimento
-            query = "INSERT INTO dieta.ingredienti_ricetta (qta, id_alimento, id_ricetta, user_id) VALUES (%s, %s, %s, %s)"
-
-        params = (quantity, ingredient_id, recipe_id, user_id)
-        printer(cur.mogrify(query, params).decode('utf-8'))
-        cur.execute(query, params)
-        conn.commit()
+    if not ingredienti_ricetta:
+        ingredienti_ricetta = IngredientiRicetta(
+            id_alimento=ingredient_id,
+            id_ricetta=recipe_id,
+            user_id=user_id,
+            qta=quantity
+        )
+    else:
+        ingredienti_ricetta.id_alimento = ingredient_id
+        ingredienti_ricetta.id_ricetta = recipe_id
+        ingredienti_ricetta.user_id = user_id
+        ingredienti_ricetta.qta = quantity
 
 
-def recupera_ingredienti(user_id):
-    with get_db_connection() as conn:
-        cur = conn.cursor()
-        query = """SELECT id, nome 
-                     FROM dieta.alimento 
-                    WHERE user_id = %s
-                    ORDER BY nome;"""
-
-        params = (user_id, )
-
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-        cur.execute(query, params)
-
-        foods = cur.fetchall()
-
-    return foods
+    db.session.add(ingredienti_ricetta)
+    db.session.commit()
 
 
 def get_dati_utente(user_id):
-    with get_db_connection() as conn:
-        cur = conn.cursor()
-        query = """
-                SELECT id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, 
-                peso_ideale, meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, 
-                carboidrati, proteine, grassi, email
-                FROM dieta.utenti
-                where id = %s;
-            """
-
-        params = (user_id,)
-
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-        cur.execute(query, params)
-
-        row = cur.fetchone()
-
-    return row
+    results = Utente.query.filter_by(id=user_id).first()
+    return results.to_dict()
 
 
-def calcola_macronutrienti_rimanenti(menu):
+def calcola_macronutrienti_rimanenti(menu: json):
     remaining_macronutrienti = {}
     if menu:
         for giorno, dati_giorno in menu['day'].items():
-            remaining_kcal = round(float(dati_giorno['kcal']),2)
-            remaining_carboidrati = round(float(dati_giorno['carboidrati']),2)
-            remaining_proteine = round(float(dati_giorno['proteine']),2)
-            remaining_grassi = round(float(dati_giorno['grassi']),2)
+            remaining_kcal = round(dati_giorno['kcal'],2)
+            remaining_carboidrati = round(dati_giorno['carboidrati'],2)
+            remaining_proteine = round(dati_giorno['proteine'],2)
+            remaining_grassi = round(dati_giorno['grassi'],2)
 
             remaining_macronutrienti[giorno] = {
                 'kcal': remaining_kcal,
@@ -839,96 +654,111 @@ def calcola_macronutrienti_rimanenti(menu):
 
 
 def carica_alimenti(user_id):
-    with get_db_connection() as conn:
-        cur = conn.cursor()
-        query = """SELECT id, nome, carboidrati, proteine, grassi, kcal, macro, frutta, 
-                          carne_bianca, carne_rossa, pane, stagionalita, verdura, 
-                          confezionato, vegan, pesce, user_id
-                     FROM dieta.alimento
-                     where user_id = %s 
-                    ORDER BY nome;"""
-        params = (user_id,)
 
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-        cur.execute(query, params)
-
-        alimenti = cur.fetchall()
+    results = Alimento.query.filter_by(user_id=user_id).order_by(Alimento.nome).all()
+    alimenti = [record.to_dict() for record in results]
     return alimenti
 
 
 def salva_alimento(id, nome, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura, confezionato, vegan, pesce, user_id):
-    with get_db_connection() as conn:
-        cur = conn.cursor()
-        if id:
-            query = """
-                UPDATE dieta.alimento
-                SET nome = %s, carboidrati = %s, proteine = %s, grassi = %s, frutta = %s, carne_bianca = %s,
-                    carne_rossa = %s, pane = %s, verdura = %s, confezionato = %s, vegan = %s, pesce = %s
-                WHERE id = %s
-                  AND user_id = %s
-            """
-            params = (nome, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura, confezionato, vegan, pesce, id, user_id)
-        else:
-            query = """
-                INSERT INTO dieta.alimento (nome, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, 
-                                            pane, verdura, confezionato, vegan, pesce, user_id)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """
-            params = (nome, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura, confezionato, vegan, pesce, user_id)
+    alimento = Alimento.query.filter_by(id=id, user_id=user_id).first()
+    if not alimento:
+        alimento = Alimento(
+            nome=nome.upper(),
+            carboidrati=carboidrati,
+            proteine=proteine,
+            grassi=grassi,
+            frutta=frutta,
+            carne_bianca=carne_bianca,
+            carne_rossa=carne_rossa,
+            pane=pane,
+            verdura=verdura,
+            confezionato=confezionato,
+            vegan=vegan,
+            pesce=pesce,
+            user_id=user_id
+        )
+        db.session.add(alimento)
+    else:
+        alimento.nome = nome.upper()
+        alimento.carboidrati = carboidrati
+        alimento.proteine = proteine
+        alimento.grassi = grassi
+        alimento.frutta = frutta
+        alimento.carne_bianca = carne_bianca
+        alimento.carne_rossa = carne_rossa
+        alimento.pane = pane
+        alimento.verdura = verdura
+        alimento.confezionato = confezionato
+        alimento.vegan = vegan
+        alimento.pesce = pesce
 
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-        cur.execute(query, params)
-        conn.commit()
+    db.session.commit()
 
 
 def elimina_alimento(alimento_id, user_id):
-    with get_db_connection() as conn:
-        cur = conn.cursor()
-        query = """DELETE 
-                     FROM dieta.alimento 
-                    WHERE id = %s 
-                    AND user_id = %s"""
+    Alimento.query.filter_by(id=alimento_id, user_id=user_id).delete()
+    db.session.commit()
 
-        params = (alimento_id, user_id,)
 
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-        cur.execute(query, params)
-        conn.commit()
+def get_sequence_value(seq_name):
+
+    # Creare una query per ottenere il valore successivo dalla sequenza
+    nextval_query = select(func.nextval(seq_name))
+
+    # Eseguire la query con il metodo session.execute()
+    result = db.session.execute(nextval_query)
+
+    # Estrarre il valore dal risultato
+    nextval = result.scalar()
+
+    return nextval
 
 
 def salva_nuovo_alimento(name, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura, confezionato, vegan, pesce, user_id):
-    with get_db_connection() as conn:
-        cur = conn.cursor()
-        query = """INSERT INTO dieta.alimento (nome, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura, confezionato, vegan, pesce, user_id) 
-                        VALUES (upper(%s), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id"""
 
-        params = (name, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura, confezionato, vegan, pesce, user_id)
+    alimento = Alimento(
+        id=get_sequence_value('dieta.alimento_id_seq'),
+        nome=name.upper(),
+        carboidrati=carboidrati,
+        proteine=proteine,
+        grassi=grassi,
+        frutta=frutta,
+        carne_bianca=carne_bianca,
+        carne_rossa=carne_rossa,
+        pane=pane,
+        verdura=verdura,
+        confezionato=confezionato,
+        vegan=vegan,
+        pesce=pesce,
+        user_id=user_id
+    )
 
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-        cur.execute(query, params)
+    db.session.add(alimento)
+    db.session.commit()
 
-        alimento_id = cur.fetchone()
+    alimento_id = alimento.id
 
-        if confezionato:
-            query = """INSERT INTO dieta.ricetta (nome_ricetta, user_id) VALUES (upper(%s), %s) RETURNING id"""
-            params = (name, user_id)
+    if confezionato:
+        ricetta_id = get_sequence_value('dieta.ricetta_id_seq')
+        ricetta = Ricetta(
+            id=ricetta_id,
+            nome_ricetta=name,
+            user_id=user_id
+        )
 
-            printer(cur.mogrify(query, params).decode('utf-8'))
-            cur.execute(query, params)
+        db.session.add(ricetta)
+        db.session.commit()
 
-            ricetta_id = cur.fetchone()
+        ingredienti_ricetta = IngredientiRicetta(
+            id_ricetta=ricetta_id,
+            id_alimento=alimento_id,
+            qta=100,
+            user_id=user_id
+        )
 
-            query = """INSERT INTO dieta.ingredienti_ricetta (id_ricetta, id_alimento, qta, user_id) VALUES (%s, %s, %s, %s)"""
-            params = (ricetta_id['id'], alimento_id['id'], 100, user_id)
-
-            printer(cur.mogrify(query, params).decode('utf-8'))
-            cur.execute(query, params)
-
-        conn.commit()
+        db.session.add(ingredienti_ricetta)
+        db.session.commit()
 
 
 def aggiungi_ricetta_al_menu(menu, day, meal, meal_id, user_id):
@@ -945,51 +775,32 @@ def aggiungi_ricetta_al_menu(menu, day, meal, meal_id, user_id):
     })
 
     # Aggiorna i macronutrienti per il giorno
-    menu['day'][day]['kcal'] -= float(ricetta[0]['kcal'])
-    menu['day'][day]['carboidrati'] -= float(ricetta[0]['carboidrati'])
-    menu['day'][day]['proteine'] -= float(ricetta[0]['proteine'])
-    menu['day'][day]['grassi'] -= float(ricetta[0]['grassi'])
+    menu['day'][day]['kcal'] -= ricetta[0]['kcal']
+    menu['day'][day]['carboidrati'] -= ricetta[0]['carboidrati']
+    menu['day'][day]['proteine'] -= ricetta[0]['proteine']
+    menu['day'][day]['grassi'] -= ricetta[0]['grassi']
 
     # Aggiorna i macronutrienti settimanali
-    menu['weekly']['kcal'] -= float(ricetta[0]['kcal'])
-    menu['weekly']['carboidrati'] -= float(ricetta[0]['carboidrati'])
-    menu['weekly']['proteine'] -= float(ricetta[0]['proteine'])
-    menu['weekly']['grassi'] -= float(ricetta[0]['grassi'])
+    menu['weekly']['kcal'] -= ricetta[0]['kcal']
+    menu['weekly']['carboidrati'] -= ricetta[0]['carboidrati']
+    menu['weekly']['proteine'] -= ricetta[0]['proteine']
+    menu['weekly']['grassi'] -= ricetta[0]['grassi']
 
 
 def update_menu_corrente(menu, week_id, user_id):
-    with get_db_connection() as conn:
-        # Esegui le operazioni con la connessione
-        cur = conn.cursor()
+    menu_settimanale = MenuSettimanale.query.filter_by(id=week_id, user_id=user_id).first()
+    menu_settimanale.menu = menu
+    db.session.commit()
 
-        # Converti tutti i Decimals a float
-        menu_convertito = convert_decimal_to_float(menu)
-
-        # Inserisce un nuovo menu per la prossima settimana
-        query = """
-            UPDATE dieta.menu_settimanale 
-               SET menu = %s 
-             WHERE id = %s
-               AND user_id = %s
-        """
-
-        params = (Json(menu_convertito), week_id, user_id)
-
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-
-        # Recupera il menu per la settimana corrente
-        cur.execute(query, params)
-
-        conn.commit()
 
 def remove_meal_from_menu(menu, day, meal, meal_id, user_id):
     # Trova la ricetta da rimuovere
     ricetta_da_rimuovere = None
+    qta = 0
     for ricetta in menu['day'][day]['pasto'][meal]['ricette']:
-        qta = ricetta['qta']
         if int(ricetta['id']) == int(meal_id):
             ricetta_da_rimuovere = ricetta
+            qta = ricetta['qta']
             break
 
     # Se la ricetta è trovata, rimuovila
@@ -998,40 +809,24 @@ def remove_meal_from_menu(menu, day, meal, meal_id, user_id):
 
         # Recupera i valori nutrizionali della ricetta rimossa
         ricetta_valori = carica_ricette(user_id, ids=meal_id)
-
         # Aggiorna i macronutrienti per il giorno
-        menu['day'][day]['kcal'] += float(ricetta_valori[0]['kcal']) * float(qta)
-        menu['day'][day]['carboidrati'] += float(ricetta_valori[0]['carboidrati']) * float(qta)
-        menu['day'][day]['proteine'] += float(ricetta_valori[0]['proteine']) * float(qta)
-        menu['day'][day]['grassi'] += float(ricetta_valori[0]['grassi']) * float(qta)
+        menu['day'][day]['kcal'] += ricetta_valori[0]['kcal'] * qta
+        menu['day'][day]['carboidrati'] += ricetta_valori[0]['carboidrati'] * qta
+        menu['day'][day]['proteine'] += ricetta_valori[0]['proteine'] * qta
+        menu['day'][day]['grassi'] += ricetta_valori[0]['grassi'] * qta
 
         # Aggiorna i macronutrienti settimanali
-        menu['weekly']['kcal'] += float(ricetta_valori[0]['kcal']) * float(qta)
-        menu['weekly']['carboidrati'] += float(ricetta_valori[0]['carboidrati']) * float(qta)
-        menu['weekly']['proteine'] += float(ricetta_valori[0]['proteine']) * float(qta)
-        menu['weekly']['grassi'] += float(ricetta_valori[0]['grassi']) * float(qta)
+        menu['weekly']['kcal'] += ricetta_valori[0]['kcal'] * qta
+        menu['weekly']['carboidrati'] += ricetta_valori[0]['carboidrati'] * qta
+        menu['weekly']['proteine'] += ricetta_valori[0]['proteine'] * qta
+        menu['weekly']['grassi'] += ricetta_valori[0]['grassi'] * qta
 
     return menu
 
 
 def delete_week_menu(week_id, user_id):
-    with get_db_connection() as conn:
-
-        # Esegui le operazioni con la connessione
-        cur = conn.cursor()
-
-        # Inserisce un nuovo menu per la prossima settimana
-        query = """ DELETE FROM dieta.menu_settimanale 
-                     WHERE id = %s 
-                       AND user_id = %s"""
-        params = (week_id, user_id)
-
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-
-        # Recupera il menu per la settimana corrente
-        cur.execute(query, params)
-        conn.commit()
+    MenuSettimanale.query.filter_by(id=week_id, user_id=user_id).delete()
+    db.session.commit()
 
 
 def is_valid_email(email):
@@ -1045,97 +840,168 @@ def is_valid_email(email):
         return False
 
 
-def copia_alimenti_ricette(user_id, ricette_vegane, ricette_carne, ricette_pesce):
-    with get_db_connection() as conn:
-        cur = conn.cursor()
+def copia_alimenti_ricette(user_id: int, ricette_vegane: bool, ricette_carne: bool, ricette_pesce: bool):
+    # 1. Copia dati dalla tabella alimento_base a alimento
+    subquery_alimento = db.session.query(
+        AlimentoBase.id,
+        AlimentoBase.nome,
+        AlimentoBase.carboidrati,
+        AlimentoBase.proteine,
+        AlimentoBase.grassi,
+        AlimentoBase.frutta,
+        AlimentoBase.carne_bianca,
+        AlimentoBase.carne_rossa,
+        AlimentoBase.pane,
+        AlimentoBase.stagionalita,
+        AlimentoBase.verdura,
+        AlimentoBase.confezionato,
+        AlimentoBase.vegan,
+        AlimentoBase.pesce,
+        user_id
+    ).distinct()
 
-        params = (int(user_id),)
+    db.session.execute(
+        insert(Alimento).from_select(
+            [
+                Alimento.id,
+                Alimento.nome,
+                Alimento.carboidrati,
+                Alimento.proteine,
+                Alimento.grassi,
+                Alimento.frutta,
+                Alimento.carne_bianca,
+                Alimento.carne_rossa,
+                Alimento.pane,
+                Alimento.stagionalita,
+                Alimento.verdura,
+                Alimento.confezionato,
+                Alimento.vegan,
+                Alimento.pesce,
+                Alimento.user_id
+            ],
+            subquery_alimento
+        )
+    )
 
-        query = """insert into dieta.alimento(id, nome, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, stagionalita, verdura, confezionato, vegan, pesce, user_id)
-                    SELECT distinct id, nome, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, stagionalita, verdura, confezionato, vegan, pesce, %s
-                    FROM dieta.alimento_base"""
-        printer(cur.mogrify(query, params).decode('utf-8'))
-        cur.execute(query, params)
+    # 2. Copia dati dalla tabella ricetta_base a ricetta
+    subquery_ricetta = db.session.query(
+        RicettaBase.id,
+        RicettaBase.nome_ricetta,
+        RicettaBase.colazione,
+        RicettaBase.spuntino,
+        RicettaBase.principale,
+        RicettaBase.contorno,
+        false(),  # Set enabled to False
+        RicettaBase.colazione_sec,
+        RicettaBase.pane,
+        user_id
+    )
 
-        query = """insert into dieta.ricetta(id, nome_ricetta, colazione, spuntino, principale, contorno, enabled, colazione_sec, pane, user_id)
-                   SELECT id, nome_ricetta, colazione, spuntino, principale, contorno, false as enabled, colazione_sec, pane, %s as user_id
-                     FROM dieta.ricetta_base"""
-        printer(cur.mogrify(query, params).decode('utf-8'))
-        cur.execute(query, params)
+    db.session.execute(
+        insert(Ricetta).from_select(
+            [
+                Ricetta.id,
+                Ricetta.nome_ricetta,
+                Ricetta.colazione,
+                Ricetta.spuntino,
+                Ricetta.principale,
+                Ricetta.contorno,
+                Ricetta.enabled,
+                Ricetta.colazione_sec,
+                Ricetta.pane,
+                Ricetta.user_id
+            ],
+            subquery_ricetta
+        )
+    )
 
-        query = """ insert into dieta.ingredienti_ricetta (id_ricetta, id_alimento, qta, user_id)
-                    SELECT id_ricetta, id_alimento, qta, %s as user_id
-                      FROM dieta.ingredienti_ricetta_base"""
-        printer(cur.mogrify(query, params).decode('utf-8'))
-        cur.execute(query, params)
+    # 3. Copia dati dalla tabella ingredienti_ricetta_base a ingredienti_ricetta
+    subquery_ingredienti = db.session.query(
+        IngredientiRicettaBase.id_ricetta,
+        IngredientiRicettaBase.id_alimento,
+        IngredientiRicettaBase.qta,
+        user_id
+    )
 
-        if ricette_vegane:
-            query = """WITH ricette_vegane AS (SELECT distinct r.id
-                                                 FROM dieta.ricetta_base r
-                                                JOIN dieta.ingredienti_ricetta_base ir ON r.id = ir.id_ricetta 
-                                                JOIN dieta.alimento_base a ON ir.id_alimento = a.id
-                                                GROUP BY r.id, r.nome_ricetta
-                                                HAVING COUNT(*) = SUM(CASE WHEN a.vegan = true THEN 1 ELSE 0 END)
-                                                ) 
-                    update dieta.ricetta r set enabled = true
-                      from ricette_vegane rv
-                      where rv.id = r.id
-                        and r.user_id = %s"""
-        else:
-            if ricette_carne and ricette_pesce:
-                query = """update dieta.ricetta r set enabled = true
-                            where r.user_id = %s"""
+    db.session.execute(
+        insert(IngredientiRicetta).from_select(
+            [
+                IngredientiRicetta.id_ricetta,
+                IngredientiRicetta.id_alimento,
+                IngredientiRicetta.qta,
+                IngredientiRicetta.user_id
+            ],
+            subquery_ingredienti
+        )
+    )
 
-            elif ricette_carne and not ricette_pesce:
-                query = """with ricette_no_pesce as (SELECT distinct r.id
-                                                    FROM dieta.ricetta_base r
-                                                    JOIN dieta.ingredienti_ricetta_base ir ON r.id = ir.id_ricetta
-                                                    JOIN dieta.alimento_base a ON ir.id_alimento = a.id
-                                                    WHERE NOT EXISTS (
-                                                        SELECT 1
-                                                        FROM dieta.ingredienti_ricetta_base ir_sub
-                                                        JOIN dieta.alimento_base a_sub ON ir_sub.id_alimento = a_sub.id
-                                                        WHERE ir_sub.id_ricetta = r.id
-                                                          and a_sub.pesce
-                                                    ))
-                            update dieta.ricetta r set enabled = true
-                              from ricette_no_pesce rv
-                              where rv.id = r.id
-                                and r.user_id = %s"""
+    # 4. Logica per l'abilitazione delle ricette vegane, con carne, o con pesce
+    if ricette_vegane:
+        subquery_ricette_vegane = db.session.query(
+            RicettaBase.id
+        ).join(
+            IngredientiRicettaBase, RicettaBase.id == IngredientiRicettaBase.id_ricetta
+        ).join(
+            AlimentoBase, IngredientiRicettaBase.id_alimento == AlimentoBase.id
+        ).group_by(
+            RicettaBase.id, RicettaBase.nome_ricetta
+        ).having(
+            func.count() == func.sum(
+                case(
+                    (AlimentoBase.vegan == true(), 1),
+                    else_=0
+                )
+            )
+        ).subquery()
 
-            elif not ricette_carne and ricette_pesce:
-                query = """with ricette_no_carne as (SELECT distinct r.id
-                                                    FROM dieta.ricetta_base r
-                                                    JOIN dieta.ingredienti_ricetta_base ir ON r.id = ir.id_ricetta
-                                                    JOIN dieta.alimento_base a ON ir.id_alimento = a.id
-                                                    WHERE NOT EXISTS (
-                                                        SELECT 1
-                                                        FROM dieta.ingredienti_ricetta_base ir_sub
-                                                        JOIN dieta.alimento_base a_sub ON ir_sub.id_alimento = a_sub.id
-                                                        WHERE ir_sub.id_ricetta = r.id
-                                                          AND (a_sub.carne_bianca OR a_sub.carne_rossa )
-                                                    ))
-                            update dieta.ricetta r set enabled = true
-                              from ricette_no_carne rv
-                              where rv.id = r.id
-                                and r.user_id = %s"""
+        db.session.execute(
+            update(Ricetta).where(
+                and_(Ricetta.id.in_(subquery_ricette_vegane), Ricetta.user_id == user_id)
+            ).values(enabled=True)
+        )
+    else:
+        if ricette_carne and ricette_pesce:
+            db.session.execute(
+                update(Ricetta).where(
+                    Ricetta.user_id == user_id
+                ).values(enabled=True)
+            )
+        elif ricette_carne and not ricette_pesce:
+            subquery_no_pesce = db.session.query(
+                RicettaBase.id
+            ).filter(~exists().where(
+                and_(
+                    IngredientiRicettaBase.id_ricetta == RicettaBase.id,
+                    AlimentoBase.id == IngredientiRicettaBase.id_alimento,
+                    AlimentoBase.pesce == True
+                )
+            )).subquery()
 
-        printer(cur.mogrify(query, params).decode('utf-8'))
-        cur.execute(query, params)
-        conn.commit()
+            db.session.execute(
+                update(Ricetta).where(
+                    and_(Ricetta.id.in_(subquery_no_pesce), Ricetta.user_id == user_id)
+                ).values(enabled=True)
+            )
+        elif not ricette_carne and ricette_pesce:
+            subquery_no_carne = db.session.query(
+                RicettaBase.id
+            ).filter(~exists().where(
+                and_(
+                    IngredientiRicettaBase.id_ricetta == RicettaBase.id,
+                    AlimentoBase.id == IngredientiRicettaBase.id_alimento,
+                    (AlimentoBase.carne_bianca == True) | (AlimentoBase.carne_rossa == True)
+                )
+            )).subquery()
+
+            db.session.execute(
+                update(Ricetta).where(
+                    and_(Ricetta.id.in_(subquery_no_carne), Ricetta.user_id == user_id)
+                ).values(enabled=True)
+            )
+
+    db.session.commit()
 
 
 def elimina_ricetta(ricetta_id, user_id):
-    with get_db_connection() as conn:
-        cur = conn.cursor()
-        query = """DELETE FROM dieta.ricetta                       
-                    WHERE id = %s 
-                      AND user_id = %s"""
-
-        params = (ricetta_id, user_id)
-
-        # Stampa la query con parametri
-        printer(cur.mogrify(query, params).decode('utf-8'))
-        cur.execute(query, params)
-
-        conn.commit()
+    Ricetta.query.filter_by(id=ricetta_id, user_id=user_id).delete()
+    db.session.commit()

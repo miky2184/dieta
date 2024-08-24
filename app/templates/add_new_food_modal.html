@@ -5,7 +5,7 @@
                 <h5 class="modal-title" id="addFoodModalLabel">Crea Nuovo Alimento</h5>
             </div>
             <div class="modal-body">
-                <form action="{{ url_for('views.nuovo_alimento') }}" method="POST">
+                <form id="addFoodForm">
                     <div class="input-group input-group-sm mb-3">
                         <span class="input-group-text">Nome</span>
                         <input type="text" class="form-control form-control-sm" name="alimento" placeholder="Inserisci nome alimento" required>

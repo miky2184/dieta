@@ -121,7 +121,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeButton = document.getElementById('closeTutorial');
 
     // Aggiungi un event listener al clic sul pulsante "Chiudi"
-    closeButton.addEventListener('click', function() {
-        completeTutorial();
-    });
+    if (closeButton){
+        closeButton.addEventListener('click', function() {
+            completeTutorial();
+        });
+    }
 });

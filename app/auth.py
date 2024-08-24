@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
-from app.models.models import db, UtenteAuth, Utenti
+from app.models.models import db, UtenteAuth, Utente
 from app.services.menu_services import save_weight, is_valid_email, copia_alimenti_ricette
 from datetime import datetime
 from flask import jsonify, request
@@ -25,7 +25,7 @@ def check_email():
     if not is_valid_email(email):
         return jsonify({'bad': True})
 
-    user = Utenti.query.filter_by(email=email.lower()).first()
+    user = Utente.query.filter_by(email=email.lower()).first()
     if user:
         return jsonify({'exists': True})
     return jsonify({'exists': False})
@@ -63,7 +63,7 @@ def register():
     pesce = request.form.get('include_pesce')
 
     # Crea l'utente nella tabella Utenti
-    new_user_details = Utenti(
+    new_user_details = Utente(
         nome=nome.upper(),
         cognome=cognome.upper(),
         sesso=sesso,

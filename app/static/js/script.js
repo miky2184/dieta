@@ -14,7 +14,7 @@ function openTab(evt, tabName) {
 
 function invertMeals(day) {
     // Invia la richiesta al backend per salvare l'inversione
-    fetch(`/invert_meals/${selectedWeekId}`, {
+    fetch(`/inverti_pasti/${selectedWeekId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -493,7 +493,8 @@ function populateRicetteTable(ricette) {
                 colazione_sec: document.querySelector(`input[name='colazione_sec_${ricettaId}']`).checked,
                 spuntino: document.querySelector(`input[name='spuntino_${ricettaId}']`).checked,
                 principale: document.querySelector(`input[name='principale_${ricettaId}']`).checked,
-                contorno: document.querySelector(`input[name='contorno_${ricettaId}']`).checked
+                contorno: document.querySelector(`input[name='contorno_${ricettaId}']`).checked,
+                pane: document.querySelector(`input[name='pane_${ricettaId}']`).checked
             };
             saveRicetta(ricettaData);
         });
@@ -551,7 +552,9 @@ function populateDietaForm(data) {
     document.querySelector('[name="eta"]').value = Math.round(data.eta) || '';
     document.querySelector('[name="altezza"]').value = Math.round(data.altezza) || '';
     document.querySelector('[name="peso"]').value = Math.round(data.peso) || '';
+    console.log(data.tdee);
     document.getElementById('tdee').value = data.tdee || '';
+    console.log(data.deficit_calorico);
     document.getElementById('deficit_calorico').value = data.deficit_calorico || '';
     document.getElementById('bmi').value = Math.round(data.bmi * 100) / 100 || '';
     document.getElementById('peso_ideale').value = Math.round(data.peso_ideale) || '';
@@ -738,7 +741,7 @@ function saveAlimento(alimentoData) {
         })
         .then(response => response.json())
         .then(data => {
-            fetchAlimentiData()
+            fetchAlimentiData();
         })
         .catch((error) => {
             console.error('Errore:', error);
@@ -758,7 +761,8 @@ function deleteAlimento(alimentoId) {
         })
         .then(response => response.json())
         .then(data => {
-
+            fetchAlimentiData();
+            filterAlimentiTable();
         })
         .catch((error) => {
             console.error('Errore:', error);
@@ -1021,7 +1025,7 @@ function updateMealQuantity(day, meal, ricettaId, newQuantity) {
         week_id: selectedWeekId
     };
 
-    fetch(`/update_meal_quantity`, {
+    fetch(`/aggiorna_quantita_ingrediente`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1037,7 +1041,7 @@ function updateMealQuantity(day, meal, ricettaId, newQuantity) {
 }
 
 function removeMeal(day, meal, mealId) {
-    fetch(`/remove_meal/${selectedWeekId}`, {
+    fetch(`/rimuovi_ricetta/${selectedWeekId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1054,13 +1058,13 @@ function removeMeal(day, meal, mealId) {
             const rowId = `meal-${mealId}-${day}-${meal}`;
             const row = document.getElementById(rowId);
 
+            // Se la tabella non ha più righe nel corpo, lascia la `thead` intatta
+            const mealTableBody = row.parentNode;
             // Se la riga esiste, rimuovila
             if (row) {
                 row.parentNode.removeChild(row);
             }
 
-            // Se la tabella non ha più righe nel corpo, lascia la `thead` intatta
-            const mealTableBody = row.parentNode;
             if (mealTableBody.rows.length === 0) {
                 // Verifica se la tabella è ancora presente
                 const mealContainer = mealTableBody.closest('.meal-container');
@@ -1117,7 +1121,7 @@ function recalculateCalories(alimentoId) {
 }
 
 function addMealsToMenu(day, meal, selectedMeals) {
-    fetch(`/add_meals_to_menu/${selectedWeekId}`, {
+    fetch(`/aggiungi_ricetta_menu/${selectedWeekId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1189,10 +1193,10 @@ function updateWeightChart(weights) {
     myChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: weights.map(item => formatDate(item.date)),
+            labels: weights.map(item => formatDate(item.data_rilevazione)),
             datasets: [{
                 label: 'Peso',
-                data: weights.map(item => item.weight),
+                data: weights.map(item => item.peso),
                 backgroundColor: 'rgba(255, 99, 132, 0.2)',
                 borderColor: 'rgba(255, 99, 132, 1)',
                 borderWidth: 1
@@ -1478,6 +1482,31 @@ function updateSelectedWeek() {
 document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById("defaultOpen").click();
+
+    document.getElementById('addFoodForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const formData = new FormData(form);
+
+    fetch('/nuovo_alimento', {
+        method: 'POST',
+        body: formData
+    }).then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              // Chiudi il modal
+              const modal = bootstrap.Modal.getInstance(document.getElementById('addFoodModal'));
+              modal.hide();
+              fetchAlimentiData();
+              // Facoltativamente, aggiorna la pagina o i dati dinamicamente
+              // location.reload();
+          } else {
+              // Gestisci errori, se necessario
+              alert('Errore durante il salvataggio dell\'alimento');
+          }
+      });
+});
 
     document.querySelector('#addRecipeModal form').addEventListener('submit', function(event) {
     event.preventDefault();
