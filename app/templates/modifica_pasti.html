@@ -15,6 +15,32 @@
                 </select>
         </div>
     </div>
+     <!-- Sezione per l'inversione dei giorni -->
+    <div class="input-group mb-4">
+        <select class="form-select form-select-sm" id="day1">
+            <option value="lunedi">Lunedì</option>
+            <option value="martedi">Martedì</option>
+            <option value="mercoledi">Mercoledì</option>
+            <option value="giovedi">Giovedì</option>
+            <option value="venerdi">Venerdì</option>
+            <option value="sabato">Sabato</option>
+            <option value="domenica">Domenica</option>
+        </select>
+
+        <span class="input-group-text"><i class="fas fa-exchange-alt"></i></span>
+
+        <select class="form-select form-select-sm" id="day2">
+            <option value="lunedi">Lunedì</option>
+            <option value="martedi">Martedì</option>
+            <option value="mercoledi">Mercoledì</option>
+            <option value="giovedi">Giovedì</option>
+            <option value="venerdi">Venerdì</option>
+            <option value="sabato">Sabato</option>
+            <option value="domenica">Domenica</option>
+        </select>
+
+        <button class="btn btn-warning btn-sm" onclick="invertDays()">Inverti Giorni</button>
+    </div>
     <div id="menuEditor">
         <!-- Editor del menu caricato dinamicamente -->
     </div>

@@ -13,13 +13,6 @@ from sqlalchemy import insert, update, and_, case, func, exists, asc, String, tr
 
 MAX_RETRY = int(os.getenv('MAX_RETRY'))
 
-class DecimalEncoder(json.JSONEncoder):
-    def default(self, obj):
-        from decimal import Decimal
-        if isinstance(obj, Decimal):
-            return float(obj)  # o str(obj) se preferisci
-        return super(DecimalEncoder, self).default(obj)
-
 
 def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, ripetibile: bool,
                     controllo_macro_settimanale: bool, ricette, ids_specifici=None, skip_check=False):
@@ -50,11 +43,11 @@ def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, rip
             ricette_modificate.append(ricetta_modificata)
 
     # Invoca select_food con le ricette modificate e gli ID specifici
-    return select_food(ricette_modificate, settimana, giorno_settimana, pasto, MAX_RETRY, None, ripetibile,
+    return select_food(ricette_modificate, settimana, giorno_settimana, pasto, ripetibile,
                        False, controllo_macro_settimanale, skip_check, ids_specifici)
 
 
-def select_food(ricette, settimana, giorno_settimana, pasto, max_retry, perc, ripetibile, found, controllo_macro_settimanale, skip_check, ids_specifici=None):
+def select_food(ricette, settimana, giorno_settimana, pasto, ripetibile, found, controllo_macro_settimanale, skip_check, ids_specifici=None):
     # Filtra gli ID disponibili in base alla ripetibilità e agli ID specifici
     if ids_specifici:
         ids_disponibili = [oggetto['id'] for oggetto in ricette if oggetto['id'] in ids_specifici and oggetto['id'] not in settimana['all_food']]

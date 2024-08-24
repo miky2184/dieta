@@ -21,8 +21,6 @@ import base64
 from PIL import Image
 from flask_login import login_required, current_user
 from app.models.models import db
-from decimal import Decimal
-import json
 
 views = Blueprint('views', __name__)
 
@@ -410,7 +408,7 @@ def salva_dati():
     peso = int(request.form['peso'])
     tdee = request.form['tdee']
     deficit_calorico = request.form['deficit_calorico']
-    bmi = Decimal(request.form['bmi'])
+    bmi = float(request.form['bmi'])
     peso_ideale = int(request.form['peso_ideale'])
     meta_basale = int(request.form['meta_basale'])
     meta_giornaliero = int(request.form['meta_giornaliero'])
@@ -622,7 +620,7 @@ def aggiorna_quantita_ingrediente():
     # Aggiorna la quantità del pasto nel menu
     for ricetta in menu_corrente['day'][day]['pasto'][meal]['ricette']:
         if int(ricetta['id']) == meal_id:
-            old_qta = ricetta['qta']  # Assicuriamoci che sia Decimal
+            old_qta = ricetta['qta']
             ricetta['qta'] = quantity
 
             # Ricalcola i macronutrienti giornalieri e settimanali
@@ -779,6 +777,40 @@ def inverti_pasti(week_id):
     remaining_macronutrienti = calcola_macronutrienti_rimanenti(settimana)
     current_app.cache.delete(f'dashboard_{user_id}')
     current_app.cache.delete(f'view//menu_settimana/{week_id}')
+    return jsonify({
+        'status': 'success',
+        'menu': settimana,
+        'remaining_macronutrienti': remaining_macronutrienti
+    })
+
+
+@views.route('/inverti_pasti_giorni/<int:week_id>', methods=['POST'])
+@login_required
+def inverti_pasti_giorni(week_id):
+    data = request.json
+    day1 = data.get('day1')
+    day2 = data.get('day2')
+    user_id = current_user.user_id
+
+    # Recupera il menu della settimana per l'utente
+    settimana = get_menu_corrente(user_id, ids=week_id)
+
+    if not settimana:
+        return jsonify({'status': 'error', 'message': 'Menu non trovato'}), 404
+
+    # Inverti i pasti dei due giorni specificati
+    temp_day = deepcopy(settimana['day'][day1])
+    settimana['day'][day1] = deepcopy(settimana['day'][day2])
+    settimana['day'][day2] = temp_day
+
+    # Salva le modifiche nel database
+    update_menu_corrente(settimana, week_id, user_id)
+
+    # Ricalcola i macronutrienti rimanenti
+    remaining_macronutrienti = calcola_macronutrienti_rimanenti(settimana)
+    current_app.cache.delete(f'dashboard_{user_id}')
+    current_app.cache.delete(f'view//menu_settimana/{week_id}')
+
     return jsonify({
         'status': 'success',
         'menu': settimana,

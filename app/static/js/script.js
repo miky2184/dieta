@@ -12,6 +12,40 @@ function openTab(evt, tabName) {
     evt.currentTarget.className += " active";
 }
 
+function invertDays() {
+    const day1 = document.getElementById('day1').value;
+    const day2 = document.getElementById('day2').value;
+    const weekId = selectedWeekId;
+
+    // Controlla che i giorni non siano uguali
+    if (day1 === day2) {
+        alert("Seleziona due giorni diversi per l'inversione.");
+        return;
+    }
+
+    fetch(`/inverti_pasti_giorni/${weekId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            day1: day1,
+            day2: day2
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            renderMenuEditor(data);
+        } else {
+            console.error('Error:', data.message);
+            alert('Errore nell\'inversione dei pasti. Riprova.');
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+
 function invertMeals(day) {
     // Invia la richiesta al backend per salvare l'inversione
     fetch(`/inverti_pasti/${selectedWeekId}`, {
