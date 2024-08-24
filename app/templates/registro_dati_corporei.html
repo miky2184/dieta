@@ -1,0 +1,25 @@
+<div id="Peso" class="tabcontent">
+    <div class="card"><div class="card-body">
+    <form id="weightForm">
+        <div class="input-group input-group-sm mb-3 table-margin">
+            <span class="input-group-text">Peso</span>
+            <input type="number" class="form-control  form-control-sm" id="weightInput" placeholder="Inserisci il tuo peso" required>
+            <span class="input-group-text">kg</span>
+        </div>
+        <div class="input-group input-group-sm  mb-3 table-margin">
+            <span class="input-group-text">Vita</span>
+            <input type="number" class="form-control  form-control-sm" id="vitaInput" placeholder="Inserisci la circonferenza vita" required>
+            <span class="input-group-text">cm</span>
+        </div>
+        <div class="input-group input-group-sm  mb-3 table-margin">
+            <span class="input-group-text">Fianchi</span>
+            <input type="number" class="form-control  form-control-sm" id="fianchiInput" placeholder="Inserisci la circonferenza fianchi" required>
+            <span class="input-group-text">cm</span>
+        </div>
+        <button class="btn btn-secondary btn-sm" type="button" onclick="submitWeight()">Registra Dati</button>
+    </form>
+    <div id="weightChart" style="height: 400px;">
+        <canvas id="weightChartCanvas"></canvas>
+    </div>
+        </div></div>
+</div>

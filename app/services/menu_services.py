@@ -9,7 +9,7 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.sql import extract
 from sqlalchemy.dialects.postgresql import insert
 import json
-from sqlalchemy import insert, update, and_, case, func, exists, asc, String, true, false, select
+from sqlalchemy import insert, update, and_, case, func, exists, asc, String, true, false, select, desc
 
 MAX_RETRY = int(os.getenv('MAX_RETRY'))
 
@@ -146,9 +146,9 @@ def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=Fals
     ricetta_subquery = (
         db.session.query(
             func.string_agg(a.nome + ': ' + func.cast(ir.qta, String) + 'g', ', ')
-        )
+        ).distinct()
         .join(ir, ir.id_alimento == a.id)  # Join condizionato correttamente
-        .filter(ir.id_ricetta == Ricetta.id, ir.user_id == a.user_id)
+        .filter(ir.id_ricetta == Ricetta.id, ir.user_id == a.user_id, ir.user_id == Ricetta.user_id, ir.user_id == user_id)
         .correlate(Ricetta)  # Correggere la correlazione automatica
         .label('ricetta')
     )
@@ -192,7 +192,8 @@ def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=Fals
         query = query.filter(Ricetta.id == ids)
 
     if attive:
-        query = query.filter(Ricetta.enabled.is_(True))
+        print(f"attive")
+        query = query.filter(Ricetta.enabled.is_(True), Ricetta.user_id == user_id)
 
     # Raggruppamento e ordinamento
     query = query.group_by(
@@ -274,6 +275,10 @@ def genera_menu(settimana, controllo_macro_settimanale, ricette) -> None:
 
             if numero_ricette(p, 'spuntino_pomeriggio', 'spuntino', ricette) < 1:
                 scegli_pietanza(settimana, giorno, 'spuntino_pomeriggio', 'spuntino', True, controllo_macro_settimanale, ricette)
+
+            if numero_ricette(p, 'spuntino_sera', 'spuntino', ricette) < 1:
+                scegli_pietanza(settimana, giorno, 'spuntino_sera', 'spuntino', True, controllo_macro_settimanale, ricette)
+
 
             if numero_ricette(p, 'pranzo', 'principale', ricette) < 2:
                 scegli_pietanza(settimana, giorno, 'pranzo', 'principale', False, controllo_macro_settimanale, ricette)
@@ -422,17 +427,20 @@ def get_settimane_salvate(user_id):
 
     return settimane
 
-def save_weight(date, weight, user_id):
+def save_weight(data, user_id):
 
-
-    registro_peso = RegistroPeso.query.filter_by(data_rilevazione=date,user_id=user_id).first()
+    registro_peso = RegistroPeso.query.filter_by(data_rilevazione=data['date'],user_id=user_id).first()
 
     if registro_peso:
-        registro_peso.peso = weight
+        registro_peso.peso = data['weight']
+        registro_peso.vita = data['vita']
+        registro_peso.fianchi = data['fianchi']
     else:
         registro_peso = RegistroPeso(
-            data_rilevazione=date,
-            peso=weight,
+            data_rilevazione=data['date'],
+            peso=data['weight'],
+            vita=data['vita'],
+            fianchi=data['fianchi'],
             user_id=user_id
         )
 
@@ -457,8 +465,9 @@ def get_settimana(macronutrienti: Utente):
     pasto = {'colazione': deepcopy(ricetta),
              'spuntino_mattina': deepcopy(ricetta),
              'pranzo': deepcopy(ricetta),
-             'cena': deepcopy(ricetta),
              'spuntino_pomeriggio': deepcopy(ricetta),
+             'cena': deepcopy(ricetta),
+             'spuntino_sera': deepcopy(ricetta)
              }
 
     macronutrienti_giornalieri = {
@@ -509,12 +518,15 @@ def attiva_o_disattiva_ricetta(ricetta_id, user_id):
 
 
 def get_ricette(recipe_id, user_id):
-    results = db.session.query(IngredientiRicetta).filter(IngredientiRicetta.id_ricetta == recipe_id, IngredientiRicetta.user_id == user_id).all()
+
+    results = IngredientiRicetta.query.filter_by(id_ricetta=recipe_id, user_id=user_id).order_by(desc(IngredientiRicetta.qta)).all()
+
     r = []
     for res in results:
         r.append({
             "id": res.alimento.id,
             "nome": res.alimento.nome,
+            "nome_ricetta": res.ricetta.nome_ricetta,
             "qta": res.qta,
             "id_ricetta": res.id_ricetta
         })

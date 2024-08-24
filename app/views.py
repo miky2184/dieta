@@ -46,29 +46,29 @@ def dashboard():
             'day': {
                 'lunedi': {'pasto': {'colazione': {'ricette': []}, 'spuntino_mattina': {'ricette': []},
                                      'pranzo': {'ricette': []}, 'spuntino_pomeriggio': {'ricette': []},
-                                     'cena': {'ricette': []}}, 'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0},
+                                     'cena': {'ricette': []}, 'spuntino_sera': {'ricette': []}}, 'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0},
                 'martedi': {'pasto': {'colazione': {'ricette': []}, 'spuntino_mattina': {'ricette': []},
                                       'pranzo': {'ricette': []}, 'spuntino_pomeriggio': {'ricette': []},
-                                      'cena': {'ricette': []}}, 'kcal': 0, 'carboidrati': 0, 'proteine': 0,
+                                      'cena': {'ricette': []}, 'spuntino_sera': {'ricette': []}}, 'kcal': 0, 'carboidrati': 0, 'proteine': 0,
                             'grassi': 0},
                 'mercoledi': {'pasto': {'colazione': {'ricette': []}, 'spuntino_mattina': {'ricette': []},
                                         'pranzo': {'ricette': []}, 'spuntino_pomeriggio': {'ricette': []},
-                                        'cena': {'ricette': []}}, 'kcal': 0, 'carboidrati': 0, 'proteine': 0,
+                                        'cena': {'ricette': []}, 'spuntino_sera': {'ricette': []}}, 'kcal': 0, 'carboidrati': 0, 'proteine': 0,
                               'grassi': 0},
                 'giovedi': {'pasto': {'colazione': {'ricette': []}, 'spuntino_mattina': {'ricette': []},
                                       'pranzo': {'ricette': []}, 'spuntino_pomeriggio': {'ricette': []},
-                                      'cena': {'ricette': []}}, 'kcal': 0, 'carboidrati': 0, 'proteine': 0,
+                                      'cena': {'ricette': []}, 'spuntino_sera': {'ricette': []}}, 'kcal': 0, 'carboidrati': 0, 'proteine': 0,
                             'grassi': 0},
                 'venerdi': {'pasto': {'colazione': {'ricette': []}, 'spuntino_mattina': {'ricette': []},
                                       'pranzo': {'ricette': []}, 'spuntino_pomeriggio': {'ricette': []},
-                                      'cena': {'ricette': []}}, 'kcal': 0, 'carboidrati': 0, 'proteine': 0,
+                                      'cena': {'ricette': []}, 'spuntino_sera': {'ricette': []}}, 'kcal': 0, 'carboidrati': 0, 'proteine': 0,
                             'grassi': 0},
                 'sabato': {'pasto': {'colazione': {'ricette': []}, 'spuntino_mattina': {'ricette': []},
                                      'pranzo': {'ricette': []}, 'spuntino_pomeriggio': {'ricette': []},
-                                     'cena': {'ricette': []}}, 'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0},
+                                     'cena': {'ricette': []}, 'spuntino_sera': {'ricette': []}}, 'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0},
                 'domenica': {'pasto': {'colazione': {'ricette': []}, 'spuntino_mattina': {'ricette': []},
                                        'pranzo': {'ricette': []}, 'spuntino_pomeriggio': {'ricette': []},
-                                       'cena': {'ricette': []}}, 'kcal': 0, 'carboidrati': 0, 'proteine': 0,
+                                       'cena': {'ricette': []}, 'spuntino_sera': {'ricette': []}}, 'kcal': 0, 'carboidrati': 0, 'proteine': 0,
                              'grassi': 0},
             },
             'weekly': {'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0},
@@ -380,7 +380,7 @@ def submit_weight():
     data = request.json
     user_id = current_user.user_id
     # Salva i dati del peso nel database
-    peso = save_weight(data['date'], data['weight'], user_id)
+    peso = save_weight(data, user_id)
     # Esempio di svuotamento della cache di una funzione specifica
     current_app.cache.delete(f'get_peso_data_{user_id}')
 
@@ -505,9 +505,10 @@ def get_available_meals():
     meal_type_mapping = {
         'colazione': ['colazione', 'colazione_sec'],
         'spuntino_mattina': ['spuntino'],
-        'pranzo': ['principale', 'contorno'],
-        'cena': ['principale', 'contorno'],
-        'spuntino_pomeriggio': ['spuntino']
+        'pranzo': ['principale', 'contorno', 'pane'],
+        'spuntino_pomeriggio': ['spuntino'],
+        'cena': ['principale', 'contorno', 'pane'],
+        'spuntino_sera': ['spuntino']
     }
 
     generic_meal_types = meal_type_mapping.get(meal_type)

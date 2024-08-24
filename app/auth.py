@@ -8,7 +8,6 @@ from flask import jsonify, request
 
 auth = Blueprint('auth', __name__)
 
-
 @auth.route('/check_username', methods=['POST'])
 def check_username():
     username = request.json.get('username')
@@ -89,10 +88,13 @@ def register():
 
     save_weight(datetime.now().date(), peso, user_id)
 
-    copia_alimenti_ricette(user_id, vegane, carne, pesce)
+    copia_alimenti_ricette(user_id, bool(vegane), bool(carne), bool(pesce))
+
+    # Logga automaticamente l'utente appena registrato
+    login_user(new_user_auth, remember=True)
 
     current_app.cache.delete(f'get_data_utente_{user_id}')
-    return redirect(url_for('auth.login'))
+    return redirect(url_for('views.dashboard'))
 
 @auth.route('/logout', methods=['GET', 'POST'])
 @login_required
@@ -100,3 +102,8 @@ def logout():
     logout_user()
     current_app.cache.clear()
     return redirect(url_for('auth.login'))
+
+
+@auth.route('/forgot_password', methods=['POST'])
+def forgot_password():
+    pass

@@ -1,7 +1,7 @@
 /* === Stili Globali === */
 body {
     background-color: #f8f9fa !important;
-    font-family: Arial, sans-serif !important;
+    font-family: 'Roboto', sans-serif !important;
     font-size: 0.8rem !important;
     padding: 1em;
 }
@@ -226,4 +226,14 @@ td div:last-child {
 .span-width-10 {
     display: inline-block; /* Garantisce che il width venga applicato correttamente */
     width: 10%;
+}
+
+.sticky-container {
+    position: sticky;
+    top: 0; /* Mantiene la table in alto rispetto alla viewport */
+    z-index: 1000; /* Assicurati che sia sopra le altre card */
+    background-color: white; /* Aggiungi uno sfondo per evitare sovrapposizioni di testo */
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1); /* Aggiunge un'ombra per migliorare la separazione visiva */
+    padding-top: 10px; /* Aggiunge uno spazio sopra */
+    padding-bottom: 10px; /* Aggiunge uno spazio sotto */
 }

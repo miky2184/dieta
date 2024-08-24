@@ -24,110 +24,181 @@
     <!-- Includi la libreria jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
+        .container {
+            background: linear-gradient(to bottom right, #f9f9f9, #e9e9e9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary {
+            background-color: #0062cc;
+            border-color: #0056b3;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004da3;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #c82333;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+        .tab-pane {
+            transition: opacity 0.3s ease-in-out;
+        }
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        .input-group-text i {
+            margin-right: 5px;
+        }
+        input.is-invalid {
+            border-color: #dc3545;
+        }
+        input.is-invalid:focus {
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+        small {
+            display: block;
+            margin-top: 10px;
+        }
+        .d-flex.justify-content-between.align-items-center.mb-3 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+    </style>
 </head>
-<body><div class="container my-4">
-<div class="container">
-    <ul class="nav nav-tabs" id="authTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab" aria-controls="login" aria-selected="true">Login</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button" role="tab" aria-controls="register" aria-selected="false">Register</button>
-        </li>
-    </ul>
-    <div class="tab-content" id="authTabsContent">
-        <!-- Login Form -->
-        <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
-                        <div class="card">
-                <div class="card-body">
-            <form action="{{ url_for('auth.login') }}" method="POST">
-                <div class="input-group input-group-sm mb-3">
-                    <span for="login-username" class="input-group-text span-width-20">Username</span>
-                    <input type="text" class="form-control form-control-sm" id="login-username" name="username" required>
-                </div>
-                <div class="input-group input-group-sm mb-3">
-                    <span  for="password" class="input-group-text span-width-20">Password</span>
-                    <input type="password" class="form-control form-control-sm" id="login-password" name="password" required>
-                </div>
-                <button type="submit" class="btn btn-primary btn-sm">Login</button>
-            </form>
-                    </div>
+<body>
+<div class="container my-4">
+    <div class="container">
+        <ul class="nav nav-tabs" id="authTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab" aria-controls="login" aria-selected="true">Login</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button" role="tab" aria-controls="register" aria-selected="false">Register</button>
+            </li>
+        </ul>
+        <div class="tab-content" id="authTabsContent">
+            <!-- Login Form -->
+            <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
+                <div class="card">
+                    <div class="card-body">
+                        <form action="{{ url_for('auth.login') }}" method="POST">
+                            <div class="input-group input-group-sm mb-3">
+                                <span class="input-group-text"><i class="fas fa-user"></i> Username</span>
+                                <input type="text" class="form-control form-control-sm" id="login-username" name="username" required>
                             </div>
-        </div>
-        <!-- Register Form -->
-        <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
-            <div class="card">
-                <div class="card-body">
-            <form action="{{ url_for('auth.register') }}" method="POST">
-                <div class="input-group input-group-sm mb-3">
-                    <span   for="username" class="input-group-text span-width-20">Username</span>
-                    <input type="text" class="form-control form-control-sm" id="username" name="username" required>
-                    <div class="invalid-feedback">
-                        Username già in uso. Scegli un altro username.
+                            <div class="input-group input-group-sm mb-3">
+                                <span class="input-group-text"><i class="fas fa-lock"></i> Password</span>
+                                <input type="password" class="form-control form-control-sm" id="login-password" name="password" required>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="remember" name="remember">
+                                    <label class="form-check-label" for="remember">
+                                        Remember Me
+                                    </label>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm">Login</button>
+                            </div>
+                            <small>
+                                <a href="{{ url_for('auth.forgot_password') }}" class="text-muted">Password dimenticata?</a>
+                            </small>
+                        </form>
                     </div>
                 </div>
-                <div class="input-group input-group-sm mb-3">
-                    <span  for="password" class="input-group-text span-width-20">Password</span>
-                    <input type="password" class="form-control form-control-sm" id="password" name="password" required>
+            </div>
+            <!-- Register Form -->
+            <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
+                <div class="card">
+                    <div class="card-body">
+                        <form action="{{ url_for('auth.register') }}" method="POST">
+                            <div class="input-group input-group-sm mb-3">
+                                <span class="input-group-text span-width-10"><i class="fas fa-user"></i> Username</span>
+                                <input type="text" class="form-control form-control-sm" id="username" name="username" required>
+                                <div class="invalid-feedback">
+                                    Username già in uso. Scegli un altro username.
+                                </div>
+                            </div>
+                            <div class="input-group input-group-sm mb-3">
+                                <span class="input-group-text span-width-10"><i class="fas fa-lock"></i> Password</span>
+                                <input type="password" class="form-control form-control-sm" id="password" name="password" required>
+                            </div>
+                            <div class="input-group input-group-sm mb-3">
+                                <span class="input-group-text span-width-10"><i class="fas fa-envelope"></i> Email</span>
+                                <input type="text" class="form-control form-control-sm" id="email" name="email" required>
+                            </div>
+                            <div class="input-group input-group-sm mb-3">
+                                <span class="input-group-text span-width-10"><i class="fas fa-user"></i> Nome</span>
+                                <input type="text" class="form-control form-control-sm" id="nome" name="nome" required>
+                            </div>
+                            <div class="input-group input-group-sm mb-3">
+                                <span class="input-group-text span-width-10"><i class="fas fa-user"></i> Cognome</span>
+                                <input type="text" class="form-control form-control-sm" id="cognome" name="cognome" required>
+                            </div>
+                            <div class="input-group input-group-sm mb-3">
+                                <span class="input-group-text span-width-10"><i class="fas fa-venus-mars"></i> Sesso</span>
+                                <select class="form-control form-control-sm" name="sesso" required>
+                                    <option value="">Scegli...</option>
+                                    <option value="M">Uomo</option>
+                                    <option value="F">Donna</option>
+                                </select>
+                            </div>
+                            <div class="input-group input-group-sm mb-3">
+                                <span class="input-group-text span-width-10"><i class="fas fa-birthday-cake"></i> Età</span>
+                                <input type="number" class="form-control form-control-sm" name="eta" required>
+                            </div>
+                            <div class="input-group input-group-sm mb-3">
+                                <span class="input-group-text span-width-10"><i class="fas fa-ruler-vertical"></i> Altezza (cm)</span>
+                                <input type="number" class="form-control form-control-sm" name="altezza" required>
+                            </div>
+                            <div class="input-group input-group-sm mb-3">
+                                <span class="input-group-text span-width-10"><i class="fas fa-weight"></i> Peso (kg)</span>
+                                <input type="number" step=".1" class="form-control form-control-sm" name="peso" required>
+                            </div>
+                            <!-- New Checkboxes for Recipe Preferences -->
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="include-vegan" name="include_vegan">
+                                <label class="form-check-label" for="include-vegan">
+                                    Includi Solo Ricette Vegane
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="include-carne" name="include_carne">
+                                <label class="form-check-label" for="include-carne">
+                                    Includi Ricette con Carne
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="include-pesce" name="include_pesce">
+                                <label class="form-check-label" for="include-pesce">
+                                    Includi Ricette con Pesce
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm">Registra</button>
+                        </form>
+                    </div>
                 </div>
-                <div class="input-group input-group-sm mb-3">
-                    <span  for="email" class="input-group-text span-width-20">Email</span>
-                    <input type="text" class="form-control form-control-sm" id="email" name="email" required>
-                </div>
-                <div class="input-group input-group-sm mb-3 ">
-                    <span  for="nome" class="input-group-text span-width-20">Nome</span>
-                    <input type="text" class="form-control form-control-sm" id="nome" name="nome" required>
-                </div>
-                <div class="input-group input-group-sm mb-3">
-                    <span   for="cognome" class="input-group-text span-width-20">Cognome</span>
-                    <input type="text" class="form-control form-control-sm" id="cognome" name="cognome" required>
-                </div>
-                <div class="input-group input-group-sm mb-3">
-                    <span   for="sesso" class="input-group-text span-width-20">Sesso</span>
-                    <select class="form-control form-control-sm" name="sesso" required>
-                        <option value="">Scegli...</option>
-                        <option value="M">Uomo</option>
-                        <option value="F">Donna</option>
-                    </select>
-                </div>
-                <div class="input-group input-group-sm mb-3">
-                    <span   for="eta" class="input-group-text span-width-20">Età</span>
-                    <input type="number" class="form-control form-control-sm" name="eta" required>
-                </div>
-                <div class="input-group input-group-sm mb-3">
-                    <span   for="altezza" class="input-group-text span-width-20">Altezza (cm)</span>
-                    <input type="number" class="form-control form-control-sm" name="altezza" required>
-                </div>
-                <div class="input-group input-group-sm mb-3">
-                    <span   for="peso" class="input-group-text span-width-20">Peso (kg)</span>
-                    <input type="number" step=".1" class="form-control form-control-sm" name="peso" required>
-                </div>
-                <!-- New Checkboxes for Recipe Preferences -->
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" id="include-vegan" name="include_vegan">
-                            <label class="form-check-label" for="include-vegan">
-                                Includi Solo Ricette Vegane
-                            </label>
-                        </div>
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" id="include-carne" name="include_carne">
-                            <label class="form-check-label" for="include-carne">
-                                Includi Ricette con Carne
-                            </label>
-                        </div>
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" id="include-pesce" name="include_pesce">
-                            <label class="form-check-label" for="include-pesce">
-                                Includi Ricette con Pesce
-                            </label>
-                        </div>
-                <button type="submit" class="btn btn-primary btn-sm">Registra</button>
-            </form>
-                </div>
-                </div>
+            </div>
         </div>
     </div>
-</div>
 </div>
 </body>
 </html>

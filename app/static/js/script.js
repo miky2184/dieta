@@ -77,7 +77,7 @@ function aggiornaTabellaMenu(menu) {
     const macroNutrients = ['kcal', 'carboidrati', 'proteine', 'grassi'];
 
     // Itera su ogni pasto e giorno
-    ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena'].forEach(pasto => {
+    ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena', 'spuntino_sera'].forEach(pasto => {
         const tr = document.createElement('tr');
         const tdPasto = document.createElement('td');
         tdPasto.textContent = capitalize(pasto.replace('_', ' '));
@@ -356,6 +356,8 @@ function filterAlimentiTable() {
 }
 
 function populateIngredientsModal(ingredients) {
+    document.getElementById('editIngredientsModalLabel').textContent = 'Dettagli Ricetta: ' + ingredients[0]['nome_ricetta'];
+
     const tbody = document.getElementById('ingredientsBody');
     tbody.innerHTML = ''; // Clear existing rows
     ingredients.forEach(ingredient => {
@@ -850,6 +852,8 @@ function formatMealName(meal) {
             return 'Spuntino Mattina';
         case 'spuntino_pomeriggio':
             return 'Spuntino Pomeriggio';
+        case 'spuntino_sera':
+            return 'Spuntino Sera';
         default:
             return capitalize(meal);
     }
@@ -868,7 +872,7 @@ function renderMenuEditor(data) {
     if (!macrosContainer) {
         // Se il contenitore non esiste, creane uno nuovo
         macrosContainer = document.createElement('div');
-        macrosContainer.classList.add('remaining-macros-container');
+        macrosContainer.classList.add('remaining-macros-container', 'sticky-container'); // Aggiunge la classe sticky-container
         const menuContainer = document.getElementById('menuEditor');
         menuContainer.parentNode.insertBefore(macrosContainer, menuContainer);
     } else {
@@ -879,12 +883,19 @@ function renderMenuEditor(data) {
     const menu = data.menu;
 
     const days = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
-    const meals = ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena'];
+    const meals = ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena', 'spuntino_sera'];
+
+    // Creazione della card che conterrà la tabellina per i rimanenti giornalieri
+    const card = document.createElement('div');
+    card.classList.add('card', 'mb-4');
+
+    const cardBody = document.createElement('div');
+    cardBody.classList.add('card-body');
 
     // Creazione della tabellina per i rimanenti giornalieri
     const remainingTable = document.createElement('table');
     remainingTable.id = 'remainingTable';
-    remainingTable.classList.add('table', 'table-sm', 'table-bordered');
+    remainingTable.classList.add('table', 'table-sm', 'table-bordered', 'table-striped', 'table-margin');
 
     const remainingTableHeader = document.createElement('thead');
     remainingTableHeader.innerHTML = `
@@ -936,7 +947,9 @@ function renderMenuEditor(data) {
     remainingTableBody.appendChild(totalRow);
 
     remainingTable.appendChild(remainingTableBody);
-    macrosContainer.appendChild(remainingTable);
+    cardBody.appendChild(remainingTable); // Inserisci la tabella nel card body
+    card.appendChild(cardBody); // Inserisci il card body nella card
+    macrosContainer.appendChild(card); // Inserisci la card nel macrosContainer
 
     // Aggiungi la tabella sotto al week selector
     const menuContainer = document.getElementById('menuEditor');
@@ -980,33 +993,29 @@ function renderMenuEditor(data) {
         meals.forEach(meal => {
             const mealContainer = document.createElement('div');
             mealContainer.classList.add('meal-container');
-            //const mealTitle = document.createElement('h6');
-            //mealTitle.classList.add('card-subtitle', 'mb-2', 'text-muted');
-            //mealTitle.textContent = formatMealName(meal);
-            //mealContainer.appendChild(mealTitle);
+
+            // Creare una tabella per ogni pasto
+            const mealTable = document.createElement('table');
+
+            mealTable.classList.add('table', 'table-sm', 'table-bordered', 'mb-2', 'table-striped', 'table-margin');
+
+            const mealTableHead = document.createElement('thead');
+            mealTableHead.innerHTML = `
+                <tr>
+                    <th style="width:40%" class="text-align-center">${formatMealName(meal)}</th>
+                    <th style="width:10%" class="text-align-center">Kcal</th>
+                    <th style="width:10%" class="text-align-center">Carboidrati (g)</th>
+                    <th style="width:10%" class="text-align-center">Proteine (g)</th>
+                    <th style="width:10%" class="text-align-center">Grassi (g)</th>
+                    <th style="width:10%" class="text-align-center">Quantità</th>
+                    <th style="width:10%" class="text-align-center">Azioni</th>
+                </tr>
+            `;
+            mealTable.appendChild(mealTableHead);
+
+            const mealTableBody = document.createElement('tbody');
 
             if (menu.day[day].pasto[meal].ricette.length > 0) {
-                // Creare una tabella per ogni pasto
-                const mealTable = document.createElement('table');
-
-                mealTable.classList.add('table', 'table-sm', 'table-bordered', 'mb-2', 'table-striped', 'table-margin');
-
-                const mealTableHead = document.createElement('thead');
-                mealTableHead.innerHTML = `
-                    <tr>
-                        <th style="width:40%" class="text-align-center">${formatMealName(meal)}</th>
-                        <th style="width:10%" class="text-align-center">Kcal</th>
-                        <th style="width:10%" class="text-align-center">Carboidrati (g)</th>
-                        <th style="width:10%" class="text-align-center">Proteine (g)</th>
-                        <th style="width:10%" class="text-align-center">Grassi (g)</th>
-                        <th style="width:10%" class="text-align-center">Quantità</th>
-                        <th style="width:10%" class="text-align-center">Azioni</th>
-                    </tr>
-                `;
-                mealTable.appendChild(mealTableHead);
-
-                const mealTableBody = document.createElement('tbody');
-
                 menu.day[day].pasto[meal].ricette.forEach(ricetta => {
                     const row = document.createElement('tr');
                     row.id = `meal-${ricetta.id}-${day}-${meal}`;
@@ -1023,8 +1032,9 @@ function renderMenuEditor(data) {
                 });
 
                 mealTable.appendChild(mealTableBody);
-                mealContainer.appendChild(mealTable);
             }
+
+            mealContainer.appendChild(mealTable);
 
             const addMealBtn = document.createElement('button');
             addMealBtn.textContent = "Aggiungi Ricetta";
@@ -1094,6 +1104,7 @@ function removeMeal(day, meal, mealId) {
 
             // Se la tabella non ha più righe nel corpo, lascia la `thead` intatta
             const mealTableBody = row.parentNode;
+
             // Se la riga esiste, rimuovila
             if (row) {
                 row.parentNode.removeChild(row);
@@ -1190,6 +1201,8 @@ function aggiornaMacronutrientiRimanenti(remaining_macronutrienti) {
 
 function submitWeight() {
     const weight = document.getElementById('weightInput').value;
+    const vita = document.getElementById('vitaInput').value;
+    const fianchi = document.getElementById('fianchiInput').value;
     const date = new Date().toISOString().slice(0, 10); // Prende la data odierna
 
     // Invia il peso al server (assumendo che tu abbia un endpoint API)
@@ -1200,7 +1213,9 @@ function submitWeight() {
             },
             body: JSON.stringify({
                 date: date,
-                weight: weight
+                weight: weight,
+                vita: vita,
+                fianchi: fianchi
             })
         })
         .then(response => response.json())
@@ -1219,7 +1234,6 @@ function formatDate(dateStr) {
 
 function updateWeightChart(weights) {
     const ctx = document.getElementById('weightChartCanvas').getContext('2d');
-    // Distruggi il grafico esistente se esiste
     if (myChart) {
         myChart.destroy();
     }
@@ -1233,19 +1247,90 @@ function updateWeightChart(weights) {
                 data: weights.map(item => item.peso),
                 backgroundColor: 'rgba(255, 99, 132, 0.2)',
                 borderColor: 'rgba(255, 99, 132, 1)',
-                borderWidth: 1
+                borderWidth: 1,
+                pointRadius: 5,
+                pointBackgroundColor: 'rgba(255, 99, 132, 1)',
+                pointHoverRadius: 7
+            },{
+                label: 'Vita',
+                data: weights.map(item => item.vita),
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1,
+                pointRadius: 5,
+                pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                pointHoverRadius: 7
+            },{
+                label: 'Fianchi',
+                data: weights.map(item => item.fianchi),
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1,
+                pointRadius: 5,
+                pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                pointHoverRadius: 7
             }]
         },
         options: {
+            responsive: true,
+            maintainAspectRatio: false,
             scales: {
                 y: {
                     beginAtZero: true,
-                    max: 100
+                    max: 120,
+                    grid: {
+                        color: 'rgba(200, 200, 200, 0.3)',
+                        borderDash: [5, 5]
+                    },
+                    ticks: {
+                        padding: 10
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        padding: 10
+                    }
                 }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        boxWidth: 20,
+                        padding: 15,
+                        usePointStyle: true,
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            label += context.parsed.y.toFixed(2);
+                            if (context.dataset.label === 'Peso') {
+                                label += ' kg';
+                            } else {
+                                label += ' cm';
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            animation: {
+                duration: 1000,
+                easing: 'easeInOutQuad'
             }
         }
     });
 }
+
 
 function startMenuGeneration() {
     // Effettua una richiesta AJAX per avviare la generazione del menu

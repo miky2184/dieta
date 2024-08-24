@@ -145,7 +145,9 @@ class RegistroPeso(db.Model):
 
     data_rilevazione = db.Column(db.Date, primary_key=True)
     peso = db.Column(db.Numeric)
-    user_id = db.Column(db.BigInteger, ForeignKey('dieta.utente.id', ondelete='SET NULL'), primary_key=True)
+    vita = db.Column(db.Numeric)
+    fianchi = db.Column(db.Numeric)
+    user_id = db.Column(db.BigInteger, ForeignKey('dieta.utente.id', ondelete='CASCADE'), primary_key=True)
 
     def to_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
