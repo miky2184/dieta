@@ -1227,8 +1227,10 @@ function startMenuGeneration() {
                     location.reload(); // Ricarica la pagina per visualizzare il nuovo menu
                 }, 1000);
             } else if (data.status === 'error') {
-                $('#errorModal').modal('show');
-                $('#generateMenuModal').modal('hide');
+                setTimeout(() => {
+                    $('#errorModal').modal('show');
+                    $('#generateMenuModal').modal('hide'); // Chiudi il modal
+                }, 4000);
             }
         })
         .catch(error => {
