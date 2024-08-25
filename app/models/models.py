@@ -168,6 +168,7 @@ class Ricetta(db.Model):
     enabled = db.Column(db.Boolean, default=True)
     colazione_sec = db.Column(db.Boolean, default=False)
     pane = db.Column(db.Boolean, default=False)
+    complemento = db.Column(db.Boolean, default=False)
     user_id = db.Column(db.BigInteger, ForeignKey('dieta.utente.id', ondelete='CASCADE'), primary_key=True)
 
     ingredienti = db.relationship('IngredientiRicetta', back_populates='ricetta')
@@ -225,6 +226,7 @@ class RicettaBase(db.Model):
     enabled = db.Column(db.Boolean, default=True)
     colazione_sec = db.Column(db.Boolean, default=False)
     pane = db.Column(db.Boolean, default=False)
+    complemento = db.Column(db.Boolean, default=False)
 
     def to_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}

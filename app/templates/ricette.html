@@ -20,6 +20,7 @@
                     <th class="principale">Principale</th>
                     <th class="contorno">Contorno</th>
                     <th class="pane">Pane</th>
+                    <th class="pane">Complemento</th>
                     <th class="attiva">Attiva</th>
                     <th class="azione">Azioni</th>
                 </tr>
@@ -82,6 +83,12 @@
                         </select></th>
                     <th>
                         <select id="filter-pane-ricette" class="form-select form-select-sm" onchange="filterTable()">
+                            <option value="all"></option>
+                            <option value="true">T</option>
+                            <option value="false">F</option>
+                        </select></th>
+                    <th>
+                        <select id="filter-complemento-ricette" class="form-select form-select-sm" onchange="filterTable()">
                             <option value="all"></option>
                             <option value="true">T</option>
                             <option value="false">F</option>

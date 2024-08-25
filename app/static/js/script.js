@@ -216,6 +216,7 @@ function filterTable() {
     const principaleFilter = document.getElementById('filter-principale').value;
     const contornoFilter = document.getElementById('filter-contorno').value;
     const paneFilter = document.getElementById('filter-pane-ricette').value;
+    const complementoFilter = document.getElementById('filter-complemento-ricette').value;
     const attivaFilter = document.getElementById('filter-attiva').value;
 
     const table = document.getElementById('ricette-table').querySelector('tbody');
@@ -237,7 +238,8 @@ function filterTable() {
         const principaleCell = cells[8].querySelector('input').checked.toString();
         const contornoCell = cells[9].querySelector('input').checked.toString();
         const paneCell = cells[10].querySelector('input').checked.toString();
-        const attivaCell = cells[11].querySelector('input').checked.toString();
+        const complementoCell = cells[11].querySelector('input').checked.toString();
+        const attivaCell = cells[12].querySelector('input').checked.toString();
 
         const colazioneMatch = (colazioneFilter === 'all') || (colazioneFilter === colazioneCell);
         const colazioneSecMatch = (colazioneSecFilter === 'all') || (colazioneSecFilter === colazioneSecCell);
@@ -245,6 +247,7 @@ function filterTable() {
         const principaleMatch = (principaleFilter === 'all') || (principaleFilter === principaleCell);
         const contornoMatch = (contornoFilter === 'all') || (contornoFilter === contornoCell);
         const paneMatch = (paneFilter === 'all') || (paneFilter === paneCell);
+        const complementoMatch = (complementoFilter === 'all') || (complementoFilter === complementoCell);
         const attivaMatch = (attivaFilter === 'all') || (attivaFilter === attivaCell);
 
         const calorieMatch = calorieCell >= calorieMin && calorieCell <= calorieMax;
@@ -263,6 +266,7 @@ function filterTable() {
             principaleMatch &&
             contornoMatch &&
             paneMatch &&
+            complementoMatch &&
             attivaMatch) {
             rows[i].style.display = '';
         } else {
@@ -355,7 +359,11 @@ function filterAlimentiTable() {
 }
 
 function populateIngredientsModal(ingredients) {
-    document.getElementById('editIngredientsModalLabel').textContent = 'Dettagli Ricetta: ' + ingredients[0]['nome_ricetta'];
+    if (ingredients && ingredients.length > 0 && ingredients[0]['nome_ricetta']) {
+        document.getElementById('editIngredientsModalLabel').textContent = 'Dettagli Ricetta: ' + ingredients[0]['nome_ricetta'];
+    } else {
+        document.getElementById('editIngredientsModalLabel').textContent = 'Dettagli Ricetta';
+    }
 
     const tbody = document.getElementById('ingredientsBody');
     tbody.innerHTML = ''; // Clear existing rows
@@ -500,6 +508,12 @@ function populateRicetteTable(ricette) {
                     <label hidden class="form-control form-control-sm">${ricetta.pane}</label>
                 </div>
             </td>
+            <td class="complemento">
+                <div>
+                    <input type="checkbox" name="complemento_${ricetta.id}" ${ricetta.complemento ? 'checked' : ''}>
+                    <label hidden class="form-control form-control-sm">${ricetta.complemento}</label>
+                </div>
+            </td>
             <td class="attiva">
                 <div>
                     <label hidden class="form-control form-control-sm">${ricetta.attiva}</label>
@@ -508,7 +522,7 @@ function populateRicetteTable(ricette) {
             </td>
             <td class="azione">
                 <div class="btn-group" role="group">
-                    <button class="btn btn-primary btn-sm save-btn" data-ricetta-id="${ricetta.id}" data-ricetta-nome="${ricetta.nome_ricetta}" data-ricetta-colazione="${ricetta.colazione}" data-ricetta-colazione_sec="${ricetta.colazione_sec}" data-ricetta-spuntino="${ricetta.spuntino}" data-ricetta-principale="${ricetta.principale}" data-ricetta-contorno="${ricetta.contorno}" data-ricetta-pane="${ricetta.pane}" data-ricetta-attiva="${ricetta.attiva}">Salva</button>
+                    <button class="btn btn-primary btn-sm save-btn" data-ricetta-id="${ricetta.id}" data-ricetta-nome="${ricetta.nome_ricetta}" data-ricetta-colazione="${ricetta.colazione}" data-ricetta-colazione_sec="${ricetta.colazione_sec}" data-ricetta-spuntino="${ricetta.spuntino}" data-ricetta-principale="${ricetta.principale}" data-ricetta-contorno="${ricetta.contorno}" data-ricetta-pane="${ricetta.pane}" data-ricetta-complemento="${ricetta.complemento}" data-ricetta-attiva="${ricetta.attiva}">Salva</button>
                     <button class="btn btn-primary btn-sm edit-btn" data-ricetta-id="${ricetta.id}" data-bs-toggle="modal" data-bs-target="#editRecipeModal">Modifica</button>
                     <button class="btn btn-primary btn-sm toggle-btn" data-ricetta-id="${ricetta.id}" data-ricetta-attiva="${ricetta.attiva}">Attiva/Disattiva</button>
                     <button class="btn btn-danger btn-sm delete-btn" data-ricetta-id="${ricetta.id}">Elimina</button>
@@ -529,7 +543,8 @@ function populateRicetteTable(ricette) {
                 spuntino: document.querySelector(`input[name='spuntino_${ricettaId}']`).checked,
                 principale: document.querySelector(`input[name='principale_${ricettaId}']`).checked,
                 contorno: document.querySelector(`input[name='contorno_${ricettaId}']`).checked,
-                pane: document.querySelector(`input[name='pane_${ricettaId}']`).checked
+                pane: document.querySelector(`input[name='pane_${ricettaId}']`).checked,
+                complemento: document.querySelector(`input[name='complemento_${ricettaId}']`).checked
             };
             saveRicetta(ricettaData);
         });
@@ -1033,13 +1048,30 @@ function renderMenuEditor(data) {
 
             mealContainer.appendChild(mealTable);
 
+            const buttonGroup = document.createElement('div');
+            buttonGroup.classList.add('btn-group', 'mt-2');
+
+            // Pulsante "Aggiungi Ricetta"
             const addMealBtn = document.createElement('button');
             addMealBtn.textContent = "Aggiungi Ricetta";
-            addMealBtn.classList.add('btn', 'btn-success', 'btn-sm', 'mt-2');
+            addMealBtn.classList.add('btn', 'btn-success', 'btn-sm');
             addMealBtn.onclick = function() {
                 addNewMeal(day, meal);
             };
-            mealContainer.appendChild(addMealBtn);
+            buttonGroup.appendChild(addMealBtn);
+
+            // Pulsante "Aggiungi Complemento"
+            const addComplementoBtn = document.createElement('button');
+            addComplementoBtn.textContent = "Aggiungi Complemento";
+            addComplementoBtn.classList.add('btn', 'btn-success', 'btn-sm');
+            addComplementoBtn.onclick = function() {
+                addNewComplemento(day, meal);
+            };
+            buttonGroup.appendChild(addComplementoBtn);
+
+            // Aggiungi il gruppo di pulsanti al contenitore
+            mealContainer.appendChild(buttonGroup);
+
 
             cardBody.appendChild(mealContainer);
         });
@@ -1055,6 +1087,7 @@ function renderMenuEditor(data) {
         document.getElementById('day_select').value = selectedDay;
     }
 
+    filterDayCards();
     aggiornaTabellaMenu(data.menu);
 }
 
@@ -1130,6 +1163,36 @@ function addNewMeal(day, meal) {
 
     // Fetch delle ricette disponibili per quel pasto
     fetch(`/get_available_meals?meal=${meal}&day=${day}&week_id=${selectedWeekId}`)
+        .then(response => response.json())
+        .then(data => {
+            const mealSelectionBody = document.getElementById('mealSelectionBody');
+            mealSelectionBody.innerHTML = ''; // Pulisce la tabella
+
+            data.forEach(ricetta => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${ricetta.nome_ricetta}</td>
+                    <td>${ricetta.kcal}</td>
+                    <td>${ricetta.carboidrati}</td>
+                    <td>${ricetta.proteine}</td>
+                    <td>${ricetta.grassi}</td>
+                    <td><input type="checkbox" value="${ricetta.id}" class="meal-checkbox"></td>
+                `;
+                mealSelectionBody.appendChild(row);
+            });
+
+            // Mostra il modal
+            const addMealModal = new bootstrap.Modal(document.getElementById('addMealModal'));
+            addMealModal.show();
+        });
+}
+
+function addNewComplemento(day, meal) {
+    currentDay = day;
+    currentMeal = meal;
+
+    // Fetch delle ricette disponibili per quel pasto
+    fetch(`/get_complemento?meal=${meal}&day=${day}&week_id=${selectedWeekId}`)
         .then(response => response.json())
         .then(data => {
             const mealSelectionBody = document.getElementById('mealSelectionBody');
@@ -1375,6 +1438,7 @@ function cleanFilters() {
     document.getElementById('filter-grassi-max').value = '';
     document.getElementById('filter-colazione').value = 'all';
     document.getElementById('filter-pane-ricette').value = 'all';
+    document.getElementById('filter-complemento-ricette').value = 'all';
     document.getElementById('filter-colazione-sec').value = 'all';
     document.getElementById('filter-spuntino').value = 'all';
     document.getElementById('filter-principale').value = 'all';

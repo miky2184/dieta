@@ -134,7 +134,7 @@ def check_macronutrienti(ricetta, day, weekly, controllo_macro_settimanale):
             and float(weekly['grassi']) - ricetta['grassi'] > 0)
 
 
-def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=False):
+def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=False, complemento=False):
     """
     Carica tutte le ricette disponibili dal database in memoria.
     """
@@ -172,6 +172,7 @@ def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=Fals
         Ricetta.contorno,
         Ricetta.colazione_sec,
         Ricetta.pane,
+        Ricetta.complemento,
         Ricetta.enabled.label('attiva'),
         func.coalesce(ricetta_subquery, '').label('ricetta')
     ).outerjoin(
@@ -192,8 +193,10 @@ def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=Fals
         query = query.filter(Ricetta.id == ids)
 
     if attive:
-        print(f"attive")
         query = query.filter(Ricetta.enabled.is_(True), Ricetta.user_id == user_id)
+
+    if complemento:
+        query = query.filter(Ricetta.complemento.is_(True), Ricetta.user_id == user_id)
 
     # Raggruppamento e ordinamento
     query = query.group_by(
@@ -210,6 +213,7 @@ def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=Fals
         Ricetta.contorno,
         Ricetta.colazione_sec,
         Ricetta.pane,
+        Ricetta.complemento,
         Ricetta.enabled
     ).order_by(
         Ricetta.enabled.desc(),
@@ -235,6 +239,7 @@ def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=Fals
             'contorno': row.contorno,
             'colazione_sec': row.colazione_sec,
             'pane': row.pane,
+            'complemento': row.complemento,
             'attiva': row.attiva,
             'ricetta': row.ricetta
         })
@@ -499,7 +504,7 @@ def get_settimana(macronutrienti: Utente):
             }
 
 
-def aggiorna_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, pane, ricetta_id, user_id):
+def aggiorna_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, pane, complemento, ricetta_id, user_id):
     ricetta = Ricetta.query.filter_by(id=ricetta_id, user_id=user_id).first()
     ricetta.nome_ricetta = nome.upper()
     ricetta.colazione = colazione
@@ -508,6 +513,7 @@ def aggiorna_ricetta(nome, colazione, colazione_sec, spuntino, principale, conto
     ricetta.principale = principale
     ricetta.contorno = contorno
     ricetta.pane = pane
+    ricetta.complemento = complemento
     db.session.commit()
 
 def attiva_o_disattiva_ricetta(ricetta_id, user_id):
@@ -593,7 +599,7 @@ def salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, defic
     db.session.commit()
 
 
-def salva_nuova_ricetta(name, breakfast, snack, main, side, second_breakfast, pane, user_id):
+def salva_nuova_ricetta(name, breakfast, snack, main, side, second_breakfast, pane, complemento, user_id):
 
     ricetta = Ricetta(
         id=get_sequence_value('dieta.ricetta_id_seq'),
@@ -604,6 +610,7 @@ def salva_nuova_ricetta(name, breakfast, snack, main, side, second_breakfast, pa
         contorno=side,
         colazione_sec=second_breakfast,
         pane=pane,
+        complemento=complemento,
         user_id=user_id
     )
 
@@ -896,6 +903,7 @@ def copia_alimenti_ricette(user_id: int, ricette_vegane: bool, ricette_carne: bo
         false(),  # Set enabled to False
         RicettaBase.colazione_sec,
         RicettaBase.pane,
+        RicettaBase.complemento,
         user_id
     )
 
@@ -911,6 +919,7 @@ def copia_alimenti_ricette(user_id: int, ricette_vegane: bool, ricette_carne: bo
                 Ricetta.enabled,
                 Ricetta.colazione_sec,
                 Ricetta.pane,
+                Ricetta.complemento,
                 Ricetta.user_id
             ],
             subquery_ricetta

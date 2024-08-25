@@ -218,10 +218,11 @@ def salva_ricetta():
     contorno = data['contorno']
     nome = data['nome']
     pane = data['pane']
+    complemento = data['complemento']
 
     user_id = current_user.user_id
 
-    aggiorna_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, pane, ricetta_id, user_id)
+    aggiorna_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, pane, complemento, ricetta_id, user_id)
 
     current_app.cache.delete(f'recupera_ricette_{user_id}')
     return jsonify({'status': 'success', 'message': 'Ricetta salvata con successo!'})
@@ -332,10 +333,11 @@ def nuova_ricetta():
     side = 'contorno' in request.form
     second_breakfast = 'colazione/biscotti' in request.form
     pane = 'pane' in request.form
+    complemento = 'complemento' in request.form
 
     user_id = current_user.user_id
 
-    salva_nuova_ricetta(name.upper(), breakfast, snack, main, side, second_breakfast, pane, user_id)
+    salva_nuova_ricetta(name.upper(), breakfast, snack, main, side, second_breakfast, pane, complemento, user_id)
     current_app.cache.delete(f'recupera_ricette_{user_id}')
 
     return jsonify({"status": "success"}), 200
@@ -807,3 +809,18 @@ def inverti_pasti_giorni(week_id):
         'menu': settimana,
         'remaining_macronutrienti': remaining_macronutrienti
     })
+
+
+@views.route('/get_complemento', methods=['GET'])
+@login_required
+def get_complemento():
+    """
+    Questa funzione restituisce le ricette disponibili per un pasto specifico in un giorno specifico,
+    escludendo quelle già presenti nel menu corrente.
+    """
+    user_id = current_user.user_id
+
+    # Recupera tutte le ricette complemento
+    results = carica_ricette(user_id, complemento=True)
+
+    return jsonify(results)
