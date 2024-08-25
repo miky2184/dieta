@@ -59,7 +59,6 @@ function invertMeals(day) {
     .then(data => {
         if (data.status === 'success') {
             renderMenuEditor(data);
-            aggiornaTabellaMenu(data.menu);
         }
     })
     .catch(error => {
@@ -457,7 +456,7 @@ function populateRicetteTable(ricette) {
         row.innerHTML = `
             <td class="nome-ricetta">
                 <div>
-                    <input type="text" class="form-control filter-text" data-ricetta-id="${ricetta.id}" name="nome_${ricetta.id}" value="${ricetta.nome_ricetta}">
+                    <input type="text" class="form-control filter-text" data-ricetta-id="${ricetta.id}" name="nome_ricetta_${ricetta.id}" value="${ricetta.nome_ricetta}">
                     <label hidden class="form-control form-control-sm">${ricetta.nome_ricetta}</label>
                 </div>
             </td>
@@ -524,7 +523,7 @@ function populateRicetteTable(ricette) {
             const ricettaId = this.getAttribute('data-ricetta-id');
             const ricettaData = {
                 id: ricettaId,
-                nome: document.querySelector(`input[name='nome_${ricettaId}']`).value,
+                nome: document.querySelector(`input[name='nome_ricetta_${ricettaId}']`).value,
                 colazione: document.querySelector(`input[name='colazione_${ricettaId}']`).checked,
                 colazione_sec: document.querySelector(`input[name='colazione_sec_${ricettaId}']`).checked,
                 spuntino: document.querySelector(`input[name='spuntino_${ricettaId}']`).checked,
@@ -823,8 +822,6 @@ function loadAndUpdateMenuData() {
             if (data.menu) {
                 // Qui inserisci la logica per caricare i dati del menu nel div #menuEditor
                 renderMenuEditor(data);
-                // Aggiorna il contenuto del menu con i dati ricevuti
-                aggiornaTabellaMenu(data.menu);
                 aggiornaTabellaListaDellaSpesa(data.menu.all_food);
             }
         })
@@ -1057,6 +1054,8 @@ function renderMenuEditor(data) {
     if (selectedDay) {
         document.getElementById('day_select').value = selectedDay;
     }
+
+    aggiornaTabellaMenu(data.menu);
 }
 
 
