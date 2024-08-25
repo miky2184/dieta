@@ -857,3 +857,36 @@ def get_complemento():
     results = carica_ricette(user_id, complemento=True)
 
     return jsonify(results)
+
+
+@views.route('/copy_week', methods=['POST'])
+@login_required
+def copy_week():
+    user_id = current_user.user_id
+    data = request.get_json()
+    week_from = data.get('weekFrom')
+    week_to = data.get('weekTo')
+
+    # Verifica che entrambe le settimane esistano nel database
+    menu_from = get_menu(user_id, ids=week_from)
+    menu_to = get_menu(user_id, ids=week_to)
+
+    if not menu_from:
+        return jsonify({'status': 'error', 'message': 'La settimana di origine non esiste.'})
+
+    if not menu_to:
+        return jsonify({'status': 'error', 'message': 'La settimana di destinazione non esiste.'})
+
+    try:
+        # Copia il menu da una settimana all'altra
+        copia_menu_settimana(menu_from, menu_to)
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@views.route('/get_weeks', methods=['GET'])
+@login_required
+def get_weeks():
+    user_id = current_user.user_id
+    weeks = get_all_weeks(user_id)  # Implementa una funzione che recupera le settimane
+    return jsonify(weeks)

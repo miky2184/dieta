@@ -1,12 +1,10 @@
 <!-- app/templates/modifica_pasti.html -->
 <div id="ModificaPasti" class="tabcontent">
-    <div class="card"><div class="card-body">
-    <!-- Dropdown per selezionare la settimana -->
-    <div class="table-margin d-flex">
-        <div class="input-group mb-3">
-                {% include 'week_selector.html' %}
-                <select class="form-select form-select-sm" id="selectDay" onchange="filterDayCards()">
-                    <option value="all">Tutti i giorni</option>
+    <div class="card">
+        <div class="card-body">
+            <!-- Sezione per l'inversione dei giorni -->
+            <div class="input-group mb-4">
+                <select class="form-select form-select-sm" id="day1">
                     <option value="lunedi">Lunedì</option>
                     <option value="martedi">Martedì</option>
                     <option value="mercoledi">Mercoledì</option>
@@ -15,35 +13,39 @@
                     <option value="sabato">Sabato</option>
                     <option value="domenica">Domenica</option>
                 </select>
+
+                <span class="input-group-text"><i class="fas fa-exchange-alt"></i></span>
+
+                <select class="form-select form-select-sm" id="day2">
+                    <option value="lunedi">Lunedì</option>
+                    <option value="martedi">Martedì</option>
+                    <option value="mercoledi">Mercoledì</option>
+                    <option value="giovedi">Giovedì</option>
+                    <option value="venerdi">Venerdì</option>
+                    <option value="sabato">Sabato</option>
+                    <option value="domenica">Domenica</option>
+                </select>
+
+                <button class="btn btn-warning btn-sm" onclick="invertDays()">Inverti Giorni</button>
+            </div>
+            <!-- Dropdown per selezionare la settimana -->
+            <div class="table-margin d-flex">
+                <div class="input-group mb-3">
+                    {% include 'week_selector.html' %}
+                    <select class="form-select form-select-sm" id="selectDay" onchange="filterDayCards()">
+                        <option value="all">Tutti i giorni</option>
+                        <option value="lunedi">Lunedì</option>
+                        <option value="martedi">Martedì</option>
+                        <option value="mercoledi">Mercoledì</option>
+                        <option value="giovedi">Giovedì</option>
+                        <option value="venerdi">Venerdì</option>
+                        <option value="sabato">Sabato</option>
+                        <option value="domenica">Domenica</option>
+                    </select>
+                </div>
+            </div>
         </div>
     </div>
-     <!-- Sezione per l'inversione dei giorni -->
-    <div class="input-group mb-4">
-        <select class="form-select form-select-sm" id="day1">
-            <option value="lunedi">Lunedì</option>
-            <option value="martedi">Martedì</option>
-            <option value="mercoledi">Mercoledì</option>
-            <option value="giovedi">Giovedì</option>
-            <option value="venerdi">Venerdì</option>
-            <option value="sabato">Sabato</option>
-            <option value="domenica">Domenica</option>
-        </select>
-
-        <span class="input-group-text"><i class="fas fa-exchange-alt"></i></span>
-
-        <select class="form-select form-select-sm" id="day2">
-            <option value="lunedi">Lunedì</option>
-            <option value="martedi">Martedì</option>
-            <option value="mercoledi">Mercoledì</option>
-            <option value="giovedi">Giovedì</option>
-            <option value="venerdi">Venerdì</option>
-            <option value="sabato">Sabato</option>
-            <option value="domenica">Domenica</option>
-        </select>
-
-        <button class="btn btn-warning btn-sm" onclick="invertDays()">Inverti Giorni</button>
-    </div>
-        </div> </div>
     <div id="menuEditor">
         <!-- Editor del menu caricato dinamicamente -->
     </div>
