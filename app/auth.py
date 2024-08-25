@@ -86,7 +86,11 @@ def register():
     db.session.add(new_user_auth)
     db.session.commit()
 
-    save_weight(datetime.now().date(), peso, user_id)
+    data = {}
+    data.peso = peso
+    data.date = datetime.now().date()
+
+    save_weight(data, user_id)
 
     copia_alimenti_ricette(user_id, bool(vegane), bool(carne), bool(pesce))
 
