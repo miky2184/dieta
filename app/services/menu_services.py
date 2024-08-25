@@ -1,3 +1,4 @@
+#app/services/menu_services.py
 import os
 import random
 from datetime import datetime, timedelta
@@ -342,17 +343,19 @@ def stampa_lista_della_spesa(user_id, ids_all_food: list):
     return lista_della_spesa
 
 
-def salva_menu_corrente(menu, user_id):
-    # Calcola l'inizio e la fine della prossima settimana
-    oggi = datetime.now()
-    giorni_indietro = (oggi.weekday() - 0) % 7
-    ultimo_lunedi = oggi - timedelta(days=giorni_indietro)
-    domenica_prossima = ultimo_lunedi + timedelta(days=6)
+def salva_menu(menu, user_id, period: dict = None):
+
+    if not period:
+        period = {}
+        last_menu = MenuSettimanale.query.filter_by(user_id=user_id).order_by(desc(MenuSettimanale.data_fine)).first()
+        period['data_inizio'] = last_menu.data_inizio + timedelta(days=7)
+        period['data_fine'] = last_menu.data_fine + timedelta(days=7)
+
 
     # Inserisce un nuovo menu per la prossima settimana
     new_menu_settimanale = MenuSettimanale(
-        data_inizio=ultimo_lunedi.date(),
-        data_fine=domenica_prossima.date(),
+        data_inizio=period['data_inizio'],
+        data_fine=period['data_fine'],
         menu=menu,
         user_id=user_id
     )
@@ -361,52 +364,17 @@ def salva_menu_corrente(menu, user_id):
     db.session.commit()
 
 
-def salva_menu_settimana_prossima(menu: dict, user_id: int):
-    # Calcola l'inizio e la fine della prossima settimana
-    oggi = datetime.now()
-    lunedi_prossimo = oggi + timedelta(days=(7 - oggi.weekday()))
-    domenica_prossima = lunedi_prossimo + timedelta(days=6)
-
-    # Converti il menu in JSON
-    menu_json = menu  # Usare json.dumps per serializzare il dict in JSON
-
-    # Verifica se un menu per la prossima settimana esiste già
-    existing_menu = MenuSettimanale.query.filter_by(data_inizio=lunedi_prossimo.date(),
-        data_fine=domenica_prossima.date(),
-        user_id=user_id).first()
-
-    if existing_menu:
-        # Aggiorna il menu esistente
-        existing_menu.menu = menu_json
-        db.session.commit()
-    else:
-        # Inserisce un nuovo menu per la prossima settimana
-        nuovo_menu = MenuSettimanale(
-            data_inizio=lunedi_prossimo.date(),
-            data_fine=domenica_prossima.date(),
-            menu=menu_json,
-            user_id=user_id
-        )
-        db.session.add(nuovo_menu)
-        # Commit delle modifiche
-        db.session.commit()
-
-def get_menu_corrente(user_id: int, ids: int = None):
-    oggi = datetime.now().date()
-
+def get_menu(user_id: int, period: dict = None, ids: int = None):
     query = db.session.query(MenuSettimanale.menu).filter_by(user_id=user_id)
 
     if ids:
         query = query.filter(MenuSettimanale.id == ids)
     else:
-        query = query.filter(and_(MenuSettimanale.data_inizio <= oggi, MenuSettimanale.data_fine >= oggi))
+        query = query.filter(and_(MenuSettimanale.data_inizio == period['data_inizio'], MenuSettimanale.data_fine == period['data_fine']))
 
     result = query.first()
 
-    if result:
-        return result.menu
-    else:
-        return None
+    return result.menu if result else None
 
 
 def get_menu_settima_prossima(user_id):

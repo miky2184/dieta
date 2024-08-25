@@ -1,3 +1,4 @@
+/* app/static/css/styles.css */
 /* === Stili Globali === */
 body {
     background-color: #f8f9fa !important;
@@ -231,4 +232,27 @@ td div:last-child {
     box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1); /* Aggiunge un'ombra per migliorare la separazione visiva */
     padding-top: 10px; /* Aggiunge uno spazio sopra */
     padding-bottom: 10px; /* Aggiunge uno spazio sotto */
+}
+
+/* Stile per rimuovere i bordi e migliorare l'aspetto del campo input */
+.input-hidden-border {
+    border: none !important;
+    border-bottom: 1px dashed #ccc !important; /* Linea inferiore tratteggiata */
+    background-color: transparent !important;
+    outline: none !important;
+    transition: border-color 0.3s ease !important;
+    width: 100% !important;
+}
+
+.input-hidden-border:hover {
+    border-bottom: 1px solid #007bff; /* Cambia colore al passaggio del mouse */
+}
+
+.input-hidden-border:focus {
+    border-bottom: 1px solid #007bff; /* Cambia colore quando il campo è in focus */
+}
+
+.input-hidden-border::placeholder {
+    color: #999;
+    opacity: 0.7;
 }

@@ -1,28 +1,29 @@
+<!-- app/templates/ricette.html -->
 <div id="Ricette" class="tabcontent">
     <div class="card">
         <div class="card-body">
             <table id="ricette-table" class="table table-sm table-striped table-margin">
                 <thead>
                 <tr>
-                    <th class="nome-ricetta">
-                        <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal"
+                    <th class="nome-ricetta" onclick="sortTable('ricette-table', 1)">
+                        <button class="btn btn-secondary btn-sm" data-bs-toggle="modal"
                                 data-bs-target="#addRecipeModal">
                             Ricetta +
                         </button>
                     </th>
-                    <th class="calorie">Kcal</th>
-                    <th class="carboidrati">Carboidrati (g)</th>
-                    <th class="proteine">Proteine (g)</th>
-                    <th class="grassi">Grassi (g)</th>
-                    <th class="colazione">Colazione</th>
-                    <th class="colazione-sec">Merenda</th>
-                    <th class="spuntino">Spuntino</th>
-                    <th class="principale">Principale</th>
-                    <th class="contorno">Contorno</th>
-                    <th class="pane">Pane</th>
-                    <th class="pane">Complemento</th>
-                    <th class="attiva">Attiva</th>
-                    <th class="azione">Azioni</th>
+                    <th class="calorie" onclick="sortTable('ricette-table', 2)">Kcal</th>
+                    <th class="carboidrati" onclick="sortTable('ricette-table', 3)">Carboidrati (g)</th>
+                    <th class="proteine" onclick="sortTable('ricette-table', 4)">Proteine (g)</th>
+                    <th class="grassi" onclick="sortTable('ricette-table', 5)">Grassi (g)</th>
+                    <th class="colazione" onclick="sortTable('ricette-table', 6)">Colazione</th>
+                    <th class="colazione-sec" onclick="sortTable('ricette-table', 7)">Merenda</th>
+                    <th class="spuntino" onclick="sortTable('ricette-table', 8)">Spuntino</th>
+                    <th class="principale" onclick="sortTable('ricette-table', 9)">Principale</th>
+                    <th class="contorno" onclick="sortTable('ricette-table', 10)">Contorno</th>
+                    <th class="pane" onclick="sortTable('ricette-table', 11)">Pane</th>
+                    <th class="complemento" onclick="sortTable('ricette-table', 12)">Complemento</th>
+                    <th class="attiva" onclick="sortTable('ricette-table', 13)">Attiva</th>
+                    <th class="azione" onclick="sortTable('ricette-table', 14)">Azioni</th>
                 </tr>
                 <tr>
                     <th><input type="text" id="filter-nome" class="form-control filter-text"
@@ -99,7 +100,7 @@
                             <option value="true">T</option>
                             <option value="false">F</option>
                         </select></th>
-                    <th>
+                    <th class="text-center align-middle">
                         <button id="cleanFiltersBtn" class="btn btn-sm btn-secondary" onclick="cleanFilters()">Clean
                         </button>
                     </th>

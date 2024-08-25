@@ -1,3 +1,4 @@
+// app/js/auth.js
 document.addEventListener('DOMContentLoaded', function() {
 
     var veganCheckbox = document.getElementById('include-vegan');

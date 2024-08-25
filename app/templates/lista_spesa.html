@@ -1,11 +1,12 @@
+<!-- app/templates/lista_spesa.html -->
 <div id="ListaSpesa" class="tabcontent">
     <div class="card">
         <div class="card-body">
-    <table class="table table-sm table-striped table-bordered table-margin">
+    <table id="lista-spesa-table" class="table table-sm table-striped table-bordered table-margin">
         <thead>
         <tr>
-            <th>Alimento</th>
-            <th>Quantità Totale (g)</th>
+            <th onclick="sortTable('lista-spesa-table', 1)">Alimento</th>
+            <th onclick="sortTable('lista-spesa-table', 2)">Quantità Totale (g)</th>
         </tr>
         </thead>
         <tbody id="spesa_tbody">

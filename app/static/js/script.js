@@ -1,3 +1,4 @@
+// app/js/script.js
 let currentDay = '';
 let currentMeal = '';
 let selectedWeekId = null;
@@ -11,6 +12,36 @@ function openTab(evt, tabName) {
     document.getElementById(tabName).style.display = "block";
     evt.currentTarget.className += " active";
 }
+
+function sortTable(tableId, columnIndex) {
+    const table = document.getElementById(tableId);
+    const rows = Array.from(table.querySelector('tbody').rows);
+    let ascending = table.dataset.sortOrder === 'asc';
+
+    rows.sort((a, b) => {
+        const aText = a.cells[columnIndex].textContent.trim();
+        const bText = b.cells[columnIndex].textContent.trim();
+
+        // Controlla se i valori possono essere interpretati come numeri
+        const aValue = isNaN(aText) ? aText.toLowerCase() : parseFloat(aText);
+        const bValue = isNaN(bText) ? bText.toLowerCase() : parseFloat(bText);
+
+        if (aValue < bValue) {
+            return ascending ? -1 : 1;
+        }
+        if (aValue > bValue) {
+            return ascending ? 1 : -1;
+        }
+        return 0;
+    });
+
+    // Aggiorna l'ordine delle righe nel tbody
+    rows.forEach(row => table.querySelector('tbody').appendChild(row));
+
+    // Alterna l'ordine di ordinamento per la prossima volta
+    table.dataset.sortOrder = ascending ? 'desc' : 'asc';
+}
+
 
 function invertDays() {
     const day1 = document.getElementById('day1').value;
@@ -360,9 +391,9 @@ function filterAlimentiTable() {
 
 function populateIngredientsModal(ingredients) {
     if (ingredients && ingredients.length > 0 && ingredients[0]['nome_ricetta']) {
-        document.getElementById('editIngredientsModalLabel').textContent = 'Dettagli Ricetta: ' + ingredients[0]['nome_ricetta'];
+        document.getElementById('editIngredientsModalLabel').textContent = 'Ingredienti Ricetta: ' + ingredients[0]['nome_ricetta'];
     } else {
-        document.getElementById('editIngredientsModalLabel').textContent = 'Dettagli Ricetta';
+        document.getElementById('editIngredientsModalLabel').textContent = 'Ingredienti Ricetta';
     }
 
     const tbody = document.getElementById('ingredientsBody');
@@ -370,7 +401,7 @@ function populateIngredientsModal(ingredients) {
     ingredients.forEach(ingredient => {
         const row = `<tr>
             <td>${ingredient['nome']}</td>
-            <td><input type="number" class="form-control form-control-sm" id="quantity-${ingredient['id']}" value="${ingredient['qta']}"></td>
+            <td><input type="number" class="form-control form-control-sm input-hidden-border" id="quantity-${ingredient['id']}" value="${ingredient['qta']}"></td>
             <td>
                 <div class="btn-group" role="group">
                     <button type="button" class="btn btn-primary btn-sm update-ingredient" data-id="${ingredient['id']}" data-recipe-id="${ingredient['id_ricetta']}">Salva</button>
@@ -455,7 +486,7 @@ function addIngredientToRecipe() {
 }
 
 function populateRicetteTable(ricette) {
-     const tbody = document.getElementById('ricette-tbody');
+    const tbody = document.getElementById('ricette-tbody');
     tbody.innerHTML = ''; // Svuota il contenuto attuale della tabella
 
     ricette.forEach(ricetta => {
@@ -464,7 +495,7 @@ function populateRicetteTable(ricette) {
         row.innerHTML = `
             <td class="nome-ricetta">
                 <div>
-                    <input type="text" class="form-control filter-text" data-ricetta-id="${ricetta.id}" name="nome_ricetta_${ricetta.id}" value="${ricetta.nome_ricetta}">
+                    <input type="text" class="form-control form-control-sm filter-text input-hidden-border" data-ricetta-id="${ricetta.id}" name="nome_ricetta_${ricetta.id}" value="${ricetta.nome_ricetta}">
                     <label hidden class="form-control form-control-sm">${ricetta.nome_ricetta}</label>
                 </div>
             </td>
@@ -522,16 +553,17 @@ function populateRicetteTable(ricette) {
             </td>
             <td class="azione">
                 <div class="btn-group" role="group">
-                    <button class="btn btn-primary btn-sm save-btn" data-ricetta-id="${ricetta.id}" data-ricetta-nome="${ricetta.nome_ricetta}" data-ricetta-colazione="${ricetta.colazione}" data-ricetta-colazione_sec="${ricetta.colazione_sec}" data-ricetta-spuntino="${ricetta.spuntino}" data-ricetta-principale="${ricetta.principale}" data-ricetta-contorno="${ricetta.contorno}" data-ricetta-pane="${ricetta.pane}" data-ricetta-complemento="${ricetta.complemento}" data-ricetta-attiva="${ricetta.attiva}">Salva</button>
-                    <button class="btn btn-primary btn-sm edit-btn" data-ricetta-id="${ricetta.id}" data-bs-toggle="modal" data-bs-target="#editRecipeModal">Modifica</button>
-                    <button class="btn btn-primary btn-sm toggle-btn" data-ricetta-id="${ricetta.id}" data-ricetta-attiva="${ricetta.attiva}">Attiva/Disattiva</button>
-                    <button class="btn btn-danger btn-sm delete-btn" data-ricetta-id="${ricetta.id}">Elimina</button>
+                    <button class="btn btn-primary btn-sm save-btn" data-ricetta-id="${ricetta.id}" data-ricetta-nome="${ricetta.nome_ricetta}" data-ricetta-colazione="${ricetta.colazione}" data-ricetta-colazione_sec="${ricetta.colazione_sec}" data-ricetta-spuntino="${ricetta.spuntino}" data-ricetta-principale="${ricetta.principale}" data-ricetta-contorno="${ricetta.contorno}" data-ricetta-pane="${ricetta.pane}" data-ricetta-complemento="${ricetta.complemento}" data-ricetta-attiva="${ricetta.attiva}" data-bs-toggle="tooltip" title="Salva"><i class="fas fa-save"></i></button>
+                    <button class="btn btn-primary btn-sm edit-btn" data-ricetta-id="${ricetta.id}" data-bs-toggle="modal" data-bs-target="#editRecipeModal" data-bs-toggle="tooltip" title="Modifica"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-primary btn-sm toggle-btn" data-ricetta-id="${ricetta.id}" data-ricetta-attiva="${ricetta.attiva}" data-bs-toggle="tooltip" title="Attiva/Disattiva"><i class="fas fa-toggle-on"></i></button>
+                    <button class="btn btn-danger btn-sm delete-btn" data-ricetta-id="${ricetta.id}" data-bs-toggle="tooltip" title="Elimina"><i class="fas fa-trash-alt"></i></button>
                 </div>
             </td>
         `;
         tbody.appendChild(row);
     });
 
+    // Attacca i listener per i bottoni
     document.querySelectorAll('.save-btn').forEach(button => {
         button.addEventListener('click', function() {
             const ricettaId = this.getAttribute('data-ricetta-id');
@@ -589,7 +621,6 @@ function populateRicetteTable(ricette) {
                 .catch(error => console.error('Error loading the ingredients:', error));
         });
     });
-
 }
 
 function populateDietaForm(data) {
@@ -1037,8 +1068,8 @@ function renderMenuEditor(data) {
                         <td class="text-align-center">${ricetta.carboidrati.toFixed(2)}</td>
                         <td class="text-align-center">${ricetta.proteine.toFixed(2)}</td>
                         <td class="text-align-center">${ricetta.grassi.toFixed(2)}</td>
-                        <td><input type="number" class="form-control form-control-sm" style="width: 60px;" value="${ricetta.qta}" min="0.1" step="0.1" onchange="updateMealQuantity('${day}', '${meal}', '${ricetta.id}', this.value)"></td>
-                        <td><button class="btn btn-danger btn-sm" onclick="removeMeal('${day}', '${meal}', '${ricetta.id}')">Rimuovi</button></td>
+                        <td><input type="number" class="form-control form-control-sm input-hidden-border" value="${ricetta.qta}" min="0.1" step="0.1" onchange="updateMealQuantity('${day}', '${meal}', '${ricetta.id}', this.value)"></td>
+                        <td class="text-center align-middle"><button class="btn btn-danger btn-sm" onclick="removeMeal('${day}', '${meal}', '${ricetta.id}')"><i class="fas fa-trash-alt"></button></td>
                     `;
                     mealTableBody.appendChild(row);
                 });
@@ -1528,26 +1559,26 @@ function populateAlimentiTable(alimenti) {
         row.innerHTML = `
             <td class="nome-alimento">
                 <div>
-                    <input type="text" class="form-control  form-control-sm filter-text" data-alimento-id="${alimento.id}" name="nome_${alimento.id}" value="${alimento.nome}">
+                    <input type="text" class="form-control input-hidden-border form-control-sm filter-text" data-alimento-id="${alimento.id}" name="nome_${alimento.id}" value="${alimento.nome}">
                     <label hidden class="form-control form-control-sm">${alimento.nome}</label>
                 </div>
             </td>
             <td id="calorie_${alimento.id}" class="calorie">${alimento.kcal}</td>
             <td class="carboidrati">
                 <div>
-                    <input type="number" class="form-control  form-control-sm filter-text"  min="0.1" step="0.1" data-alimento-id="${alimento.id}" name="carboidrati_${alimento.id}" value="${alimento.carboidrati}">
+                    <input type="number" class="form-control  form-control-sm filter-text input-hidden-border"  min="0.1" step="0.1" data-alimento-id="${alimento.id}" name="carboidrati_${alimento.id}" value="${alimento.carboidrati}">
                     <label hidden class="form-control form-control-sm">${alimento.carboidrati}</label>
                 </div>
             </td>
             <td class="proteine">
                 <div>
-                    <input type="number" class="form-control  form-control-sm filter-text"  min="0.1" step="0.1" data-alimento-id="${alimento.id}" name="proteine_${alimento.id}" value="${alimento.proteine}">
+                    <input type="number" class="form-control  form-control-sm filter-text input-hidden-border"  min="0.1" step="0.1" data-alimento-id="${alimento.id}" name="proteine_${alimento.id}" value="${alimento.proteine}">
                     <label hidden class="form-control form-control-sm">${alimento.proteine}</label>
                 </div>
             </td>
             <td class="grassi">
                 <div>
-                    <input type="number" class="form-control  form-control-sm filter-text"  min="0.1" step="0.1" data-alimento-id="${alimento.id}" name="grassi_${alimento.id}" value="${alimento.grassi}">
+                    <input type="number" class="form-control  form-control-sm filter-text input-hidden-border"  min="0.1" step="0.1" data-alimento-id="${alimento.id}" name="grassi_${alimento.id}" value="${alimento.grassi}">
                     <label hidden class="form-control form-control-sm">${alimento.grassi}</label>
                 </div>
             </td>
@@ -1578,8 +1609,8 @@ function populateAlimentiTable(alimenti) {
             </td>
             <td class="azione">
                 <div class="btn-group" role="group">
-                    <button class="btn btn-primary btn-sm save-alimento-btn" data-alimento-id="${alimento.id}">Salva</button>
-                    <button class="btn btn-danger  btn-sm delete-alimento-btn" data-alimento-id="${alimento.id}">Elimina</button>
+                    <button class="btn btn-primary btn-sm save-alimento-btn" data-alimento-id="${alimento.id}" data-bs-toggle="tooltip" title="Salva"><i class="fas fa-save"></i></button>
+                    <button class="btn btn-danger  btn-sm delete-alimento-btn" data-alimento-id="${alimento.id}" data-bs-toggle="tooltip" title="Elimina"><i class="fas fa-trash-alt"></i></button>
                 </div>
             </td>
         `;

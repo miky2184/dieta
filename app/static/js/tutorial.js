@@ -1,3 +1,4 @@
+// app/js/tutorial.js
 function startTutorial() {
     // Fase 1: Vai al tab 'Dieta'
     var dietaTab = document.getElementById('dieta-tab');

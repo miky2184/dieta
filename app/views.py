@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, redirect, url_for, request, send_file, jsonify, current_app
 from .services.menu_services import (definisci_calorie_macronutrienti, save_weight, genera_menu,
-                                     stampa_lista_della_spesa, get_menu_corrente, salva_menu_settimana_prossima,
-                                     carica_ricette, get_settimane_salvate, get_menu_settima_prossima,
-                                     salva_menu_corrente, get_settimana, aggiorna_ricetta,
+                                     stampa_lista_della_spesa, get_menu,
+                                     carica_ricette, get_settimane_salvate,
+                                     salva_menu, get_settimana, aggiorna_ricetta,
                                      attiva_o_disattiva_ricetta, get_ricette, elimina_ingredienti, salva_utente_dieta,
                                      salva_nuova_ricetta, salva_ingredienti,
                                      get_peso_hist, get_dati_utente,
@@ -21,6 +21,7 @@ import base64
 from PIL import Image
 from flask_login import login_required, current_user
 from app.models.models import db
+from datetime import datetime, timedelta
 
 views = Blueprint('views', __name__)
 
@@ -37,8 +38,12 @@ def dashboard():
     # Calcola le calorie e i macronutrienti giornalieri dell'utente.
     macronutrienti = definisci_calorie_macronutrienti(user_id)
 
+    period = {
+        "data_inizio": datetime.now().date(),
+        "data_fine": datetime.now().date()
+    }
     # Recupera il menu corrente dal database.
-    menu_corrente = get_menu_corrente(user_id)
+    menu_corrente = get_menu(user_id, period)
 
     # Se il menu corrente non esiste, crea una struttura vuota con tutti i pasti e i macronutrienti inizializzati.
     if not menu_corrente:
@@ -132,9 +137,20 @@ def generate_menu():
 
     progress = 0
     total_steps = 4  # Numero totale di passaggi nella generazione del menu
+    # Calcola l'inizio e la fine della prossima settimana
+    oggi = datetime.now().date()
+    giorni_indietro = (oggi.weekday() - 0) % 7
+    lunedi_corrente = oggi - timedelta(days=giorni_indietro)
+    domenica_corrente = lunedi_corrente + timedelta(days=6)
+
+    period = {
+        "data_inizio": lunedi_corrente,
+        "data_fine": domenica_corrente
+    }
 
     # Generazione del menu per la settimana corrente
-    if not get_menu_corrente(user_id):
+
+    if not get_menu(user_id, period=period):
         settimana_corrente = deepcopy(get_settimana(macronutrienti))
         genera_menu(settimana_corrente, False, ricette_menu)
         progress += 1 / total_steps * 100
@@ -147,13 +163,21 @@ def generate_menu():
         progress += 1 / total_steps * 100
         time.sleep(1)
 
-        salva_menu_corrente(settimana_corrente_ordinata, user_id)
+        salva_menu(settimana_corrente_ordinata, user_id, period=period)
         progress += 1 / total_steps * 100
     else:
         progress += 3 / total_steps * 100
 
+    lunedi_prossimo = oggi + timedelta(days=(7 - oggi.weekday()))
+    domenica_prossima = lunedi_prossimo + timedelta(days=6)
+
+    period = {
+        "data_inizio": lunedi_prossimo,
+        "data_fine": domenica_prossima
+    }
+
     # Generazione del menu per la settimana successiva
-    if not get_menu_settima_prossima(user_id):
+    if not get_menu(user_id, period=period):
         prossima_settimana = deepcopy(get_settimana(macronutrienti))
         genera_menu(prossima_settimana, False, ricette_menu)
         progress += 1 / total_steps * 100
@@ -163,9 +187,18 @@ def generate_menu():
         prossima_settimana_ordinata = ordina_settimana_per_kcal(prossima_settimana)
 
         genera_menu(prossima_settimana_ordinata, True, ricette_menu)
-        salva_menu_settimana_prossima(prossima_settimana_ordinata, user_id)
+        salva_menu(prossima_settimana_ordinata, user_id, period=period)
     else:
+        prossima_settimana = deepcopy(get_settimana(macronutrienti))
+        genera_menu(prossima_settimana, False, ricette_menu)
         progress += 1 / total_steps * 100
+        time.sleep(1)
+
+        # Ordina la settimana in base alle kcal giornaliere rimanenti in ordine decrescente
+        prossima_settimana_ordinata = ordina_settimana_per_kcal(prossima_settimana)
+
+        genera_menu(prossima_settimana_ordinata, True, ricette_menu)
+        salva_menu(prossima_settimana_ordinata, user_id)
 
     current_app.cache.delete(f'dashboard_{user_id}')
     return jsonify({'status': 'success', 'progress': progress})
@@ -180,7 +213,7 @@ def menu_settimana(settimana_id):
     Restituisce il menu selezionato e i macronutrienti rimanenti per quella settimana.
     """
     user_id = current_user.user_id
-    menu_selezionato = get_menu_corrente(user_id, ids=settimana_id)
+    menu_selezionato = get_menu(user_id, ids=settimana_id)
     macronutrienti_rimanenti = calcola_macronutrienti_rimanenti(menu_selezionato)
 
     return jsonify({'menu': menu_selezionato, 'remaining_macronutrienti': macronutrienti_rimanenti})
@@ -315,7 +348,7 @@ def update_ingredient():
     user_id = current_user.user_id
 
     salva_ingredienti(recipe_id, ingredient_id, quantity, user_id)
-    current_app.cache.delete(f'recipe_{recipe_id}_{recipe_id}')
+    current_app.cache.delete(f'recipe_{recipe_id}_{user_id}')
     current_app.cache.delete(f'recupera_ricette_{user_id}')
     return jsonify({'status': 'success', 'message': 'Quantità aggiornata correttamente.'})
 
@@ -523,7 +556,7 @@ def get_available_meals():
                        any(ricetta[generic_meal_type] for generic_meal_type in generic_meal_types)]
 
     # Esclude le ricette già presenti nel pasto del giorno specificato
-    menu_corrente = get_menu_corrente(user_id, ids=week_id)
+    menu_corrente = get_menu(user_id, ids=week_id)
     if menu_corrente:
         ricette_presenti_ids = [r['id'] for r in menu_corrente['day'][day]['pasto'][meal_type]['ricette']]
         available_meals = [ricetta for ricetta in available_meals if ricetta['id'] not in ricette_presenti_ids]
@@ -545,7 +578,7 @@ def aggiungi_ricetta_menu(week_id):
     user_id = current_user.user_id
 
     # Recupera il menu corrente dal database
-    menu_corrente = get_menu_corrente(user_id, ids=week_id)
+    menu_corrente = get_menu(user_id, ids=week_id)
 
     # Aggiunge i pasti selezionati al menu
     for meal_id in selected_meals:
@@ -579,7 +612,7 @@ def rimuovi_ricetta(week_id):
     user_id = current_user.user_id
 
     # Recupera il menu corrente dal database
-    menu_corrente = get_menu_corrente(user_id, ids=week_id)
+    menu_corrente = get_menu(user_id, ids=week_id)
 
     # Rimuove il pasto dal menu
     updated_menu = remove_meal_from_menu(menu_corrente, day, meal, meal_id, user_id)
@@ -614,7 +647,7 @@ def aggiorna_quantita_ingrediente():
     user_id = current_user.user_id
 
     # Recupera il menu corrente dal database
-    menu_corrente = get_menu_corrente(user_id, ids=week_id)
+    menu_corrente = get_menu(user_id, ids=week_id)
 
     # Aggiorna la quantità del pasto nel menu
     for ricetta in menu_corrente['day'][day]['pasto'][meal]['ricette']:
@@ -661,7 +694,7 @@ def generate_pdf():
     img = Image.open(BytesIO(base64.b64decode(img_data)))
 
     # Recupera il menu selezionato dal database
-    menu_selezionato = get_menu_corrente(user_id, ids=week_id)
+    menu_selezionato = get_menu(user_id, ids=week_id)
 
     # Imposta il PDF in orientamento orizzontale
     pdf_file = BytesIO()
@@ -751,7 +784,7 @@ def inverti_pasti(week_id):
     user_id = current_user.user_id
 
     # Recupera il menu della settimana per l'utente
-    settimana = get_menu_corrente(user_id, ids=week_id)
+    settimana = get_menu(user_id, ids=week_id)
 
     if not settimana:
         return jsonify({'status': 'error', 'message': 'Menu non trovato'}), 404
@@ -786,7 +819,7 @@ def inverti_pasti_giorni(week_id):
     user_id = current_user.user_id
 
     # Recupera il menu della settimana per l'utente
-    settimana = get_menu_corrente(user_id, ids=week_id)
+    settimana = get_menu(user_id, ids=week_id)
 
     if not settimana:
         return jsonify({'status': 'error', 'message': 'Menu non trovato'}), 404

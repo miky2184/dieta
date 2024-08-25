@@ -1,3 +1,4 @@
+#app/models/models.py
 from sqlalchemy import CheckConstraint, UniqueConstraint, ForeignKey, Computed, func
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY, JSON
 from werkzeug.security import generate_password_hash, check_password_hash

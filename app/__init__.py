@@ -1,3 +1,4 @@
+# app/__init__.py
 from flask_caching import Cache
 from flask import Flask, request, redirect, url_for
 from flask_login import LoginManager, current_user

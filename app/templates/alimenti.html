@@ -1,27 +1,28 @@
+<!-- app/templates/alimenti.html -->
 <div id="Alimenti" class="tabcontent">
     <div class="card">
         <div class="card-body">
             <table id="alimenti-table" class="table table-sm table-striped table-margin">
                 <thead>
                 <tr>
-                    <th class="nome-alimento">
-                        <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal"
+                    <th class="nome-alimento" onclick="sortTable('alimenti-table', 0)">
+                        <button class="btn btn-secondary btn-sm" data-bs-toggle="modal"
                                 data-bs-target="#addFoodModal">Alimento +
                         </button>
                     </th>
-                    <th class="calorie">Kcal</th>
-                    <th class="carboidrati">Carboidrati (g)</th>
-                    <th class="proteine">Proteine (g)</th>
-                    <th class="grassi">Grassi (g)</th>
-                    <th class="macro">Macro</th>
-                    <th class="frutta">Frutta</th>
-                    <th class="verdura">Verdura</th>
-                    <th class="carne-bianca">Carne Bianca</th>
-                    <th class="carne-rossa">Carne Rossa</th>
-                    <th class="pesce">Pesce</th>
-                    <th class="vegan">Vegan</th>
-                    <th class="pane">Pane</th>
-                    <th class="confezionato">Confezionato</th>
+                    <th class="calorie" onclick="sortTable('alimenti-table', 1)">Kcal</th>
+                    <th class="carboidrati" onclick="sortTable('alimenti-table', 2)">Carboidrati (g)</th>
+                    <th class="proteine" onclick="sortTable('alimenti-table', 3)">Proteine (g)</th>
+                    <th class="grassi" onclick="sortTable('alimenti-table', 4)">Grassi (g)</th>
+                    <th class="macro" onclick="sortTable('alimenti-table', 5)">Macro</th>
+                    <th class="frutta" onclick="sortTable('alimenti-table', 6)">Frutta</th>
+                    <th class="verdura" onclick="sortTable('alimenti-table', 7)">Verdura</th>
+                    <th class="carne-bianca" onclick="sortTable('alimenti-table', 8)">Carne Bianca</th>
+                    <th class="carne-rossa" onclick="sortTable('alimenti-table', 9)">Carne Rossa</th>
+                    <th class="pesce" onclick="sortTable('alimenti-table', 10)" >Pesce</th>
+                    <th class="vegan" onclick="sortTable('alimenti-table', 11)">Vegan</th>
+                    <th class="pane" onclick="sortTable('alimenti-table', 12)">Pane</th>
+                    <th class="confezionato" onclick="sortTable('alimenti-table', 13)">Confezionato</th>
                     <th class="azione">Azioni</th>
                 </tr>
                 <tr>
@@ -96,7 +97,7 @@
                         <option value="true">T</option>
                         <option value="false">F</option>
                     </select></th>
-                    <th>
+                    <th class="text-center align-middle">
                         <button id="cleanFiltersBtn" class="btn btn-sm btn-secondary" onclick="cleanFiltersAlimenti()">
                             Clean
                         </button>
