@@ -406,14 +406,14 @@ def save_weight(data, user_id):
 
     if registro_peso:
         registro_peso.peso = data['weight']
-        registro_peso.vita = data['vita']
-        registro_peso.fianchi = data['fianchi']
+        registro_peso.vita = data.get('vita', None)
+        registro_peso.fianchi = data.get('fianchi', None)
     else:
         registro_peso = RegistroPeso(
             data_rilevazione=data['date'],
             peso=data['weight'],
-            vita=data['vita'],
-            fianchi=data['fianchi'],
+            vita=data.get('vita', None),
+            fianchi=data.get('fianchi', None),
             user_id=user_id
         )
 
