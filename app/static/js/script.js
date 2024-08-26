@@ -771,7 +771,7 @@ function calculateResults() {
     let calorieGiornaliereValue = (Math.round(((metaDailyValue - (metaDailyValue * data.deficit / 100))) / 50 ) * 50).toFixed(0);
 
     var settimaneDietaValue = 0;
-
+    var settimaneNecessarie = 0;
     if (data.deficit > 0 ){
         settimaneNecessarie = (((data.peso - idealWeight) * 7000) / ((metaDailyValue - calorieGiornaliereValue) * 7)).toFixed(0);
     }
