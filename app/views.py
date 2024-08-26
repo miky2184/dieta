@@ -406,7 +406,7 @@ def nuovo_alimento():
     return jsonify({'success': True})
 
 
-@views.route('/submit-weight', methods=['POST'])
+@views.route('/submit_weight', methods=['POST'])
 @login_required
 def submit_weight():
     """
@@ -415,14 +415,20 @@ def submit_weight():
     data = request.json
     user_id = current_user.user_id
     # Salva i dati del peso nel database
-    peso = save_weight(data, user_id)
+    salvato = save_weight(data, user_id)
+
+    if not salvato:
+        return jsonify({'status': 'error', 'message': 'Prima di salvare i parametri, compila il tab Dieta con i tuoi Dati.'})
+
+    peso = get_peso_hist(user_id)
+
     # Esempio di svuotamento della cache di una funzione specifica
     current_app.cache.delete(f'get_peso_data_{user_id}')
 
     return jsonify(peso)
 
 
-@views.route('/salva-dati', methods=['POST'])
+@views.route('/salva_dati', methods=['POST'])
 @login_required
 def salva_dati():
     """
@@ -454,7 +460,9 @@ def salva_dati():
     salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
                        meta_basale, meta_giornaliero, calorie_giornaliere, settimane_dieta, carboidrati,
                        proteine, grassi, diet)
+
     current_app.cache.delete(f'get_data_utente_{user_id}')
+    current_app.cache.delete(f'get_peso_data_{user_id}')
     return redirect(url_for('views.dashboard'))
 
 

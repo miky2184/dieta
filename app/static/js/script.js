@@ -1351,7 +1351,7 @@ function submitWeight() {
     const date = new Date().toISOString().slice(0, 10); // Prende la data odierna
 
     // Invia il peso al server (assumendo che tu abbia un endpoint API)
-    fetch('/submit-weight', {
+    fetch('/submit_weight', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1365,7 +1365,11 @@ function submitWeight() {
         })
         .then(response => response.json())
         .then(data => {
-            updateWeightChart(data); // Aggiorna il grafico dopo l'invio
+            if (data.status === "error"){
+                alert(data.message);
+            } else {
+                updateWeightChart(data); // Aggiorna il grafico dopo l'invio
+            }
         })
         .catch(error => console.error('Errore nel salvataggio del peso:', error));
 }
@@ -1388,6 +1392,17 @@ function updateWeightChart(weights) {
         data: {
             labels: weights.map(item => formatDate(item.data_rilevazione)),
             datasets: [{
+                label: 'Peso Ideale',
+                data: weights.map(item => item.peso_ideale),
+                backgroundColor: 'rgba(153, 102, 255, 0.1)', // Viola chiaro
+                borderColor: 'rgba(153, 102, 255, 0.5)', // Viola intenso
+                borderWidth: 1,
+                borderDash: [10, 5], // Linea tratteggiata
+                pointRadius: 1,
+                pointBackgroundColor: 'rgba(153, 102, 255, 0.5)',
+                pointHoverRadius: 3,
+                spanGaps: true // Collega i punti ignorando i null
+            },{
                 label: 'Peso',
                 data: weights.map(item => item.peso),
                 backgroundColor: 'rgba(255, 99, 132, 0.2)',
@@ -1458,7 +1473,7 @@ function updateWeightChart(weights) {
                                 label += ': ';
                             }
                             label += context.parsed.y.toFixed(2);
-                            if (context.dataset.label === 'Peso') {
+                            if (context.dataset.label === 'Peso' || context.dataset.label === 'Peso Ideale') {
                                 label += ' kg';
                             } else {
                                 label += ' cm';

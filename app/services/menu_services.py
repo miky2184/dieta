@@ -5,7 +5,8 @@ from datetime import datetime, timedelta
 from copy import deepcopy
 import re
 import math
-from app.models.models import db, Utente, Alimento, IngredientiRicetta, Ricetta, MenuSettimanale, RegistroPeso, AlimentoBase, RicettaBase, IngredientiRicettaBase
+from app.models.models import (db, Utente, Alimento, IngredientiRicetta, Ricetta, MenuSettimanale, RegistroPeso,
+                               AlimentoBase, RicettaBase, IngredientiRicettaBase)
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql import extract
 from sqlalchemy.dialects.postgresql import insert
@@ -377,20 +378,6 @@ def get_menu(user_id: int, period: dict = None, ids: int = None):
     return result.menu if result else None
 
 
-def get_menu_settima_prossima(user_id):
-    # Calcola l'inizio e la fine della prossima settimana
-    oggi = datetime.now()
-    lunedi_prossimo = oggi + timedelta(days=(7 - oggi.weekday()))
-    domenica_prossima = lunedi_prossimo + timedelta(days=6)
-
-    menu_settimanale = db.session.query(MenuSettimanale.id).filter(
-        MenuSettimanale.data_inizio == lunedi_prossimo.date(),
-        MenuSettimanale.data_fine == domenica_prossima.date(),
-        MenuSettimanale.user_id == user_id
-    ).first()
-
-    return menu_settimanale is not None
-
 def get_settimane_salvate(user_id):
     # Ottieni la data odierna
     oggi = datetime.now().date()
@@ -402,28 +389,30 @@ def get_settimane_salvate(user_id):
 
 def save_weight(data, user_id):
 
-    registro_peso = RegistroPeso.query.filter_by(data_rilevazione=data['date'],user_id=user_id).first()
+    utente = Utente.query.filter_by(id=user_id).one()
+
+    if utente.peso_ideale is None:
+        return False
+
+    registro_peso = RegistroPeso.query.order_by(desc(RegistroPeso.data_rilevazione)).filter(RegistroPeso.data_rilevazione <= data['date'], RegistroPeso.user_id==user_id).first()
 
     if registro_peso:
-        registro_peso.peso = data['weight']
-        registro_peso.vita = data.get('vita', None)
-        registro_peso.fianchi = data.get('fianchi', None)
+        registro_peso.peso = data['weight'] or None
+        registro_peso.vita = data['vita'] or None
+        registro_peso.fianchi = data['fianchi'] or None
     else:
         registro_peso = RegistroPeso(
             data_rilevazione=data['date'],
-            peso=data['weight'],
-            vita=data.get('vita', None),
-            fianchi=data.get('fianchi', None),
+            peso=data['weight'] or None,
+            vita=data['vita'] or None,
+            fianchi=data['fianchi'] or None,
             user_id=user_id
         )
 
     db.session.add(registro_peso)
     db.session.commit()
 
-    # Richiama la funzione per ottenere lo storico del peso
-    peso_hist = get_peso_hist(user_id)
-
-    return peso_hist
+    return True
 
 
 def get_peso_hist(user_id):
@@ -526,46 +515,82 @@ def salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, defic
 
     utente = Utente.query.filter_by(id=id).first()
 
-    if not utente:
-        utente = Utente(
-            nome=nome,
-            cognome=cognome,
-            sesso=sesso,
-            eta=eta,
-            peso=peso,
-            tdee=tdee,
-            deficit_calorico=deficit_calorico,
-            bmi=bmi,
-            peso_ideale=peso_ideale,
-            meta_basale=meta_basale,
-            meta_giornaliero=meta_giornaliero,
-            calorie_giornaliere=calorie_giornaliere,
-            settimane_dieta=settimane_dieta,
-            carboidrati=carboidrati,
-            proteine=proteine,
-            grassi=grassi,
-            diet=diet
-        )
-    else:
-        utente.nome = nome
-        utente.cognome = cognome
-        utente.sesso = sesso
-        utente.eta = eta
-        utente.peso = peso
-        utente.tdee = tdee
-        utente.deficit_calorico = deficit_calorico
-        utente.bmi = bmi
-        utente.peso_ideale = peso_ideale
-        utente.meta_basale = meta_basale
-        utente.meta_giornaliero = meta_giornaliero
-        utente.calorie_giornaliere = calorie_giornaliere
-        utente.settimane_dieta = settimane_dieta
-        utente.carboidrati = carboidrati
-        utente.proteine = proteine
-        utente.grassi = grassi
-        utente.diet = diet
+    utente.nome = nome
+    utente.cognome = cognome
+    utente.sesso = sesso
+    utente.eta = eta
+    utente.peso = peso
+    utente.altezza = altezza
+    utente.tdee = tdee
+    utente.deficit_calorico = deficit_calorico
+    utente.bmi = bmi
+    utente.peso_ideale = peso_ideale
+    utente.meta_basale = meta_basale
+    utente.meta_giornaliero = meta_giornaliero
+    utente.calorie_giornaliere = calorie_giornaliere
+    utente.settimane_dieta = settimane_dieta
+    utente.carboidrati = carboidrati
+    utente.proteine = proteine
+    utente.grassi = grassi
+    utente.diet = diet
 
     db.session.add(utente)
+
+    # cancello tutti i record che hanno il peso ideale valorizzato e peso/vita/fianchi null
+    db.session.query(RegistroPeso).filter(
+        RegistroPeso.user_id == id,
+        RegistroPeso.peso_ideale.isnot(None),
+        RegistroPeso.peso.is_(None),
+        RegistroPeso.vita.is_(None),
+        RegistroPeso.fianchi.is_(None),
+    ).delete()
+
+    # calcolo la data di fine dieta
+    match = re.match(r"^(.*?)\s*\(", settimane_dieta)
+    oggi = datetime.now()
+    giorni_indietro = (oggi.weekday() - 0) % 7
+    lunedi_corrente = oggi - timedelta(days=giorni_indietro)
+    settimane = int(match.group(1))
+    data_fine_dieta = lunedi_corrente + (timedelta(days=7*int(match.group(1))))
+
+    # calcolo la differenza di peso per ogni settimana
+    peso_iniziale = utente.peso  # o il peso registrato più recentemente
+    perdita_peso_totale = peso_iniziale - peso_ideale
+    perdita_peso_settimanale = perdita_peso_totale / settimane
+
+    for settimana in range(0, settimane):
+        data_intermedia = lunedi_corrente + timedelta(days=7 * settimana)
+        peso_ideale_intermedio = peso_iniziale - perdita_peso_settimanale * settimana
+        registro_intermedio = RegistroPeso.query.filter_by(user_id=id, data_rilevazione=data_intermedia.date()).first()
+        if not registro_intermedio:
+            # Inserisci il punto intermedio nel database
+            registro_intermedio = RegistroPeso(
+                user_id=id,
+                data_rilevazione=data_intermedia.date(),
+                peso=peso_iniziale if settimana == 0 else None,
+                peso_ideale=round(peso_ideale_intermedio, 1)
+            )
+            db.session.add(registro_intermedio)
+        else:
+            registro_intermedio.peso = peso_iniziale if settimana == 0 else None
+            registro_intermedio.peso_ideale = round(peso_ideale_intermedio, 1)
+
+
+    # cerco se esiste già un record con la data di fine dieta
+    new_peso = RegistroPeso.query.filter_by(user_id=id, data_rilevazione=data_fine_dieta).first()
+
+    # se c'è aggiorno solo il peso ideale
+    if new_peso:
+        new_peso.peso_ideale = peso_ideale
+    else:
+        # altrimento creo la riga
+        new_peso = RegistroPeso(
+            user_id=id,
+            data_rilevazione=data_fine_dieta,
+            peso_ideale=peso_ideale
+        )
+        db.session.add(new_peso)
+
     db.session.commit()
 
 
