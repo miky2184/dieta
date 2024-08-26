@@ -712,7 +712,7 @@ function addWeeksToDate(weeks) {
     const month = months[resultDate.getMonth()]; // Ottiene il nome del mese
     const year = resultDate.getFullYear(); // Anno
 
-    return `${month}/${year}`;
+    return `${month} ${year}`;
 }
 
 function calculateResults() {
