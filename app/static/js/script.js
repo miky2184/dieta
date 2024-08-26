@@ -633,19 +633,18 @@ function populateDietaForm(data) {
     document.querySelector('[name="eta"]').value = Math.round(data.eta) || '';
     document.querySelector('[name="altezza"]').value = Math.round(data.altezza) || '';
     document.querySelector('[name="peso"]').value = Math.round(data.peso) || '';
-    console.log(data.tdee);
     document.getElementById('tdee').value = data.tdee || '';
-    console.log(data.deficit_calorico);
     document.getElementById('deficit_calorico').value = data.deficit_calorico || '';
     document.getElementById('bmi').value = Math.round(data.bmi * 100) / 100 || '';
     document.getElementById('peso_ideale').value = Math.round(data.peso_ideale) || '';
     document.getElementById('meta_basale').value = Math.round(data.meta_basale) || '';
     document.getElementById('meta_giornaliero').value = Math.round(data.meta_giornaliero) || '';
     document.getElementById('calorie_giornaliere').value = Math.round(data.calorie_giornaliere) || '';
-    document.getElementById('calorie_settimanali').value = Math.round(data.calorie_settimanali) || '';
+    document.getElementById('settimane_dieta').value = data.settimane_dieta || '';
     document.getElementById('carboidrati_input').value = Math.round(data.carboidrati) || '';
     document.getElementById('proteine_input').value = Math.round(data.proteine) || '';
     document.getElementById('grassi_input').value = Math.round(data.grassi) || '';
+    document.getElementById('diet').value = data.diet || '';
 }
 
 function calcolaPesoIdeale(data) {
@@ -683,9 +682,9 @@ function synchronizeFields() {
     const calorieGiornaliereHidden = document.getElementById('calorie_giornaliere_hidden');
     calorieGiornaliereHidden.value = calorieGiornaliereVisible.value;
 
-    const calorieSettimanaliVisible = document.getElementById('calorie_settimanali');
-    const calorieSettimanaliHidden = document.getElementById('calorie_settimanali_hidden');
-    calorieSettimanaliHidden.value = calorieSettimanaliVisible.value;
+    const settimaneDietaVisible = document.getElementById('settimane_dieta');
+    const settimaneDietaHidden = document.getElementById('settimane_dieta_hidden');
+    settimaneDietaHidden.value = settimaneDietaVisible.value;
 
     const carboidratiVisible = document.getElementById('carboidrati_input');
     const carboidratiHidden = document.getElementById('carboidrati_hidden');
@@ -700,6 +699,22 @@ function synchronizeFields() {
     grassiHidden.value = grassiVisible.value;
 }
 
+function addWeeksToDate(weeks) {
+    const today = new Date(); // Data di oggi
+    const resultDate = new Date(today); // Crea una nuova data basata su oggi
+    resultDate.setDate(today.getDate() + weeks * 7); // Aggiunge il numero di giorni (settimane * 7)
+
+    // Array con i nomi dei mesi in italiano
+    const months = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+                    "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+
+    // Estrai mese e anno
+    const month = months[resultDate.getMonth()]; // Ottiene il nome del mese
+    const year = resultDate.getFullYear(); // Anno
+
+    return `${month}/${year}`;
+}
+
 function calculateResults() {
 
     const form = document.getElementById('personalInfoForm');
@@ -709,11 +724,10 @@ function calculateResults() {
     const metaBasale = document.getElementById('meta_basale');
     const metaDaily = document.getElementById('meta_giornaliero');
     const calorieGiornaliere = document.getElementById('calorie_giornaliere');
-    const calorieSettimanali = document.getElementById('calorie_settimanali');
+    const settimaneDieta = document.getElementById('settimane_dieta');
     const carboidrati = document.getElementById('carboidrati_input');
     const proteine = document.getElementById('proteine_input');
     const grassi = document.getElementById('grassi_input');
-
 
     // Verifica se il form è stato correttamente selezionato
     if (!form) {
@@ -730,7 +744,8 @@ function calculateResults() {
         peso: formData.get('peso'),
         altezza: formData.get('altezza'),
         tdee: formData.get('tdee'),
-        deficit: formData.get('deficit_calorico')
+        deficit: formData.get('deficit_calorico'),
+        diet: formData.get('diet')
     };
 
     // Esegui i calcoli basati sui dati inseriti
@@ -742,25 +757,66 @@ function calculateResults() {
     let mifflinStJeor;
 
     if (data.sesso === 'M') {
-        harrisBenedict = 88.362 + (13.397 * data.peso) + (4.799 * data.altezza) - (5.677 * data.eta);
-        mifflinStJeor = 10 * data.peso + 6.25 * data.altezza - 5 * data.eta + 5;
+        harrisBenedict = 66 + (13.7 * data.peso) + (5 * data.altezza) - (6.8 * data.eta);
+        mifflinStJeor = (9.99 * data.peso) + (6.25 * data.altezza) - (4.92 * data.eta) + 5;
     } else if (data.sesso === 'F') {
-        harrisBenedict = 447.593 + (9.247 * data.peso) + (3.098 * data.altezza) - (4.330 * data.eta);
-        mifflinStJeor = 10 * data.peso + 6.25 * data.altezza - 5 * data.eta - 161;
+        harrisBenedict = 665 + (9.6 * data.peso) + (1.8 * data.altezza) - (4.7 * data.eta);
+        mifflinStJeor = (9.99 * data.peso) + (6.25 * data.altezza) - (4.92 * data.eta) - 161;
     }
 
     let metaBasaleValue = ((harrisBenedict + mifflinStJeor) / 2).toFixed(0);
 
     let metaDailyValue = (metaBasaleValue * data.tdee).toFixed(0);
 
-    let calorieGiornaliereValue = ((metaDailyValue - (metaDailyValue * data.deficit / 100))).toFixed(0);
+    let calorieGiornaliereValue = (Math.round(((metaDailyValue - (metaDailyValue * data.deficit / 100))) / 50 ) * 50).toFixed(0);
 
-    let calorieSettimanaliValue = (calorieGiornaliereValue * 7).toFixed(0);
+    var settimaneDietaValue = 0;
 
-    let carboidratiValue = (calorieGiornaliereValue * 0.6 / 4).toFixed(0);
-    let proteineValue = (calorieGiornaliereValue * 0.15 / 4).toFixed(0);;
-    let grassiValue = (calorieGiornaliereValue * 0.25 / 9).toFixed(0);;
+    if (data.deficit > 0 ){
+        settimaneNecessarie = (((data.peso - idealWeight) * 7000) / ((metaDailyValue - calorieGiornaliereValue) * 7)).toFixed(0);
+    }
 
+    // Esempio di utilizzo:
+    settimaneDietaValue = settimaneNecessarie + ' (' +  addWeeksToDate(settimaneNecessarie) + ')';
+
+    let carbsRatio, proteinRatio, fatRatio;
+
+    switch (data.diet) {
+        case 'balanced':
+            carbsRatio = 0.55;
+            proteinRatio = 0.25;
+            fatRatio = 0.20;
+            break;
+        case 'low_carb':
+            carbsRatio = 0.25;
+            proteinRatio = 0.35;
+            fatRatio = 0.40;
+            break;
+        case 'keto':
+            carbsRatio = 0.05;
+            proteinRatio = 0.20;
+            fatRatio = 0.75;
+            break;
+        case 'high_protein':
+            carbsRatio = 0.35;
+            proteinRatio = 0.40;
+            fatRatio = 0.25;
+            break;
+        case 'low_fat':
+            carbsRatio = 0.60;
+            proteinRatio = 0.15;
+            fatRatio = 0.25;
+            break;
+        case 'mediterranean':
+            carbsRatio = 0.50;
+            proteinRatio = 0.20;
+            fatRatio = 0.30;
+            break;
+    }
+
+    var carboidratiValue = (calorieGiornaliereValue * carbsRatio / 4).toFixed(0);
+    var proteineValue = (calorieGiornaliereValue * proteinRatio / 4).toFixed(0);;
+    var grassiValue = (calorieGiornaliereValue * fatRatio / 9).toFixed(0);;
 
     if (isNaN(bmi)) {
         bmi = 0; // Imposta un valore di default o gestisci l'errore come necessario
@@ -782,10 +838,6 @@ function calculateResults() {
         calorieGiornaliereValue = 0; // Imposta un valore di default o gestisci l'errore come necessario
     }
 
-    if (isNaN(calorieSettimanaliValue)) {
-        calorieSettimanaliValue = 0; // Imposta un valore di default o gestisci l'errore come necessario
-    }
-
     if (isNaN(carboidratiValue)) {
         carboidratiValue = 0; // Imposta un valore di default o gestisci l'errore come necessario
     }
@@ -803,7 +855,7 @@ function calculateResults() {
     metaBasale.value = metaBasaleValue;
     metaDaily.value = metaDailyValue;
     calorieGiornaliere.value = calorieGiornaliereValue;
-    calorieSettimanali.value = calorieSettimanaliValue;
+    settimaneDieta.value = settimaneDietaValue;
     carboidrati.value = carboidratiValue;
     proteine.value = proteineValue;
     grassi.value = grassiValue;

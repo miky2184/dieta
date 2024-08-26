@@ -53,11 +53,12 @@ class Utente(db.Model):
     meta_basale = db.Column(db.Numeric(8, 2), nullable=True)
     meta_giornaliero = db.Column(db.Numeric(8, 2), nullable=True)
     calorie_giornaliere = db.Column(db.Numeric(8, 2), nullable=True)
-    calorie_settimanali = db.Column(db.Numeric(8, 2), nullable=True)
+    settimane_dieta = db.Column(db.String, nullable=True)
     carboidrati = db.Column(db.Integer, nullable=True)
     proteine = db.Column(db.Integer, nullable=True)
     grassi = db.Column(db.Integer, nullable=True)
     email = db.Column(db.String, nullable=False)
+    diet = db.Column(db.String, nullable=True)
 
     alimenti = db.relationship('Alimento', backref='utente', cascade='all, delete-orphan')
     ingredienti_ricette = db.relationship('IngredientiRicetta', backref='utente', cascade='all, delete-orphan')

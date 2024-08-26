@@ -521,8 +521,8 @@ def elimina_ingredienti(ingredient_id: int, recipe_id: int, user_id: int):
 
 
 def salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
-                       meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, carboidrati,
-                       proteine, grassi):
+                       meta_basale, meta_giornaliero, calorie_giornaliere, settimane_dieta, carboidrati,
+                       proteine, grassi, diet):
 
     utente = Utente.query.filter_by(id=id).first()
 
@@ -540,10 +540,11 @@ def salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, defic
             meta_basale=meta_basale,
             meta_giornaliero=meta_giornaliero,
             calorie_giornaliere=calorie_giornaliere,
-            calorie_settimanali=calorie_settimanali,
+            settimane_dieta=settimane_dieta,
             carboidrati=carboidrati,
             proteine=proteine,
-            grassi=grassi
+            grassi=grassi,
+            diet=diet
         )
     else:
         utente.nome = nome
@@ -558,10 +559,11 @@ def salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, defic
         utente.meta_basale = meta_basale
         utente.meta_giornaliero = meta_giornaliero
         utente.calorie_giornaliere = calorie_giornaliere
-        utente.calorie_settimanali = calorie_settimanali
+        utente.settimane_dieta = settimane_dieta
         utente.carboidrati = carboidrati
         utente.proteine = proteine
         utente.grassi = grassi
+        utente.diet = diet
 
     db.session.add(utente)
     db.session.commit()

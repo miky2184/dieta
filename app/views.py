@@ -445,14 +445,15 @@ def salva_dati():
     meta_basale = int(request.form['meta_basale'])
     meta_giornaliero = int(request.form['meta_giornaliero'])
     calorie_giornaliere = int(request.form['calorie_giornaliere'])
-    calorie_settimanali = int(request.form['calorie_settimanali'])
+    settimane_dieta = request.form['settimane_dieta']
     carboidrati = int(request.form['carboidrati'])
     proteine = int(request.form['proteine'])
     grassi = int(request.form['grassi'])
+    diet = request.form['diet']
 
     salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
-                       meta_basale, meta_giornaliero, calorie_giornaliere, calorie_settimanali, carboidrati,
-                       proteine, grassi)
+                       meta_basale, meta_giornaliero, calorie_giornaliere, settimane_dieta, carboidrati,
+                       proteine, grassi, diet)
     current_app.cache.delete(f'get_data_utente_{user_id}')
     return redirect(url_for('views.dashboard'))
 
@@ -857,36 +858,3 @@ def get_complemento():
     results = carica_ricette(user_id, complemento=True)
 
     return jsonify(results)
-
-
-@views.route('/copy_week', methods=['POST'])
-@login_required
-def copy_week():
-    user_id = current_user.user_id
-    data = request.get_json()
-    week_from = data.get('weekFrom')
-    week_to = data.get('weekTo')
-
-    # Verifica che entrambe le settimane esistano nel database
-    menu_from = get_menu(user_id, ids=week_from)
-    menu_to = get_menu(user_id, ids=week_to)
-
-    if not menu_from:
-        return jsonify({'status': 'error', 'message': 'La settimana di origine non esiste.'})
-
-    if not menu_to:
-        return jsonify({'status': 'error', 'message': 'La settimana di destinazione non esiste.'})
-
-    try:
-        # Copia il menu da una settimana all'altra
-        copia_menu_settimana(menu_from, menu_to)
-        return jsonify({'status': 'success'})
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
-
-@views.route('/get_weeks', methods=['GET'])
-@login_required
-def get_weeks():
-    user_id = current_user.user_id
-    weeks = get_all_weeks(user_id)  # Implementa una funzione che recupera le settimane
-    return jsonify(weeks)

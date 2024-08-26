@@ -56,59 +56,64 @@
                     <select class="form-control" id="deficit_calorico" name="deficit_calorico" required>
                         <option selected disabled>Scegli...</option>
                         <option value="0.00">Nessuno</option>
-                        <option value="12.50">Leggero</option>
-                        <option value="18.40">Moderato</option>
-                        <option value="32.50">Aggressivo</option>
+                        <option value="18.16">Leggero</option>
+                        <option value="23.27">Moderato</option>
+                        <option value="28.40">Aggressivo</option>
                     </select>
                 </div>
                 </div>
                 <div class="col-md-6">
                 <div class="input-group input-group-sm mb-3">
                     <span   class="input-group-text span-width" id="bmi-span">BMI</span>
-                    <input type="number" step=".1" class="form-control" name="bmi_visible" id="bmi" disabled>
+                    <input type="number" class="form-control" name="bmi_visible" id="bmi" disabled>
                     <input type="hidden" name="bmi" id="bmi_hidden">
                 </div>
                 <div class="input-group input-group-sm mb-3">
-                    <span   class="input-group-text span-width" id="peso_ideale-span">Peso Ideale</span>
-                    <input type="number" step=".1" class="form-control" name="peso_ideale_visible" id="peso_ideale" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Peso calcolato utilizzando la media della formula di Lorenz, Broca, Berthean e Keys" disabled>
+                    <span   class="input-group-text span-width" id="peso_ideale-span" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="Peso calcolato utilizzando la media della formula di Lorenz, Broca, Berthean e Keys">Peso Ideale</span>
+                    <input type="number" class="form-control" name="peso_ideale_visible" id="peso_ideale" disabled>
                     <input type="hidden" name="peso_ideale" id="peso_ideale_hidden">
                     <span   class="input-group-text span-width">kg</span>
                 </div>
                 <div class="input-group input-group-sm mb-3">
-                    <span   class="input-group-text span-width" id="meta_basale-span">Metabolismo Basale</span>
-                    <input type="number" step=".1" class="form-control" name="meta_basale_visible" id="meta_basale" disabled>
+                    <span   class="input-group-text span-width" id="meta_basale-span" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="Il metabolismo basale (BMR) è il numero totale di calorie di cui il corpo necessita in fase di riposo e rappresenta circa il 50-70% dell’energia totale consumata." >MBR</span>
+                    <input type="number" class="form-control" name="meta_basale_visible" id="meta_basale" disabled>
                     <input type="hidden" name="meta_basale" id="meta_basale_hidden">
                 </div>
                 <div class="input-group input-group-sm mb-3">
                     <span   class="input-group-text span-width" id="meta_giornaliero-span">Metabolismo Giornaliero</span>
-                    <input type="number" step=".1" class="form-control" name="meta_giornaliero_visible" id="meta_giornaliero" disabled>
+                    <input type="number" class="form-control" name="meta_giornaliero_visible" id="meta_giornaliero" disabled>
                     <input type="hidden" name="meta_giornaliero" id="meta_giornaliero_hidden">
                 </div>
                 <div class="input-group input-group-sm mb-3">
                     <span   class="input-group-text span-width" id="calorie_giornaliere-span">Calorie Giornaliere a dieta</span>
-                    <input type="number" step=".1" class="form-control" name="calorie_giornaliere_visible" id="calorie_giornaliere" disabled>
+                    <input type="number" class="form-control" name="calorie_giornaliere_visible" id="calorie_giornaliere" disabled>
                     <input type="hidden" name="calorie_giornaliere" id="calorie_giornaliere_hidden">
                 </div>
                 <div class="input-group input-group-sm mb-3">
-                    <span   class="input-group-text span-width" id="calorie_settimanali-span">Calorie Settimanali a dieta</span>
-                    <input type="number" step=".1" class="form-control" name="calorie_settimanali_visible" id="calorie_settimanali" disabled>
-                    <input type="hidden" name="calorie_settimanali" id="calorie_settimanali_hidden">
+                    <span   class="input-group-text span-width" id="settimane_dieta-span">Settimane necessarie</span>
+                    <input type="text" class="form-control" name="settimane_dieta_visible" id="settimane_dieta" disabled>
+                    <input type="hidden" name="settimane_dieta" id="settimane_dieta_hidden">
                 </div>
+                    <div class="input-group input-group-sm mb-3">
+                        <span   class="input-group-text span-width">Scegli una dieta</span>
+                        <select class="form-control" id="diet" name="diet" required>
+            <option value="balanced">Dieta Equilibrata</option>
+            <option value="low_carb">Dieta Low Carb</option>
+            <option value="keto">Dieta Chetogenica</option>
+            <option value="high_protein">Dieta Ricca di Proteine</option>
+            <option value="low_fat">Dieta a Basso Contenuto di Grassi</option>
+            <option value="mediterranean">Dieta Mediterranea</option>
+        </select>
+                    </div>
                  <div class="input-group input-group-sm mb-3">
                     <span   class="input-group-text span-width" id="carboidrati-span">Carboidrati</span>
-                    <input type="number" step=".1" class="form-control" name="carboidrati_visible" id="carboidrati_input" disabled>
+                     <input type="number" class="form-control" name="carboidrati_visible" id="carboidrati_input" disabled>
                      <input type="hidden" name="carboidrati" id="carboidrati_hidden">
-                     <span   class="input-group-text span-width">gr</span>
-                </div>
-                <div class="input-group input-group-sm mb-3">
-                    <span   class="input-group-text span-width" id="proteine-span">Proteine</span>
-                    <input type="number" step=".1" class="form-control" name="proteine_visible" id="proteine_input" disabled>
+                     <span   class="input-group-text span-width" id="proteine-span">Proteine</span>
+                    <input type="number" class="form-control" name="proteine_visible" id="proteine_input" disabled>
                      <input type="hidden" name="proteine" id="proteine_hidden">
-                    <span   class="input-group-text span-width">gr</span>
-                </div>
-                <div class="input-group input-group-sm mb-3">
-                    <span   class="input-group-text span-width" id="grassi-span">Grassi</span>
-                    <input type="number" step=".1" class="form-control" name="grassi_visible" id="grassi_input" disabled>
+                     <span   class="input-group-text span-width" id="grassi-span">Grassi</span>
+                    <input type="number" class="form-control" name="grassi_visible" id="grassi_input" disabled>
                     <input type="hidden" name="grassi" id="grassi_hidden">
                     <span   class="input-group-text span-width">gr</span>
                 </div>
