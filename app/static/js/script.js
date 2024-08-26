@@ -121,7 +121,7 @@ function aggiornaTabellaMenu(menu) {
                     div.textContent = `${ricetta.nome_ricetta} (${ricetta.qta}x)`;
 
                     // Aggiungi gli attributi per il popover
-                    div.setAttribute('data-bs-toggle', 'popover');
+                    div.setAttribute('data-bs-toggle', 'tooltip');
                     div.setAttribute('data-bs-title', ricetta.ricetta);
 
                     // Aggiungi la classe "recipe-cell"
@@ -131,7 +131,7 @@ function aggiornaTabellaMenu(menu) {
                     td.appendChild(div);
 
                     // Inizializza il popover sul nuovo elemento
-                    new bootstrap.Popover(div);
+                    new bootstrap.Tooltip(div);
                 });
             }
             tr.appendChild(td);
@@ -1907,9 +1907,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     }
 
-    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var popoverList = popoverTriggerList.map(function(popoverTriggerEl) {
-        return new bootstrap.Popover(popoverTriggerEl);
+        return new bootstrap.Tooltip(popoverTriggerEl);
     });
 
 

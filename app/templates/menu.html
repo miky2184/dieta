@@ -38,7 +38,7 @@
                         'domenica'] %}
                         <td>
                             {% for ricetta in menu.day[dati_giorno].pasto[pasto].ricette %}
-                            <div data-bs-toggle="popover" data-bs-title="{{ ricetta.ricetta }}" class="recipe-cell">{{
+                            <div data-bs-toggle="tooltip" data-bs-title="{{ ricetta.ricetta }}" class="recipe-cell">{{
                                 ricetta.nome_ricetta }} ({{ ricetta.qta }}x)
                             </div>
                             {% endfor %}
