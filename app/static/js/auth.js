@@ -1,6 +1,17 @@
 // app/js/auth.js
 document.addEventListener('DOMContentLoaded', function() {
 
+    document.getElementById('recipe-form').addEventListener('submit', function(event) {
+        const vegan = document.getElementById('include-vegan').checked;
+        const carne = document.getElementById('include-carne').checked;
+        const pesce = document.getElementById('include-pesce').checked;
+
+        if (!vegan && !carne && !pesce) {
+            event.preventDefault();
+            alert('Devi selezionare almeno una opzione tra le ricette.');
+        }
+    });
+
     var veganCheckbox = document.getElementById('include-vegan');
     var carneCheckbox = document.getElementById('include-carne');
     var pesceCheckbox = document.getElementById('include-pesce');

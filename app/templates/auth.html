@@ -130,7 +130,7 @@
             <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
                 <div class="card">
                     <div class="card-body">
-                        <form action="{{ url_for('auth.register') }}" method="POST">
+                        <form id="recipe-form" action="{{ url_for('auth.register') }}" method="POST">
                             <div class="input-group input-group-sm mb-3">
                                 <span class="input-group-text span-width"><i class="fas fa-user"></i> Username</span>
                                 <input type="text" class="form-control form-control-sm" id="username" name="username" required>
