@@ -403,6 +403,8 @@ def nuovo_alimento():
     current_app.cache.delete(f'dashboard_{user_id}')
     current_app.cache.delete(f'get_all_ingredients_{user_id}')
     current_app.cache.delete(f'recupera_alimenti_{user_id}')
+    current_app.cache.delete(f'recupera_ricette_{user_id}')
+
     return jsonify({'success': True})
 
 

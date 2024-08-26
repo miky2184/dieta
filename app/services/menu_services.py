@@ -747,7 +747,7 @@ def salva_nuovo_alimento(name, carboidrati, proteine, grassi, frutta, carne_bian
         ricetta_id = get_sequence_value('dieta.ricetta_id_seq')
         ricetta = Ricetta(
             id=ricetta_id,
-            nome_ricetta=name,
+            nome_ricetta=name.upper(),
             user_id=user_id
         )
 
