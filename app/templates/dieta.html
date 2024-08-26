@@ -41,7 +41,7 @@
                     <span   class="input-group-text span-width">kg</span>
                 </div>
                 <div class="input-group input-group-sm mb-3">
-                <span   class="input-group-text span-width">Attività Lavorativa/Fisica</span>
+                <span   class="input-group-text span-width"  data-bs-toggle="tooltip" data-bs-placement="left"  data-bs-title="Seleziona il livello di attività fisica e lavorativa che meglio descrive la tua routine quotidiana. Questo campo viene utilizzato per calcolare il tuo fabbisogno calorico giornaliero (TDEE). Scegliendo un livello più alto, il tuo fabbisogno calorico aumenterà, riflettendo l'energia extra necessaria per sostenere un'attività fisica più intensa.">Attività Lavorativa/Fisica</span>
                     <select class="form-control" name="tdee" id="tdee" required>
                         <option selected disabled>Scegli...</option>
                         <option value="1.200">Sedentario (poca o nessuna attività fisica):</option>
@@ -52,7 +52,7 @@
                      </select>
                 </div>
                  <div class="input-group input-group-sm mb-3">
-                    <span   class="input-group-text span-width" id="deficit_calorico-span">Deficit Calorico</span>
+                    <span   class="input-group-text span-width" id="deficit_calorico-span"  data-bs-toggle="tooltip" data-bs-placement="left"  data-bs-title="Scegli la percentuale di riduzione delle calorie giornaliere per raggiungere i tuoi obiettivi di perdita di peso. Un deficit più grande porta a una maggiore perdita di peso, ma considera l'impatto sulla tua energia e salute.">Riduzione Calorie (%)</span>
                     <select class="form-control" id="deficit_calorico" name="deficit_calorico" required>
                         <option selected disabled>Scegli...</option>
                         <option value="0.00">Nessuno</option>
