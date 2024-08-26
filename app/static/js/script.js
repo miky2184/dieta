@@ -1120,7 +1120,7 @@ function renderMenuEditor(data) {
                         <td class="text-align-center">${(ricetta.carboidrati * ricetta.qta).toFixed(2)}</td>
                         <td class="text-align-center">${(ricetta.proteine * ricetta.qta).toFixed(2)}</td>
                         <td class="text-align-center">${(ricetta.grassi * ricetta.qta).toFixed(2)}</td>
-                        <td><input type="number" class="form-control form-control-sm input-hidden-border" value="${ricetta.qta}" min="0.1" step="0.1" onchange="updateMealQuantity('${day}', '${meal}', '${ricetta.id}', this.value)"></td>
+                        <td><input type="number" class="form-control form-control-sm input-hidden-border" value="${ricetta.qta}" min="0.1" step="0.05" onchange="updateMealQuantity('${day}', '${meal}', '${ricetta.id}', this.value)"></td>
                         <td class="text-center align-middle"><button class="btn btn-danger btn-sm" onclick="removeMeal('${day}', '${meal}', '${ricetta.id}')"><i class="fas fa-trash-alt"></button></td>
                     `;
                     mealTableBody.appendChild(row);
