@@ -88,8 +88,8 @@ def register():
     db.session.commit()
 
     data = {}
-    data.weight = peso
-    data.date = datetime.now().date()
+    data['weight'] = peso
+    data['date'] = datetime.now().date()
 
     save_weight(data, user_id)
 
