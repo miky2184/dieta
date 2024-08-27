@@ -390,7 +390,6 @@ function filterAlimentiTable() {
     const grassiMin = parseFloat(document.getElementById('filter-grassi-min').value) || -Infinity;
     const grassiMax = parseFloat(document.getElementById('filter-grassi-max').value) || Infinity;
 
-    const macroFilter = document.getElementById('filter-macro').value;
     const fruttaFilter = document.getElementById('filter-frutta').value;
     const carneBiancaFilter = document.getElementById('filter-carne-bianca').value;
     const carneRossaFilter = document.getElementById('filter-carne-rossa').value;
@@ -412,22 +411,20 @@ function filterAlimentiTable() {
         const proteineCell = parseFloat(cells[3].textContent) || 0;
         const grassiCell = parseFloat(cells[4].textContent) || 0;
 
-        const macroCell = cells[5].textContent;
-        const fruttaCell = cells[6].querySelector('input').checked.toString();
-        const carneBiancaCell = cells[8].querySelector('input').checked.toString();
-        const carneRossaCell = cells[9].querySelector('input').checked.toString();
-        const paneCell = cells[12].querySelector('input').checked.toString();
-        const verduraCell = cells[7].querySelector('input').checked.toString();
-        const confezionatoCell = cells[13].querySelector('input').checked.toString();
-        const veganCell = cells[11].querySelector('input').checked.toString();
-        const pesceCell = cells[10].querySelector('input').checked.toString();
+        const fruttaCell = cells[5].querySelector('input').checked.toString();
+        const verduraCell = cells[6].querySelector('input').checked.toString();
+        const carneBiancaCell = cells[7].querySelector('input').checked.toString();
+        const carneRossaCell = cells[8].querySelector('input').checked.toString();
+        const pesceCell = cells[9].querySelector('input').checked.toString();
+        const veganCell = cells[10].querySelector('input').checked.toString();
+        const paneCell = cells[11].querySelector('input').checked.toString();
+        const confezionatoCell = cells[12].querySelector('input').checked.toString();
 
         const calorieMatch = calorieCell >= calorieMin && calorieCell <= calorieMax;
         const carboMatch = carboCell >= carboMin && carboCell <= carboMax;
         const proteineMatch = proteineCell >= proteineMin && proteineCell <= proteineMax;
         const grassiMatch = grassiCell >= grassiMin && grassiCell <= grassiMax;
 
-        const macroMatch = (macroFilter === 'all') || (macroFilter === macroCell);
         const fruttaMatch = (fruttaFilter === 'all') || (fruttaFilter === fruttaCell);
         const carneBiancaMatch = (carneBiancaFilter === 'all') || (carneBiancaFilter === carneBiancaCell);
         const carneRossaMatch = (carneRossaFilter === 'all') || (carneRossaFilter === carneRossaCell);
@@ -443,7 +440,6 @@ function filterAlimentiTable() {
             carboMatch &&
             proteineMatch &&
             grassiMatch &&
-            macroMatch &&
             fruttaMatch &&
             carneBiancaMatch &&
             carneRossaMatch &&
@@ -564,65 +560,65 @@ function populateRicetteTable(ricette) {
         const row = document.createElement('tr');
 
         row.innerHTML = `
-            <td class="nome-ricetta">
+            <td>
                 <div>
-                    <input type="text" class="form-control form-control-sm filter-text input-hidden-border" data-ricetta-id="${ricetta.id}" name="nome_ricetta_${ricetta.id}" value="${ricetta.nome_ricetta}">
+                    <input type="text" class="form-control form-control-sm input-hidden-border" data-ricetta-id="${ricetta.id}" name="nome_ricetta_${ricetta.id}" value="${ricetta.nome_ricetta}">
                     <label hidden class="form-control form-control-sm">${ricetta.nome_ricetta}</label>
                 </div>
             </td>
-            <td class="calorie">${ricetta.kcal}</td>
-            <td class="carboidrati">${ricetta.carboidrati}</td>
-            <td class="proteine">${ricetta.proteine}</td>
-            <td class="grassi">${ricetta.grassi}</td>
-            <td class="colazione">
+            <td style="text-align: center;">${ricetta.kcal}</td>
+            <td style="text-align: center;">${ricetta.carboidrati}</td>
+            <td style="text-align: center;">${ricetta.proteine}</td>
+            <td style="text-align: center;">${ricetta.grassi}</td>
+            <td style="text-align: center;">
                 <div>
                     <input type="checkbox" name="colazione_${ricetta.id}" ${ricetta.colazione ? 'checked' : ''}>
                     <label hidden class="form-control form-control-sm">${ricetta.colazione}</label>
                 </div>
             </td>
-            <td class="colazione-sec">
+            <td style="text-align: center;">
                 <div>
                     <input type="checkbox" name="colazione_sec_${ricetta.id}" ${ricetta.colazione_sec ? 'checked' : ''}>
                     <label hidden class="form-control form-control-sm">${ricetta.colazione_sec}</label>
                 </div>
             </td>
-            <td class="spuntino">
+            <td style="text-align: center;">
                 <div>
                     <input type="checkbox" name="spuntino_${ricetta.id}" ${ricetta.spuntino ? 'checked' : ''}>
                     <label hidden class="form-control form-control-sm">${ricetta.spuntino}</label>
                 </div>
             </td>
-            <td class="principale">
+            <td style="text-align: center;">
                 <div>
                     <input type="checkbox" name="principale_${ricetta.id}" ${ricetta.principale ? 'checked' : ''}>
                     <label hidden class="form-control form-control-sm">${ricetta.principale}</label>
                 </div>
             </td>
-            <td class="contorno">
+            <td style="text-align: center;">
                 <div>
                     <input type="checkbox" name="contorno_${ricetta.id}" ${ricetta.contorno ? 'checked' : ''}>
                     <label hidden class="form-control form-control-sm">${ricetta.contorno}</label>
                 </div>
             </td>
-            <td class="pane">
+            <td style="text-align: center;">
                 <div>
                     <input type="checkbox" name="pane_${ricetta.id}" ${ricetta.pane ? 'checked' : ''}>
                     <label hidden class="form-control form-control-sm">${ricetta.pane}</label>
                 </div>
             </td>
-            <td class="complemento">
+            <td style="text-align: center;">
                 <div>
                     <input type="checkbox" name="complemento_${ricetta.id}" ${ricetta.complemento ? 'checked' : ''}>
                     <label hidden class="form-control form-control-sm">${ricetta.complemento}</label>
                 </div>
             </td>
-            <td class="attiva">
+            <td style="text-align: center;">
                 <div>
                     <label hidden class="form-control form-control-sm">${ricetta.attiva}</label>
                     <input type="checkbox" class="attiva-checkbox" name="attiva_${ricetta.id}" data-ricetta-id="${ricetta.id}" ${ricetta.attiva ? 'checked' : ''} disabled>
                 </div>
             </td>
-            <td class="azione">
+            <td style="text-align: center;">
                 <div class="btn-group" role="group">
                     <button class="btn btn-primary btn-sm save-btn" data-ricetta-id="${ricetta.id}" data-ricetta-nome="${ricetta.nome_ricetta}" data-ricetta-colazione="${ricetta.colazione}" data-ricetta-colazione_sec="${ricetta.colazione_sec}" data-ricetta-spuntino="${ricetta.spuntino}" data-ricetta-principale="${ricetta.principale}" data-ricetta-contorno="${ricetta.contorno}" data-ricetta-pane="${ricetta.pane}" data-ricetta-complemento="${ricetta.complemento}" data-ricetta-attiva="${ricetta.attiva}" data-bs-toggle="tooltip" title="Salva"><i class="fas fa-save"></i></button>
                     <button class="btn btn-primary btn-sm edit-btn" data-ricetta-id="${ricetta.id}" data-bs-toggle="modal" data-bs-target="#editRecipeModal" data-bs-toggle="tooltip" title="Modifica"><i class="fas fa-edit"></i></button>
@@ -1068,16 +1064,16 @@ function renderMenuEditor(data) {
     // Creazione della tabellina per i rimanenti giornalieri
     const remainingTable = document.createElement('table');
     remainingTable.id = 'remainingTable';
-    remainingTable.classList.add('table', 'table-sm', 'table-bordered', 'table-striped', 'table-margin');
+    remainingTable.classList.add('table', 'table-sm', 'table-bordered', 'table-striped');
 
     const remainingTableHeader = document.createElement('thead');
     remainingTableHeader.innerHTML = `
         <tr>
-            <th>Giorno</th>
-            <th class="calorie-edit">Kcal</th>
-            <th class="carboidrati-edit">Carboidrati (g)</th>
-            <th class="proteine-edit">Proteine (g)</th>
-            <th class="grassi-edit">Grassi (g)</th>
+            <th style="width:20%; text-align: center;">Giorno</th>
+            <th style="width:20%; text-align: center;">Kcal</th>
+            <th style="width:20%; text-align: center;">Carbs</th>
+            <th style="width:20%; text-align: center;">Prot</th>
+            <th style="width:20%; text-align: center;">Fat</th>
         </tr>
     `;
     remainingTable.appendChild(remainingTableHeader);
@@ -1100,10 +1096,10 @@ function renderMenuEditor(data) {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${capitalize(day)}</td>
-            <td class="calorie-edit">${remaining.kcal.toFixed(2)}</td>
-            <td class="carboidrati-edit">${remaining.carboidrati.toFixed(2)}</td>
-            <td class="proteine-edit">${remaining.proteine.toFixed(2)}</td>
-            <td class="grassi-edit">${remaining.grassi.toFixed(2)}</td>
+            <td style="text-align: center;">${remaining.kcal.toFixed(2)}</td>
+            <td style="text-align: center;">${remaining.carboidrati.toFixed(2)}</td>
+            <td style="text-align: center;">${remaining.proteine.toFixed(2)}</td>
+            <td style="text-align: center;">${remaining.grassi.toFixed(2)}</td>
         `;
         remainingTableBody.appendChild(row);
     });
@@ -1112,10 +1108,10 @@ function renderMenuEditor(data) {
     const totalRow = document.createElement('tr');
     totalRow.innerHTML = `
         <th>Totale</th>
-        <th class="calorie-edit">${totalKcal.toFixed(2)}</th>
-        <th class="carboidrati-edit">${totalCarboidrati.toFixed(2)}</th>
-        <th class="proteine-edit">${totalProteine.toFixed(2)}</th>
-        <th class="grassi-edit">${totalGrassi.toFixed(2)}</th>
+        <th style="text-align: center;">${totalKcal.toFixed(2)}</th>
+        <th style="text-align: center;">${totalCarboidrati.toFixed(2)}</th>
+        <th style="text-align: center;">${totalProteine.toFixed(2)}</th>
+        <th style="text-align: center;">${totalGrassi.toFixed(2)}</th>
     `;
     remainingTableBody.appendChild(totalRow);
 
@@ -1170,18 +1166,18 @@ function renderMenuEditor(data) {
             // Creare una tabella per ogni pasto
             const mealTable = document.createElement('table');
 
-            mealTable.classList.add('table', 'table-sm', 'table-bordered', 'mb-2', 'table-striped', 'table-margin');
+            mealTable.classList.add('table', 'table-sm', 'table-bordered', 'mb-2', 'table-striped');
 
             const mealTableHead = document.createElement('thead');
             mealTableHead.innerHTML = `
                 <tr>
-                    <th style="width:34%" class="text-align-center">${formatMealName(meal)}</th>
-                    <th style="width:11%" class="text-align-center">Kcal</th>
-                    <th style="width:11%" class="text-align-center">Carboidrati (g)</th>
-                    <th style="width:11%" class="text-align-center">Proteine (g)</th>
-                    <th style="width:11%" class="text-align-center">Grassi (g)</th>
-                    <th style="width:11%" class="text-align-center">Quantità</th>
-                    <th style="width:11%" class="text-align-center">Azioni</th>
+                    <th style="width:34%; text-align: center;">${formatMealName(meal)}</th>
+                    <th style="width:11%; text-align: center;">Kcal</th>
+                    <th style="width:11%; text-align: center;">Carbs</th>
+                    <th style="width:11%; text-align: center;">Prot</th>
+                    <th style="width:11%; text-align: center;">Fat</th>
+                    <th style="width:11%; text-align: center;">Quantità</th>
+                    <th style="width:11%; text-align: center;">Azioni</th>
                 </tr>
             `;
             mealTable.appendChild(mealTableHead);
@@ -1194,12 +1190,12 @@ function renderMenuEditor(data) {
                     row.id = `meal-${ricetta.id}-${day}-${meal}`;
                     row.innerHTML = `
                         <td>${ricetta.nome_ricetta}</td>
-                        <td class="text-align-center">${(ricetta.kcal * ricetta.qta).toFixed(2)}</td>
-                        <td class="text-align-center">${(ricetta.carboidrati * ricetta.qta).toFixed(2)}</td>
-                        <td class="text-align-center">${(ricetta.proteine * ricetta.qta).toFixed(2)}</td>
-                        <td class="text-align-center">${(ricetta.grassi * ricetta.qta).toFixed(2)}</td>
-                        <td><input type="number" class="form-control form-control-sm input-hidden-border" value="${ricetta.qta}" min="0.1" step="0.05" onchange="updateMealQuantity('${day}', '${meal}', '${ricetta.id}', this.value)"></td>
-                        <td class="text-center align-middle"><button class="btn btn-danger btn-sm" onclick="removeMeal('${day}', '${meal}', '${ricetta.id}')"><i class="fas fa-trash-alt"></button></td>
+                        <td style="text-align: center;">${(ricetta.kcal * ricetta.qta).toFixed(2)}</td>
+                        <td style="text-align: center;">${(ricetta.carboidrati * ricetta.qta).toFixed(2)}</td>
+                        <td style="text-align: center;">${(ricetta.proteine * ricetta.qta).toFixed(2)}</td>
+                        <td style="text-align: center;">${(ricetta.grassi * ricetta.qta).toFixed(2)}</td>
+                        <td style="text-align: center;"><input type="number" class="form-control form-control-sm input-hidden-border" value="${ricetta.qta}" min="0.1" step="0.05" onchange="updateMealQuantity('${day}', '${meal}', '${ricetta.id}', this.value)"></td>
+                        <td style="text-align: center;"><button class="btn btn-danger btn-sm" onclick="removeMeal('${day}', '${meal}', '${ricetta.id}')"><i class="fas fa-trash-alt"></button></td>
                     `;
                     mealTableBody.appendChild(row);
                 });
@@ -1703,57 +1699,56 @@ function populateAlimentiTable(alimenti) {
         const row = document.createElement('tr');
 
         row.innerHTML = `
-            <td class="nome-alimento">
+            <td>
                 <div>
-                    <input type="text" class="form-control input-hidden-border form-control-sm filter-text" data-alimento-id="${alimento.id}" data-alimento-nome="${alimento.nome}" name="nome_${alimento.id}" value="${alimento.nome}">
+                    <input type="text" class="form-control input-hidden-border form-control-sm" data-alimento-id="${alimento.id}" data-alimento-nome="${alimento.nome}" name="nome_${alimento.id}" value="${alimento.nome}">
                     <label hidden class="form-control form-control-sm">${alimento.nome}</label>
                 </div>
             </td>
-            <td id="calorie_${alimento.id}" class="calorie">${alimento.kcal}</td>
-            <td class="carboidrati">
+            <td id="calorie_${alimento.id}" style="text-align: center;">${alimento.kcal}</td>
+            <td>
                 <div>
-                    <input type="number" class="form-control  form-control-sm filter-text input-hidden-border"  min="0.1" step="0.1" data-alimento-id="${alimento.id}" name="carboidrati_${alimento.id}" value="${alimento.carboidrati}">
+                    <input type="number" class="form-control form-control-sm input-hidden-border"  min="0.1" step="0.1" data-alimento-id="${alimento.id}" name="carboidrati_${alimento.id}" value="${alimento.carboidrati}">
                     <label hidden class="form-control form-control-sm">${alimento.carboidrati}</label>
                 </div>
             </td>
-            <td class="proteine">
+            <td>
                 <div>
-                    <input type="number" class="form-control  form-control-sm filter-text input-hidden-border"  min="0.1" step="0.1" data-alimento-id="${alimento.id}" name="proteine_${alimento.id}" value="${alimento.proteine}">
+                    <input type="number" class="form-control  form-control-sm  input-hidden-border"  min="0.1" step="0.1" data-alimento-id="${alimento.id}" name="proteine_${alimento.id}" value="${alimento.proteine}">
                     <label hidden class="form-control form-control-sm">${alimento.proteine}</label>
                 </div>
             </td>
-            <td class="grassi">
+            <td>
                 <div>
-                    <input type="number" class="form-control  form-control-sm filter-text input-hidden-border"  min="0.1" step="0.1" data-alimento-id="${alimento.id}" name="grassi_${alimento.id}" value="${alimento.grassi}">
+                    <input type="number" class="form-control  form-control-sm  input-hidden-border"  min="0.1" step="0.1" data-alimento-id="${alimento.id}" name="grassi_${alimento.id}" value="${alimento.grassi}">
                     <label hidden class="form-control form-control-sm">${alimento.grassi}</label>
                 </div>
             </td>
-            <td class="macro">${alimento.macro}</td>
-            <td class="frutta">
+            <td style="text-align: center;" >
                 <div><input type="checkbox" name="frutta_${alimento.id}" ${alimento.frutta ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.frutta}</label></div>
             </td>
-            <td class="verdura">
+            <td  style="text-align: center;" >
                 <div><input type="checkbox" name="verdura_${alimento.id}" ${alimento.verdura ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.verdura}</label></div>
             </td>
-            <td class="carne-bianca">
+            <td  style="text-align: center;" >
                 <div><input type="checkbox" name="carne_bianca_${alimento.id}" ${alimento.carne_bianca ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.carne_bianca}</label></div>
             </td>
-            <td class="carne-rossa">
+            <td  style="text-align: center;" ">
                 <div><input type="checkbox" name="carne_rossa_${alimento.id}" ${alimento.carne_rossa ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.carne_rossa}</label></div>
             </td>
-            <td class="pesce">
+            <td  style="text-align: center;" >
                 <div><input type="checkbox" name="pesce_${alimento.id}" ${alimento.pesce ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.pesce}</label></div>
             </td>
-            <td class="vegan">
+            <td  style="text-align: center;" >
                 <div><input type="checkbox" name="vegan_${alimento.id}" ${alimento.vegan ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.vegan}</label></div>
             </td>
-            <td class="pane">
+            <td  style="text-align: center;" >
                 <div><input type="checkbox" name="pane_${alimento.id}" ${alimento.pane ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.pane}</label></div>
             </td>
-            <td class="confezionato">
+            <td  style="text-align: center;" >
                 <div><input type="checkbox" name="confezionato_${alimento.id}" ${alimento.confezionato ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.confezionato}</label></div>
             </td>
-            <td class="azione">
+            <td  style="text-align: center;" >
                 <div class="btn-group" role="group">
                     <button class="btn btn-primary btn-sm save-alimento-btn" data-alimento-id="${alimento.id}" data-bs-toggle="tooltip" title="Salva"><i class="fas fa-save"></i></button>
                     <button class="btn btn-danger  btn-sm delete-alimento-btn" data-alimento-id="${alimento.id}" data-bs-toggle="tooltip" title="Elimina"><i class="fas fa-trash-alt"></i></button>

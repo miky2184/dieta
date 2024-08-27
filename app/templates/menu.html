@@ -1,6 +1,6 @@
 <!-- app/templates/menu.html -->
 <div id="Menu" class="tabcontent">
-    <div class="table-margin d-flex">
+    <div class="d-flex">
         <div class="input-group mb-3">
             {% include 'week_selector.html' %}
             <button id="generateMenuBtn" class="btn btn-primary btn-sm" data-bs-toggle="modal"
@@ -17,17 +17,17 @@
     <div id="capture">
         <div class="card">
             <div class="card-body">
-                <table class="table table-sm table-striped table-bordered table-margin">
+                <table class="table table-sm table-striped table-bordered">
                     <thead>
                     <tr>
-                        <th class="text-align-center">Pasto</th>
-                        <th class="text-align-center">Lunedì</th>
-                        <th class="text-align-center">Martedì</th>
-                        <th class="text-align-center">Mercoledì</th>
-                        <th class="text-align-center">Giovedì</th>
-                        <th class="text-align-center">Venerdì</th>
-                        <th class="text-align-center">Sabato</th>
-                        <th class="text-align-center">Domenica</th>
+                        <th style="width:12.5%; text-align: center;">Pasto</th>
+                        <th style="width:12.5%; text-align: center;">Lunedì</th>
+                        <th style="width:12.5%; text-align: center;">Martedì</th>
+                        <th style="width:12.5%; text-align: center;">Mercoledì</th>
+                        <th style="width:12.5%; text-align: center;">Giovedì</th>
+                        <th style="width:12.5%; text-align: center;">Venerdì</th>
+                        <th style="width:12.5%; text-align: center;">Sabato</th>
+                        <th style="width:12.5%; text-align: center;">Domenica</th>
                     </tr>
                     </thead>
                     <tbody id="menu_tbody">
@@ -55,11 +55,11 @@
                         <td>
                             <div><strong>Kcal:</strong> <span id="remaining-kcal-{{ dati_giorno }}">{{ remaining_macronutrienti[dati_giorno]['kcal'] }}</span>
                             </div>
-                            <div><strong>Carboidrati:</strong> <span id="remaining-carboidrati-{{ dati_giorno }}">{{ remaining_macronutrienti[dati_giorno]['carboidrati'] }}</span>
+                            <div><strong>Carbs:</strong> <span id="remaining-carboidrati-{{ dati_giorno }}">{{ remaining_macronutrienti[dati_giorno]['carboidrati'] }}</span>
                             </div>
-                            <div><strong>Proteine:</strong> <span id="remaining-proteine-{{ dati_giorno }}">{{ remaining_macronutrienti[dati_giorno]['proteine'] }}</span>
+                            <div><strong>Prot:</strong> <span id="remaining-proteine-{{ dati_giorno }}">{{ remaining_macronutrienti[dati_giorno]['proteine'] }}</span>
                             </div>
-                            <div><strong>Grassi:</strong> <span id="remaining-grassi-{{ dati_giorno }}">{{ remaining_macronutrienti[dati_giorno]['grassi'] }}</span>
+                            <div><strong>Fat:</strong> <span id="remaining-grassi-{{ dati_giorno }}">{{ remaining_macronutrienti[dati_giorno]['grassi'] }}</span>
                             </div>
                         </td>
                         {% endfor %}

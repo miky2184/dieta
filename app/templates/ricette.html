@@ -2,55 +2,55 @@
 <div id="Ricette" class="tabcontent">
     <div class="card">
         <div class="card-body">
-            <table id="ricette-table" class="table table-sm table-hover table-bordered table-margin">
+            <table id="ricette-table" class="table table-sm table-hover table-bordered">
                 <thead>
                 <tr>
-                    <th class="nome-ricetta" onclick="sortTable('ricette-table', 0)">
+                    <th style="width:20%; text-align: center;" onclick="sortTable('ricette-table', 0)">
                         <button class="btn btn-secondary btn-sm" data-bs-toggle="modal"
                                 data-bs-target="#addRecipeModal">
                             Ricetta +
                         </button>
                     </th>
-                    <th class="calorie" onclick="sortTable('ricette-table', 1)">Kcal</th>
-                    <th class="carboidrati" onclick="sortTable('ricette-table', 2)">Carboidrati (g)</th>
-                    <th class="proteine" onclick="sortTable('ricette-table', 3)">Proteine (g)</th>
-                    <th class="grassi" onclick="sortTable('ricette-table', 4)">Grassi (g)</th>
-                    <th class="colazione" onclick="sortTable('ricette-table', 5)">Colazione</th>
-                    <th class="colazione-sec" onclick="sortTable('ricette-table', 6)">Merenda</th>
-                    <th class="spuntino" onclick="sortTable('ricette-table', 7)">Spuntino</th>
-                    <th class="principale" onclick="sortTable('ricette-table', 8)">Principale</th>
-                    <th class="contorno" onclick="sortTable('ricette-table', 9)">Contorno</th>
-                    <th class="pane" onclick="sortTable('ricette-table', 10)">Pane</th>
-                    <th class="complemento" onclick="sortTable('ricette-table', 11)">Complemento</th>
-                    <th class="attiva" onclick="sortTable('ricette-table', 12)">Attiva</th>
-                    <th class="azione" onclick="sortTable('ricette-table', 13)">Azioni</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 1)">Kcal</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 2)">Carbs</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 3)">Prot</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 4)">Fat</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 5)">Colazione</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 6)">Merenda</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 7)">Spuntino</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 8)">Principale</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 9)">Contorno</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 10)">Pane</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 11)">Complemento</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 12)">Attiva</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 13)">Azioni</th>
                 </tr>
                 <tr>
-                    <th><input type="text" id="filter-nome" class="form-control filter-text"
+                    <th><input type="text" id="filter-nome" class="form-control form-control-sm"
                                placeholder="Filtra per nome" onkeyup="filterTable()"></th>
                     <th><input type="number" id="filter-calorie-min"
-                               class="form-control form-control-sm filter-number  filter-text" placeholder="Min"
+                               class="form-control form-control-sm" placeholder="Min"
                                oninput="filterTable()">
                         <input type="number" id="filter-calorie-max"
-                               class="form-control form-control-sm filter-number  filter-text" placeholder="Max"
+                               class="form-control form-control-sm" placeholder="Max"
                                oninput="filterTable()"></th>
                     <th><input type="number" id="filter-carbo-min"
-                               class="form-control form-control-sm filter-number  filter-text" placeholder="Min"
+                               class="form-control form-control-sm" placeholder="Min"
                                oninput="filterTable()">
                         <input type="number" id="filter-carbo-max"
-                               class="form-control form-control-sm filter-number  filter-text" placeholder="Max"
+                               class="form-control form-control-sm" placeholder="Max"
                                oninput="filterTable()"></th>
                     <th><input type="number" id="filter-proteine-min"
-                               class="form-control form-control-sm filter-number  filter-text" placeholder="Min"
+                               class="form-control form-control-sm" placeholder="Min"
                                oninput="filterTable()">
                         <input type="number" id="filter-proteine-max"
-                               class="form-control form-control-sm filter-number  filter-text" placeholder="Max"
+                               class="form-control form-control-sm" placeholder="Max"
                                oninput="filterTable()"></th>
                     <th><input type="number" id="filter-grassi-min"
-                               class="form-control form-control-sm filter-number  filter-text" placeholder="Min"
+                               class="form-control form-control-sm" placeholder="Min"
                                oninput="filterTable()">
                         <input type="number" id="filter-grassi-max"
-                               class="form-control form-control-sm filter-number  filter-text" placeholder="Max"
+                               class="form-control form-control-sm" placeholder="Max"
                                oninput="filterTable()"></th>
                     <th>
                         <select id="filter-colazione" class="form-select form-select-sm" onchange="filterTable()">
@@ -100,7 +100,7 @@
                             <option value="true">T</option>
                             <option value="false">F</option>
                         </select></th>
-                    <th class="text-center align-middle">
+                    <th  style="text-align: center;">
                         <button id="cleanFiltersBtn" class="btn btn-sm btn-secondary" onclick="cleanFilters()">Clean
                         </button>
                     </th>
