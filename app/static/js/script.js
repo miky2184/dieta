@@ -16,25 +16,27 @@ function openTab(evt, tabName) {
 function populateWeekDropdowns() {
     fetch('/get_weeks')
         .then(response => response.json())
-        .then(weeks => {
-            const weekFromSelect = document.getElementById('weekFrom');
-            const weekToSelect = document.getElementById('weekTo');
+        .then(data => {
+            if (data.status == 'success'){
+                const weekFromSelect = document.getElementById('weekFrom');
+                const weekToSelect = document.getElementById('weekTo');
 
-            // Svuota le dropdown prima di popolare
-            weekFromSelect.innerHTML = '';
-            weekToSelect.innerHTML = '';
+                // Svuota le dropdown prima di popolare
+                weekFromSelect.innerHTML = '';
+                weekToSelect.innerHTML = '';
 
-            weeks.forEach(week => {
-                const optionFrom = document.createElement('option');
-                optionFrom.value = week.id;
-                optionFrom.textContent = week.name;
-                weekFromSelect.appendChild(optionFrom);
+                data.weeks.forEach(week => {
+                    const optionFrom = document.createElement('option');
+                    optionFrom.value = week.id;
+                    optionFrom.textContent = week.name;
+                    weekFromSelect.appendChild(optionFrom);
 
-                const optionTo = document.createElement('option');
-                optionTo.value = week.id;
-                optionTo.textContent = week.name;
-                weekToSelect.appendChild(optionTo);
-            });
+                    const optionTo = document.createElement('option');
+                    optionTo.value = week.id;
+                    optionTo.textContent = week.name;
+                    weekToSelect.appendChild(optionTo);
+                });
+            }
         })
         .catch(error => console.error('Errore nel caricamento delle settimane:', error));
 }
@@ -674,8 +676,10 @@ function populateRicetteTable(ricette) {
             fetch(`/get_ricetta/${recipeId}`)
                 .then(response => response.json())
                 .then(data => {
-                    populateIngredientsModal(data);
-                    document.getElementById('modal-recipe-id').value = recipeId;
+                    if (data.status == 'success'){
+                        populateIngredientsModal(data.ricette);
+                        document.getElementById('modal-recipe-id').value = recipeId;
+                    }
                 })
                 .catch(error => console.error('Error loading the ingredients:', error));
         });
@@ -1341,25 +1345,27 @@ function addNewComplemento(day, meal) {
     fetch(`/get_complemento?meal=${meal}&day=${day}&week_id=${selectedWeekId}`)
         .then(response => response.json())
         .then(data => {
-            const mealSelectionBody = document.getElementById('mealSelectionBody');
-            mealSelectionBody.innerHTML = ''; // Pulisce la tabella
+            if (data.status == 'success'){
+                const mealSelectionBody = document.getElementById('mealSelectionBody');
+                mealSelectionBody.innerHTML = ''; // Pulisce la tabella
 
-            data.forEach(ricetta => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${ricetta.nome_ricetta}</td>
-                    <td>${ricetta.kcal}</td>
-                    <td>${ricetta.carboidrati}</td>
-                    <td>${ricetta.proteine}</td>
-                    <td>${ricetta.grassi}</td>
-                    <td><input type="checkbox" value="${ricetta.id}" class="meal-checkbox"></td>
-                `;
-                mealSelectionBody.appendChild(row);
-            });
+                data.ricette.forEach(ricetta => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${ricetta.nome_ricetta}</td>
+                        <td>${ricetta.kcal}</td>
+                        <td>${ricetta.carboidrati}</td>
+                        <td>${ricetta.proteine}</td>
+                        <td>${ricetta.grassi}</td>
+                        <td><input type="checkbox" value="${ricetta.id}" class="meal-checkbox"></td>
+                    `;
+                    mealSelectionBody.appendChild(row);
+                });
 
-            // Mostra il modal
-            const addMealModal = new bootstrap.Modal(document.getElementById('addMealModal'));
-            addMealModal.show();
+                // Mostra il modal
+                const addMealModal = new bootstrap.Modal(document.getElementById('addMealModal'));
+                addMealModal.show();
+            }
         });
 }
 
@@ -1431,7 +1437,7 @@ function submitWeight() {
             if (data.status === "error"){
                 alert(data.message);
             } else {
-                updateWeightChart(data); // Aggiorna il grafico dopo l'invio
+                updateWeightChart(data.peso); // Aggiorna il grafico dopo l'invio
             }
         })
         .catch(error => console.error('Errore nel salvataggio del peso:', error));
@@ -1674,7 +1680,7 @@ function fetchAlimentiData() {
     fetch('/recupera_alimenti')
         .then(response => response.json())
         .then(data => {
-            populateAlimentiTable(data);
+            populateAlimentiTable(data.alimenti);
         })
         .catch(error => console.error('Errore nel caricamento degli alimenti:', error));
 }
@@ -1878,7 +1884,7 @@ document.getElementById('addFoodForm').addEventListener('submit', function(event
         body: formData
     }).then(response => response.json())
       .then(data => {
-          if (data.success) {
+          if (data.status == 'success') {
               // Chiudi il modal
               const modal = bootstrap.Modal.getInstance(document.getElementById('addFoodModal'));
               modal.hide();
@@ -2077,8 +2083,10 @@ document.getElementById('addFoodForm').addEventListener('submit', function(event
         fetch('/get_peso_data')
             .then(response => response.json())
             .then(data => {
-                if (data.length > 0) {
-                    updateWeightChart(data);
+                if (data.status == 'success'){
+                    if (data.peso.length > 0) {
+                        updateWeightChart(data.peso);
+                    }
                 }
             })
             .catch(error => console.error('Errore nel caricamento dei dati:', error));
@@ -2115,11 +2123,13 @@ document.getElementById('addFoodForm').addEventListener('submit', function(event
 
             fetch('/get_all_ingredients')
                 .then(response => response.json())
-                .then(ingredients => {
-                    ingredients.forEach(ingredient => {
-                        const option = new Option(ingredient.nome, ingredient.id);
-                        select.add(option);
-                    });
+                .then(data => {
+                    if (data.status == 'success'){
+                        data.ingredienti.forEach(ingredient => {
+                            const option = new Option(ingredient.nome, ingredient.id);
+                            select.add(option);
+                        });
+                    }
                 })
                 .catch(error => console.error('Error loading ingredients:', error));
         });
