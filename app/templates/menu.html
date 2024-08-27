@@ -33,7 +33,7 @@
                     <tbody id="menu_tbody">
                     {% for pasto in ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena', 'spuntino_sera'] %}
                     <tr>
-                        <td>{{ pasto.replace('_', ' ').capitalize() }}</td>
+                        <td><strong>{{ pasto.replace('_', ' ').capitalize() }}</strong></td>
                         {% for dati_giorno in ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato',
                         'domenica'] %}
                         <td>
