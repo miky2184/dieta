@@ -1775,7 +1775,6 @@ function populateAlimentiTable(alimenti) {
         document.querySelector(`input[name='grassi_${alimento.id}']`).addEventListener('input', () => {
             recalculateCalories(alimento.id);
         });
-
     });
 
     // Event listener per il salvataggio degli alimenti
