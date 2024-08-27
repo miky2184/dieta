@@ -84,9 +84,6 @@ def dashboard():
     # Recupera le settimane salvate per la selezione.
     settimane_salvate = get_settimane_salvate(user_id)
 
-    # Genera la lista della spesa basata sul menu corrente.
-    lista_spesa = stampa_lista_della_spesa(user_id, menu_corrente.get('all_food'))
-
     # Calcola i macronutrienti rimanenti per ogni giorno del menu.
     remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente)
 
@@ -96,7 +93,6 @@ def dashboard():
     return render_template('index.html',
                            macronutrienti=macronutrienti,
                            menu=menu_corrente,
-                           lista_spesa=lista_spesa,
                            settimane=settimane_salvate,
                            remaining_macronutrienti=remaining_macronutrienti,
                            show_tutorial=show_tutorial
@@ -230,20 +226,19 @@ def menu_settimana(settimana_id):
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-@views.route('/get_lista_spesa', methods=['POST'])
+@views.route('/get_lista_spesa/<int:settimana_id>', methods=['GET'])
 @login_required
-def get_lista_spesa():
+def get_lista_spesa(settimana_id):
     """
     Questa funzione gestisce la richiesta POST per ottenere la lista della spesa basata sugli ID degli alimenti
     forniti dal client. Restituisce la lista della spesa corrispondente.
     """
     user_id = current_user.user_id
     try:
-        data = request.get_json()
-        ids_all_food = data.get('ids_all_food', [])
+        menu = get_menu(user_id, ids=settimana_id)
 
         # Genera la lista della spesa basata sugli ID degli alimenti.
-        lista_spesa = stampa_lista_della_spesa(user_id, ids_all_food)
+        lista_spesa = stampa_lista_della_spesa(user_id, menu['all_food'])
 
         return jsonify({'status': 'success', 'lista_spesa': lista_spesa}), 200
     except Exception as e:

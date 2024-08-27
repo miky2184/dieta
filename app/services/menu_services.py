@@ -316,28 +316,18 @@ def stampa_lista_della_spesa(user_id, ids_all_food: list):
     """
     Recupera la lista della spesa basata sugli ID degli alimenti e restituisce i dati come lista di dizionari.
     """
-
-    # Alias per le tabelle
-    ir = aliased(IngredientiRicetta)
-    a = aliased(Alimento)
-
-    # Costruisci la query con SQLAlchemy
-    results = (
-        db.session.query(
-            a.nome.label('alimento'),
-            func.sum(ir.qta).label('qta_totale')
-        )
-        .join(a, (ir.id_alimento == a.id) & (ir.user_id == a.user_id))
-        .filter(ir.user_id == user_id)
-        .filter(ir.id_ricetta.in_(ids_all_food))
-        .group_by(a.nome)
-        .order_by(a.nome)
-        .all()
-    )
+    results = (db.session.query(
+        (Alimento.nome).label('nome'),
+        func.sum(IngredientiRicetta.qta).label('qta_totale')
+    ).join(Alimento, Alimento.id == IngredientiRicetta.id_alimento)
+               .filter(Alimento.user_id == IngredientiRicetta.user_id)
+               .filter(IngredientiRicetta.user_id == user_id)
+               .filter(IngredientiRicetta.id_ricetta.in_(ids_all_food))
+               .group_by(Alimento.nome).order_by(Alimento.nome).all())
 
     # Trasforma i risultati in una lista di dizionari
     lista_della_spesa = [
-        {'alimento': result.alimento, 'qta_totale': int(result.qta_totale)}
+        {'alimento': result[0], 'qta_totale': float(result[1])}
         for result in results
     ]
 
@@ -771,6 +761,8 @@ def salva_nuovo_alimento(name, carboidrati, proteine, grassi, frutta, carne_bian
 
 def aggiungi_ricetta_al_menu(menu, day, meal, meal_id, user_id):
     ricetta = carica_ricette(user_id, ids=meal_id)
+    menu['all_food'].append(ricetta[0]['id'])
+    menu['day'][day]['pasto'][meal]['ids'].append(ricetta[0]['id'])
     menu['day'][day]['pasto'][meal]['ricette'].append({
         'id': ricetta[0]['id'],
         'nome_ricetta': ricetta[0]['nome_ricetta'],
@@ -813,6 +805,8 @@ def remove_meal_from_menu(menu, day, meal, meal_id, user_id):
 
     # Se la ricetta è trovata, rimuovila
     if ricetta_da_rimuovere:
+        menu['all_food'].remove(int(meal_id))
+        menu['day'][day]['pasto'][meal]['ids'].remove(int(meal_id))
         menu['day'][day]['pasto'][meal]['ricette'].remove(ricetta_da_rimuovere)
 
         # Recupera i valori nutrizionali della ricetta rimossa

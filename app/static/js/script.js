@@ -217,22 +217,22 @@ function aggiornaTabellaMenu(menu) {
             document.getElementById(`remaining-${macro}-${giorno}`).textContent = remainingValue.toFixed(2);
         });
     });
+
+    aggiornaTabellaListaDellaSpesa();
 }
 
-function aggiornaTabellaListaDellaSpesa(idsAllFood) {
+function aggiornaTabellaListaDellaSpesa() {
+    var weekId = selectedWeekId; // Ottieni l'ID della settimana selezionata
+
+    if (!selectedWeekId) {
+        weekId = document.querySelector('.week-select').value;
+    }
+
     const tbody = document.getElementById('spesa_tbody');
     tbody.innerHTML = ''; // Pulisci la tabella
 
     // Esegui una chiamata fetch per ottenere la lista della spesa basata sugli ID degli alimenti
-    fetch('/get_lista_spesa', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                ids_all_food: idsAllFood
-            })
-        })
+    fetch(`/get_lista_spesa/${weekId}`)
         .then(response => response.json())
         .then(data => {
             data.lista_spesa.forEach(item => {
@@ -993,7 +993,6 @@ function loadAndUpdateMenuData() {
             if (data.menu) {
                 // Qui inserisci la logica per caricare i dati del menu nel div #menuEditor
                 renderMenuEditor(data);
-                aggiornaTabellaListaDellaSpesa(data.menu.all_food);
             }
         })
         .catch(error => console.error('Errore nel caricamento del menu:', error));
