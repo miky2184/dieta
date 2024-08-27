@@ -238,7 +238,7 @@ def get_lista_spesa(settimana_id):
         menu = get_menu(user_id, ids=settimana_id)
 
         # Genera la lista della spesa basata sugli ID degli alimenti.
-        lista_spesa = stampa_lista_della_spesa(user_id, menu['all_food'])
+        lista_spesa = stampa_lista_della_spesa(user_id, menu)
 
         return jsonify({'status': 'success', 'lista_spesa': lista_spesa}), 200
     except Exception as e:
@@ -792,7 +792,7 @@ def generate_pdf():
 
         # Aggiungi la lista della spesa al PDF
         y = height - margin_y  # Posiziona la lista sotto l'immagine
-        shopping_list = stampa_lista_della_spesa(user_id, menu_selezionato.get('all_food'))
+        shopping_list = stampa_lista_della_spesa(user_id, menu_selezionato)
         c.setFont("Helvetica", 12)
         c.drawString(margin_x, y, "Lista della Spesa:")
         y -= 20

@@ -12,6 +12,8 @@ from sqlalchemy.sql import extract
 from sqlalchemy.dialects.postgresql import insert
 import json
 from sqlalchemy import insert, update, and_, case, func, exists, asc, String, true, false, select, desc
+from collections import defaultdict
+from decimal import Decimal
 
 MAX_RETRY = int(os.getenv('MAX_RETRY'))
 
@@ -312,24 +314,62 @@ def definisci_calorie_macronutrienti(user_id) -> Utente:
     return rows
 
 
-def stampa_lista_della_spesa(user_id, ids_all_food: list):
+def stampa_lista_della_spesa(user_id, menu):
     """
     Recupera la lista della spesa basata sugli ID degli alimenti e restituisce i dati come lista di dizionari.
     """
     results = (db.session.query(
+        (Ricetta.id).label('id_ricetta'),
         (Alimento.nome).label('nome'),
         func.sum(IngredientiRicetta.qta).label('qta_totale')
     ).join(Alimento, Alimento.id == IngredientiRicetta.id_alimento)
+               .join(Ricetta, Ricetta.id == IngredientiRicetta.id_ricetta)
                .filter(Alimento.user_id == IngredientiRicetta.user_id)
+               .filter(Ricetta.user_id == IngredientiRicetta.user_id)
                .filter(IngredientiRicetta.user_id == user_id)
-               .filter(IngredientiRicetta.id_ricetta.in_(ids_all_food))
-               .group_by(Alimento.nome).order_by(Alimento.nome).all())
+               .filter(IngredientiRicetta.id_ricetta.in_(menu['all_food']))
+               .group_by(Ricetta.id, Alimento.nome ).order_by(Alimento.nome).all())
+
+    ingredient_totals = defaultdict(float)
+    ricetta_qta = []
+    # Itera sui giorni
+    for day, day_data in menu["day"].items():
+        # Itera sui pasti del giorno
+        for meal_name, meal_data in day_data["pasto"].items():
+            # Itera sulle ricette del pasto
+            for ricetta in meal_data["ricette"]:
+                # Nome dell'ingrediente e quantità (moltiplicata per il fattore `qta`)
+                ricetta_id = ricetta["id"]
+                qta = ricetta["qta"]
+
+                # Aggiungi la quantità al totale dell'ingrediente
+                ingredient_totals[ricetta_id] += qta
+
+    # Stampa le quantità totali per ogni ingrediente
+    for ingredient, total in ingredient_totals.items():
+        ricetta_qta.append({"id": ingredient, "qta": total})
+
+    qta_map = {item['id']: item['qta'] for item in ricetta_qta}
+
+    # Crea un dizionario per aggregare le quantità degli ingredienti
+    ingredienti_totali = {}
+
+    # Itera attraverso i risultati
+    for result in results:
+        ricetta_id, ingrediente_nome, quantita = result
+
+        # Moltiplica la quantità per il moltiplicatore corrispondente
+        if ricetta_id in qta_map:
+            quantita_moltiplicata = quantita * Decimal(qta_map[ricetta_id])
+
+            # Aggiungi o somma la quantità moltiplicata nel dizionario degli ingredienti totali
+            if ingrediente_nome in ingredienti_totali:
+                ingredienti_totali[ingrediente_nome] += quantita_moltiplicata
+            else:
+                ingredienti_totali[ingrediente_nome] = quantita_moltiplicata
 
     # Trasforma i risultati in una lista di dizionari
-    lista_della_spesa = [
-        {'alimento': result[0], 'qta_totale': float(result[1])}
-        for result in results
-    ]
+    lista_della_spesa = [{'alimento': ingrediente, 'qta_totale': float(qta_totale)} for ingrediente, qta_totale in ingredienti_totali.items()]
 
     return lista_della_spesa
 
