@@ -124,6 +124,10 @@ class IngredientiRicetta(db.Model):
     alimento = db.relationship('Alimento', back_populates='ingredienti')
     ricetta = db.relationship('Ricetta', back_populates='ricetta')
 
+    def add_meal(self, meal):
+        self.meals.append(meal)
+        db.session.add(self)
+
 
 class MenuSettimanale(db.Model):
     __tablename__ = 'menu_settimanale'

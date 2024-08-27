@@ -13,6 +13,65 @@ function openTab(evt, tabName) {
     evt.currentTarget.className += " active";
 }
 
+function populateWeekDropdowns() {
+    fetch('/get_weeks')
+        .then(response => response.json())
+        .then(weeks => {
+            const weekFromSelect = document.getElementById('weekFrom');
+            const weekToSelect = document.getElementById('weekTo');
+
+            // Svuota le dropdown prima di popolare
+            weekFromSelect.innerHTML = '';
+            weekToSelect.innerHTML = '';
+
+            weeks.forEach(week => {
+                const optionFrom = document.createElement('option');
+                optionFrom.value = week.id;
+                optionFrom.textContent = week.name;
+                weekFromSelect.appendChild(optionFrom);
+
+                const optionTo = document.createElement('option');
+                optionTo.value = week.id;
+                optionTo.textContent = week.name;
+                weekToSelect.appendChild(optionTo);
+            });
+        })
+        .catch(error => console.error('Errore nel caricamento delle settimane:', error));
+}
+
+function copyWeek() {
+    const weekFrom = document.getElementById('weekFrom').value;
+    const weekTo = document.getElementById('weekTo').value;
+
+    if (weekFrom === weekTo) {
+        alert("Seleziona due settimane diverse per la copia.");
+        return;
+    }
+
+    fetch('/copy_week', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            week_from: weekFrom,
+            week_to: weekTo
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('Copia completata con successo.');
+            // Ricarica il menu della settimana selezionata
+            loadAndUpdateMenuData();
+        } else {
+            console.error('Errore:', data.message);
+            alert('Errore nella copia della settimana. Riprova.');
+        }
+    })
+    .catch(error => console.error('Errore:', error));
+}
+
 function sortTable(tableId, columnIndex) {
     const table = document.getElementById(tableId);
     const rows = Array.from(table.querySelector('tbody').rows);
@@ -956,6 +1015,10 @@ function formatMealName(meal) {
 
 
 function renderMenuEditor(data) {
+
+    // Chiama questa funzione quando la pagina viene caricata per popolare i dropdown
+    populateWeekDropdowns();
+
     const selectedWeek = selectedWeekId;
     const selectedDay = document.getElementById('day_select') ? document.getElementById('day_select').value : null;
 

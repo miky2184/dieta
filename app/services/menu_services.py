@@ -378,12 +378,16 @@ def get_menu(user_id: int, period: dict = None, ids: int = None):
     return result.menu if result else None
 
 
-def get_settimane_salvate(user_id):
+def get_settimane_salvate(user_id, show_old_week: bool = False):
     # Ottieni la data odierna
     oggi = datetime.now().date()
 
-    settimane = db.session.query(MenuSettimanale).order_by(MenuSettimanale.data_inizio.asc()).filter(MenuSettimanale.data_fine >= oggi,
-        MenuSettimanale.user_id == user_id).all()
+    query = MenuSettimanale.query.order_by(asc(MenuSettimanale.data_inizio))
+
+    if not show_old_week:
+        query = query.filter(MenuSettimanale.data_fine >= oggi)
+
+    settimane = query.filter(MenuSettimanale.user_id == user_id).all()
 
     return settimane
 
@@ -1017,3 +1021,20 @@ def recupera_ricette_per_alimento(alimento_id, user_id):
     ricette = IngredientiRicetta.query.filter_by(user_id=user_id, id_alimento=alimento_id).all()
     ricette_data = [{'id': r.alimento.id, 'nome_ricetta': r.ricetta.nome_ricetta} for r in ricette]
     return ricette_data
+
+
+def copia_menu(menu_from, week_to, user_id):
+    menu_destinazione = MenuSettimanale.query.filter_by(user_id=user_id, id=week_to).one()
+
+    if menu_destinazione:
+        menu_destinazione.menu = menu_from
+
+    db.session.commit()
+
+
+def recupera_settimane(user_id):
+    weeks = get_settimane_salvate(user_id, show_old_week=True)
+    return [
+        {'id': week.id, 'name': f"Settimana {index + 1} dal {week.data_inizio.strftime('%Y-%m-%d')} al {week.data_fine.strftime('%Y-%m-%d')}"}
+        for index, week in enumerate(weeks)
+    ]

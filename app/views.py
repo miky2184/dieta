@@ -9,7 +9,8 @@ from .services.menu_services import (definisci_calorie_macronutrienti, save_weig
                                      calcola_macronutrienti_rimanenti,
                                      carica_alimenti, salva_alimento, elimina_alimento, salva_nuovo_alimento,
                                      aggiungi_ricetta_al_menu, update_menu_corrente, remove_meal_from_menu,
-                                     delete_week_menu, elimina_ricetta, ordina_settimana_per_kcal, recupera_ricette_per_alimento)
+                                     delete_week_menu, elimina_ricetta, ordina_settimana_per_kcal,
+                                     recupera_ricette_per_alimento, copia_menu, recupera_settimane)
 from copy import deepcopy
 import time
 from reportlab.lib.pagesizes import letter, landscape
@@ -876,3 +877,38 @@ def get_ricette_con_alimento(alimento_id):
     user_id = current_user.user_id
     ricette_data = recupera_ricette_per_alimento(alimento_id, user_id)
     return jsonify({'status': 'success', 'ricette': ricette_data})
+
+
+@views.route('/copy_week', methods=['POST'])
+@login_required
+def copy_week():
+    user_id = current_user.user_id
+    data = request.json
+    week_from = data.get('week_from')
+    week_to = data.get('week_to')
+
+    try:
+        # Ottieni il menu della settimana di origine
+        menu_from = get_menu(current_user.user_id, ids=week_from)
+
+        if not menu_from:
+            return jsonify({'status': 'error', 'message': 'Settimana non trovata.'}), 404
+
+        # Copia il menu dalla settimana di origine alla settimana di destinazione
+        copia_menu(menu_from, week_to, user_id)
+        current_app.cache.delete(f'dashboard_{user_id}')
+        current_app.cache.delete(f'view//menu_settimana/{week_to}')
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@views.route('/get_weeks', methods=['GET'])
+@login_required
+def get_weeks():
+    user_id = current_user.user_id
+    try:
+        weeks_list = recupera_settimane(user_id)
+        return jsonify(weeks_list)
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500

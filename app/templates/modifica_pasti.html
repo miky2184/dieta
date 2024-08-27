@@ -2,6 +2,21 @@
 <div id="ModificaPasti" class="tabcontent">
     <div class="card">
         <div class="card-body">
+
+            <div class="input-group mb-4">
+                <select class="form-select form-select-sm" id="weekFrom">
+                    <!-- Le opzioni verranno caricate dinamicamente -->
+                </select>
+
+                <span class="input-group-text"><i class="fas fa-arrow-right"></i></span>
+
+                <select class="form-select form-select-sm" id="weekTo">
+                    <!-- Le opzioni verranno caricate dinamicamente -->
+                </select>
+
+                <button class="btn btn-warning btn-sm" onclick="copyWeek()"  data-bs-toggle="tooltip" title="Copia Menu Settimanale"><i class="fas fa-arrow-right"></i></button>
+            </div>
+
             <!-- Sezione per l'inversione dei giorni -->
             <div class="input-group mb-4">
                 <select class="form-select form-select-sm" id="day1">
@@ -26,7 +41,7 @@
                     <option value="domenica">Domenica</option>
                 </select>
 
-                <button class="btn btn-warning btn-sm" onclick="invertDays()">Inverti Giorni</button>
+                <button class="btn btn-warning btn-sm" onclick="invertDays()"  data-bs-toggle="tooltip" title="Inverti il Menu dei Giorni"><i class="fas fa-exchange-alt"></i></button>
             </div>
             <!-- Dropdown per selezionare la settimana -->
             <div class="table-margin d-flex">
