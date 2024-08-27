@@ -13,6 +13,16 @@ function openTab(evt, tabName) {
     evt.currentTarget.className += " active";
 }
 
+function showAlertModal(message) {
+    // Imposta il messaggio nel modal
+    document.getElementById('modalMessage').textContent = message;
+
+    // Mostra il modal usando Bootstrap
+    var myModal = new bootstrap.Modal(document.getElementById('genericModal'));
+    myModal.show();
+}
+
+
 function populateWeekDropdowns() {
     fetch('/get_weeks')
         .then(response => response.json())
@@ -46,7 +56,7 @@ function copyWeek() {
     const weekTo = document.getElementById('weekTo').value;
 
     if (weekFrom === weekTo) {
-        alert("Seleziona due settimane diverse per la copia.");
+        showAlertModal("Seleziona due settimane diverse per la copia.");
         return;
     }
 
@@ -63,12 +73,12 @@ function copyWeek() {
     .then(response => response.json())
     .then(data => {
         if (data.status === 'success') {
-            alert('Copia completata con successo.');
+            showAlertModal('Copia completata con successo.');
             // Ricarica il menu della settimana selezionata
             loadAndUpdateMenuData();
         } else {
             console.error('Errore:', data.message);
-            alert('Errore nella copia della settimana. Riprova.');
+            showAlertModal('Errore nella copia della settimana. Riprova.');
         }
     })
     .catch(error => console.error('Errore:', error));
@@ -111,7 +121,7 @@ function invertDays() {
 
     // Controlla che i giorni non siano uguali
     if (day1 === day2) {
-        alert("Seleziona due giorni diversi per l'inversione.");
+        showAlertModal("Seleziona due giorni diversi per l'inversione.");
         return;
     }
 
@@ -131,7 +141,7 @@ function invertDays() {
             renderMenuEditor(data);
         } else {
             console.error('Error:', data.message);
-            alert('Errore nell\'inversione dei pasti. Riprova.');
+            showAlertModal('Errore nell\'inversione dei pasti. Riprova.');
         }
     })
     .catch(error => console.error('Error:', error));
@@ -155,7 +165,7 @@ function invertMeals(day) {
     })
     .catch(error => {
         console.error('Errore di rete:', error);
-        // Puoi aggiungere un'alert o un messaggio di errore qui
+        showAlertModal(error)
     });
 }
 
@@ -1435,7 +1445,7 @@ function submitWeight() {
         .then(response => response.json())
         .then(data => {
             if (data.status === "error"){
-                alert(data.message);
+                showAlertModal(data.message);
             } else {
                 updateWeightChart(data.peso); // Aggiorna il grafico dopo l'invio
             }
@@ -1893,7 +1903,7 @@ document.getElementById('addFoodForm').addEventListener('submit', function(event
               // location.reload();
           } else {
               // Gestisci errori, se necessario
-              alert('Errore durante il salvataggio dell\'alimento');
+              showAlertModal('Errore durante il salvataggio dell\'alimento');
           }
       });
 });
