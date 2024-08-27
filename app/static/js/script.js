@@ -2137,7 +2137,7 @@ document.getElementById('addFoodForm').addEventListener('submit', function(event
                 .then(response => response.json())
                 .then(data => {
                     if (data.status == 'success'){
-                        data.ingredienti.forEach(ingredient => {
+                        data.alimenti.forEach(ingredient => {
                             const option = new Option(ingredient.nome, ingredient.id);
                             select.add(option);
                         });
