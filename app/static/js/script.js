@@ -1626,7 +1626,7 @@ function populateAlimentiTable(alimenti) {
         row.innerHTML = `
             <td class="nome-alimento">
                 <div>
-                    <input type="text" class="form-control input-hidden-border form-control-sm filter-text" data-alimento-id="${alimento.id}" name="nome_${alimento.id}" value="${alimento.nome}">
+                    <input type="text" class="form-control input-hidden-border form-control-sm filter-text" data-alimento-id="${alimento.id}" data-alimento-nome="${alimento.nome}" name="nome_${alimento.id}" value="${alimento.nome}">
                     <label hidden class="form-control form-control-sm">${alimento.nome}</label>
                 </div>
             </td>
@@ -1725,7 +1725,8 @@ function populateAlimentiTable(alimenti) {
     document.querySelectorAll('.delete-alimento-btn').forEach(button => {
         button.addEventListener('click', function() {
             const alimentoId = this.getAttribute('data-alimento-id');
-            deleteAlimento(alimentoId);
+            const alimentoNome = this.getAttribute('data-alimento-nome');
+            showConfirmDeleteAlimentoModal(alimentoId, alimentoNome);
         });
     });
 }
@@ -1761,11 +1762,49 @@ function updateSelectedWeek() {
     }
 }
 
+// Funzione per recuperare le ricette contenenti l'alimento e aprire il modal di conferma
+function showConfirmDeleteAlimentoModal(alimentoId, alimentoNome) {
+    fetch(`/get_ricette_con_alimento/${alimentoId}`)
+        .then(response => response.json())
+        .then(data => {
+            const ricetteList = document.getElementById('ricetteList');
+            ricetteList.innerHTML = ''; // Pulisce l'elenco delle ricette
+
+            data.ricette.forEach(ricetta => {
+                const listItem = document.createElement('li');
+                listItem.classList.add('list-group-item');
+                listItem.textContent = ricetta.nome_ricetta;
+                ricetteList.appendChild(listItem);
+            });
+
+            document.getElementById('alimentoName').querySelector('strong').textContent = alimentoNome;
+
+            // Associa l'alimentoId al pulsante di conferma
+            const confirmDeleteBtn = document.getElementById('confirmDeleteAlimentoBtn');
+            confirmDeleteBtn.setAttribute('data-alimento-id', alimentoId);
+
+            // Mostra il modal
+            const confirmDeleteModal = new bootstrap.Modal(document.getElementById('confirmDeleteAlimentoModal'));
+            confirmDeleteModal.show();
+        })
+        .catch(error => console.error('Errore nel recupero delle ricette:', error));
+}
+
 document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById("defaultOpen").click();
 
-    document.getElementById('addFoodForm').addEventListener('submit', function(event) {
+    // Aggiungi listener al pulsante di conferma eliminazione nel modal
+    document.getElementById('confirmDeleteAlimentoBtn').addEventListener('click', function() {
+        const alimentoId = this.getAttribute('data-alimento-id');
+        deleteAlimento(alimentoId);
+
+        const confirmDeleteModal = bootstrap.Modal.getInstance(document.getElementById('confirmDeleteAlimentoModal'));
+        confirmDeleteModal.hide();
+    });
+
+
+document.getElementById('addFoodForm').addEventListener('submit', function(event) {
     event.preventDefault();
 
     const form = event.target;

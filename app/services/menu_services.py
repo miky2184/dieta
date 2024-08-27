@@ -1011,3 +1011,9 @@ def copia_alimenti_ricette(user_id: int, ricette_vegane: bool, ricette_carne: bo
 def elimina_ricetta(ricetta_id, user_id):
     Ricetta.query.filter_by(id=ricetta_id, user_id=user_id).delete()
     db.session.commit()
+
+
+def recupera_ricette_per_alimento(alimento_id, user_id):
+    ricette = IngredientiRicetta.query.filter_by(user_id=user_id, id_alimento=alimento_id).all()
+    ricette_data = [{'id': r.alimento.id, 'nome_ricetta': r.ricetta.nome_ricetta} for r in ricette]
+    return ricette_data

@@ -122,7 +122,7 @@ class IngredientiRicetta(db.Model):
     user_id = db.Column(db.BigInteger, ForeignKey('dieta.utente.id', ondelete='CASCADE'), primary_key=True)
 
     alimento = db.relationship('Alimento', back_populates='ingredienti')
-    ricetta = db.relationship('Ricetta', back_populates='ingredienti')
+    ricetta = db.relationship('Ricetta', back_populates='ricetta')
 
 
 class MenuSettimanale(db.Model):
@@ -174,7 +174,7 @@ class Ricetta(db.Model):
     complemento = db.Column(db.Boolean, default=False)
     user_id = db.Column(db.BigInteger, ForeignKey('dieta.utente.id', ondelete='CASCADE'), primary_key=True)
 
-    ingredienti = db.relationship('IngredientiRicetta', back_populates='ricetta')
+    ricetta = db.relationship('IngredientiRicetta', back_populates='ricetta')
 
     def to_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}

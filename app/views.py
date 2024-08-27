@@ -9,7 +9,7 @@ from .services.menu_services import (definisci_calorie_macronutrienti, save_weig
                                      calcola_macronutrienti_rimanenti,
                                      carica_alimenti, salva_alimento, elimina_alimento, salva_nuovo_alimento,
                                      aggiungi_ricetta_al_menu, update_menu_corrente, remove_meal_from_menu,
-                                     delete_week_menu, elimina_ricetta, ordina_settimana_per_kcal)
+                                     delete_week_menu, elimina_ricetta, ordina_settimana_per_kcal, recupera_ricette_per_alimento)
 from copy import deepcopy
 import time
 from reportlab.lib.pagesizes import letter, landscape
@@ -868,3 +868,11 @@ def get_complemento():
     results = carica_ricette(user_id, complemento=True)
 
     return jsonify(results)
+
+
+@views.route('/get_ricette_con_alimento/<int:alimento_id>', methods=['GET'])
+@login_required
+def get_ricette_con_alimento(alimento_id):
+    user_id = current_user.user_id
+    ricette_data = recupera_ricette_per_alimento(alimento_id, user_id)
+    return jsonify({'status': 'success', 'ricette': ricette_data})

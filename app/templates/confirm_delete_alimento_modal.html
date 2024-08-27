@@ -1,0 +1,22 @@
+<!-- Modal per conferma eliminazione alimento -->
+<div class="modal fade" id="confirmDeleteAlimentoModal" tabindex="-1" aria-labelledby="confirmDeleteAlimentoLabel" aria-hidden="true"  data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmDeleteAlimentoLabel">Conferma eliminazione</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="alimentoName">L'alimento <strong></strong> è presente nelle seguenti ricette:</p>
+                <ul id="ricetteList" class="list-group mb-3">
+                    <!-- Elenco delle ricette verrà popolato dinamicamente -->
+                </ul>
+                <p>Vuoi davvero eliminarlo? L'alimento sarà rimosso da tutte le ricette sopra elencate.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" id="confirmDeleteAlimentoBtn" class="btn btn-danger btn-sm">Elimina</button>
+            </div>
+        </div>
+    </div>
+</div>
