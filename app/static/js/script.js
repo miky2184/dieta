@@ -694,6 +694,8 @@ function populateRicetteTable(ricette) {
                 .catch(error => console.error('Error loading the ingredients:', error));
         });
     });
+
+    filterTable();
 }
 
 function populateDietaForm(data) {
@@ -1678,7 +1680,6 @@ function recupera_tutte_le_ricette()  {
                 .then(data => {
                     if (data) {
                         populateRicetteTable(data.ricette);
-                        filterTable();
                     }
                 })
                 .catch(error => console.error('Errore nel caricamento dei dati:', error));
@@ -1807,6 +1808,8 @@ function populateAlimentiTable(alimenti) {
             showConfirmDeleteAlimentoModal(alimentoId, alimentoNome);
         });
     });
+
+    filterAlimentiTable();
 }
 
 // Aggiungi l'evento di cambio a tutte le select con la classe 'week-select'
