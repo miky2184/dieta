@@ -1,22 +1,25 @@
 <!-- app/templates/menu.html -->
 <div id="Menu" class="tabcontent">
-    <div class="d-flex">
-        <div class="input-group mb-3">
-            {% include 'week_selector.html' %}
-            <button id="generateMenuBtn" class="btn btn-primary btn-sm" data-bs-toggle="modal"
-                    data-bs-target="#generateMenuModal">Genera Menu
-            </button>
-            <button id="captureButton" class="btn btn-primary btn-sm" {% if settimane|length== 0 %}disabled{% endif %}>
-                Stampa Menu
-            </button>
-            <button id="deleteMenuBtn" class="btn btn-danger btn-sm delete-menu-btn" {% if settimane|length== 0
-                    %}disabled{% endif %}>Elimina Menu
-            </button>
-        </div>
-    </div>
     <div id="capture">
         <div class="card">
             <div class="card-body">
+                <div class="d-flex">
+                    <div class="input-group mb-3">
+                        {% include 'week_selector.html' %}
+                        <button id="generateMenuBtn" class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                                data-bs-target="#generateMenuModal">Genera Menu
+                        </button>
+                        <button id="captureButton" class="btn btn-primary btn-sm" {% if settimane|length== 0
+                                %}disabled{% endif %}>
+                            Stampa Menu
+                        </button>
+                        <button id="deleteMenuBtn" class="btn btn-danger btn-sm delete-menu-btn" {% if
+                                settimane|length== 0
+                                %}disabled{% endif %}>Elimina Menu
+                        </button>
+                    </div>
+                </div>
+                <div>
                 <table class="table table-sm table-striped table-bordered">
                     <thead>
                     <tr>
@@ -31,7 +34,8 @@
                     </tr>
                     </thead>
                     <tbody id="menu_tbody">
-                    {% for pasto in ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena', 'spuntino_sera'] %}
+                    {% for pasto in ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena',
+                    'spuntino_sera'] %}
                     <tr>
                         <td><strong>{{ pasto.replace('_', ' ').capitalize() }}</strong></td>
                         {% for dati_giorno in ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato',
@@ -66,6 +70,7 @@
                     </tr>
                     </tfoot>
                 </table>
+                    </div>
             </div>
         </div>
     </div>
