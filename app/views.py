@@ -417,9 +417,9 @@ def nuovo_alimento():
     user_id = current_user.user_id
     try:
         name = request.form['alimento']
-        carboidrati = request.form['carboidrati']
-        proteine = request.form['proteine']
-        grassi = request.form['grassi']
+        carboidrati = request.form['carbs']
+        proteine = request.form['prot']
+        grassi = request.form['fat']
         verdura = 'verdura' in request.form
         frutta = 'frutta' in request.form
         pesce = 'pesce' in request.form
