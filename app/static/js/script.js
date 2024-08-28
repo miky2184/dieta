@@ -193,7 +193,7 @@ function aggiornaTabellaMenu(menu) {
 
                     // Aggiungi gli attributi per il popover
                     div.setAttribute('data-bs-toggle', 'tooltip');
-                    div.setAttribute('data-bs-title', ricetta.ricetta);
+                    div.setAttribute('data-bs-title', ricetta.ricetta || '');
 
                     // Aggiungi la classe "recipe-cell"
                     div.classList.add('recipe-cell');
