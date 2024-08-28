@@ -369,7 +369,9 @@ def stampa_lista_della_spesa(user_id, menu):
                 ingredienti_totali[ingrediente_nome] = quantita_moltiplicata
 
     # Trasforma i risultati in una lista di dizionari
-    lista_della_spesa = [{'alimento': ingrediente, 'qta_totale': float(qta_totale)} for ingrediente, qta_totale in ingredienti_totali.items()]
+    lista_della_spesa = [{'alimento': ingrediente, 'qta_totale': float(qta_totale)}
+                         for ingrediente, qta_totale in ingredienti_totali.items()
+                         if float(qta_totale) > 0]
 
     return lista_della_spesa
 

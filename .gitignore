@@ -135,5 +135,4 @@ dmypy.json
 .idea/
 openfoodapi.py
 prompt/
-sql/
 app/.DS_Store
