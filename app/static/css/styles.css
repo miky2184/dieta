@@ -149,10 +149,10 @@ td div:last-child {
 }
 
 .sticky-container {
-    position: sticky;
+    position: sticky !important;
     top: 0; /* Mantiene la table in alto rispetto alla viewport */
     z-index: 1000; /* Assicurati che sia sopra le altre card */
-    background-color: white; /* Aggiungi uno sfondo per evitare sovrapposizioni di testo */
+    background-color: white  !important; /* Aggiungi uno sfondo per evitare sovrapposizioni di testo */
     box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1); /* Aggiunge un'ombra per migliorare la separazione visiva */
     padding-top: 10px; /* Aggiunge uno spazio sopra */
     padding-bottom: 10px; /* Aggiunge uno spazio sotto */

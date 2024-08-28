@@ -1,9 +1,9 @@
 <!-- app/templates/modifica_pasti.html -->
 <div id="ModificaPasti" class="tabcontent">
-    <div class="card">
+    <div class="card mb-2">
         <div class="card-body">
 
-            <div class="input-group mb-4">
+            <div class="input-group mb-3">
                 <select class="form-select form-select-sm" id="weekFrom">
                     <!-- Le opzioni verranno caricate dinamicamente -->
                 </select>
@@ -14,11 +14,12 @@
                     <!-- Le opzioni verranno caricate dinamicamente -->
                 </select>
 
-                <button class="btn btn-warning btn-sm" onclick="copyWeek()"  data-bs-toggle="tooltip" title="Copia Menu Settimanale"><i class="fas fa-arrow-right"></i></button>
+                <button class="btn btn-warning btn-sm" onclick="copyWeek()" data-bs-toggle="tooltip"
+                        title="Copia Menu Settimanale"><i class="fas fa-arrow-right"></i></button>
             </div>
 
             <!-- Sezione per l'inversione dei giorni -->
-            <div class="input-group mb-4">
+            <div class="input-group mb-3">
                 <select class="form-select form-select-sm" id="day1">
                     <option value="lunedi">Lunedì</option>
                     <option value="martedi">Martedì</option>
@@ -41,8 +42,13 @@
                     <option value="domenica">Domenica</option>
                 </select>
 
-                <button class="btn btn-warning btn-sm" onclick="invertDays()"  data-bs-toggle="tooltip" title="Inverti il Menu dei Giorni"><i class="fas fa-exchange-alt"></i></button>
+                <button class="btn btn-warning btn-sm" onclick="invertDays()" data-bs-toggle="tooltip"
+                        title="Inverti il Menu dei Giorni"><i class="fas fa-exchange-alt"></i></button>
             </div>
+        </div>
+    </div>
+    <div class="card mb-2 sticky-container">
+        <div class="card-body">
             <!-- Dropdown per selezionare la settimana -->
             <div class="d-flex">
                 <div class="input-group mb-3">
@@ -58,6 +64,9 @@
                         <option value="domenica">Domenica</option>
                     </select>
                 </div>
+            </div>
+            <div id="remaining-macros-container">
+                <!-- Editor del menu caricato dinamicamente -->
             </div>
         </div>
     </div>

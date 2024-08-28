@@ -1037,29 +1037,13 @@ function renderMenuEditor(data) {
     menuEditor.innerHTML = ''; // Pulisce l'editor
 
     // Cerca il contenitore esistente dei macronutrienti rimanenti
-    let macrosContainer = document.querySelector('.remaining-macros-container');
-    if (!macrosContainer) {
-        // Se il contenitore non esiste, creane uno nuovo
-        macrosContainer = document.createElement('div');
-        macrosContainer.classList.add('remaining-macros-container', 'sticky-container'); // Aggiunge la classe sticky-container
-        const menuContainer = document.getElementById('menuEditor');
-        menuContainer.parentNode.insertBefore(macrosContainer, menuContainer);
-    } else {
-        // Se il contenitore esiste, puliscilo
-        macrosContainer.innerHTML = '';
-    }
+    const macrosContainer = document.getElementById('remaining-macros-container');
+    macrosContainer.innerHTML = '';
 
     const menu = data.menu;
 
     const days = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
     const meals = ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena', 'spuntino_sera'];
-
-    // Creazione della card che conterrà la tabellina per i rimanenti giornalieri
-    const card = document.createElement('div');
-    card.classList.add('card', 'mb-4');
-
-    const cardBody = document.createElement('div');
-    cardBody.classList.add('card-body');
 
     // Creazione della tabellina per i rimanenti giornalieri
     const remainingTable = document.createElement('table');
@@ -1116,18 +1100,16 @@ function renderMenuEditor(data) {
     remainingTableBody.appendChild(totalRow);
 
     remainingTable.appendChild(remainingTableBody);
-    cardBody.appendChild(remainingTable); // Inserisci la tabella nel card body
-    card.appendChild(cardBody); // Inserisci il card body nella card
-    macrosContainer.appendChild(card); // Inserisci la card nel macrosContainer
+    macrosContainer.appendChild(remainingTable); // Inserisci la card nel macrosContainer
 
     // Aggiungi la tabella sotto al week selector
     const menuContainer = document.getElementById('menuEditor');
-    menuContainer.parentNode.insertBefore(macrosContainer, menuContainer);
+    //menuContainer.parentNode.insertBefore(macrosContainer, menuContainer);
 
     // Creazione delle card per ogni giorno
     days.forEach(day => {
         const dayContainer = document.createElement('div');
-        dayContainer.classList.add('day-container', 'mb-4');
+        dayContainer.classList.add('day-container', 'mb-2');
         dayContainer.setAttribute('data-day', day); // Aggiungi l'attributo data-day per il filtraggio
 
         const card = document.createElement('div');
