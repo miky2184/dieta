@@ -960,7 +960,7 @@ def get_contorno():
     user_id = current_user.user_id
     try:
         # Recupera tutte le ricette complemento
-        results = carica_ricette(user_id, contorno=True)
+        results = carica_ricette(user_id, attive=True, contorno=True)
 
         return jsonify({'status':'success', 'ricette':results}), 200
     except Exception as e:
