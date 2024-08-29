@@ -1192,16 +1192,28 @@ function renderMenuEditor(data) {
 
             // Pulsante "Aggiungi Ricetta"
             const addMealBtn = document.createElement('button');
-            addMealBtn.textContent = "Aggiungi Ricetta";
+            //addMealBtn.textContent = "Aggiungi Ricetta";
+            addMealBtn.innerHTML = `<i class="fa fa-plus" aria-hidden="true"></i> Ricetta`; // Aggiungi l'icona e il testo
             addMealBtn.classList.add('btn', 'btn-success', 'btn-sm');
             addMealBtn.onclick = function() {
                 addNewMeal(day, meal);
             };
             buttonGroup.appendChild(addMealBtn);
 
+            // Pulsante "Aggiungi Contorno"
+            const addContornoBtn = document.createElement('button');
+            //addContornoBtn.textContent = "Aggiungi Contorno";
+            addContornoBtn.innerHTML = `<i class="fa fa-plus" aria-hidden="true"></i> Contorno`; // Aggiungi l'icona e il testo
+            addContornoBtn.classList.add('btn', 'btn-success', 'btn-sm');
+            addContornoBtn.onclick = function() {
+                addNewContorno(day, meal);
+            };
+            buttonGroup.appendChild(addContornoBtn);
+
             // Pulsante "Aggiungi Complemento"
             const addComplementoBtn = document.createElement('button');
-            addComplementoBtn.textContent = "Aggiungi Complemento";
+            //addComplementoBtn.textContent = "Aggiungi Complemento";
+            addComplementoBtn.innerHTML = `<i class="fa fa-plus" aria-hidden="true"></i> Complemento`; // Aggiungi l'icona e il testo
             addComplementoBtn.classList.add('btn', 'btn-success', 'btn-sm');
             addComplementoBtn.onclick = function() {
                 addNewComplemento(day, meal);
@@ -1332,6 +1344,38 @@ function addNewComplemento(day, meal) {
 
     // Fetch delle ricette disponibili per quel pasto
     fetch(`/get_complemento?meal=${meal}&day=${day}&week_id=${selectedWeekId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status == 'success'){
+                const mealSelectionBody = document.getElementById('mealSelectionBody');
+                mealSelectionBody.innerHTML = ''; // Pulisce la tabella
+
+                data.ricette.forEach(ricetta => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${ricetta.nome_ricetta}</td>
+                        <td>${ricetta.kcal}</td>
+                        <td>${ricetta.carboidrati}</td>
+                        <td>${ricetta.proteine}</td>
+                        <td>${ricetta.grassi}</td>
+                        <td><input type="checkbox" value="${ricetta.id}" class="meal-checkbox"></td>
+                    `;
+                    mealSelectionBody.appendChild(row);
+                });
+
+                // Mostra il modal
+                const addMealModal = new bootstrap.Modal(document.getElementById('addMealModal'));
+                addMealModal.show();
+            }
+        });
+}
+
+function addNewContorno(day, meal) {
+    currentDay = day;
+    currentMeal = meal;
+
+    // Fetch delle ricette disponibili per quel pasto
+    fetch(`/get_contorno?meal=${meal}&day=${day}&week_id=${selectedWeekId}`)
         .then(response => response.json())
         .then(data => {
             if (data.status == 'success'){

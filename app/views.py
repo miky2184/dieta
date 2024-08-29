@@ -602,9 +602,9 @@ def get_available_meals():
         meal_type_mapping = {
             'colazione': ['colazione', 'colazione_sec'],
             'spuntino_mattina': ['spuntino'],
-            'pranzo': ['principale', 'contorno', 'pane'],
+            'pranzo': ['principale', 'pane'],
             'spuntino_pomeriggio': ['spuntino'],
-            'cena': ['principale', 'contorno', 'pane'],
+            'cena': ['principale', 'pane'],
             'spuntino_sera': ['spuntino']
         }
 
@@ -944,6 +944,23 @@ def get_complemento():
     try:
         # Recupera tutte le ricette complemento
         results = carica_ricette(user_id, complemento=True)
+
+        return jsonify({'status':'success', 'ricette':results}), 200
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@views.route('/get_contorno', methods=['GET'])
+@login_required
+def get_contorno():
+    """
+    Questa funzione restituisce le ricette disponibili per un pasto specifico in un giorno specifico,
+    escludendo quelle già presenti nel menu corrente.
+    """
+    user_id = current_user.user_id
+    try:
+        # Recupera tutte le ricette complemento
+        results = carica_ricette(user_id, contorno=True)
 
         return jsonify({'status':'success', 'ricette':results}), 200
     except Exception as e:
