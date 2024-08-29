@@ -602,9 +602,9 @@ def get_available_meals():
         meal_type_mapping = {
             'colazione': ['colazione', 'colazione_sec'],
             'spuntino_mattina': ['spuntino'],
-            'pranzo': ['principale', 'pane'],
+            'pranzo': ['principale'],
             'spuntino_pomeriggio': ['spuntino'],
-            'cena': ['principale', 'pane'],
+            'cena': ['principale'],
             'spuntino_sera': ['spuntino']
         }
 
