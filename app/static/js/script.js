@@ -311,6 +311,8 @@ function filterTable() {
     const proteineMax = parseFloat(document.getElementById('filter-proteine-max').value) || Infinity;
     const grassiMin = parseFloat(document.getElementById('filter-grassi-min').value) || -Infinity;
     const grassiMax = parseFloat(document.getElementById('filter-grassi-max').value) || Infinity;
+    const fibreMin = parseFloat(document.getElementById('filter-fibre-min').value) || -Infinity;
+    const fibreMax = parseFloat(document.getElementById('filter-fibre-max').value) || Infinity;
 
     const colazioneFilter = document.getElementById('filter-colazione').value;
     const colazioneSecFilter = document.getElementById('filter-colazione-sec').value;
@@ -333,15 +335,16 @@ function filterTable() {
         const carboCell = parseFloat(cells[2].textContent) || 0;
         const proteineCell = parseFloat(cells[3].textContent) || 0;
         const grassiCell = parseFloat(cells[4].textContent) || 0;
+        const fibreCell = parseFloat(cells[5].textContent) || 0;
 
-        const colazioneCell = cells[5].querySelector('input').checked.toString();
-        const colazioneSecCell = cells[6].querySelector('input').checked.toString();
-        const spuntinoCell = cells[7].querySelector('input').checked.toString();
-        const principaleCell = cells[8].querySelector('input').checked.toString();
-        const contornoCell = cells[9].querySelector('input').checked.toString();
-        const paneCell = cells[10].querySelector('input').checked.toString();
-        const complementoCell = cells[11].querySelector('input').checked.toString();
-        const attivaCell = cells[12].querySelector('input').checked.toString();
+        const colazioneCell = cells[6].querySelector('input').checked.toString();
+        const colazioneSecCell = cells[7].querySelector('input').checked.toString();
+        const spuntinoCell = cells[8].querySelector('input').checked.toString();
+        const principaleCell = cells[9].querySelector('input').checked.toString();
+        const contornoCell = cells[10].querySelector('input').checked.toString();
+        const paneCell = cells[11].querySelector('input').checked.toString();
+        const complementoCell = cells[12].querySelector('input').checked.toString();
+        const attivaCell = cells[13].querySelector('input').checked.toString();
 
         const colazioneMatch = (colazioneFilter === 'all') || (colazioneFilter === colazioneCell);
         const colazioneSecMatch = (colazioneSecFilter === 'all') || (colazioneSecFilter === colazioneSecCell);
@@ -356,6 +359,7 @@ function filterTable() {
         const carboMatch = carboCell >= carboMin && carboCell <= carboMax;
         const proteineMatch = proteineCell >= proteineMin && proteineCell <= proteineMax;
         const grassiMatch = grassiCell >= grassiMin && grassiCell <= grassiMax;
+        const fibreMatch = fibreCell >= fibreMin && fibreCell <= fibreMax;
 
         if (nomeCell.includes(nomeFilter) &&
             calorieMatch &&
@@ -389,6 +393,8 @@ function filterAlimentiTable() {
     const proteineMax = parseFloat(document.getElementById('filter-proteine-max').value) || Infinity;
     const grassiMin = parseFloat(document.getElementById('filter-grassi-min').value) || -Infinity;
     const grassiMax = parseFloat(document.getElementById('filter-grassi-max').value) || Infinity;
+    const fibreMin = parseFloat(document.getElementById('filter-fibre-min').value) || -Infinity;
+    const fibreMax = parseFloat(document.getElementById('filter-fibre-max').value) || Infinity;
 
     const fruttaFilter = document.getElementById('filter-frutta').value;
     const carneBiancaFilter = document.getElementById('filter-carne-bianca').value;
@@ -410,20 +416,22 @@ function filterAlimentiTable() {
         const carboCell = parseFloat(cells[2].textContent) || 0;
         const proteineCell = parseFloat(cells[3].textContent) || 0;
         const grassiCell = parseFloat(cells[4].textContent) || 0;
+        const fibreCell = parseFloat(cells[5].textContent) || 0;
 
-        const fruttaCell = cells[5].querySelector('input').checked.toString();
-        const verduraCell = cells[6].querySelector('input').checked.toString();
-        const carneBiancaCell = cells[7].querySelector('input').checked.toString();
-        const carneRossaCell = cells[8].querySelector('input').checked.toString();
-        const pesceCell = cells[9].querySelector('input').checked.toString();
-        const veganCell = cells[10].querySelector('input').checked.toString();
-        const paneCell = cells[11].querySelector('input').checked.toString();
-        const confezionatoCell = cells[12].querySelector('input').checked.toString();
+        const fruttaCell = cells[6].querySelector('input').checked.toString();
+        const verduraCell = cells[7].querySelector('input').checked.toString();
+        const carneBiancaCell = cells[8].querySelector('input').checked.toString();
+        const carneRossaCell = cells[9].querySelector('input').checked.toString();
+        const pesceCell = cells[10].querySelector('input').checked.toString();
+        const veganCell = cells[11].querySelector('input').checked.toString();
+        const paneCell = cells[12].querySelector('input').checked.toString();
+        const confezionatoCell = cells[13].querySelector('input').checked.toString();
 
         const calorieMatch = calorieCell >= calorieMin && calorieCell <= calorieMax;
         const carboMatch = carboCell >= carboMin && carboCell <= carboMax;
         const proteineMatch = proteineCell >= proteineMin && proteineCell <= proteineMax;
         const grassiMatch = grassiCell >= grassiMin && grassiCell <= grassiMax;
+        const fibreMatch = fibreCell >= fibreMin && fibreCell <= fibreMax;
 
         const fruttaMatch = (fruttaFilter === 'all') || (fruttaFilter === fruttaCell);
         const carneBiancaMatch = (carneBiancaFilter === 'all') || (carneBiancaFilter === carneBiancaCell);
@@ -440,6 +448,7 @@ function filterAlimentiTable() {
             carboMatch &&
             proteineMatch &&
             grassiMatch &&
+            fibreMatch &&
             fruttaMatch &&
             carneBiancaMatch &&
             carneRossaMatch &&
@@ -570,6 +579,7 @@ function populateRicetteTable(ricette) {
             <td style="text-align: center;">${ricetta.carboidrati}</td>
             <td style="text-align: center;">${ricetta.proteine}</td>
             <td style="text-align: center;">${ricetta.grassi}</td>
+            <td style="text-align: center;">${ricetta.fibre}</td>
             <td style="text-align: center;">
                 <div>
                     <input type="checkbox" name="colazione_${ricetta.id}" ${ricetta.colazione ? 'checked' : ''}>
@@ -1327,6 +1337,7 @@ function addNewMeal(day, meal) {
                     <td>${ricetta.carboidrati}</td>
                     <td>${ricetta.proteine}</td>
                     <td>${ricetta.grassi}</td>
+                    <td>${ricetta.fibre}</td>
                     <td><input type="checkbox" value="${ricetta.id}" class="meal-checkbox"></td>
                 `;
                 mealSelectionBody.appendChild(row);
@@ -1358,6 +1369,7 @@ function addNewComplemento(day, meal) {
                         <td>${ricetta.carboidrati}</td>
                         <td>${ricetta.proteine}</td>
                         <td>${ricetta.grassi}</td>
+                        <td>${ricetta.fibre}</td>
                         <td><input type="checkbox" value="${ricetta.id}" class="meal-checkbox"></td>
                     `;
                     mealSelectionBody.appendChild(row);
@@ -1390,6 +1402,7 @@ function addNewContorno(day, meal) {
                         <td>${ricetta.carboidrati}</td>
                         <td>${ricetta.proteine}</td>
                         <td>${ricetta.grassi}</td>
+                        <td>${ricetta.fibre}</td>
                         <td><input type="checkbox" value="${ricetta.id}" class="meal-checkbox"></td>
                     `;
                     mealSelectionBody.appendChild(row);
@@ -1406,8 +1419,9 @@ function recalculateCalories(alimentoId) {
     const carboidrati = parseFloat(document.querySelector(`input[name='carboidrati_${alimentoId}']`).value) || 0;
     const proteine = parseFloat(document.querySelector(`input[name='proteine_${alimentoId}']`).value) || 0;
     const grassi = parseFloat(document.querySelector(`input[name='grassi_${alimentoId}']`).value) || 0;
+    const fibre = parseFloat(document.querySelector(`input[name='fibre_${alimentoId}']`).value) || 0;
 
-    const calorie = (carboidrati * 4) + (proteine * 4) + (grassi * 9);
+    const calorie = (carboidrati * 4) + (proteine * 4) + (grassi * 9) + (fibre * 2);
 
     document.getElementById(`calorie_${alimentoId}`).textContent = calorie.toFixed(2);
 }
@@ -1750,6 +1764,12 @@ function populateAlimentiTable(alimenti) {
                     <label hidden class="form-control form-control-sm">${alimento.grassi}</label>
                 </div>
             </td>
+                        <td>
+                <div>
+                    <input type="number" class="form-control  form-control-sm  input-hidden-border"  min="0.1" step="0.1" data-alimento-id="${alimento.id}" name="fibre_${alimento.id}" value="${alimento.fibre}">
+                    <label hidden class="form-control form-control-sm">${alimento.fibre}</label>
+                </div>
+            </td>
             <td style="text-align: center;" >
                 <div><input type="checkbox" name="frutta_${alimento.id}" ${alimento.frutta ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.frutta}</label></div>
             </td>
@@ -1808,6 +1828,7 @@ function populateAlimentiTable(alimenti) {
                 carboidrati: parseFloat(document.querySelector(`input[name='carboidrati_${alimentoId}']`).value),
                 proteine: parseFloat(document.querySelector(`input[name='proteine_${alimentoId}']`).value),
                 grassi: parseFloat(document.querySelector(`input[name='grassi_${alimentoId}']`).value),
+                fibre: parseFloat(document.querySelector(`input[name='fibre_${alimentoId}']`).value),
                 frutta: document.querySelector(`input[name='frutta_${alimentoId}']`).checked,
                 carne_bianca: document.querySelector(`input[name='carne_bianca_${alimentoId}']`).checked,
                 carne_rossa: document.querySelector(`input[name='carne_rossa_${alimentoId}']`).checked,

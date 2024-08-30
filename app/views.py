@@ -420,6 +420,7 @@ def nuovo_alimento():
         carboidrati = request.form['carbs']
         proteine = request.form['prot']
         grassi = request.form['fat']
+        fibre = request.form['fibre']
         verdura = 'verdura' in request.form
         frutta = 'frutta' in request.form
         pesce = 'pesce' in request.form
@@ -429,7 +430,7 @@ def nuovo_alimento():
         carne_bianca = 'carne-bianca' in request.form
         carne_rossa = 'carne-rossa' in request.form
 
-        salva_nuovo_alimento(name, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura,
+        salva_nuovo_alimento(name, carboidrati, proteine, grassi, fibre, frutta, carne_bianca, carne_rossa, pane, verdura,
                              confezionato, vegan, pesce, user_id)
 
         current_app.cache.delete(f'dashboard_{user_id}')
@@ -549,6 +550,7 @@ def save_alimento():
         carboidrati = data.get('carboidrati')
         proteine = data.get('proteine')
         grassi = data.get('grassi')
+        fibre = data.get('fibre')
         frutta = data.get('frutta')
         carne_bianca = data.get('carne_bianca')
         carne_rossa = data.get('carne_rossa')
@@ -558,7 +560,7 @@ def save_alimento():
         vegan = data.get('vegan')
         pesce = data.get('pesce')
 
-        salva_alimento(alimento_id, nome, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura,
+        salva_alimento(alimento_id, nome, carboidrati, proteine, grassi, fibre, frutta, carne_bianca, carne_rossa, pane, verdura,
                        confezionato, vegan, pesce, user_id)
         current_app.cache.delete(f'get_all_ingredients_{user_id}')
         current_app.cache.delete(f'recupera_alimenti_{user_id}')

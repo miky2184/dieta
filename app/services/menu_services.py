@@ -165,11 +165,13 @@ def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=Fals
         func.ceil(func.sum(
             (a.carboidrati / 100 * ir.qta * 4) +
             (a.proteine / 100 * ir.qta * 4) +
-            (a.grassi / 100 * ir.qta * 9)
+            (a.grassi / 100 * ir.qta * 9) +
+            (a.fibre / 100 * ir.qta * 2)
         ).over(partition_by=Ricetta.id)).label('kcal'),
         func.round(func.sum(a.carboidrati / 100 * ir.qta).over(partition_by=Ricetta.id), 2).label('carboidrati'),
         func.round(func.sum(a.proteine / 100 * ir.qta).over(partition_by=Ricetta.id), 2).label('proteine'),
         func.round(func.sum(a.grassi / 100 * ir.qta).over(partition_by=Ricetta.id), 2).label('grassi'),
+        func.round(func.sum(a.fibre / 100 * ir.qta).over(partition_by=Ricetta.id), 2).label('fibre'),
         Ricetta.colazione,
         Ricetta.spuntino,
         Ricetta.principale,
@@ -213,6 +215,7 @@ def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=Fals
         a.carboidrati,
         a.proteine,
         a.grassi,
+        a.fibre,
         ir.qta,
         Ricetta.colazione,
         Ricetta.spuntino,
@@ -240,6 +243,7 @@ def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=Fals
             'carboidrati': float(row.carboidrati or 0),
             'proteine': float(row.proteine or 0),
             'grassi': float(row.grassi or 0),
+            'fibre': float(row.fibre or 0),
             'colazione': row.colazione,
             'spuntino': row.spuntino,
             'principale': row.principale,
@@ -704,7 +708,7 @@ def carica_alimenti(user_id):
     return alimenti
 
 
-def salva_alimento(id, nome, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura, confezionato, vegan, pesce, user_id):
+def salva_alimento(id, nome, carboidrati, proteine, grassi, fibre, frutta, carne_bianca, carne_rossa, pane, verdura, confezionato, vegan, pesce, user_id):
     alimento = Alimento.query.filter_by(id=id, user_id=user_id).first()
     if not alimento:
         alimento = Alimento(
@@ -712,6 +716,7 @@ def salva_alimento(id, nome, carboidrati, proteine, grassi, frutta, carne_bianca
             carboidrati=carboidrati,
             proteine=proteine,
             grassi=grassi,
+            fibre=fibre,
             frutta=frutta,
             carne_bianca=carne_bianca,
             carne_rossa=carne_rossa,
@@ -728,6 +733,7 @@ def salva_alimento(id, nome, carboidrati, proteine, grassi, frutta, carne_bianca
         alimento.carboidrati = carboidrati
         alimento.proteine = proteine
         alimento.grassi = grassi
+        alimento.fibre = fibre
         alimento.frutta = frutta
         alimento.carne_bianca = carne_bianca
         alimento.carne_rossa = carne_rossa
@@ -759,7 +765,7 @@ def get_sequence_value(seq_name):
     return nextval
 
 
-def salva_nuovo_alimento(name, carboidrati, proteine, grassi, frutta, carne_bianca, carne_rossa, pane, verdura, confezionato, vegan, pesce, user_id):
+def salva_nuovo_alimento(name, carboidrati, proteine, grassi, fibre, frutta, carne_bianca, carne_rossa, pane, verdura, confezionato, vegan, pesce, user_id):
 
     alimento = Alimento(
         id=get_sequence_value('dieta.alimento_id_seq'),
@@ -767,6 +773,7 @@ def salva_nuovo_alimento(name, carboidrati, proteine, grassi, frutta, carne_bian
         carboidrati=carboidrati,
         proteine=proteine,
         grassi=grassi,
+        fibre=fibre,
         frutta=frutta,
         carne_bianca=carne_bianca,
         carne_rossa=carne_rossa,

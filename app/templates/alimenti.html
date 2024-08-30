@@ -14,14 +14,15 @@
                     <th style="text-align: center;" onclick="sortTable('alimenti-table', 2)">Carbs</th>
                     <th style="text-align: center;" onclick="sortTable('alimenti-table', 3)">Prot</th>
                     <th style="text-align: center;" onclick="sortTable('alimenti-table', 4)">Fat</th>
-                    <th style="text-align: center;" onclick="sortTable('alimenti-table', 5)">Frutta</th>
-                    <th style="text-align: center;" onclick="sortTable('alimenti-table', 6)">Verdura</th>
-                    <th style="text-align: center;" onclick="sortTable('alimenti-table', 7)">Carne Bianca</th>
-                    <th style="text-align: center;" onclick="sortTable('alimenti-table', 8)">Carne Rossa</th>
-                    <th style="text-align: center;" onclick="sortTable('alimenti-table', 9)" >Pesce</th>
-                    <th style="text-align: center;" onclick="sortTable('alimenti-table', 10)">Vegan</th>
-                    <th style="text-align: center;" onclick="sortTable('alimenti-table', 11)">Pane</th>
-                    <th style="text-align: center;" onclick="sortTable('alimenti-table', 12)">Confezionato</th>
+                    <th style="text-align: center;" onclick="sortTable('alimenti-table', 5)">Fibre</th>
+                    <th style="text-align: center;" onclick="sortTable('alimenti-table', 6)">Frutta</th>
+                    <th style="text-align: center;" onclick="sortTable('alimenti-table', 7)">Verdura</th>
+                    <th style="text-align: center;" onclick="sortTable('alimenti-table', 8)">Carne Bianca</th>
+                    <th style="text-align: center;" onclick="sortTable('alimenti-table', 9)">Carne Rossa</th>
+                    <th style="text-align: center;" onclick="sortTable('alimenti-table', 10)" >Pesce</th>
+                    <th style="text-align: center;" onclick="sortTable('alimenti-table', 11)">Vegan</th>
+                    <th style="text-align: center;" onclick="sortTable('alimenti-table', 12)">Pane</th>
+                    <th style="text-align: center;" onclick="sortTable('alimenti-table', 13)">Confezionato</th>
                     <th style="text-align: center;">Azioni</th>
                 </tr>
                 <tr>
@@ -45,6 +46,11 @@
                     <th><input type="number" id="filter-grassi-min" class="form-control form-control-sm"
                                placeholder="Min" oninput="filterAlimentiTable()">
                         <input type="number" id="filter-grassi-max" class="form-control form-control-sm"
+                               placeholder="Max" oninput="filterAlimentiTable()">
+                    </th>
+                                        <th><input type="number" id="filter-fibre-min" class="form-control form-control-sm"
+                               placeholder="Min" oninput="filterAlimentiTable()">
+                        <input type="number" id="filter-fibre-max" class="form-control form-control-sm"
                                placeholder="Max" oninput="filterAlimentiTable()">
                     </th>
                     <th><select id="filter-frutta" class="form-select form-select-sm" onchange="filterAlimentiTable()">

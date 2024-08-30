@@ -83,7 +83,8 @@ class Alimento(db.Model):
     carboidrati = db.Column(db.Numeric)
     proteine = db.Column(db.Numeric)
     grassi = db.Column(db.Numeric)
-    kcal = db.Column(Numeric, Computed("carboidrati * 4 + proteine * 4 + grassi * 9", persisted=True))
+    fibre = db.Column(db.Numeric)
+    kcal = db.Column(Numeric, Computed("((carboidrati * 4) + (proteine * 4) + (grassi * 9) + (fibre * 2))", persisted=True))
     macro = db.Column(db.String(1), Computed("""
     CASE
         WHEN (carboidrati * 4) >= (proteine * 4) AND (carboidrati * 4) >= (grassi * 9) THEN 'C'
@@ -195,7 +196,8 @@ class AlimentoBase(db.Model):
     carboidrati = db.Column(db.Numeric)
     proteine = db.Column(db.Numeric)
     grassi = db.Column(db.Numeric)
-    kcal = db.Column(db.Numeric, Computed("carboidrati * 4 + proteine * 4 + grassi * 9", persisted=True))
+    fibre = db.Column(db.Numeric)
+    kcal = db.Column(Numeric, Computed("((carboidrati * 4) + (proteine * 4) + (grassi * 9) + (fibre * 2))", persisted=True))
     macro = db.Column(db.String(1), Computed("""
     CASE
         WHEN (carboidrati * 4) >= (proteine * 4) AND (carboidrati * 4) >= (grassi * 9) THEN 'C'
