@@ -433,7 +433,7 @@ def save_weight(data, user_id):
     if utente.peso_ideale is None:
         return False
 
-    registro_peso = RegistroPeso.query.order_by(desc(RegistroPeso.data_rilevazione)).filter(RegistroPeso.data_rilevazione <= data['date'], RegistroPeso.user_id==user_id).first()
+    registro_peso = RegistroPeso.query.order_by(desc(RegistroPeso.data_rilevazione)).filter(RegistroPeso.data_rilevazione == data['date'], RegistroPeso.user_id==user_id).first()
 
     if registro_peso:
         registro_peso.peso = data['weight'] or None

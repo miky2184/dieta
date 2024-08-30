@@ -482,7 +482,7 @@ def salva_dati():
         sesso = request.form['sesso']
         eta = int(request.form['eta'])
         altezza = int(request.form['altezza'])
-        peso = int(request.form['peso'])
+        peso = float(request.form['peso'])
         tdee = request.form['tdee']
         deficit_calorico = request.form['deficit_calorico']
         bmi = float(request.form['bmi'])
