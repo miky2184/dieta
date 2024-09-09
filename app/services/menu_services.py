@@ -1,7 +1,7 @@
 #app/services/menu_services.py
 import os
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from copy import deepcopy
 import re
 import math
@@ -448,7 +448,7 @@ def save_weight(data, user_id):
         peso_ideale_successivo = RegistroPeso.query.order_by(desc(RegistroPeso.data_rilevazione)).filter(
             RegistroPeso.data_rilevazione >= data['date'], RegistroPeso.user_id == user_id).first()
 
-        peso_ideale_calcolato = registro_peso.peso_ideale - ((peso_ideale_successivo.peso_ideale - registro_peso.peso_ideale) / 7 * (registro_peso.data_rilevazione - datetime.date(data['date'])))
+        peso_ideale_calcolato = registro_peso.peso_ideale - ((peso_ideale_successivo.peso_ideale - registro_peso.peso_ideale) / 7 * (registro_peso.data_rilevazione - date(data['date'])))
 
         registro_peso = RegistroPeso(
             data_rilevazione=data['date'],
