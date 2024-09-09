@@ -444,12 +444,18 @@ def save_weight(data, user_id):
         registro_peso.vita = data['vita'] or None
         registro_peso.fianchi = data['fianchi'] or None
     else:
+
+        peso_ideale_successivo = RegistroPeso.query.order_by(desc(RegistroPeso.data_rilevazione)).filter(
+            RegistroPeso.data_rilevazione >= data['date'], RegistroPeso.user_id == user_id).first()
+
+        peso_ideale_calcolato = registro_peso.peso_ideale - ((peso_ideale_successivo.peso_ideale - registro_peso.peso_ideale) / 7 * (registro_peso.data_rilevazione - data['date']))
+
         registro_peso = RegistroPeso(
             data_rilevazione=data['date'],
             peso=data['weight'] or None,
             vita=data['vita'] or None,
             fianchi=data['fianchi'] or None,
-            peso_ideale=registro_peso.peso_ideale,
+            peso_ideale=peso_ideale_calcolato,
             user_id=user_id
         )
 

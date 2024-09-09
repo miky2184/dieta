@@ -1514,9 +1514,9 @@ function updateWeightChart(weights) {
                 borderColor: 'rgba(153, 102, 255, 0.5)', // Viola intenso
                 borderWidth: 1,
                 borderDash: [10, 5], // Linea tratteggiata
-                pointRadius: 1,
+                pointRadius: 3,
                 pointBackgroundColor: 'rgba(153, 102, 255, 0.5)',
-                pointHoverRadius: 3,
+                pointHoverRadius: 5,
                 spanGaps: true // Collega i punti ignorando i null
             },{
                 label: 'Peso',
