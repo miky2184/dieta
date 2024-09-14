@@ -611,7 +611,6 @@ def get_available_meals():
         }
 
         generic_meal_types = meal_type_mapping.get(meal_type)
-
         # Recupera tutte le ricette attive
         ricette = carica_ricette(user_id, stagionalita=True, attive=True)
 
@@ -622,10 +621,10 @@ def get_available_meals():
         # Esclude le ricette già presenti nel pasto del giorno specificato
         menu_corrente = get_menu(user_id, ids=week_id)
         if menu_corrente:
-            if generic_meal_types in ('pranzo', 'cena'):
+            if meal_type in ('pranzo', 'cena'):
                 ricette_presenti_ids = menu_corrente['all_food']
             else:
-                ricette_presenti_ids = [r['id'] for r in menu_corrente['all_food']]
+                ricette_presenti_ids = [r['id'] for r in menu_corrente['day'][day]['pasto'][meal_type]['ricette']]
             available_meals = [ricetta for ricetta in available_meals if ricetta['id'] not in ricette_presenti_ids]
 
         return jsonify(available_meals), 200
