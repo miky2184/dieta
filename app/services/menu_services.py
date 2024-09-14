@@ -321,7 +321,7 @@ def definisci_calorie_macronutrienti(user_id) -> Utente:
     return rows
 
 
-def stampa_lista_della_spesa(user_id, menu):
+def stampa_lista_della_spesa(user_id, menu, print_macro: bool = False):
     """
     Recupera la lista della spesa basata sugli ID degli alimenti e restituisce i dati come lista di dizionari.
     """

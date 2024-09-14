@@ -622,7 +622,7 @@ def get_available_meals():
         # Esclude le ricette già presenti nel pasto del giorno specificato
         menu_corrente = get_menu(user_id, ids=week_id)
         if menu_corrente:
-            ricette_presenti_ids = [r['id'] for r in menu_corrente['day'][day]['pasto'][meal_type]['ricette']]
+            ricette_presenti_ids = [r['id'] for r in menu_corrente['all_food']]
             available_meals = [ricetta for ricetta in available_meals if ricetta['id'] not in ricette_presenti_ids]
 
         return jsonify(available_meals), 200
@@ -794,7 +794,7 @@ def generate_pdf():
 
         # Aggiungi la lista della spesa al PDF
         y = height - margin_y  # Posiziona la lista sotto l'immagine
-        shopping_list = stampa_lista_della_spesa(user_id, menu_selezionato)
+        shopping_list = stampa_lista_della_spesa(user_id, menu_selezionato, True)
         c.setFont("Helvetica", 12)
         c.drawString(margin_x, y, "Lista della Spesa:")
         y -= 20
