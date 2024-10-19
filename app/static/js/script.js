@@ -1210,15 +1210,16 @@ function renderMenuEditor(data) {
             };
             buttonGroup.appendChild(addMealBtn);
 
-            // Pulsante "Aggiungi Contorno"
-            const addContornoBtn = document.createElement('button');
-            //addContornoBtn.textContent = "Aggiungi Contorno";
-            addContornoBtn.innerHTML = `<i class="fa fa-plus" aria-hidden="true"></i> Contorno`; // Aggiungi l'icona e il testo
-            addContornoBtn.classList.add('btn', 'btn-success', 'btn-sm');
-            addContornoBtn.onclick = function() {
-                addNewContorno(day, meal);
-            };
-            buttonGroup.appendChild(addContornoBtn);
+            if meal not in ('colazione', 'spuntino'):
+                // Pulsante "Aggiungi Contorno"
+                const addContornoBtn = document.createElement('button');
+                //addContornoBtn.textContent = "Aggiungi Contorno";
+                addContornoBtn.innerHTML = `<i class="fa fa-plus" aria-hidden="true"></i> Contorno`; // Aggiungi l'icona e il testo
+                addContornoBtn.classList.add('btn', 'btn-success', 'btn-sm');
+                addContornoBtn.onclick = function() {
+                    addNewContorno(day, meal);
+                };
+                buttonGroup.appendChild(addContornoBtn);
 
             // Pulsante "Aggiungi Complemento"
             const addComplementoBtn = document.createElement('button');
