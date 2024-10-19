@@ -1210,7 +1210,7 @@ function renderMenuEditor(data) {
             };
             buttonGroup.appendChild(addMealBtn);
 
-            if (meal not in ('colazione', 'spuntino')){
+            if (meal != 'colazione' && meal != 'spuntino')){
                 // Pulsante "Aggiungi Contorno"
                 const addContornoBtn = document.createElement('button');
                 //addContornoBtn.textContent = "Aggiungi Contorno";
