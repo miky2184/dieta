@@ -1210,7 +1210,7 @@ function renderMenuEditor(data) {
             };
             buttonGroup.appendChild(addMealBtn);
 
-            if meal not in ('colazione', 'spuntino'):
+            if (meal not in ('colazione', 'spuntino')){
                 // Pulsante "Aggiungi Contorno"
                 const addContornoBtn = document.createElement('button');
                 //addContornoBtn.textContent = "Aggiungi Contorno";
@@ -1220,6 +1220,7 @@ function renderMenuEditor(data) {
                     addNewContorno(day, meal);
                 };
                 buttonGroup.appendChild(addContornoBtn);
+            }
 
             // Pulsante "Aggiungi Complemento"
             const addComplementoBtn = document.createElement('button');
