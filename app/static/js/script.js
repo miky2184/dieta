@@ -1138,10 +1138,15 @@ function renderMenuEditor(data) {
         const buttonDayGroup = document.createElement('div');
         buttonDayGroup.classList.add('btn-group', 'ms-3');
 
+        const deleteDayBtn = document.createElement('button');
+        deleteDayBtn.textContent = "Svuota Pasti `${capitalize(day)}`";
+        deleteDayBtn.classList.add('btn', 'btn-warning', 'btn-sm', 'ms-3');
+
         const invertMealsBtn = document.createElement('button');
         invertMealsBtn.textContent = "Inverti Pasti";
         invertMealsBtn.classList.add('btn', 'btn-warning', 'btn-sm', 'ms-3'); // Margine a sinistra
         buttonDayGroup.appendChild(invertMealsBtn);
+        buttonDayGroup.appendChild(deleteDayBtn);
 
         // Aggiungi il titolo e il pulsante al contenitore
         dayTitleContainer.appendChild(dayTitle);
