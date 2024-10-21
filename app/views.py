@@ -918,8 +918,8 @@ def delete_day_pasti(week_id):
         pranzo = settimana['day'][day]['pasto']['pranzo']
         cena = settimana['day'][day]['pasto']['cena']
 
-        settimana['day'][day]['pasto']['pranzo'] = {}
-        settimana['day'][day]['pasto']['cena'] = {}
+        settimana['day'][day]['pasto']['pranzo'] = {"ids":[], "ricette":[]}
+        settimana['day'][day]['pasto']['cena'] = {"ids":[], "ricette":[]}
 
         # Salva le modifiche nel database
         update_menu_corrente(settimana, week_id, user_id)
