@@ -900,6 +900,43 @@ def inverti_pasti(week_id):
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+@views.route('/delete_day/<int:week_id>', methods=['POST'])
+@login_required
+def inverti_pasti(week_id):
+    user_id = current_user.user_id
+    try:
+        data = request.json
+        day = data.get('day')
+
+        # Recupera il menu della settimana per l'utente
+        settimana = get_menu(user_id, ids=week_id)
+
+        if not settimana:
+            return jsonify({'status': 'error', 'message': 'Menu non trovato'}), 404
+
+        # Inverti i pasti per il giorno specificato
+        pranzo = settimana['day'][day]['pasto']['pranzo']
+        cena = settimana['day'][day]['pasto']['cena']
+
+        settimana['day'][day]['pasto']['pranzo'] = {}
+        settimana['day'][day]['pasto']['cena'] = {}
+
+        # Salva le modifiche nel database
+        update_menu_corrente(settimana, week_id, user_id)
+
+        # Ricalcola i macronutrienti rimanenti
+        remaining_macronutrienti = calcola_macronutrienti_rimanenti(settimana)
+        current_app.cache.delete(f'dashboard_{user_id}')
+        current_app.cache.delete(f'view//menu_settimana/{week_id}')
+        return jsonify({
+            'status': 'success',
+            'menu': settimana,
+            'remaining_macronutrienti': remaining_macronutrienti
+        }), 200
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
 @views.route('/inverti_pasti_giorni/<int:week_id>', methods=['POST'])
 @login_required
 def inverti_pasti_giorni(week_id):

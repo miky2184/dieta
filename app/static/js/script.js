@@ -169,6 +169,26 @@ function invertMeals(day) {
     });
 }
 
+function deleteDay(day) {
+    fetch(`/delete_day/${selectedWeekId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ day: day })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            renderMenuEditor(data);
+        }
+    })
+    .catch(error => {
+        console.error('Errore di rete:', error);
+        showAlertModal(error)
+    });
+}
+
 
 function aggiornaTabellaMenu(menu) {
     const tbody = document.getElementById('menu_tbody');
@@ -1158,6 +1178,10 @@ function renderMenuEditor(data) {
         // Imposta l'evento clic per il pulsante
         invertMealsBtn.onclick = function() {
             invertMeals(day);
+        };
+
+        deleteDayBtn.onclick = function() {
+            deleteDay(day);
         };
 
         meals.forEach(meal => {
