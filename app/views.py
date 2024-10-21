@@ -902,7 +902,7 @@ def inverti_pasti(week_id):
 
 @views.route('/delete_day/<int:week_id>', methods=['POST'])
 @login_required
-def inverti_pasti(week_id):
+def delete_day_pasti(week_id):
     user_id = current_user.user_id
     try:
         data = request.json
