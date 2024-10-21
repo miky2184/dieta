@@ -1139,12 +1139,12 @@ function renderMenuEditor(data) {
         buttonDayGroup.classList.add('btn-group', 'ms-3');
 
         const deleteDayBtn = document.createElement('button');
-        deleteDayBtn.textContent = "Svuota Pasti `${capitalize(day)}`";
-        deleteDayBtn.classList.add('btn', 'btn-warning', 'btn-sm', 'ms-3');
+        deleteDayBtn.textContent = "Svuota Pasti " + `${capitalize(day)}`;
+        deleteDayBtn.classList.add('btn', 'btn-warning', 'btn-sm');
 
         const invertMealsBtn = document.createElement('button');
         invertMealsBtn.textContent = "Inverti Pasti";
-        invertMealsBtn.classList.add('btn', 'btn-warning', 'btn-sm', 'ms-3'); // Margine a sinistra
+        invertMealsBtn.classList.add('btn', 'btn-warning', 'btn-sm'); // Margine a sinistra
         buttonDayGroup.appendChild(invertMealsBtn);
         buttonDayGroup.appendChild(deleteDayBtn);
 
