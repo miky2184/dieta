@@ -1135,13 +1135,17 @@ function renderMenuEditor(data) {
         dayTitle.classList.add('card-title', 'mb-0'); // Rimuove il margine inferiore
         dayTitle.textContent = `${capitalize(day)}`;
 
+        const buttonDayGroup = document.createElement('div');
+        buttonDayGroup.classList.add('btn-group', 'ms-3');
+
         const invertMealsBtn = document.createElement('button');
         invertMealsBtn.textContent = "Inverti Pasti";
         invertMealsBtn.classList.add('btn', 'btn-warning', 'btn-sm', 'ms-3'); // Margine a sinistra
+        buttonDayGroup.appendChild(invertMealsBtn);
 
         // Aggiungi il titolo e il pulsante al contenitore
         dayTitleContainer.appendChild(dayTitle);
-        dayTitleContainer.appendChild(invertMealsBtn);
+        dayTitleContainer.appendChild(buttonDayGroup);
 
         // Aggiungi il contenitore al cardBody
         cardBody.appendChild(dayTitleContainer);
