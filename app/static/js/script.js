@@ -169,13 +169,13 @@ function invertMeals(day) {
     });
 }
 
-function deleteDay(day) {
-    fetch(`/delete_day/${selectedWeekId}`, {
+function cancellaMealDaily(day, meal_type) {
+    fetch(`/delete_meal_daily/${selectedWeekId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ day: day })
+        body: JSON.stringify({ day: day, meal_type: meal_type })
     })
     .then(response => response.json())
     .then(data => {
@@ -1158,15 +1158,30 @@ function renderMenuEditor(data) {
         const buttonDayGroup = document.createElement('div');
         buttonDayGroup.classList.add('btn-group', 'ms-3');
 
-        const deleteDayBtn = document.createElement('button');
-        deleteDayBtn.innerHTML = `<i class="fa fa-trash"></i> Pranzo/Cena ${capitalize(day)}`;
-        deleteDayBtn.classList.add('btn', 'btn-warning', 'btn-sm');
+        const cancellaColazioneDailyBtn = document.createElement('button');
+        cancellaColazioneDailyBtn.innerHTML = `<i class="fa fa-trash"></i> Colazione ${capitalize(day)}`;
+        cancellaColazioneDailyBtn.classList.add('btn', 'btn-warning', 'btn-sm');
+
+        const cancellaPranzoCenaDailyBtn = document.createElement('button');
+        cancellaPranzoCenaDailyBtn.innerHTML = `<i class="fa fa-trash"></i> Pranzo/Cena ${capitalize(day)}`;
+        cancellaPranzoCenaDailyBtn.classList.add('btn', 'btn-warning', 'btn-sm');
+
+        const cancellaSpuntiniDailyBtn = document.createElement('button');
+        cancellaSpuntiniDailyBtn.innerHTML = `<i class="fa fa-trash"></i> Spuntini ${capitalize(day)}`;
+        cancellaSpuntiniDailyBtn.classList.add('btn', 'btn-warning', 'btn-sm');
+
+        const cancellaTuttoDailyBtn = document.createElement('button');
+        cancellaTuttoDailyBtn.innerHTML = `<i class="fa fa-trash"></i> ${capitalize(day)}`;
+        cancellaTuttoDailyBtn.classList.add('btn', 'btn-warning', 'btn-sm');
 
         const invertMealsBtn = document.createElement('button');
         invertMealsBtn.innerHTML = `<i class="fas fa-exchange-alt"></i> Pranzo/Cena`;
         invertMealsBtn.classList.add('btn', 'btn-warning', 'btn-sm'); // Margine a sinistra
         buttonDayGroup.appendChild(invertMealsBtn);
-        buttonDayGroup.appendChild(deleteDayBtn);
+        buttonDayGroup.appendChild(cancellaColazioneDailyBtn);
+        buttonDayGroup.appendChild(cancellaPranzoCenaDailyBtn);
+        buttonDayGroup.appendChild(cancellaSpuntiniDailyBtn);
+        buttonDayGroup.appendChild(cancellaTuttoDailyBtn);
 
         // Aggiungi il titolo e il pulsante al contenitore
         dayTitleContainer.appendChild(dayTitle);
@@ -1180,9 +1195,22 @@ function renderMenuEditor(data) {
             invertMeals(day);
         };
 
-        deleteDayBtn.onclick = function() {
-            deleteDay(day);
+        cancellaPranzoCenaDailyBtn.onclick = function() {
+            cancellaMealDaily(day, 'principali');
         };
+
+        cancellaColazioneDailyBtn.onclick = function() {
+            cancellaMealDaily(day, 'colazione');
+        };
+
+        cancellaSpuntiniDailyBtn.onclick = function() {
+            cancellaMealDaily(day, 'spuntini');
+        };
+
+        cancellaTuttoDailyBtn.onclick = function() {
+            cancellaMealDaily(day, 'all');
+        };
+
 
         meals.forEach(meal => {
             const mealContainer = document.createElement('div');

@@ -900,13 +900,14 @@ def inverti_pasti(week_id):
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
-@views.route('/delete_day/<int:week_id>', methods=['POST'])
+@views.route('/delete_meal_daily/<int:week_id>', methods=['POST'])
 @login_required
-def delete_day_pasti(week_id):
+def delete_meal_daily(week_id):
     user_id = current_user.user_id
     try:
         data = request.json
         day = data.get('day')
+        meal_type = data.get('meal_type')
 
         # Recupera il menu della settimana per l'utente
         settimana = get_menu(user_id, ids=week_id)
@@ -914,12 +915,22 @@ def delete_day_pasti(week_id):
         if not settimana:
             return jsonify({'status': 'error', 'message': 'Menu non trovato'}), 404
 
-        # Inverti i pasti per il giorno specificato
-        pranzo = settimana['day'][day]['pasto']['pranzo']
-        cena = settimana['day'][day]['pasto']['cena']
-
-        settimana['day'][day]['pasto']['pranzo'] = {"ids":[], "ricette":[]}
-        settimana['day'][day]['pasto']['cena'] = {"ids":[], "ricette":[]}
+        if meal_type == 'colazione':
+            settimana['day'][day]['pasto']['colazione'] = {"ids":[], "ricette":[]}
+        elif meal_type == 'principali':
+            settimana['day'][day]['pasto']['pranzo'] = {"ids": [], "ricette": []}
+            settimana['day'][day]['pasto']['cena'] = {"ids": [], "ricette": []}
+        elif meal_type == 'spuntini':
+            settimana['day'][day]['pasto']['spuntino_mattina'] = {"ids": [], "ricette": []}
+            settimana['day'][day]['pasto']['spuntino_pomeriggio'] = {"ids": [], "ricette": []}
+            settimana['day'][day]['pasto']['spuntino_sera'] = {"ids": [], "ricette": []}
+        else:
+            settimana['day'][day]['pasto']['colazione'] = {"ids": [], "ricette": []}
+            settimana['day'][day]['pasto']['pranzo'] = {"ids": [], "ricette": []}
+            settimana['day'][day]['pasto']['cena'] = {"ids": [], "ricette": []}
+            settimana['day'][day]['pasto']['spuntino_mattina'] = {"ids": [], "ricette": []}
+            settimana['day'][day]['pasto']['spuntino_pomeriggio'] = {"ids": [], "ricette": []}
+            settimana['day'][day]['pasto']['spuntino_sera'] = {"ids": [], "ricette": []}
 
         # Salva le modifiche nel database
         update_menu_corrente(settimana, week_id, user_id)
