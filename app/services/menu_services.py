@@ -19,7 +19,7 @@ MAX_RETRY = int(os.getenv('MAX_RETRY'))
 
 
 def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, ripetibile: bool,
-                    controllo_macro_settimanale: bool, ricette, ids_specifici=None, skip_check=False):
+                    controllo_macro_settimanale: bool, ricette, user_id, ids_specifici=None, skip_check=False):
     """
     Seleziona una pietanza dalla lista di ricette pre-caricate in memoria.
     Ora lascia che select_food determini la percentuale ottimale basata sui macronutrienti rimanenti.
@@ -48,10 +48,10 @@ def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, rip
 
     # Invoca select_food con le ricette modificate e gli ID specifici
     return select_food(ricette_modificate, settimana, giorno_settimana, pasto, ripetibile,
-                       False, controllo_macro_settimanale, skip_check, ids_specifici)
+                       False, controllo_macro_settimanale, skip_check, user_id, ids_specifici)
 
 
-def select_food(ricette, settimana, giorno_settimana, pasto, ripetibile, found, controllo_macro_settimanale, skip_check, ids_specifici=None):
+def select_food(ricette, settimana, giorno_settimana, pasto, ripetibile, found, controllo_macro_settimanale, skip_check, user_id, ids_specifici=None):
     # Filtra gli ID disponibili in base alla ripetibilità e agli ID specifici
     if ids_specifici:
         ids_disponibili = [oggetto['id'] for oggetto in ricette if oggetto['id'] in ids_specifici and oggetto['id'] not in settimana['all_food']]
@@ -101,28 +101,70 @@ def select_food(ricette, settimana, giorno_settimana, pasto, ripetibile, found, 
             if (skip_check or check_macronutrienti(ricetta_selezionata, settimana['day'][giorno_settimana], settimana['weekly'], controllo_macro_settimanale)):
                 settimana.get('all_food').append(id_selezionato)
                 mt.get('ids').append(id_selezionato)
-                r = {'qta': percentuale_effettiva,
-                    'id': ricetta_selezionata.get('id'),
-                    'nome_ricetta': ricetta_selezionata.get('nome_ricetta'),
-                    'ricetta': ricetta_selezionata.get('ricetta'),
-                    'kcal': ricetta_selezionata.get('kcal') * percentuale_effettiva,
-                    'carboidrati': ricetta_selezionata.get('carboidrati') * percentuale_effettiva,
-                    'proteine':  ricetta_selezionata.get('proteine') * percentuale_effettiva,
-                    'grassi': ricetta_selezionata.get('grassi') * percentuale_effettiva,
+
+                ingredienti_ricetta = recupera_ingredienti_ricetta(ricetta_selezionata.get('id'), user_id, percentuale_effettiva)
+
+                r = {
+                        'qta': percentuale_effettiva,
+                        'id': ricetta_selezionata.get('id'),
+                        'nome_ricetta': ricetta_selezionata.get('nome_ricetta'),
+                        'ricetta': ingredienti_ricetta,
+                        'kcal': ricetta_selezionata.get('kcal'),
+                        'carboidrati': ricetta_selezionata.get('carboidrati'),
+                        'proteine':  ricetta_selezionata.get('proteine'),
+                        'grassi': ricetta_selezionata.get('grassi')
                     }
                 mt.get('ricette').append(r)
-                day['kcal'] = day.get('kcal') - r.get('kcal')
-                day['carboidrati'] = day.get('carboidrati') - r.get('carboidrati')
-                day['proteine'] = day.get('proteine') - r.get('proteine')
-                day['grassi'] = day.get('grassi') - r.get('grassi')
-                macronutrienti_settimali['kcal'] = macronutrienti_settimali.get('kcal') - r.get('kcal')
-                macronutrienti_settimali['carboidrati'] = macronutrienti_settimali.get('carboidrati') - r.get('carboidrati')
-                macronutrienti_settimali['proteine'] = macronutrienti_settimali.get('proteine') - r.get('proteine')
-                macronutrienti_settimali['grassi'] = macronutrienti_settimali.get('grassi') - r.get('grassi')
+                day['kcal'] = round(day.get('kcal') - (round(ricetta_selezionata.get('kcal') * percentuale_effettiva, 2)), 2)
+                day['carboidrati'] = round(day.get('carboidrati') - (round(ricetta_selezionata.get('carboidrati') * percentuale_effettiva, 2)), 2)
+                day['proteine'] = round(day.get('proteine') - (round(ricetta_selezionata.get('proteine') * percentuale_effettiva, 2)), 2)
+                day['grassi'] = round(day.get('grassi') - (round(ricetta_selezionata.get('grassi') * percentuale_effettiva, 2)), 2)
+                macronutrienti_settimali['kcal'] = round(macronutrienti_settimali.get('kcal') - (round(ricetta_selezionata.get('kcal') * percentuale_effettiva, 2)), 2)
+                macronutrienti_settimali['carboidrati'] = round(macronutrienti_settimali.get('carboidrati') - (round(ricetta_selezionata.get('carboidrati') * percentuale_effettiva, 2)), 2)
+                macronutrienti_settimali['proteine'] =round( macronutrienti_settimali.get('proteine') - (round(ricetta_selezionata.get('proteine') * percentuale_effettiva, 2)), 2)
+                macronutrienti_settimali['grassi'] =round( macronutrienti_settimali.get('grassi') - (round(ricetta_selezionata.get('grassi') * percentuale_effettiva, 2)), 2)
                 found = True
                 break  # Esci dal ciclo una volta trovata una ricetta valida
 
     return found
+
+
+def recupera_ingredienti_ricetta(ricetta_id, user_id, percentuale):
+
+    # Assumi che IngredientiRicetta, Ricetta e Alimento siano i tuoi modelli definiti in SQLAlchemy
+    ir = aliased(IngredientiRicetta)
+    r = aliased(Ricetta)
+    a = aliased(Alimento)
+
+    # results = db.session.query(
+    #     select(
+    #         func.string_agg(func.concat(a.nome, ': ', func.cast((ir.qta * percentuale), String), 'g, ' )).label('ingredienti')
+    #     )
+    #     .join(r, (ir.id_ricetta == r.id) & (ir.user_id == r.user_id))
+    #     .join(a, (ir.id_alimento == a.id) & (ir.user_id == a.user_id))
+    #     .where(r.user_id == user_id)
+    #     .where(r.id == ricetta_id)
+    # ).all()
+
+    ricetta_subquery = (
+        db.session.query(
+            func.string_agg(a.nome + ': ' + func.cast(ir.qta * percentuale, String) + 'g', ', ')
+        ).distinct()
+        .join(ir, ir.id_alimento == a.id)
+        .join(r, ir.id_ricetta == r.id)# Join condizionato correttamente
+        .filter(ir.id_ricetta == ricetta_id, ir.user_id == a.user_id, ir.user_id == r.user_id,
+                ir.user_id == user_id)
+        .correlate(Ricetta)  # Correggere la correlazione automatica
+        .label('ingredienti')
+    )
+
+    query = db.session.query(
+        func.coalesce(ricetta_subquery, '').label('ricetta')
+    )
+
+    results = query.distinct().all()
+
+    return results[0].ricetta
 
 
 def check_macronutrienti(ricetta, day, weekly, controllo_macro_settimanale):
@@ -149,7 +191,7 @@ def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=Fals
     # Subquery per calcolare 'ricetta'
     ricetta_subquery = (
         db.session.query(
-            func.string_agg(a.nome + ': ' + func.cast(ir.qta, String) + 'g', ', ')
+           func.string_agg(a.nome + ': ' + func.cast(ir.qta, String) + 'g', ', ')
         ).distinct()
         .join(ir, ir.id_alimento == a.id)  # Join condizionato correttamente
         .filter(ir.id_ricetta == Ricetta.id, ir.user_id == a.user_id, ir.user_id == Ricetta.user_id, ir.user_id == user_id)
@@ -277,40 +319,40 @@ def numero_ricette(p, pasto, tipo_ricetta, ricette):
     cerca_ricette = [r for r in p[pasto]['ricette'] if r['id'] in [ricetta['id'] for ricetta in ricette if ricetta[tipo_ricetta]]]
     return len(cerca_ricette)
 
-def genera_menu(settimana, controllo_macro_settimanale, ricette) -> None:
+def genera_menu(settimana, controllo_macro_settimanale, ricette, user_id) -> None:
     for giorno in settimana['day']:
         for _ in range(MAX_RETRY):
             p = settimana['day'][giorno]['pasto']
 
             if numero_ricette(p, 'colazione', 'colazione', ricette) < 1:
-                scegli_pietanza(settimana, giorno, 'colazione', 'colazione', True, controllo_macro_settimanale, ricette)
-                scegli_pietanza(settimana, giorno, 'colazione', 'colazione_sec', True, controllo_macro_settimanale, ricette)
+                scegli_pietanza(settimana, giorno, 'colazione', 'colazione', True, controllo_macro_settimanale, ricette, user_id)
+                scegli_pietanza(settimana, giorno, 'colazione', 'colazione_sec', True, controllo_macro_settimanale, ricette, user_id)
 
             if numero_ricette(p, 'spuntino_mattina', 'spuntino', ricette) < 1:
-                scegli_pietanza(settimana, giorno, 'spuntino_mattina', 'spuntino', True, controllo_macro_settimanale, ricette)
+                scegli_pietanza(settimana, giorno, 'spuntino_mattina', 'spuntino', True, controllo_macro_settimanale, ricette, user_id)
 
             if numero_ricette(p, 'spuntino_pomeriggio', 'spuntino', ricette) < 1:
-                scegli_pietanza(settimana, giorno, 'spuntino_pomeriggio', 'spuntino', True, controllo_macro_settimanale, ricette)
+                scegli_pietanza(settimana, giorno, 'spuntino_pomeriggio', 'spuntino', True, controllo_macro_settimanale, ricette, user_id)
 
             if numero_ricette(p, 'spuntino_sera', 'spuntino', ricette) < 1:
-                scegli_pietanza(settimana, giorno, 'spuntino_sera', 'spuntino', True, controllo_macro_settimanale, ricette)
+                scegli_pietanza(settimana, giorno, 'spuntino_sera', 'spuntino', True, controllo_macro_settimanale, ricette, user_id)
 
 
             if numero_ricette(p, 'pranzo', 'principale', ricette) < 2:
-                scegli_pietanza(settimana, giorno, 'pranzo', 'principale', False, controllo_macro_settimanale, ricette)
+                scegli_pietanza(settimana, giorno, 'pranzo', 'principale', False, controllo_macro_settimanale, ricette, user_id)
 
             if numero_ricette(p, 'cena', 'principale', ricette) < 1:
-                scegli_pietanza(settimana, giorno, 'cena', 'principale', False, controllo_macro_settimanale, ricette)
+                scegli_pietanza(settimana, giorno, 'cena', 'principale', False, controllo_macro_settimanale, ricette, user_id)
 
             if numero_ricette(p, 'pranzo', 'contorno', ricette) < 1:
-                scegli_pietanza(settimana, giorno, 'pranzo', 'contorno', True, controllo_macro_settimanale, ricette)
+                scegli_pietanza(settimana, giorno, 'pranzo', 'contorno', True, controllo_macro_settimanale, ricette, user_id)
 
             if numero_ricette(p, 'cena', 'contorno', ricette) < 1:
-                scegli_pietanza(settimana, giorno, 'cena', 'contorno', True, controllo_macro_settimanale, ricette)
+                scegli_pietanza(settimana, giorno, 'cena', 'contorno', True, controllo_macro_settimanale, ricette, user_id)
 
             # Aggiungi il pane
             if controllo_macro_settimanale and numero_ricette(p, 'cena', 'pane', ricette) < 1:
-                scegli_pietanza(settimana, giorno, 'cena', 'pane', True, controllo_macro_settimanale, ricette, skip_check=controllo_macro_settimanale)
+                scegli_pietanza(settimana, giorno, 'cena', 'pane', True, controllo_macro_settimanale, ricette, user_id, skip_check=controllo_macro_settimanale)
 
 
 def definisci_calorie_macronutrienti(user_id) -> Utente:
@@ -858,37 +900,45 @@ def update_menu_corrente(menu, week_id, user_id):
     db.session.commit()
 
 
-def remove_meal_from_menu(menu, day, meal, meal_id, user_id):
+def remove_meal_from_menu(menu, day, meal, meal_id):
     # Trova la ricetta da rimuovere
     ricetta_da_rimuovere = None
-    qta = 0
     for ricetta in menu['day'][day]['pasto'][meal]['ricette']:
         if int(ricetta['id']) == int(meal_id):
             ricetta_da_rimuovere = ricetta
-            qta = ricetta['qta']
-            break
 
-    # Se la ricetta è trovata, rimuovila
     if ricetta_da_rimuovere:
+        # Aggiorna i macronutrienti per il giorno
+        menu['day'][day]['kcal'] += ricetta_da_rimuovere['kcal'] * ricetta_da_rimuovere['qta']
+        menu['day'][day]['carboidrati'] += ricetta_da_rimuovere['carboidrati'] * ricetta_da_rimuovere['qta']
+        menu['day'][day]['proteine'] += ricetta_da_rimuovere['proteine'] * ricetta_da_rimuovere['qta']
+        menu['day'][day]['grassi'] += ricetta_da_rimuovere['grassi'] * ricetta_da_rimuovere['qta']
+
+        # Aggiorna i macronutrienti settimanali
+        menu['weekly']['kcal'] += ricetta_da_rimuovere['kcal'] * ricetta_da_rimuovere['qta']
+        menu['weekly']['carboidrati'] += ricetta_da_rimuovere['carboidrati'] * ricetta_da_rimuovere['qta']
+        menu['weekly']['proteine'] += ricetta_da_rimuovere['proteine'] * ricetta_da_rimuovere['qta']
+        menu['weekly']['grassi'] += ricetta_da_rimuovere['grassi'] * ricetta_da_rimuovere['qta']
         menu['all_food'].remove(int(meal_id))
         menu['day'][day]['pasto'][meal]['ids'].remove(int(meal_id))
         menu['day'][day]['pasto'][meal]['ricette'].remove(ricetta_da_rimuovere)
 
-        # Recupera i valori nutrizionali della ricetta rimossa
-        ricetta_valori = carica_ricette(user_id, ids=meal_id)
-        # Aggiorna i macronutrienti per il giorno
-        menu['day'][day]['kcal'] += ricetta_valori[0]['kcal'] * qta
-        menu['day'][day]['carboidrati'] += ricetta_valori[0]['carboidrati'] * qta
-        menu['day'][day]['proteine'] += ricetta_valori[0]['proteine'] * qta
-        menu['day'][day]['grassi'] += ricetta_valori[0]['grassi'] * qta
+
+def rimuovi_meal_daily(settimana, day, meal_type):
+    for ricetta in settimana['day'][day]['pasto'][meal_type]["ricette"]:
+        settimana['all_food'].remove(ricetta['id'])
+        settimana['day'][day]['kcal'] += ricetta['kcal'] * ricetta['qta']
+        settimana['day'][day]['carboidrati'] += ricetta['carboidrati'] * ricetta['qta']
+        settimana['day'][day]['proteine'] += ricetta['proteine'] * ricetta['qta']
+        settimana['day'][day]['grassi'] += ricetta['grassi'] * ricetta['qta']
 
         # Aggiorna i macronutrienti settimanali
-        menu['weekly']['kcal'] += ricetta_valori[0]['kcal'] * qta
-        menu['weekly']['carboidrati'] += ricetta_valori[0]['carboidrati'] * qta
-        menu['weekly']['proteine'] += ricetta_valori[0]['proteine'] * qta
-        menu['weekly']['grassi'] += ricetta_valori[0]['grassi'] * qta
+        settimana['weekly']['kcal'] += ricetta['kcal'] * ricetta['qta']
+        settimana['weekly']['carboidrati'] += ricetta['carboidrati'] * ricetta['qta']
+        settimana['weekly']['proteine'] += ricetta['proteine'] * ricetta['qta']
+        settimana['weekly']['grassi'] += ricetta['grassi'] * ricetta['qta']
 
-    return menu
+    settimana['day'][day]['pasto'][meal_type] = {"ids": [], "ricette": []}
 
 
 def delete_week_menu(week_id, user_id):

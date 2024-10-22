@@ -10,7 +10,8 @@ from .services.menu_services import (definisci_calorie_macronutrienti, save_weig
                                      carica_alimenti, salva_alimento, elimina_alimento, salva_nuovo_alimento,
                                      aggiungi_ricetta_al_menu, update_menu_corrente, remove_meal_from_menu,
                                      delete_week_menu, elimina_ricetta, ordina_settimana_per_kcal,
-                                     recupera_ricette_per_alimento, copia_menu, recupera_settimane)
+                                     recupera_ricette_per_alimento, copia_menu, recupera_settimane, rimuovi_meal_daily,
+                                     recupera_ingredienti_ricetta)
 from copy import deepcopy
 import time
 from reportlab.lib.pagesizes import letter, landscape
@@ -52,32 +53,34 @@ def dashboard():
             'day': {
                 'lunedi': {'pasto': {'colazione': {'ricette': []}, 'spuntino_mattina': {'ricette': []},
                                      'pranzo': {'ricette': []}, 'spuntino_pomeriggio': {'ricette': []},
-                                     'cena': {'ricette': []}, 'spuntino_sera': {'ricette': []}}, 'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0},
+                                     'cena': {'ricette': []}, 'spuntino_sera': {'ricette': []}
+                                     }, 'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0, 'fibre': 0},
                 'martedi': {'pasto': {'colazione': {'ricette': []}, 'spuntino_mattina': {'ricette': []},
                                       'pranzo': {'ricette': []}, 'spuntino_pomeriggio': {'ricette': []},
-                                      'cena': {'ricette': []}, 'spuntino_sera': {'ricette': []}}, 'kcal': 0, 'carboidrati': 0, 'proteine': 0,
-                            'grassi': 0},
+                                      'cena': {'ricette': []}, 'spuntino_sera': {'ricette': []}
+                                      }, 'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0, 'fibre': 0},
                 'mercoledi': {'pasto': {'colazione': {'ricette': []}, 'spuntino_mattina': {'ricette': []},
                                         'pranzo': {'ricette': []}, 'spuntino_pomeriggio': {'ricette': []},
-                                        'cena': {'ricette': []}, 'spuntino_sera': {'ricette': []}}, 'kcal': 0, 'carboidrati': 0, 'proteine': 0,
-                              'grassi': 0},
+                                        'cena': {'ricette': []}, 'spuntino_sera': {'ricette': []}
+                                        }, 'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0, 'fibre': 0},
                 'giovedi': {'pasto': {'colazione': {'ricette': []}, 'spuntino_mattina': {'ricette': []},
                                       'pranzo': {'ricette': []}, 'spuntino_pomeriggio': {'ricette': []},
-                                      'cena': {'ricette': []}, 'spuntino_sera': {'ricette': []}}, 'kcal': 0, 'carboidrati': 0, 'proteine': 0,
-                            'grassi': 0},
+                                      'cena': {'ricette': []}, 'spuntino_sera': {'ricette': []}
+                                      }, 'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0, 'fibre': 0},
                 'venerdi': {'pasto': {'colazione': {'ricette': []}, 'spuntino_mattina': {'ricette': []},
                                       'pranzo': {'ricette': []}, 'spuntino_pomeriggio': {'ricette': []},
-                                      'cena': {'ricette': []}, 'spuntino_sera': {'ricette': []}}, 'kcal': 0, 'carboidrati': 0, 'proteine': 0,
-                            'grassi': 0},
+                                      'cena': {'ricette': []}, 'spuntino_sera': {'ricette': []}
+                                      }, 'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0, 'fibre': 0},
                 'sabato': {'pasto': {'colazione': {'ricette': []}, 'spuntino_mattina': {'ricette': []},
                                      'pranzo': {'ricette': []}, 'spuntino_pomeriggio': {'ricette': []},
-                                     'cena': {'ricette': []}, 'spuntino_sera': {'ricette': []}}, 'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0},
+                                     'cena': {'ricette': []}, 'spuntino_sera': {'ricette': []}
+                                     }, 'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0, 'fibre': 0},
                 'domenica': {'pasto': {'colazione': {'ricette': []}, 'spuntino_mattina': {'ricette': []},
                                        'pranzo': {'ricette': []}, 'spuntino_pomeriggio': {'ricette': []},
-                                       'cena': {'ricette': []}, 'spuntino_sera': {'ricette': []}}, 'kcal': 0, 'carboidrati': 0, 'proteine': 0,
-                             'grassi': 0},
+                                       'cena': {'ricette': []}, 'spuntino_sera': {'ricette': []}
+                                       }, 'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0, 'fibre': 0},
             },
-            'weekly': {'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0},
+            'weekly': {'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0, 'fibre': 0},
             'all_food': []
         }
 
@@ -155,14 +158,14 @@ def generate_menu():
 
         if not get_menu(user_id, period=period):
             settimana_corrente = deepcopy(get_settimana(macronutrienti))
-            genera_menu(settimana_corrente, False, ricette_menu)
+            genera_menu(settimana_corrente, False, ricette_menu, user_id)
             progress += 1 / total_steps * 100
             time.sleep(1)  # Simula tempo di elaborazione
 
             # Ordina la settimana in base alle kcal giornaliere rimanenti in ordine decrescente
             settimana_corrente_ordinata = ordina_settimana_per_kcal(settimana_corrente)
 
-            genera_menu(settimana_corrente_ordinata, True, ricette_menu)
+            genera_menu(settimana_corrente_ordinata, True, ricette_menu, user_id)
             progress += 1 / total_steps * 100
             time.sleep(1)
 
@@ -182,30 +185,31 @@ def generate_menu():
         # Generazione del menu per la settimana successiva
         if not get_menu(user_id, period=period):
             prossima_settimana = deepcopy(get_settimana(macronutrienti))
-            genera_menu(prossima_settimana, False, ricette_menu)
+            genera_menu(prossima_settimana, False, ricette_menu, user_id)
             progress += 1 / total_steps * 100
             time.sleep(1)
 
             # Ordina la settimana in base alle kcal giornaliere rimanenti in ordine decrescente
             prossima_settimana_ordinata = ordina_settimana_per_kcal(prossima_settimana)
 
-            genera_menu(prossima_settimana_ordinata, True, ricette_menu)
+            genera_menu(prossima_settimana_ordinata, True, ricette_menu, user_id)
             salva_menu(prossima_settimana_ordinata, user_id, period=period)
         else:
             prossima_settimana = deepcopy(get_settimana(macronutrienti))
-            genera_menu(prossima_settimana, False, ricette_menu)
+            genera_menu(prossima_settimana, False, ricette_menu, user_id)
             progress += 1 / total_steps * 100
             time.sleep(1)
 
             # Ordina la settimana in base alle kcal giornaliere rimanenti in ordine decrescente
             prossima_settimana_ordinata = ordina_settimana_per_kcal(prossima_settimana)
 
-            genera_menu(prossima_settimana_ordinata, True, ricette_menu)
+            genera_menu(prossima_settimana_ordinata, True, ricette_menu, user_id)
             salva_menu(prossima_settimana_ordinata, user_id)
 
         current_app.cache.delete(f'dashboard_{user_id}')
         return jsonify({'status': 'success', 'progress': progress}), 200
     except Exception as e:
+        print(e)
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
@@ -686,13 +690,13 @@ def rimuovi_ricetta(week_id):
         menu_corrente = get_menu(user_id, ids=week_id)
 
         # Rimuove il pasto dal menu
-        updated_menu = remove_meal_from_menu(menu_corrente, day, meal, meal_id, user_id)
+        remove_meal_from_menu(menu_corrente, day, meal, meal_id)
 
         # Salva il menu aggiornato nel database
-        update_menu_corrente(updated_menu, week_id, user_id)
+        update_menu_corrente(menu_corrente, week_id, user_id)
 
         # Ricalcola i macronutrienti rimanenti
-        remaining_macronutrienti = calcola_macronutrienti_rimanenti(updated_menu)
+        remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente)
         current_app.cache.delete(f'dashboard_{user_id}')
         current_app.cache.delete(f'view//menu_settimana/{week_id}')
         return jsonify({
@@ -716,18 +720,21 @@ def aggiorna_quantita_ingrediente():
         data = request.get_json()
         day = data['day']
         meal = data['meal']
-        meal_id = int(data['meal_id'])  # Convertiamo in int per confronto sicuro
+        ricetta_id = int(data['ricetta_id'])  # Convertiamo in int per confronto sicuro
         quantity = float(data['quantity'])
         week_id = data['week_id']
 
         # Recupera il menu corrente dal database
         menu_corrente = get_menu(user_id, ids=week_id)
 
+        ingredienti_ricetta = recupera_ingredienti_ricetta(ricetta_id, user_id, quantity)
+
         # Aggiorna la quantità del pasto nel menu
         for ricetta in menu_corrente['day'][day]['pasto'][meal]['ricette']:
-            if int(ricetta['id']) == meal_id:
+            if int(ricetta['id']) == ricetta_id:
                 old_qta = ricetta['qta']
                 ricetta['qta'] = quantity
+                ricetta['ricetta'] = ingredienti_ricetta
 
                 # Ricalcola i macronutrienti giornalieri e settimanali
                 for macro in ['kcal', 'carboidrati', 'proteine', 'grassi']:
@@ -908,6 +915,7 @@ def delete_meal_daily(week_id):
         data = request.json
         day = data.get('day')
         meal_type = data.get('meal_type')
+        ids_remove = []
 
         # Recupera il menu della settimana per l'utente
         settimana = get_menu(user_id, ids=week_id)
@@ -916,21 +924,21 @@ def delete_meal_daily(week_id):
             return jsonify({'status': 'error', 'message': 'Menu non trovato'}), 404
 
         if meal_type == 'colazione':
-            settimana['day'][day]['pasto']['colazione'] = {"ids":[], "ricette":[]}
+            rimuovi_meal_daily(settimana, day, 'colazione')
         elif meal_type == 'principali':
-            settimana['day'][day]['pasto']['pranzo'] = {"ids": [], "ricette": []}
-            settimana['day'][day]['pasto']['cena'] = {"ids": [], "ricette": []}
+            rimuovi_meal_daily(settimana, day, 'pranzo')
+            rimuovi_meal_daily(settimana, day, 'cena')
         elif meal_type == 'spuntini':
-            settimana['day'][day]['pasto']['spuntino_mattina'] = {"ids": [], "ricette": []}
-            settimana['day'][day]['pasto']['spuntino_pomeriggio'] = {"ids": [], "ricette": []}
-            settimana['day'][day]['pasto']['spuntino_sera'] = {"ids": [], "ricette": []}
+            rimuovi_meal_daily(settimana, day, 'spuntino_mattina')
+            rimuovi_meal_daily(settimana, day, 'spuntino_pomeriggio')
+            rimuovi_meal_daily(settimana, day, 'spuntino_sera')
         else:
-            settimana['day'][day]['pasto']['colazione'] = {"ids": [], "ricette": []}
-            settimana['day'][day]['pasto']['pranzo'] = {"ids": [], "ricette": []}
-            settimana['day'][day]['pasto']['cena'] = {"ids": [], "ricette": []}
-            settimana['day'][day]['pasto']['spuntino_mattina'] = {"ids": [], "ricette": []}
-            settimana['day'][day]['pasto']['spuntino_pomeriggio'] = {"ids": [], "ricette": []}
-            settimana['day'][day]['pasto']['spuntino_sera'] = {"ids": [], "ricette": []}
+            rimuovi_meal_daily(settimana, day, 'colazione')
+            rimuovi_meal_daily(settimana, day, 'pranzo')
+            rimuovi_meal_daily(settimana, day, 'cena')
+            rimuovi_meal_daily(settimana, day, 'spuntino_mattina')
+            rimuovi_meal_daily(settimana, day, 'spuntino_pomeriggio')
+            rimuovi_meal_daily(settimana, day, 'spuntino_sera')
 
         # Salva le modifiche nel database
         update_menu_corrente(settimana, week_id, user_id)

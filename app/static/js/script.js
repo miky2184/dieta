@@ -1247,7 +1247,7 @@ function renderMenuEditor(data) {
                         <td style="text-align: center;">${(ricetta.carboidrati * ricetta.qta).toFixed(2)}</td>
                         <td style="text-align: center;">${(ricetta.proteine * ricetta.qta).toFixed(2)}</td>
                         <td style="text-align: center;">${(ricetta.grassi * ricetta.qta).toFixed(2)}</td>
-                        <td style="text-align: center;"><input type="number" class="form-control form-control-sm input-hidden-border" value="${ricetta.qta}" min="0.1" step="0.05" onchange="updateMealQuantity('${day}', '${meal}', '${ricetta.id}', this.value)"></td>
+                        <td style="text-align: center;"><input type="number" class="form-control form-control-sm input-hidden-border" value="${ricetta.qta}" min="0.1" step="0.1" onchange="updateMealQuantity('${day}', '${meal}', '${ricetta.id}', this.value)"></td>
                         <td style="text-align: center;"><button class="btn btn-danger btn-sm" onclick="removeMeal('${day}', '${meal}', '${ricetta.id}')"><i class="fas fa-trash-alt"></button></td>
                     `;
                     mealTableBody.appendChild(row);
@@ -1320,7 +1320,7 @@ function updateMealQuantity(day, meal, ricettaId, newQuantity) {
     const data = {
         day: day,
         meal: meal,
-        meal_id: ricettaId,
+        ricetta_id: ricettaId,
         quantity: newQuantity,
         week_id: selectedWeekId
     };
