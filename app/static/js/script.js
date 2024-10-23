@@ -1242,7 +1242,7 @@ function renderMenuEditor(data) {
                     const row = document.createElement('tr');
                     row.id = `meal-${ricetta.id}-${day}-${meal}`;
                     row.innerHTML = `
-                        <td>${ricetta.nome_ricetta}</td>
+                        <td><div data-bs-toggle="tooltip" data-bs-title="${ricetta.ricetta}" class="recipe-cell">${ricetta.nome_ricetta}</div></td>
                         <td style="text-align: center;">${(ricetta.kcal * ricetta.qta).toFixed(2)}</td>
                         <td style="text-align: center;">${(ricetta.carboidrati * ricetta.qta).toFixed(2)}</td>
                         <td style="text-align: center;">${(ricetta.proteine * ricetta.qta).toFixed(2)}</td>
@@ -1313,6 +1313,9 @@ function renderMenuEditor(data) {
 
     filterDayCards();
     aggiornaTabellaMenu(data.menu);
+
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 }
 
 
