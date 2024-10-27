@@ -8,9 +8,9 @@ from .services.menu_services import (definisci_calorie_macronutrienti, save_weig
                                      get_peso_hist, get_dati_utente,
                                      calcola_macronutrienti_rimanenti,
                                      carica_alimenti, salva_alimento, elimina_alimento, salva_nuovo_alimento,
-                                     aggiungi_ricetta_al_menu, update_menu_corrente, remove_meal_from_menu,
+                                     aggiungi_ricetta_al_menu, update_menu_corrente, rimuovi_pasto_dal_menu,
                                      delete_week_menu, elimina_ricetta, ordina_settimana_per_kcal,
-                                     recupera_ricette_per_alimento, copia_menu, recupera_settimane, rimuovi_meal_daily,
+                                     recupera_ricette_per_alimento, copia_menu, recupera_settimane, cancella_tutti_pasti_menu,
                                      recupera_ingredienti_ricetta)
 from copy import deepcopy
 import time
@@ -690,7 +690,7 @@ def rimuovi_ricetta(week_id):
         menu_corrente = get_menu(user_id, ids=week_id)
 
         # Rimuove il pasto dal menu
-        remove_meal_from_menu(menu_corrente, day, meal, meal_id)
+        rimuovi_pasto_dal_menu(menu_corrente, day, meal, meal_id)
 
         # Salva il menu aggiornato nel database
         update_menu_corrente(menu_corrente, week_id, user_id)
@@ -924,21 +924,21 @@ def delete_meal_daily(week_id):
             return jsonify({'status': 'error', 'message': 'Menu non trovato'}), 404
 
         if meal_type == 'colazione':
-            rimuovi_meal_daily(settimana, day, 'colazione')
+            cancella_tutti_pasti_menu(settimana, day, 'colazione')
         elif meal_type == 'principali':
-            rimuovi_meal_daily(settimana, day, 'pranzo')
-            rimuovi_meal_daily(settimana, day, 'cena')
+            cancella_tutti_pasti_menu(settimana, day, 'pranzo')
+            cancella_tutti_pasti_menu(settimana, day, 'cena')
         elif meal_type == 'spuntini':
-            rimuovi_meal_daily(settimana, day, 'spuntino_mattina')
-            rimuovi_meal_daily(settimana, day, 'spuntino_pomeriggio')
-            rimuovi_meal_daily(settimana, day, 'spuntino_sera')
+            cancella_tutti_pasti_menu(settimana, day, 'spuntino_mattina')
+            cancella_tutti_pasti_menu(settimana, day, 'spuntino_pomeriggio')
+            cancella_tutti_pasti_menu(settimana, day, 'spuntino_sera')
         else:
-            rimuovi_meal_daily(settimana, day, 'colazione')
-            rimuovi_meal_daily(settimana, day, 'pranzo')
-            rimuovi_meal_daily(settimana, day, 'cena')
-            rimuovi_meal_daily(settimana, day, 'spuntino_mattina')
-            rimuovi_meal_daily(settimana, day, 'spuntino_pomeriggio')
-            rimuovi_meal_daily(settimana, day, 'spuntino_sera')
+            cancella_tutti_pasti_menu(settimana, day, 'colazione')
+            cancella_tutti_pasti_menu(settimana, day, 'pranzo')
+            cancella_tutti_pasti_menu(settimana, day, 'cena')
+            cancella_tutti_pasti_menu(settimana, day, 'spuntino_mattina')
+            cancella_tutti_pasti_menu(settimana, day, 'spuntino_pomeriggio')
+            cancella_tutti_pasti_menu(settimana, day, 'spuntino_sera')
 
         # Salva le modifiche nel database
         update_menu_corrente(settimana, week_id, user_id)

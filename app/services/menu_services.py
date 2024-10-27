@@ -136,16 +136,6 @@ def recupera_ingredienti_ricetta(ricetta_id, user_id, percentuale):
     r = aliased(Ricetta)
     a = aliased(Alimento)
 
-    # results = db.session.query(
-    #     select(
-    #         func.string_agg(func.concat(a.nome, ': ', func.cast((ir.qta * percentuale), String), 'g, ' )).label('ingredienti')
-    #     )
-    #     .join(r, (ir.id_ricetta == r.id) & (ir.user_id == r.user_id))
-    #     .join(a, (ir.id_alimento == a.id) & (ir.user_id == a.user_id))
-    #     .where(r.user_id == user_id)
-    #     .where(r.id == ricetta_id)
-    # ).all()
-
     ricetta_subquery = (
         db.session.query(
             func.string_agg(a.nome + ': ' + func.cast(ir.qta * percentuale, String) + 'g', ', ')
@@ -900,7 +890,7 @@ def update_menu_corrente(menu, week_id, user_id):
     db.session.commit()
 
 
-def remove_meal_from_menu(menu, day, meal, meal_id):
+def rimuovi_pasto_dal_menu(menu, day, meal, meal_id):
     # Trova la ricetta da rimuovere
     ricetta_da_rimuovere = None
     for ricetta in menu['day'][day]['pasto'][meal]['ricette']:
@@ -908,37 +898,32 @@ def remove_meal_from_menu(menu, day, meal, meal_id):
             ricetta_da_rimuovere = ricetta
 
     if ricetta_da_rimuovere:
-        # Aggiorna i macronutrienti per il giorno
-        menu['day'][day]['kcal'] += ricetta_da_rimuovere['kcal'] * ricetta_da_rimuovere['qta']
-        menu['day'][day]['carboidrati'] += ricetta_da_rimuovere['carboidrati'] * ricetta_da_rimuovere['qta']
-        menu['day'][day]['proteine'] += ricetta_da_rimuovere['proteine'] * ricetta_da_rimuovere['qta']
-        menu['day'][day]['grassi'] += ricetta_da_rimuovere['grassi'] * ricetta_da_rimuovere['qta']
-
-        # Aggiorna i macronutrienti settimanali
-        menu['weekly']['kcal'] += ricetta_da_rimuovere['kcal'] * ricetta_da_rimuovere['qta']
-        menu['weekly']['carboidrati'] += ricetta_da_rimuovere['carboidrati'] * ricetta_da_rimuovere['qta']
-        menu['weekly']['proteine'] += ricetta_da_rimuovere['proteine'] * ricetta_da_rimuovere['qta']
-        menu['weekly']['grassi'] += ricetta_da_rimuovere['grassi'] * ricetta_da_rimuovere['qta']
-        menu['all_food'].remove(int(meal_id))
-        menu['day'][day]['pasto'][meal]['ids'].remove(int(meal_id))
+        menu['all_food'].remove(ricetta_da_rimuovere['id'])
+        menu['day'][day]['pasto'][meal]['ids'].remove(ricetta_da_rimuovere['id'])
         menu['day'][day]['pasto'][meal]['ricette'].remove(ricetta_da_rimuovere)
+        aggiorna_macronutrienti(menu, day, ricetta_da_rimuovere)
 
 
-def rimuovi_meal_daily(settimana, day, meal_type):
+def cancella_tutti_pasti_menu(settimana, day, meal_type):
     for ricetta in settimana['day'][day]['pasto'][meal_type]["ricette"]:
         settimana['all_food'].remove(ricetta['id'])
-        settimana['day'][day]['kcal'] += ricetta['kcal'] * ricetta['qta']
-        settimana['day'][day]['carboidrati'] += ricetta['carboidrati'] * ricetta['qta']
-        settimana['day'][day]['proteine'] += ricetta['proteine'] * ricetta['qta']
-        settimana['day'][day]['grassi'] += ricetta['grassi'] * ricetta['qta']
-
-        # Aggiorna i macronutrienti settimanali
-        settimana['weekly']['kcal'] += ricetta['kcal'] * ricetta['qta']
-        settimana['weekly']['carboidrati'] += ricetta['carboidrati'] * ricetta['qta']
-        settimana['weekly']['proteine'] += ricetta['proteine'] * ricetta['qta']
-        settimana['weekly']['grassi'] += ricetta['grassi'] * ricetta['qta']
+        aggiorna_macronutrienti(settimana, day, ricetta)
 
     settimana['day'][day]['pasto'][meal_type] = {"ids": [], "ricette": []}
+
+
+def aggiorna_macronutrienti(menu, day, ricetta):
+    # Aggiorna i macronutrienti per il giorno
+    menu['day'][day]['kcal'] += ricetta['kcal'] * ricetta['qta']
+    menu['day'][day]['carboidrati'] += ricetta['carboidrati'] * ricetta['qta']
+    menu['day'][day]['proteine'] += ricetta['proteine'] * ricetta['qta']
+    menu['day'][day]['grassi'] += ricetta['grassi'] * ricetta['qta']
+
+    # Aggiorna i macronutrienti settimanali
+    menu['weekly']['kcal'] += ricetta['kcal'] * ricetta['qta']
+    menu['weekly']['carboidrati'] += ricetta['carboidrati'] * ricetta['qta']
+    menu['weekly']['proteine'] += ricetta['proteine'] * ricetta['qta']
+    menu['weekly']['grassi'] += ricetta['grassi'] * ricetta['qta']
 
 
 def delete_week_menu(week_id, user_id):
