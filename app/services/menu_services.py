@@ -170,7 +170,7 @@ def check_macronutrienti(ricetta, day, weekly, controllo_macro_settimanale):
             and float(weekly['grassi']) - ricetta['grassi'] > 0)
 
 
-def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=False, complemento=False, contorno=False):
+def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=False, complemento=None, contorno=False):
     """
     Carica tutte le ricette disponibili dal database in memoria.
     """
@@ -235,6 +235,8 @@ def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=Fals
 
     if complemento:
         query = query.filter(Ricetta.complemento.is_(True), Ricetta.user_id == user_id)
+    elif not complemento:
+        query = query.filter(Ricetta.complemento.is_(False), Ricetta.user_id == user_id)
 
     if contorno:
         query = query.filter(Ricetta.contorno.is_(True), Ricetta.user_id == user_id)
