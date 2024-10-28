@@ -1001,11 +1001,28 @@ def get_complemento():
     escludendo quelle già presenti nel menu corrente.
     """
     user_id = current_user.user_id
+    meal_type = request.args.get('meal')
+
+    meal_type_mapping = {
+        'colazione': ['colazione', 'colazione_sec'],
+        'spuntino_mattina': ['spuntino'],
+        'pranzo': ['principale'],
+        'spuntino_pomeriggio': ['spuntino'],
+        'cena': ['principale'],
+        'spuntino_sera': ['spuntino']
+    }
+
+    generic_meal_types = meal_type_mapping.get(meal_type)
+
     try:
         # Recupera tutte le ricette complemento
-        results = carica_ricette(user_id, complemento=True)
+        ricette = carica_ricette(user_id, complemento=True)
 
-        return jsonify({'status':'success', 'ricette':results}), 200
+        # Filtra le ricette disponibili in base al tipo di pasto
+        available_meals = [ricetta for ricetta in ricette if
+                           any(ricetta[generic_meal_type] for generic_meal_type in generic_meal_types)]
+
+        return jsonify({'status':'success', 'ricette':available_meals}), 200
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
