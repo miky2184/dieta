@@ -339,7 +339,6 @@ function filterTable() {
     const spuntinoFilter = document.getElementById('filter-spuntino').value;
     const principaleFilter = document.getElementById('filter-principale').value;
     const contornoFilter = document.getElementById('filter-contorno').value;
-    //const paneFilter = document.getElementById('filter-pane-ricette').value;
     const complementoFilter = document.getElementById('filter-complemento-ricette').value;
     const attivaFilter = document.getElementById('filter-attiva').value;
 
@@ -362,7 +361,6 @@ function filterTable() {
         const spuntinoCell = cells[8].querySelector('input').checked.toString();
         const principaleCell = cells[9].querySelector('input').checked.toString();
         const contornoCell = cells[10].querySelector('input').checked.toString();
-        //const paneCell = cells[11].querySelector('input').checked.toString();
         const complementoCell = cells[11].querySelector('input').checked.toString();
         const attivaCell = cells[12].querySelector('input').checked.toString();
 
@@ -371,7 +369,6 @@ function filterTable() {
         const spuntinoMatch = (spuntinoFilter === 'all') || (spuntinoFilter === spuntinoCell);
         const principaleMatch = (principaleFilter === 'all') || (principaleFilter === principaleCell);
         const contornoMatch = (contornoFilter === 'all') || (contornoFilter === contornoCell);
-        //const paneMatch = (paneFilter === 'all') || (paneFilter === paneCell);
         const complementoMatch = (complementoFilter === 'all') || (complementoFilter === complementoCell);
         const attivaMatch = (attivaFilter === 'all') || (attivaFilter === attivaCell);
 
@@ -391,7 +388,6 @@ function filterTable() {
             spuntinoMatch &&
             principaleMatch &&
             contornoMatch &&
-            //paneMatch &&
             complementoMatch &&
             attivaMatch) {
             rows[i].style.display = '';
@@ -419,7 +415,6 @@ function filterAlimentiTable() {
     const fruttaFilter = document.getElementById('filter-frutta').value;
     const carneBiancaFilter = document.getElementById('filter-carne-bianca').value;
     const carneRossaFilter = document.getElementById('filter-carne-rossa').value;
-    //const paneFilter = document.getElementById('filter-pane').value;
     const verduraFilter = document.getElementById('filter-verdura').value;
     const confezionatoFilter = document.getElementById('filter-confezionato').value;
     const veganFilter = document.getElementById('filter-vegan').value;
@@ -444,7 +439,6 @@ function filterAlimentiTable() {
         const carneRossaCell = cells[9].querySelector('input').checked.toString();
         const pesceCell = cells[10].querySelector('input').checked.toString();
         const veganCell = cells[11].querySelector('input').checked.toString();
-        //const paneCell = cells[12].querySelector('input').checked.toString();
         const confezionatoCell = cells[12].querySelector('input').checked.toString();
 
         const calorieMatch = calorieCell >= calorieMin && calorieCell <= calorieMax;
@@ -456,7 +450,6 @@ function filterAlimentiTable() {
         const fruttaMatch = (fruttaFilter === 'all') || (fruttaFilter === fruttaCell);
         const carneBiancaMatch = (carneBiancaFilter === 'all') || (carneBiancaFilter === carneBiancaCell);
         const carneRossaMatch = (carneRossaFilter === 'all') || (carneRossaFilter === carneRossaCell);
-        //const paneMatch = (paneFilter === 'all') || (paneFilter === paneCell);
         const verduraMatch = (verduraFilter === 'all') || (verduraFilter === verduraCell);
         const confezionatoMatch = (confezionatoFilter === 'all') || (confezionatoFilter === confezionatoCell);
         const veganMatch = (veganFilter === 'all') || (veganFilter === veganCell);
@@ -472,7 +465,6 @@ function filterAlimentiTable() {
             fruttaMatch &&
             carneBiancaMatch &&
             carneRossaMatch &&
-            //paneMatch &&
             verduraMatch &&
             confezionatoMatch &&
             veganMatch &&
@@ -630,12 +622,6 @@ function populateRicetteTable(ricette) {
                     <label hidden class="form-control form-control-sm">${ricetta.contorno}</label>
                 </div>
             </td>
-            /* <td style="text-align: center;">
-                <div>
-                    <input type="checkbox" name="pane_${ricetta.id}" ${ricetta.pane ? 'checked' : ''}>
-                    <label hidden class="form-control form-control-sm">${ricetta.pane}</label>
-                </div>
-            </td> */
             <td style="text-align: center;">
                 <div>
                     <input type="checkbox" name="complemento_${ricetta.id}" ${ricetta.complemento ? 'checked' : ''}>
@@ -650,7 +636,7 @@ function populateRicetteTable(ricette) {
             </td>
             <td style="text-align: center;">
                 <div class="btn-group" role="group">
-                    <button class="btn btn-primary btn-sm save-btn" data-ricetta-id="${ricetta.id}" data-ricetta-nome="${ricetta.nome_ricetta}" data-ricetta-colazione="${ricetta.colazione}" data-ricetta-colazione_sec="${ricetta.colazione_sec}" data-ricetta-spuntino="${ricetta.spuntino}" data-ricetta-principale="${ricetta.principale}" data-ricetta-contorno="${ricetta.contorno}" /*data-ricetta-pane="${ricetta.pane}"*/ data-ricetta-complemento="${ricetta.complemento}" data-ricetta-attiva="${ricetta.attiva}" data-bs-toggle="tooltip" title="Salva"><i class="fas fa-save"></i></button>
+                    <button class="btn btn-primary btn-sm save-btn" data-ricetta-id="${ricetta.id}" data-ricetta-nome="${ricetta.nome_ricetta}" data-ricetta-colazione="${ricetta.colazione}" data-ricetta-colazione_sec="${ricetta.colazione_sec}" data-ricetta-spuntino="${ricetta.spuntino}" data-ricetta-principale="${ricetta.principale}" data-ricetta-contorno="${ricetta.contorno}" data-ricetta-complemento="${ricetta.complemento}" data-ricetta-attiva="${ricetta.attiva}" data-bs-toggle="tooltip" title="Salva"><i class="fas fa-save"></i></button>
                     <button class="btn btn-primary btn-sm edit-btn" data-ricetta-id="${ricetta.id}" data-bs-toggle="modal" data-bs-target="#editRecipeModal" data-bs-toggle="tooltip" title="Modifica"><i class="fas fa-edit"></i></button>
                     <button class="btn btn-primary btn-sm toggle-btn" data-ricetta-id="${ricetta.id}" data-ricetta-attiva="${ricetta.attiva}" data-bs-toggle="tooltip" title="Attiva/Disattiva"><i class="fas fa-toggle-on"></i></button>
                     <button class="btn btn-danger btn-sm delete-btn" data-ricetta-id="${ricetta.id}" data-bs-toggle="tooltip" title="Elimina"><i class="fas fa-trash-alt"></i></button>
@@ -672,7 +658,6 @@ function populateRicetteTable(ricette) {
                 spuntino: document.querySelector(`input[name='spuntino_${ricettaId}']`).checked,
                 principale: document.querySelector(`input[name='principale_${ricettaId}']`).checked,
                 contorno: document.querySelector(`input[name='contorno_${ricettaId}']`).checked,
-                /*pane: document.querySelector(`input[name='pane_${ricettaId}']`).checked, */
                 complemento: document.querySelector(`input[name='complemento_${ricettaId}']`).checked
             };
             saveRicetta(ricettaData);
@@ -1717,7 +1702,6 @@ function cleanFilters() {
     document.getElementById('filter-grassi-min').value = '';
     document.getElementById('filter-grassi-max').value = '';
     document.getElementById('filter-colazione').value = 'all';
-    /* document.getElementById('filter-pane-ricette').value = 'all'; */
     document.getElementById('filter-complemento-ricette').value = 'all';
     document.getElementById('filter-colazione-sec').value = 'all';
     document.getElementById('filter-spuntino').value = 'all';
@@ -1744,7 +1728,6 @@ function cleanFiltersAlimenti() {
     document.getElementById('filter-frutta').value = 'all';
     document.getElementById('filter-carne-bianca').value = 'all';
     document.getElementById('filter-carne-rossa').value = 'all';
-    /* document.getElementById('filter-pane').value = 'all'; */
     document.getElementById('filter-verdura').value = 'all';
     document.getElementById('filter-confezionato').value = 'all';
     document.getElementById('filter-vegan').value = 'all';
@@ -1854,10 +1837,6 @@ function populateAlimentiTable(alimenti) {
             <td  style="text-align: center;" >
                 <div><input type="checkbox" name="vegan_${alimento.id}" ${alimento.vegan ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.vegan}</label></div>
             </td>
-            /*
-            <td  style="text-align: center;" >
-                <div><input type="checkbox" name="pane_${alimento.id}" ${alimento.pane ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.pane}</label></div>
-            </td> */
             <td  style="text-align: center;" >
                 <div><input type="checkbox" name="confezionato_${alimento.id}" ${alimento.confezionato ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.confezionato}</label></div>
             </td>
@@ -1903,7 +1882,6 @@ function populateAlimentiTable(alimenti) {
                 frutta: document.querySelector(`input[name='frutta_${alimentoId}']`).checked,
                 carne_bianca: document.querySelector(`input[name='carne_bianca_${alimentoId}']`).checked,
                 carne_rossa: document.querySelector(`input[name='carne_rossa_${alimentoId}']`).checked,
-                /* pane: document.querySelector(`input[name='pane_${alimentoId}']`).checked, */
                 verdura: document.querySelector(`input[name='verdura_${alimentoId}']`).checked,
                 confezionato: document.querySelector(`input[name='confezionato_${alimentoId}']`).checked,
                 vegan: document.querySelector(`input[name='vegan_${alimentoId}']`).checked,
