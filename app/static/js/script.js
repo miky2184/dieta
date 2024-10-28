@@ -1248,7 +1248,6 @@ function renderMenuEditor(data) {
 
             // Pulsante "Aggiungi Ricetta"
             const addMealBtn = document.createElement('button');
-            //addMealBtn.textContent = "Aggiungi Ricetta";
             addMealBtn.innerHTML = `<i class="fa fa-plus" aria-hidden="true"></i> Ricetta`; // Aggiungi l'icona e il testo
             addMealBtn.classList.add('btn', 'btn-success', 'btn-sm');
             addMealBtn.onclick = function() {
@@ -1256,10 +1255,9 @@ function renderMenuEditor(data) {
             };
             buttonGroup.appendChild(addMealBtn);
 
+            // Pulsante "Aggiungi Contorno"
             if (meal != 'colazione' && !meal.startsWith('spuntino')){
-                // Pulsante "Aggiungi Contorno"
                 const addContornoBtn = document.createElement('button');
-                //addContornoBtn.textContent = "Aggiungi Contorno";
                 addContornoBtn.innerHTML = `<i class="fa fa-plus" aria-hidden="true"></i> Contorno`; // Aggiungi l'icona e il testo
                 addContornoBtn.classList.add('btn', 'btn-success', 'btn-sm');
                 addContornoBtn.onclick = function() {
@@ -1269,18 +1267,18 @@ function renderMenuEditor(data) {
             }
 
             // Pulsante "Aggiungi Complemento"
-            const addComplementoBtn = document.createElement('button');
-            //addComplementoBtn.textContent = "Aggiungi Complemento";
-            addComplementoBtn.innerHTML = `<i class="fa fa-plus" aria-hidden="true"></i> Complemento`; // Aggiungi l'icona e il testo
-            addComplementoBtn.classList.add('btn', 'btn-success', 'btn-sm');
-            addComplementoBtn.onclick = function() {
-                addNewComplemento(day, meal);
-            };
-            buttonGroup.appendChild(addComplementoBtn);
+            if (!meal.startsWith('spuntino')){
+                const addComplementoBtn = document.createElement('button');
+                addComplementoBtn.innerHTML = `<i class="fa fa-plus" aria-hidden="true"></i> Complemento`; // Aggiungi l'icona e il testo
+                addComplementoBtn.classList.add('btn', 'btn-success', 'btn-sm');
+                addComplementoBtn.onclick = function() {
+                    addNewComplemento(day, meal);
+                };
+                buttonGroup.appendChild(addComplementoBtn);
+            }
 
             // Aggiungi il gruppo di pulsanti al contenitore
             mealContainer.appendChild(buttonGroup);
-
 
             cardBody.appendChild(mealContainer);
         });
