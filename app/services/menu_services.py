@@ -235,7 +235,7 @@ def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=Fals
 
     if complemento:
         query = query.filter(Ricetta.complemento.is_(True), Ricetta.user_id == user_id)
-    elif not complemento:
+    elif complemento is False:
         query = query.filter(Ricetta.complemento.is_(False), Ricetta.user_id == user_id)
 
     if contorno:
