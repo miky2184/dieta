@@ -616,7 +616,7 @@ def get_available_meals():
 
         generic_meal_types = meal_type_mapping.get(meal_type)
         # Recupera tutte le ricette attive
-        ricette = carica_ricette(user_id, stagionalita=True, attive=True)
+        ricette = carica_ricette(user_id, stagionalita=True, attive=True, complemento=False)
 
         # Filtra le ricette disponibili in base al tipo di pasto
         available_meals = [ricetta for ricetta in ricette if
