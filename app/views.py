@@ -265,10 +265,9 @@ def salva_ricetta():
         principale = data['principale']
         contorno = data['contorno']
         nome = data['nome']
-        pane = data['pane']
         complemento = data['complemento']
 
-        aggiorna_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, pane, complemento, ricetta_id, user_id)
+        aggiorna_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, complemento, ricetta_id, user_id)
 
         current_app.cache.delete(f'recupera_ricette_{user_id}')
         return jsonify({'status': 'success', 'message': 'Ricetta salvata con successo!'}), 200
@@ -401,10 +400,9 @@ def nuova_ricetta():
         main = 'principale' in request.form
         side = 'contorno' in request.form
         second_breakfast = 'colazione/biscotti' in request.form
-        pane = 'pane' in request.form
         complemento = 'complemento' in request.form
 
-        salva_nuova_ricetta(name.upper(), breakfast, snack, main, side, second_breakfast, pane, complemento, user_id)
+        salva_nuova_ricetta(name.upper(), breakfast, snack, main, side, second_breakfast, complemento, user_id)
         current_app.cache.delete(f'recupera_ricette_{user_id}')
 
         return jsonify({"status": "success"}), 200
@@ -428,13 +426,12 @@ def nuovo_alimento():
         verdura = 'verdura' in request.form
         frutta = 'frutta' in request.form
         pesce = 'pesce' in request.form
-        pane = 'pane' in request.form
         confezionato = 'confezionato' in request.form
         vegan = 'vegan' in request.form
         carne_bianca = 'carne-bianca' in request.form
         carne_rossa = 'carne-rossa' in request.form
 
-        salva_nuovo_alimento(name, carboidrati, proteine, grassi, fibre, frutta, carne_bianca, carne_rossa, pane, verdura,
+        salva_nuovo_alimento(name, carboidrati, proteine, grassi, fibre, frutta, carne_bianca, carne_rossa, verdura,
                              confezionato, vegan, pesce, user_id)
 
         current_app.cache.delete(f'dashboard_{user_id}')
@@ -558,13 +555,12 @@ def save_alimento():
         frutta = data.get('frutta')
         carne_bianca = data.get('carne_bianca')
         carne_rossa = data.get('carne_rossa')
-        pane = data.get('pane')
         verdura = data.get('verdura')
         confezionato = data.get('confezionato')
         vegan = data.get('vegan')
         pesce = data.get('pesce')
 
-        salva_alimento(alimento_id, nome, carboidrati, proteine, grassi, fibre, frutta, carne_bianca, carne_rossa, pane, verdura,
+        salva_alimento(alimento_id, nome, carboidrati, proteine, grassi, fibre, frutta, carne_bianca, carne_rossa, verdura,
                        confezionato, vegan, pesce, user_id)
         current_app.cache.delete(f'get_all_ingredients_{user_id}')
         current_app.cache.delete(f'recupera_alimenti_{user_id}')

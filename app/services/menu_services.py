@@ -209,7 +209,6 @@ def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=Fals
         Ricetta.principale,
         Ricetta.contorno,
         Ricetta.colazione_sec,
-        Ricetta.pane,
         Ricetta.complemento,
         Ricetta.enabled.label('attiva'),
         func.coalesce(ricetta_subquery, '').label('ricetta')
@@ -256,7 +255,6 @@ def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=Fals
         Ricetta.principale,
         Ricetta.contorno,
         Ricetta.colazione_sec,
-        Ricetta.pane,
         Ricetta.complemento,
         Ricetta.enabled
     ).order_by(
@@ -283,7 +281,6 @@ def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=Fals
             'principale': row.principale,
             'contorno': row.contorno,
             'colazione_sec': row.colazione_sec,
-            'pane': row.pane,
             'complemento': row.complemento,
             'attiva': row.attiva,
             'ricetta': row.ricetta
@@ -341,10 +338,6 @@ def genera_menu(settimana, controllo_macro_settimanale, ricette, user_id) -> Non
 
             if numero_ricette(p, 'cena', 'contorno', ricette) < 1:
                 scegli_pietanza(settimana, giorno, 'cena', 'contorno', True, controllo_macro_settimanale, ricette, user_id)
-
-            # Aggiungi il pane
-            if controllo_macro_settimanale and numero_ricette(p, 'cena', 'pane', ricette) < 1:
-                scegli_pietanza(settimana, giorno, 'cena', 'pane', True, controllo_macro_settimanale, ricette, user_id, skip_check=controllo_macro_settimanale)
 
 
 def definisci_calorie_macronutrienti(user_id) -> Utente:
@@ -551,7 +544,7 @@ def get_settimana(macronutrienti: Utente):
             }
 
 
-def aggiorna_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, pane, complemento, ricetta_id, user_id):
+def aggiorna_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, complemento, ricetta_id, user_id):
     ricetta = Ricetta.query.filter_by(id=ricetta_id, user_id=user_id).first()
     ricetta.nome_ricetta = nome.upper()
     ricetta.colazione = colazione
@@ -559,7 +552,6 @@ def aggiorna_ricetta(nome, colazione, colazione_sec, spuntino, principale, conto
     ricetta.spuntino = spuntino
     ricetta.principale = principale
     ricetta.contorno = contorno
-    ricetta.pane = pane
     ricetta.complemento = complemento
     db.session.commit()
 
@@ -684,7 +676,7 @@ def salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, defic
     db.session.commit()
 
 
-def salva_nuova_ricetta(name, breakfast, snack, main, side, second_breakfast, pane, complemento, user_id):
+def salva_nuova_ricetta(name, breakfast, snack, main, side, second_breakfast, complemento, user_id):
 
     ricetta = Ricetta(
         id=get_sequence_value('dieta.ricetta_id_seq'),
@@ -694,7 +686,6 @@ def salva_nuova_ricetta(name, breakfast, snack, main, side, second_breakfast, pa
         principale=main,
         contorno=side,
         colazione_sec=second_breakfast,
-        pane=pane,
         complemento=complemento,
         user_id=user_id
     )
@@ -754,7 +745,7 @@ def carica_alimenti(user_id):
     return alimenti
 
 
-def salva_alimento(id, nome, carboidrati, proteine, grassi, fibre, frutta, carne_bianca, carne_rossa, pane, verdura, confezionato, vegan, pesce, user_id):
+def salva_alimento(id, nome, carboidrati, proteine, grassi, fibre, frutta, carne_bianca, carne_rossa, verdura, confezionato, vegan, pesce, user_id):
     alimento = Alimento.query.filter_by(id=id, user_id=user_id).first()
     if not alimento:
         alimento = Alimento(
@@ -766,7 +757,6 @@ def salva_alimento(id, nome, carboidrati, proteine, grassi, fibre, frutta, carne
             frutta=frutta,
             carne_bianca=carne_bianca,
             carne_rossa=carne_rossa,
-            pane=pane,
             verdura=verdura,
             confezionato=confezionato,
             vegan=vegan,
@@ -783,7 +773,6 @@ def salva_alimento(id, nome, carboidrati, proteine, grassi, fibre, frutta, carne
         alimento.frutta = frutta
         alimento.carne_bianca = carne_bianca
         alimento.carne_rossa = carne_rossa
-        alimento.pane = pane
         alimento.verdura = verdura
         alimento.confezionato = confezionato
         alimento.vegan = vegan
@@ -811,7 +800,7 @@ def get_sequence_value(seq_name):
     return nextval
 
 
-def salva_nuovo_alimento(name, carboidrati, proteine, grassi, fibre, frutta, carne_bianca, carne_rossa, pane, verdura, confezionato, vegan, pesce, user_id):
+def salva_nuovo_alimento(name, carboidrati, proteine, grassi, fibre, frutta, carne_bianca, carne_rossa, verdura, confezionato, vegan, pesce, user_id):
 
     alimento = Alimento(
         id=get_sequence_value('dieta.alimento_id_seq'),
@@ -823,7 +812,6 @@ def salva_nuovo_alimento(name, carboidrati, proteine, grassi, fibre, frutta, car
         frutta=frutta,
         carne_bianca=carne_bianca,
         carne_rossa=carne_rossa,
-        pane=pane,
         verdura=verdura,
         confezionato=confezionato,
         vegan=vegan,
@@ -955,7 +943,6 @@ def copia_alimenti_ricette(user_id: int, ricette_vegane: bool, ricette_carne: bo
         AlimentoBase.frutta,
         AlimentoBase.carne_bianca,
         AlimentoBase.carne_rossa,
-        AlimentoBase.pane,
         AlimentoBase.stagionalita,
         AlimentoBase.verdura,
         AlimentoBase.confezionato,
@@ -975,7 +962,6 @@ def copia_alimenti_ricette(user_id: int, ricette_vegane: bool, ricette_carne: bo
                 Alimento.frutta,
                 Alimento.carne_bianca,
                 Alimento.carne_rossa,
-                Alimento.pane,
                 Alimento.stagionalita,
                 Alimento.verdura,
                 Alimento.confezionato,
@@ -997,7 +983,6 @@ def copia_alimenti_ricette(user_id: int, ricette_vegane: bool, ricette_carne: bo
         RicettaBase.contorno,
         false(),  # Set enabled to False
         RicettaBase.colazione_sec,
-        RicettaBase.pane,
         RicettaBase.complemento,
         user_id
     )
@@ -1013,7 +998,6 @@ def copia_alimenti_ricette(user_id: int, ricette_vegane: bool, ricette_carne: bo
                 Ricetta.contorno,
                 Ricetta.enabled,
                 Ricetta.colazione_sec,
-                Ricetta.pane,
                 Ricetta.complemento,
                 Ricetta.user_id
             ],
