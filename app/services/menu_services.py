@@ -446,7 +446,7 @@ def get_menu(user_id: int, period: dict = None, ids: int = None):
 
     result = query.all()
 
-    return result[0] #{'menu': result[0], 'data_fine': result[0]}
+    return {'menu': result[0].menu, 'data_fine': result[0].data_fine}
 
 
 def get_settimane_salvate(user_id, show_old_week: bool = False):
