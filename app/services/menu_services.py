@@ -170,7 +170,7 @@ def check_macronutrienti(ricetta, day, weekly, controllo_macro_settimanale):
             and float(weekly['grassi']) - ricetta['grassi'] > 0)
 
 
-def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=False, complemento=None, contorno=False):
+def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=False, complemento=None, contorno=False, data_stagionalita=None):
     """
     Carica tutte le ricette disponibili dal database in memoria.
     """
@@ -222,9 +222,14 @@ def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=Fals
 
     # Applicazione dei filtri
     if stagionalita:
-        query = query.filter(
-            (a.frutta & (extract('month', func.current_date()) == func.any(a.stagionalita))) | (~a.frutta)
-        )
+        if data_stagionalita:
+            query = query.filter(
+                (a.frutta & (extract('month', data_stagionalita) == func.any(a.stagionalita))) | (~a.frutta)
+            )
+        else:
+            query = query.filter(
+                (a.frutta & (extract('month', func.current_date()) == func.any(a.stagionalita))) | (~a.frutta)
+            )
 
     if ids:
         query = query.filter(Ricetta.id == ids)
@@ -432,7 +437,7 @@ def salva_menu(menu, user_id, period: dict = None):
 
 
 def get_menu(user_id: int, period: dict = None, ids: int = None):
-    query = db.session.query(MenuSettimanale.menu).filter_by(user_id=user_id)
+    query = db.session.query(MenuSettimanale.menu, MenuSettimanale.data_fine).filter_by(user_id=user_id)
 
     if ids:
         query = query.filter(MenuSettimanale.id == ids)

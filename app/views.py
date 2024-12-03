@@ -139,8 +139,6 @@ def generate_menu():
         if not macronutrienti.calorie_giornaliere:
             return jsonify({'status': 'error', 'message': 'Macronutrienti non definiti!!!'}), 500
 
-        ricette_menu = carica_ricette(user_id, stagionalita=True)
-
         progress = 0
         total_steps = 4  # Numero totale di passaggi nella generazione del menu
         # Calcola l'inizio e la fine della prossima settimana
@@ -153,6 +151,8 @@ def generate_menu():
             "data_inizio": lunedi_corrente,
             "data_fine": domenica_corrente
         }
+
+        ricette_menu = carica_ricette(user_id, stagionalita=True, data_stagionalita=domenica_corrente)
 
         # Generazione del menu per la settimana corrente
 
@@ -181,6 +181,8 @@ def generate_menu():
             "data_inizio": lunedi_prossimo,
             "data_fine": domenica_prossima
         }
+
+        ricette_menu = carica_ricette(user_id, stagionalita=True, data_stagionalita=domenica_prossima)
 
         # Generazione del menu per la settimana successiva
         if not get_menu(user_id, period=period):
@@ -611,15 +613,18 @@ def get_available_meals():
         }
 
         generic_meal_types = meal_type_mapping.get(meal_type)
+
+        # Esclude le ricette già presenti nel pasto del giorno specificato
+        menu_corrente = get_menu(user_id, ids=week_id)
+
         # Recupera tutte le ricette attive
-        ricette = carica_ricette(user_id, stagionalita=True, attive=True, complemento=False)
+        ricette = carica_ricette(user_id, stagionalita=True, attive=True, complemento=False, data_stagionalita=menu_corrente['data_fine'])
 
         # Filtra le ricette disponibili in base al tipo di pasto
         available_meals = [ricetta for ricetta in ricette if
                            any(ricetta[generic_meal_type] for generic_meal_type in generic_meal_types)]
 
-        # Esclude le ricette già presenti nel pasto del giorno specificato
-        menu_corrente = get_menu(user_id, ids=week_id)
+
         if menu_corrente:
             if meal_type in ('pranzo', 'cena'):
                 ricette_presenti_ids = menu_corrente['all_food']
