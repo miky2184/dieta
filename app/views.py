@@ -88,14 +88,14 @@ def dashboard():
     settimane_salvate = get_settimane_salvate(user_id)
 
     # Calcola i macronutrienti rimanenti per ogni giorno del menu.
-    remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente.get('menu'))
+    remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente['menu'])
 
     show_tutorial = not current_user.tutorial_completed
 
     # Rende la pagina index con tutti i dati necessari.
     return render_template('index.html',
                            macronutrienti=macronutrienti,
-                           menu=menu_corrente,
+                           menu=menu_corrente['menu'],
                            settimane=settimane_salvate,
                            remaining_macronutrienti=remaining_macronutrienti,
                            show_tutorial=show_tutorial
