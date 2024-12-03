@@ -444,9 +444,9 @@ def get_menu(user_id: int, period: dict = None, ids: int = None):
     else:
         query = query.filter(and_(MenuSettimanale.data_inizio == period['data_inizio'], MenuSettimanale.data_fine == period['data_fine']))
 
-    result = query.all()
+    result = query.firtst()
 
-    return {'menu': result[0].menu, 'data_fine': result[0].data_fine}
+    return {'menu': result.menu, 'data_fine': result.data_fine}
 
 
 def get_settimane_salvate(user_id, show_old_week: bool = False):
