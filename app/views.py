@@ -618,7 +618,7 @@ def get_available_meals():
         menu_corrente = get_menu(user_id, ids=week_id)
 
         # Recupera tutte le ricette attive
-        ricette = carica_ricette(user_id, stagionalita=True, attive=True, complemento=False, data_stagionalita=menu_corrente)
+        ricette = carica_ricette(user_id, stagionalita=True, attive=True, complemento=False, data_stagionalita=menu_corrente.data_fine)
 
         # Filtra le ricette disponibili in base al tipo di pasto
         available_meals = [ricetta for ricetta in ricette if
