@@ -444,7 +444,7 @@ def get_menu(user_id: int, period: dict = None, ids: int = None):
     else:
         query = query.filter(and_(MenuSettimanale.data_inizio == period['data_inizio'], MenuSettimanale.data_fine == period['data_fine']))
 
-    result = query.firtst()
+    result = query.first()
 
     return {'menu': result.menu, 'data_fine': result.data_fine}
 
