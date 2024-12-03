@@ -88,7 +88,7 @@ def dashboard():
     settimane_salvate = get_settimane_salvate(user_id)
 
     # Calcola i macronutrienti rimanenti per ogni giorno del menu.
-    remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente)
+    remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente['menu'])
 
     show_tutorial = not current_user.tutorial_completed
 
@@ -226,9 +226,9 @@ def menu_settimana(settimana_id):
     user_id = current_user.user_id
     try:
         menu_selezionato = get_menu(user_id, ids=settimana_id)
-        macronutrienti_rimanenti = calcola_macronutrienti_rimanenti(menu_selezionato)
+        macronutrienti_rimanenti = calcola_macronutrienti_rimanenti(menu_selezionato['menu'])
 
-        return jsonify({'status':'success', 'menu': menu_selezionato, 'remaining_macronutrienti': macronutrienti_rimanenti}), 200
+        return jsonify({'status':'success', 'menu': menu_selezionato['menu'], 'remaining_macronutrienti': macronutrienti_rimanenti}), 200
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -244,7 +244,7 @@ def get_lista_spesa(settimana_id):
         menu = get_menu(user_id, ids=settimana_id)
 
         # Genera la lista della spesa basata sugli ID degli alimenti.
-        lista_spesa = stampa_lista_della_spesa(user_id, menu)
+        lista_spesa = stampa_lista_della_spesa(user_id, menu['menu'])
 
         return jsonify({'status': 'success', 'lista_spesa': lista_spesa}), 200
     except Exception as e:
@@ -625,11 +625,11 @@ def get_available_meals():
                            any(ricetta[generic_meal_type] for generic_meal_type in generic_meal_types)]
 
 
-        if menu_corrente:
+        if menu_corrente['menu']:
             if meal_type in ('pranzo', 'cena'):
-                ricette_presenti_ids = menu_corrente['all_food']
+                ricette_presenti_ids = menu_corrente['menu']['all_food']
             else:
-                ricette_presenti_ids = [r['id'] for r in menu_corrente['day'][day]['pasto'][meal_type]['ricette']]
+                ricette_presenti_ids = [r['id'] for r in menu_corrente['menu']['day'][day]['pasto'][meal_type]['ricette']]
             available_meals = [ricetta for ricetta in available_meals if ricetta['id'] not in ricette_presenti_ids]
 
         return jsonify(available_meals), 200
@@ -656,18 +656,18 @@ def aggiungi_ricetta_menu(week_id):
 
         # Aggiunge i pasti selezionati al menu
         for meal_id in selected_meals:
-            aggiungi_ricetta_al_menu(menu_corrente, day, meal, meal_id, user_id)
+            aggiungi_ricetta_al_menu(menu_corrente['menu'], day, meal, meal_id, user_id)
 
         # Ricalcola i macronutrienti rimanenti
-        remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente)
+        remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente['menu'])
 
         # Salva il menu aggiornato nel database
-        update_menu_corrente(menu_corrente, week_id, user_id)
+        update_menu_corrente(menu_corrente['menu'], week_id, user_id)
         current_app.cache.delete(f'dashboard_{user_id}')
         current_app.cache.delete(f'view//menu_settimana/{week_id}')
         return jsonify({
             'status': 'success',
-            'menu': menu_corrente,  # Restituisce il menu aggiornato
+            'menu': menu_corrente['menu'],  # Restituisce il menu aggiornato
             'remaining_macronutrienti': remaining_macronutrienti
         }), 200
     except Exception as e:
@@ -691,18 +691,18 @@ def rimuovi_ricetta(week_id):
         menu_corrente = get_menu(user_id, ids=week_id)
 
         # Rimuove il pasto dal menu
-        rimuovi_pasto_dal_menu(menu_corrente, day, meal, meal_id)
+        rimuovi_pasto_dal_menu(menu_corrente['menu'], day, meal, meal_id)
 
         # Salva il menu aggiornato nel database
-        update_menu_corrente(menu_corrente, week_id, user_id)
+        update_menu_corrente(menu_corrente['menu'], week_id, user_id)
 
         # Ricalcola i macronutrienti rimanenti
-        remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente)
+        remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente['menu'])
         current_app.cache.delete(f'dashboard_{user_id}')
         current_app.cache.delete(f'view//menu_settimana/{week_id}')
         return jsonify({
             'status': 'success',
-            'menu': menu_corrente,
+            'menu': menu_corrente['menu'],
             'remaining_macronutrienti': remaining_macronutrienti
         }), 200
     except Exception as e:
@@ -731,7 +731,7 @@ def aggiorna_quantita_ingrediente():
         ingredienti_ricetta = recupera_ingredienti_ricetta(ricetta_id, user_id, quantity)
 
         # Aggiorna la quantità del pasto nel menu
-        for ricetta in menu_corrente['day'][day]['pasto'][meal]['ricette']:
+        for ricetta in menu_corrente['menu']['day'][day]['pasto'][meal]['ricette']:
             if int(ricetta['id']) == ricetta_id:
                 old_qta = ricetta['qta']
                 ricetta['qta'] = quantity
@@ -740,20 +740,20 @@ def aggiorna_quantita_ingrediente():
                 # Ricalcola i macronutrienti giornalieri e settimanali
                 for macro in ['kcal', 'carboidrati', 'proteine', 'grassi']:
                     difference = ricetta[macro] * (old_qta - quantity)
-                    menu_corrente['day'][day][macro] += difference
-                    menu_corrente['weekly'][macro] += difference
+                    menu_corrente['menu']['day'][day][macro] += difference
+                    menu_corrente['menu']['weekly'][macro] += difference
 
         # Salva il menu aggiornato
-        update_menu_corrente(menu_corrente, week_id, user_id)
+        update_menu_corrente(menu_corrente['menu'], week_id, user_id)
 
         # Ricalcola i macronutrienti rimanenti
-        remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente)
+        remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente['menu'])
         current_app.cache.delete(f'dashboard_{user_id}')
         current_app.cache.delete(f'view//menu_settimana/{week_id}')
 
         return jsonify({
             'status': 'success',
-            'menu': menu_corrente,
+            'menu': menu_corrente['menu'],
             'remaining_macronutrienti': remaining_macronutrienti
         }), 200
     except Exception as e:
@@ -804,7 +804,7 @@ def generate_pdf():
 
         # Aggiungi la lista della spesa al PDF
         y = height - margin_y  # Posiziona la lista sotto l'immagine
-        shopping_list = stampa_lista_della_spesa(user_id, menu_selezionato, True)
+        shopping_list = stampa_lista_della_spesa(user_id, menu_selezionato['menu'], True)
         c.setFont("Helvetica", 12)
         c.drawString(margin_x, y, "Lista della Spesa:")
         y -= 20
@@ -886,22 +886,22 @@ def inverti_pasti(week_id):
             return jsonify({'status': 'error', 'message': 'Menu non trovato'}), 404
 
         # Inverti i pasti per il giorno specificato
-        pranzo = settimana['day'][day]['pasto']['pranzo']
-        cena = settimana['day'][day]['pasto']['cena']
+        pranzo = settimana['menu']['day'][day]['pasto']['pranzo']
+        cena = settimana['menu']['day'][day]['pasto']['cena']
 
-        settimana['day'][day]['pasto']['pranzo'] = cena
-        settimana['day'][day]['pasto']['cena'] = pranzo
+        settimana['menu']['day'][day]['pasto']['pranzo'] = cena
+        settimana['menu']['day'][day]['pasto']['cena'] = pranzo
 
         # Salva le modifiche nel database
-        update_menu_corrente(settimana, week_id, user_id)
+        update_menu_corrente(settimana['menu'], week_id, user_id)
 
         # Ricalcola i macronutrienti rimanenti
-        remaining_macronutrienti = calcola_macronutrienti_rimanenti(settimana)
+        remaining_macronutrienti = calcola_macronutrienti_rimanenti(settimana['menu'])
         current_app.cache.delete(f'dashboard_{user_id}')
         current_app.cache.delete(f'view//menu_settimana/{week_id}')
         return jsonify({
             'status': 'success',
-            'menu': settimana,
+            'menu': settimana['menu'],
             'remaining_macronutrienti': remaining_macronutrienti
         }), 200
     except Exception as e:
@@ -925,32 +925,32 @@ def delete_meal_daily(week_id):
             return jsonify({'status': 'error', 'message': 'Menu non trovato'}), 404
 
         if meal_type == 'colazione':
-            cancella_tutti_pasti_menu(settimana, day, 'colazione')
+            cancella_tutti_pasti_menu(settimana['menu'], day, 'colazione')
         elif meal_type == 'principali':
-            cancella_tutti_pasti_menu(settimana, day, 'pranzo')
-            cancella_tutti_pasti_menu(settimana, day, 'cena')
+            cancella_tutti_pasti_menu(settimana['menu'], day, 'pranzo')
+            cancella_tutti_pasti_menu(settimana['menu'], day, 'cena')
         elif meal_type == 'spuntini':
-            cancella_tutti_pasti_menu(settimana, day, 'spuntino_mattina')
-            cancella_tutti_pasti_menu(settimana, day, 'spuntino_pomeriggio')
-            cancella_tutti_pasti_menu(settimana, day, 'spuntino_sera')
+            cancella_tutti_pasti_menu(settimana['menu'], day, 'spuntino_mattina')
+            cancella_tutti_pasti_menu(settimana['menu'], day, 'spuntino_pomeriggio')
+            cancella_tutti_pasti_menu(settimana['menu'], day, 'spuntino_sera')
         else:
-            cancella_tutti_pasti_menu(settimana, day, 'colazione')
-            cancella_tutti_pasti_menu(settimana, day, 'pranzo')
-            cancella_tutti_pasti_menu(settimana, day, 'cena')
-            cancella_tutti_pasti_menu(settimana, day, 'spuntino_mattina')
-            cancella_tutti_pasti_menu(settimana, day, 'spuntino_pomeriggio')
-            cancella_tutti_pasti_menu(settimana, day, 'spuntino_sera')
+            cancella_tutti_pasti_menu(settimana['menu'], day, 'colazione')
+            cancella_tutti_pasti_menu(settimana['menu'], day, 'pranzo')
+            cancella_tutti_pasti_menu(settimana['menu'], day, 'cena')
+            cancella_tutti_pasti_menu(settimana['menu'], day, 'spuntino_mattina')
+            cancella_tutti_pasti_menu(settimana['menu'], day, 'spuntino_pomeriggio')
+            cancella_tutti_pasti_menu(settimana['menu'], day, 'spuntino_sera')
 
         # Salva le modifiche nel database
-        update_menu_corrente(settimana, week_id, user_id)
+        update_menu_corrente(settimana['menu'], week_id, user_id)
 
         # Ricalcola i macronutrienti rimanenti
-        remaining_macronutrienti = calcola_macronutrienti_rimanenti(settimana)
+        remaining_macronutrienti = calcola_macronutrienti_rimanenti(settimana['menu'])
         current_app.cache.delete(f'dashboard_{user_id}')
         current_app.cache.delete(f'view//menu_settimana/{week_id}')
         return jsonify({
             'status': 'success',
-            'menu': settimana,
+            'menu': settimana['menu'],
             'remaining_macronutrienti': remaining_macronutrienti
         }), 200
     except Exception as e:
@@ -973,21 +973,21 @@ def inverti_pasti_giorni(week_id):
             return jsonify({'status': 'error', 'message': 'Menu non trovato'}), 404
 
         # Inverti i pasti dei due giorni specificati
-        temp_day = deepcopy(settimana['day'][day1])
-        settimana['day'][day1] = deepcopy(settimana['day'][day2])
-        settimana['day'][day2] = temp_day
+        temp_day = deepcopy(settimana['menu']['day'][day1])
+        settimana['menu']['day'][day1] = deepcopy(settimana['menu']['day'][day2])
+        settimana['menu']['day'][day2] = temp_day
 
         # Salva le modifiche nel database
-        update_menu_corrente(settimana, week_id, user_id)
+        update_menu_corrente(settimana['menu'], week_id, user_id)
 
         # Ricalcola i macronutrienti rimanenti
-        remaining_macronutrienti = calcola_macronutrienti_rimanenti(settimana)
+        remaining_macronutrienti = calcola_macronutrienti_rimanenti(settimana['menu'])
         current_app.cache.delete(f'dashboard_{user_id}')
         current_app.cache.delete(f'view//menu_settimana/{week_id}')
 
         return jsonify({
             'status': 'success',
-            'menu': settimana,
+            'menu': settimana['menu'],
             'remaining_macronutrienti': remaining_macronutrienti
         }), 200
     except Exception as e:
@@ -1071,7 +1071,7 @@ def copy_week():
             return jsonify({'status': 'error', 'message': 'Settimana non trovata.'}), 404
 
         # Copia il menu dalla settimana di origine alla settimana di destinazione
-        copia_menu(menu_from, week_to, user_id)
+        copia_menu(menu_from['menu'], week_to, user_id)
         current_app.cache.delete(f'dashboard_{user_id}')
         current_app.cache.delete(f'view//menu_settimana/{week_to}')
         return jsonify({'status': 'success'}), 200
