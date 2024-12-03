@@ -437,14 +437,19 @@ def salva_menu(menu, user_id, period: dict = None):
 
 
 def get_menu(user_id: int, period: dict = None, ids: int = None):
-    query = db.session.query(MenuSettimanale.menu.label('menu'), MenuSettimanale.data_fine.label('data_fine')).filter_by(user_id=user_id)
+    query = db.session.query(
+        MenuSettimanale.menu.label('menu'),
+        MenuSettimanale.data_fine.label('data_fine')
+    ).filter_by(user_id=user_id)
 
     if ids:
         query = query.filter(MenuSettimanale.id == ids)
     else:
-        query = query.filter(and_(MenuSettimanale.data_inizio == period['data_inizio'], MenuSettimanale.data_fine == period['data_fine']))
+        query = query.filter(and_(MenuSettimanale.data_inizio == period['data_inizio'],
+                                  MenuSettimanale.data_fine == period['data_fine']))
 
     result = query.first()
+
 
     return {'menu': result.menu, 'data_fine': result.data_fine}
 
