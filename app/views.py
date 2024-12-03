@@ -83,19 +83,21 @@ def dashboard():
             'weekly': {'kcal': 0, 'carboidrati': 0, 'proteine': 0, 'grassi': 0, 'fibre': 0},
             'all_food': []
         }
+    else:
+        menu_corrente = menu_corrente['menu']
 
     # Recupera le settimane salvate per la selezione.
     settimane_salvate = get_settimane_salvate(user_id)
 
     # Calcola i macronutrienti rimanenti per ogni giorno del menu.
-    remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente['menu'])
+    remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente)
 
     show_tutorial = not current_user.tutorial_completed
 
     # Rende la pagina index con tutti i dati necessari.
     return render_template('index.html',
                            macronutrienti=macronutrienti,
-                           menu=menu_corrente['menu'],
+                           menu=menu_corrente,
                            settimane=settimane_salvate,
                            remaining_macronutrienti=remaining_macronutrienti,
                            show_tutorial=show_tutorial
