@@ -561,7 +561,7 @@ def salva_dati():
         carboidrati = int(request.form['carboidrati'])
         proteine = int(request.form['proteine'])
         grassi = int(request.form['grassi'])
-        dieta = request.form['diet']
+        dieta = request.form['dieta']
 
         salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
                            meta_basale, meta_giornaliero, calorie_giornaliere, settimane_dieta, carboidrati,

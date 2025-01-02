@@ -702,7 +702,7 @@ function populateDietaForm(data) {
     document.getElementById('carboidrati_input').value = Math.round(data.carboidrati) || '';
     document.getElementById('proteine_input').value = Math.round(data.proteine) || '';
     document.getElementById('grassi_input').value = Math.round(data.grassi) || '';
-    document.getElementById('diet').value = data.diet || '';
+    document.getElementById('dieta').value = data.dieta || '';
 }
 
 function calcolaPesoIdeale(data) {
@@ -803,7 +803,7 @@ function calculateResults() {
         altezza: formData.get('altezza'),
         tdee: formData.get('tdee'),
         deficit: formData.get('deficit_calorico'),
-        diet: formData.get('diet')
+        dieta: formData.get('dieta')
     };
 
     // Esegui i calcoli basati sui dati inseriti
@@ -839,7 +839,7 @@ function calculateResults() {
 
     let carbsRatio, proteinRatio, fatRatio;
 
-    switch (data.diet) {
+    switch (data.dieta) {
         case 'balanced':
             carbsRatio = 0.55;
             proteinRatio = 0.25;

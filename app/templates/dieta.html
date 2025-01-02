@@ -1,5 +1,5 @@
 <!-- app/templates/dieta.html -->
-<div id="Dieta" class="tabcontent">
+<div id="DietaForm" class="tabcontent">
     <div class="card"><div class="card-body">
     <div class="container-fluid mt-4">
         <form id="personalInfoForm" action="{{ url_for('views.salva_dati') }}" method="POST">
@@ -96,7 +96,7 @@
                 </div>
                     <div class="input-group input-group-sm mb-3">
                         <span   class="input-group-text span-width">Scegli una dieta</span>
-                        <select class="form-control" id="diet" name="diet" required>
+                        <select class="form-control" id="dieta" name="dieta" required>
             <option value="balanced">Dieta Equilibrata</option>
             <option value="low_carb">Dieta Low Carb</option>
             <option value="keto">Dieta Chetogenica</option>
