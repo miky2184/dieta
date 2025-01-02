@@ -86,7 +86,7 @@ def register():
     db.session.add(new_user_auth)
     db.session.commit()
 
-    copia_alimenti_ricette(user_id, bool(vegane), bool(carne), bool(pesce))
+    #copia_alimenti_ricette(user_id, bool(vegane), bool(carne), bool(pesce))
 
     # Logga automaticamente l'utente appena registrato
     login_user(new_user_auth, remember=True)

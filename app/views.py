@@ -11,7 +11,7 @@ from .services.menu_services import (definisci_calorie_macronutrienti, save_weig
                                      aggiungi_ricetta_al_menu, update_menu_corrente, rimuovi_pasto_dal_menu,
                                      delete_week_menu, ordina_settimana_per_kcal,
                                      recupera_ricette_per_alimento, copia_menu, recupera_settimane, cancella_tutti_pasti_menu,
-                                     recupera_ingredienti_ricetta)
+                                     recupera_ingredienti_ricetta, get_gruppi_data)
 from copy import deepcopy
 import time
 from reportlab.lib.pagesizes import letter, landscape
@@ -480,16 +480,12 @@ def nuovo_alimento():
         proteine = request.form['prot']
         grassi = request.form['fat']
         fibre = request.form['fibre']
-        verdura = 'verdura' in request.form
-        frutta = 'frutta' in request.form
-        pesce = 'pesce' in request.form
         confezionato = 'confezionato' in request.form
         vegan = 'vegan' in request.form
-        carne_bianca = 'carne-bianca' in request.form
-        carne_rossa = 'carne-rossa' in request.form
+        gruppo = request.form['gruppo']
 
-        salva_nuovo_alimento(name, carboidrati, proteine, grassi, fibre, frutta, carne_bianca, carne_rossa, verdura,
-                             confezionato, vegan, pesce, user_id)
+        salva_nuovo_alimento(name, carboidrati, proteine, grassi, fibre,
+                             confezionato, vegan, gruppo, user_id)
 
         current_app.cache.delete(f'dashboard_{user_id}')
         current_app.cache.delete(f'get_all_ingredients_{user_id}')
@@ -629,16 +625,11 @@ def aggiorna_alimento():
         proteine = data.get('proteine')
         grassi = data.get('grassi')
         fibre = data.get('fibre')
-        frutta = data.get('frutta')
-        carne_bianca = data.get('carne_bianca')
-        carne_rossa = data.get('carne_rossa')
-        verdura = data.get('verdura')
         confezionato = data.get('confezionato')
         vegan = data.get('vegan')
-        pesce = data.get('pesce')
+        gruppo = data.get('gruppo')
 
-        update_alimento(alimento_id, nome, carboidrati, proteine, grassi, fibre, frutta, carne_bianca, carne_rossa, verdura,
-                        confezionato, vegan, pesce, user_id)
+        update_alimento(alimento_id, nome, carboidrati, proteine, grassi, fibre, confezionato, vegan, gruppo, user_id)
         current_app.cache.delete(f'get_all_ingredients_{user_id}')
         current_app.cache.delete(f'recupera_alimenti_{user_id}')
         return jsonify({'status': 'success', 'message': 'Alimento salvato con successo!'}), 200
@@ -1210,6 +1201,20 @@ def get_weeks():
     try:
         weeks_list = recupera_settimane(user_id)
         return jsonify({'status': 'success', 'weeks': weeks_list}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@views.route('/get_gruppi', methods=['GET'])
+@login_required
+def get_gruppi():
+    try:
+        gruppi_data = get_gruppi_data()
+        return jsonify({'status': 'success', 'gruppi': gruppi_data})
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
     except KeyError as key_err:

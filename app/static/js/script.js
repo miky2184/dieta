@@ -2,6 +2,7 @@
 let currentDay = '';
 let currentMeal = '';
 let selectedWeekId = null;
+let gruppi = []; // Variabile globale per memorizzare i gruppi
 var myChart;
 
 function openTab(evt, tabName) {
@@ -394,14 +395,9 @@ function filterAlimentiTable() {
     const grassiMax = parseFloat(document.getElementById('filter-grassi-max').value) || Infinity;
     const fibreMin = parseFloat(document.getElementById('filter-fibre-min').value) || -Infinity;
     const fibreMax = parseFloat(document.getElementById('filter-fibre-max').value) || Infinity;
-
-    const fruttaFilter = document.getElementById('filter-frutta').value;
-    const carneBiancaFilter = document.getElementById('filter-carne-bianca').value;
-    const carneRossaFilter = document.getElementById('filter-carne-rossa').value;
-    const verduraFilter = document.getElementById('filter-verdura').value;
     const confezionatoFilter = document.getElementById('filter-confezionato').value;
     const veganFilter = document.getElementById('filter-vegan').value;
-    const pesceFilter = document.getElementById('filter-pesce').value;
+    const gruppoFilter = document.getElementById('filter-gruppo').value;
 
     const table = document.getElementById('alimenti-table').querySelector('tbody');
     const rows = table.getElementsByTagName('tr');
@@ -415,14 +411,9 @@ function filterAlimentiTable() {
         const proteineCell = parseFloat(cells[3].textContent) || 0;
         const grassiCell = parseFloat(cells[4].textContent) || 0;
         const fibreCell = parseFloat(cells[5].textContent) || 0;
-
-        const fruttaCell = cells[6].querySelector('input').checked.toString();
-        const verduraCell = cells[7].querySelector('input').checked.toString();
-        const carneBiancaCell = cells[8].querySelector('input').checked.toString();
-        const carneRossaCell = cells[9].querySelector('input').checked.toString();
-        const pesceCell = cells[10].querySelector('input').checked.toString();
-        const veganCell = cells[11].querySelector('input').checked.toString();
-        const confezionatoCell = cells[12].querySelector('input').checked.toString();
+        const gruppoCell = cells[6].querySelector('select').value;
+        const veganCell = cells[7].querySelector('input').checked.toString();
+        const confezionatoCell = cells[8].querySelector('input').checked.toString();
 
         const calorieMatch = calorieCell >= calorieMin && calorieCell <= calorieMax;
         const carboMatch = carboCell >= carboMin && carboCell <= carboMax;
@@ -430,13 +421,9 @@ function filterAlimentiTable() {
         const grassiMatch = grassiCell >= grassiMin && grassiCell <= grassiMax;
         const fibreMatch = fibreCell >= fibreMin && fibreCell <= fibreMax;
 
-        const fruttaMatch = (fruttaFilter === 'all') || (fruttaFilter === fruttaCell);
-        const carneBiancaMatch = (carneBiancaFilter === 'all') || (carneBiancaFilter === carneBiancaCell);
-        const carneRossaMatch = (carneRossaFilter === 'all') || (carneRossaFilter === carneRossaCell);
-        const verduraMatch = (verduraFilter === 'all') || (verduraFilter === verduraCell);
         const confezionatoMatch = (confezionatoFilter === 'all') || (confezionatoFilter === confezionatoCell);
         const veganMatch = (veganFilter === 'all') || (veganFilter === veganCell);
-        const pesceMatch = (pesceFilter === 'all') || (pesceFilter === pesceCell);
+        const gruppoMatch = (gruppoFilter === 'all') || (gruppoFilter === gruppoCell);
 
         if (
             nomeCell.includes(nomeFilter) &&
@@ -445,13 +432,9 @@ function filterAlimentiTable() {
             proteineMatch &&
             grassiMatch &&
             fibreMatch &&
-            fruttaMatch &&
-            carneBiancaMatch &&
-            carneRossaMatch &&
-            verduraMatch &&
             confezionatoMatch &&
             veganMatch &&
-            pesceMatch
+            gruppoMatch
         ) {
             rows[i].style.display = '';
         } else {
@@ -1694,14 +1677,9 @@ function cleanFiltersAlimenti() {
     document.getElementById('filter-proteine-max').value = '';
     document.getElementById('filter-grassi-min').value = '';
     document.getElementById('filter-grassi-max').value = '';
-    document.getElementById('filter-macro').value = 'all';
-    document.getElementById('filter-frutta').value = 'all';
-    document.getElementById('filter-carne-bianca').value = 'all';
-    document.getElementById('filter-carne-rossa').value = 'all';
-    document.getElementById('filter-verdura').value = 'all';
     document.getElementById('filter-confezionato').value = 'all';
     document.getElementById('filter-vegan').value = 'all';
-    document.getElementById('filter-pesce').value = 'all';
+    document.getElementById('filter-gruppo').value = 'all';
 
     // Chiama la funzione che filtra la tabella per aggiornare i risultati
     filterAlimentiTable();
@@ -1750,6 +1728,43 @@ function fetchAlimentiData() {
         .catch(error => console.error('Errore nel caricamento degli alimenti:', error));
 }
 
+// Supponendo che `gruppi` sia fornito dal backend come array
+function fetchGroupsAndPopulate() {
+    fetch('/get_gruppi')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                populateGroupDropdown(data.gruppi);
+            } else {
+                console.error('Errore nel recupero dei gruppi:', data.message);
+            }
+        })
+        .catch(error => console.error('Errore di rete:', error));
+}
+
+function populateGroupDropdown(gruppi) {
+    const select = document.getElementById('filter-gruppo');
+    const select_gruppo = document.getElementById('gruppo');
+    gruppi.forEach(gruppo => {
+        // Crea un'opzione per la prima select
+        const option1 = document.createElement('option');
+        option1.value = gruppo.id;
+        option1.textContent = gruppo.nome;
+        select.appendChild(option1);
+
+        // Crea un'opzione separata per la seconda select
+        const option2 = document.createElement('option');
+        option2.value = gruppo.id;
+        option2.textContent = gruppo.nome;
+        if (gruppo.id === 11) {
+            option2.selected = true; // Imposta "Altri" come predefinito se è nella lista
+        }
+        select_gruppo.appendChild(option2);
+    });
+}
+
+
+
 function populateAlimentiTable(alimenti) {
     const tbody = document.getElementById('alimenti-tbody');
     tbody.innerHTML = '';
@@ -1789,20 +1804,13 @@ function populateAlimentiTable(alimenti) {
                     <label hidden class="form-control form-control-sm">${alimento.fibre}</label>
                 </div>
             </td>
-            <td style="text-align: center;" >
-                <div><input type="checkbox" name="frutta_${alimento.id}" ${alimento.frutta ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.frutta}</label></div>
-            </td>
-            <td  style="text-align: center;" >
-                <div><input type="checkbox" name="verdura_${alimento.id}" ${alimento.verdura ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.verdura}</label></div>
-            </td>
-            <td  style="text-align: center;" >
-                <div><input type="checkbox" name="carne_bianca_${alimento.id}" ${alimento.carne_bianca ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.carne_bianca}</label></div>
-            </td>
-            <td  style="text-align: center;" ">
-                <div><input type="checkbox" name="carne_rossa_${alimento.id}" ${alimento.carne_rossa ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.carne_rossa}</label></div>
-            </td>
-            <td  style="text-align: center;" >
-                <div><input type="checkbox" name="pesce_${alimento.id}" ${alimento.pesce ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.pesce}</label></div>
+            <td>
+                <select class="form-select form-select-sm" name="gruppo_${alimento.id}" data-alimento-id="${alimento.id}">
+                    <option value="null" ${!alimento.gruppo ? 'selected' : ''}>N/A</option>
+                    ${gruppi.map(gruppo => `
+                        <option value="${gruppo.id}" ${alimento.gruppo === gruppo.nome ? 'selected' : ''}>${gruppo.nome}</option>
+                    `).join('')}
+                </select>
             </td>
             <td  style="text-align: center;" >
                 <div><input type="checkbox" name="vegan_${alimento.id}" ${alimento.vegan ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.vegan}</label></div>
@@ -1849,13 +1857,9 @@ function populateAlimentiTable(alimenti) {
                 proteine: parseFloat(document.querySelector(`input[name='proteine_${alimentoId}']`).value),
                 grassi: parseFloat(document.querySelector(`input[name='grassi_${alimentoId}']`).value),
                 fibre: parseFloat(document.querySelector(`input[name='fibre_${alimentoId}']`).value),
-                frutta: document.querySelector(`input[name='frutta_${alimentoId}']`).checked,
-                carne_bianca: document.querySelector(`input[name='carne_bianca_${alimentoId}']`).checked,
-                carne_rossa: document.querySelector(`input[name='carne_rossa_${alimentoId}']`).checked,
-                verdura: document.querySelector(`input[name='verdura_${alimentoId}']`).checked,
                 confezionato: document.querySelector(`input[name='confezionato_${alimentoId}']`).checked,
                 vegan: document.querySelector(`input[name='vegan_${alimentoId}']`).checked,
-                pesce: document.querySelector(`input[name='pesce_${alimentoId}']`).checked
+                gruppo: document.querySelector(`select[name='gruppo_${alimentoId}']`).value
             };
             saveAlimento(alimentoData);
         });
@@ -1931,7 +1935,24 @@ function showConfirmDeleteAlimentoModal(alimentoId, alimentoNome) {
         .catch(error => console.error('Errore nel recupero delle ricette:', error));
 }
 
+function fetchGroupsAndPopulate() {
+    fetch('/get_gruppi')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                gruppi = data.gruppi; // Salva i gruppi nella variabile globale
+                populateGroupDropdown(data.gruppi);
+            } else {
+                console.error('Errore nel recupero dei gruppi:', data.message);
+            }
+        })
+        .catch(error => console.error('Errore di rete:', error));
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+
+    // Invoca il fetch durante il caricamento della pagina
+    fetchGroupsAndPopulate();
 
     document.getElementById("defaultOpen").click();
 

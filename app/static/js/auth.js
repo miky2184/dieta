@@ -1,4 +1,14 @@
 // app/js/auth.js
+
+function showAlertModal(message) {
+    // Imposta il messaggio nel modal
+    document.getElementById('modalMessage').textContent = message;
+
+    // Mostra il modal usando Bootstrap
+    var myModal = new bootstrap.Modal(document.getElementById('genericModal'));
+    myModal.show();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('recipe-form').addEventListener('submit', function(event) {
@@ -8,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!vegan && !carne && !pesce) {
             event.preventDefault();
-            alert('Devi selezionare almeno una opzione tra le ricette.');
+            showAlertModal('Devi selezionare almeno una opzione tra le ricette.');
         }
     });
 

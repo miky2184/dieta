@@ -17,34 +17,17 @@
                         <input type="number" step=".01" class="form-control form-control-sm" name="{{ field | lower }}" placeholder="Inserisci {{ field | lower }}" required>
                     </div>
                     {% endfor %}
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="" id="frutta" name="frutta">
-                        <label class="form-check-label" for="frutta">Frutta</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="" id="verdura" name="verdura">
-                        <label class="form-check-label" for="verdura">Verdura</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="" id="carne-bianca" name="carne-bianca">
-                        <label class="form-check-label" for="carne-bianca">Carne Bianca</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="" id="carne-rossa" name="carne-rossa">
-                        <label class="form-check-label" for="carne-rossa">Carne Rossa</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="" id="pesce" name="pesce">
-                        <label class="form-check-label" for="pesce">Pesce</label>
+                    <!-- Selezione del Gruppo -->
+                    <div class="input-group input-group-sm mb-3">
+                        <span class="input-group-text">Gruppo</span>
+                        <select class="form-select form-select-sm" name="gruppo" id="gruppo" required>
+                            <!-- Altre opzioni verranno aggiunte dinamicamente -->
+                        </select>
                     </div>
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" value="" id="vegan" name="vegan">
                         <label class="form-check-label" for="vegan">Vegano</label>
                     </div>
-                    <!-- <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="" id="pane" name="pane">
-                        <label class="form-check-label" for="pane">Pane</label>
-                    </div> -->
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" value="" id="confezionato" name="confezionato">
                         <label class="form-check-label" for="confezionato">Confezionato</label>

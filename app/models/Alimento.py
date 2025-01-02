@@ -15,15 +15,8 @@ class Alimento(db.Model):
     proteine_override = db.Column(db.Numeric)
     grassi_override = db.Column(db.Numeric)
     fibre_override = db.Column(db.Numeric, default=0)
-    frutta_override = db.Column(db.Boolean, default=False)
-    carne_bianca_override = db.Column(db.Boolean, default=False)
-    carne_rossa_override = db.Column(db.Boolean, default=False)
-    pane_override = db.Column(db.Boolean, default=False)
-    stagionalita_override = db.Column(ARRAY(db.BigInteger))
-    verdura_override = db.Column(db.Boolean, default=False)
     confezionato_override = db.Column(db.Boolean, default=False)
     vegan_override = db.Column(db.Boolean, default=False)
-    pesce_override = db.Column(db.Boolean, default=False)
     kcal_override = db.Column(db.Numeric,
                      Computed("((carboidrati * 4) + (proteine * 4) + (grassi * 9) + (fibre * 2))", persisted=True))
     macro_override = db.Column(db.String(1), Computed("""

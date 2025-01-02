@@ -20,7 +20,7 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.sql import extract
 from sqlalchemy.dialects.postgresql import insert
 import json
-from sqlalchemy import insert, update, and_, case, func, exists, asc, String, true, false, select, desc, result_tuple
+from sqlalchemy import insert, update, and_, or_, case, func, exists, asc, String, true, false, select, desc, result_tuple
 from collections import defaultdict
 from decimal import Decimal
 
@@ -242,14 +242,19 @@ def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=Fals
 
     # Applicazione dei filtri
     if stagionalita:
+        data = func.current_date()
         if data_stagionalita:
-            query = query.filter(
-                (a.frutta & (extract('month', data_stagionalita) == func.any(a.stagionalita))) | (~a.frutta)
-            )
-        else:
-            query = query.filter(
-                (a.frutta & (extract('month', func.current_date()) == func.any(a.stagionalita))) | (~a.frutta)
-            )
+            data = data_stagionalita
+
+        query = query.filter(
+            or_(
+                and_(
+                    a.id_gruppo == 6, (extract('month', data) == func.any(a.stagionalita))
+                ),
+                (
+                        a.id_gruppo != 6)
+                )
+        )
 
     if ids:
         query = query.filter(r.id == ids)
@@ -842,13 +847,39 @@ def calcola_macronutrienti_rimanenti(menu: json):
 
 
 def carica_alimenti(user_id):
+    results = (db.session.query(
+        VAlimento.id,
+        VAlimento.nome,
+        VAlimento.carboidrati,
+        VAlimento.proteine,
+        VAlimento.grassi,
+        VAlimento.fibre,
+        VAlimento.kcal,
+        VAlimento.vegan,
+        VAlimento.confezionato,
+        GruppoAlimentare.nome.label("gruppo")
+    )
+    .join(GruppoAlimentare, VAlimento.id_gruppo == GruppoAlimentare.id, isouter=True)
+    .filter(func.coalesce(VAlimento.user_id, user_id) == user_id)
+    .order_by(VAlimento.nome)
+    ).all()
 
-    results = VAlimento.query.filter(func.coalesce(VAlimento.user_id, user_id) == user_id).order_by(VAlimento.nome).all()
-    alimenti = [record.to_dict() for record in results]
+    alimenti = [{
+        'id': r.id,
+        'nome': r.nome,
+        'carboidrati': r.carboidrati,
+        'proteine': r.proteine,
+        'grassi': r.grassi,
+        'fibre': r.fibre,
+        'kcal': r.kcal,
+        'vegan': r.vegan,
+        'confezionato': r.confezionato,
+        'gruppo': r.gruppo or "N/A"
+    } for r in results]
     return alimenti
 
 
-def update_alimento(id, nome, carboidrati, proteine, grassi, fibre, frutta, carne_bianca, carne_rossa, verdura, confezionato, vegan, pesce, user_id):
+def update_alimento(id, nome, carboidrati, proteine, grassi, fibre, confezionato, vegan, id_gruppo, user_id):
     alimento_base = (VAlimento.query.filter(VAlimento.id==id, func.coalesce(VAlimento.user_id, user_id)==user_id)).first()
     alimento = Alimento.query.filter_by(id=alimento_base.id, user_id=user_id).first()
     if not alimento:
@@ -860,13 +891,8 @@ def update_alimento(id, nome, carboidrati, proteine, grassi, fibre, frutta, carn
             proteine_override=proteine,
             grassi_override=grassi,
             fibre_override=fibre,
-            frutta_override=frutta,
-            carne_bianca_override=carne_bianca,
-            carne_rossa_override=carne_rossa,
-            verdura_override=verdura,
             confezionato_override=confezionato,
             vegan_override=vegan,
-            pesce_override=pesce,
             id_gruppo_override = alimento_base.id_gruppo,
             user_id=user_id
         )
@@ -877,13 +903,9 @@ def update_alimento(id, nome, carboidrati, proteine, grassi, fibre, frutta, carn
         alimento.proteine_override = proteine
         alimento.grassi_override = grassi
         alimento.fibre_override = fibre
-        alimento.frutta_override = frutta
-        alimento.carne_bianca_override = carne_bianca
-        alimento.carne_rossa_override = carne_rossa
-        alimento.verdura_override = verdura
         alimento.confezionato_override = confezionato
         alimento.vegan_override = vegan
-        alimento.pesce_override = pesce
+        alimento.id_gruppo_override = id_gruppo
 
     db.session.commit()
 
@@ -907,7 +929,7 @@ def get_sequence_value(seq_name):
     return nextval
 
 
-def salva_nuovo_alimento(name, carboidrati, proteine, grassi, fibre, frutta, carne_bianca, carne_rossa, verdura, confezionato, vegan, pesce, user_id):
+def salva_nuovo_alimento(name, carboidrati, proteine, grassi, fibre, confezionato, vegan, gruppo, user_id):
 
     alimento = Alimento(
         id=get_sequence_value('dieta.seq_id_alimento'),
@@ -916,13 +938,9 @@ def salva_nuovo_alimento(name, carboidrati, proteine, grassi, fibre, frutta, car
         proteine_override=proteine,
         grassi_override=grassi,
         fibre_override=fibre,
-        frutta_override=frutta,
-        carne_bianca_override=carne_bianca,
-        carne_rossa_override=carne_rossa,
-        verdura_override=verdura,
         confezionato_override=confezionato,
         vegan_override=vegan,
-        pesce_override=pesce,
+        id_gruppo_override=gruppo,
         user_id=user_id
     )
 
@@ -932,7 +950,7 @@ def salva_nuovo_alimento(name, carboidrati, proteine, grassi, fibre, frutta, car
     alimento_id = alimento.id
 
     if confezionato:
-        ricetta_id = get_sequence_value('dieta.ricetta_id_seq')
+        ricetta_id = get_sequence_value('dieta.seq_id_ricetta')
         ricetta = Ricetta(
             id=ricetta_id,
             nome_ricetta=name.upper(),
@@ -1211,3 +1229,8 @@ def recupera_settimane(user_id):
         {'id': week.id, 'name': f"Settimana {index + 1} dal {week.data_inizio.strftime('%Y-%m-%d')} al {week.data_fine.strftime('%Y-%m-%d')}"}
         for index, week in enumerate(weeks)
     ]
+
+def get_gruppi_data():
+    gruppi = GruppoAlimentare.query.all()
+    gruppi_data = [{'id': g.id, 'nome': g.nome} for g in gruppi]
+    return gruppi_data
