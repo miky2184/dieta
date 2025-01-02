@@ -7,9 +7,9 @@ from .services.menu_services import (definisci_calorie_macronutrienti, save_weig
                                      salva_nuova_ricetta, salva_ingredienti,
                                      get_peso_hist, get_dati_utente,
                                      calcola_macronutrienti_rimanenti,
-                                     carica_alimenti, salva_alimento, elimina_alimento, salva_nuovo_alimento,
+                                     carica_alimenti, update_alimento, elimina_alimento, salva_nuovo_alimento,
                                      aggiungi_ricetta_al_menu, update_menu_corrente, rimuovi_pasto_dal_menu,
-                                     delete_week_menu, elimina_ricetta, ordina_settimana_per_kcal,
+                                     delete_week_menu, ordina_settimana_per_kcal,
                                      recupera_ricette_per_alimento, copia_menu, recupera_settimane, cancella_tutti_pasti_menu,
                                      recupera_ingredienti_ricetta)
 from copy import deepcopy
@@ -24,6 +24,7 @@ from PIL import Image
 from flask_login import login_required, current_user
 from app.models.models import db
 from datetime import datetime, timedelta
+from sqlalchemy.exc import SQLAlchemyError
 
 views = Blueprint('views', __name__)
 
@@ -100,7 +101,8 @@ def dashboard():
                            menu=menu_corrente,
                            settimane=settimane_salvate,
                            remaining_macronutrienti=remaining_macronutrienti,
-                           show_tutorial=show_tutorial
+                           show_tutorial=show_tutorial,
+                           utenti=[current_user]
                            )
 
 
@@ -113,6 +115,10 @@ def recupera_alimenti():
         # Recupera tutti gli alimenti dal database.
         alimenti = carica_alimenti(user_id)
         return jsonify({'status': 'success', 'alimenti': alimenti}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -125,6 +131,10 @@ def recupera_ricette():
         # Recupera le ricette disponibili dal database.
         ricette = carica_ricette(user_id, stagionalita=False)
         return jsonify({"status": 'success', 'ricette': ricette}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -212,8 +222,11 @@ def generate_menu():
 
         current_app.cache.delete(f'dashboard_{user_id}')
         return jsonify({'status': 'success', 'progress': progress}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
-        print(e)
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
@@ -231,8 +244,13 @@ def menu_settimana(settimana_id):
         macronutrienti_rimanenti = calcola_macronutrienti_rimanenti(menu_selezionato['menu'])
 
         return jsonify({'status':'success', 'menu': menu_selezionato['menu'], 'remaining_macronutrienti': macronutrienti_rimanenti}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
 
 @views.route('/get_lista_spesa/<int:settimana_id>', methods=['GET'])
 @login_required
@@ -249,6 +267,10 @@ def get_lista_spesa(settimana_id):
         lista_spesa = stampa_lista_della_spesa(user_id, menu['menu'])
 
         return jsonify({'status': 'success', 'lista_spesa': lista_spesa}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -275,6 +297,10 @@ def salva_ricetta():
 
         current_app.cache.delete(f'recupera_ricette_{user_id}')
         return jsonify({'status': 'success', 'message': 'Ricetta salvata con successo!'}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -293,6 +319,10 @@ def attiva_disattiva_ricetta():
 
         current_app.cache.delete(f'recupera_ricette_{user_id}')
         return jsonify({'status': 'success', 'message': 'Ricetta modificata con successo!'}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -308,17 +338,20 @@ def recipe(recipe_id):
     try:
         ricette = get_ricette(recipe_id, user_id)
         return jsonify({'status': 'success', 'ricette': ricette}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
-@views.route('/delete_ingredient', methods=['POST'])
+@views.route('/delete_ingredienti', methods=['POST'])
 @login_required
-def delete_ingredient():
+def delete_ingredienti():
     """
     Questa funzione elimina un ingrediente da una ricetta basata sugli ID forniti.
     """
-    user_id = current_user.user_id
     try:
         data = request.get_json()
         ingredient_id = data['ingredient_id']
@@ -329,6 +362,10 @@ def delete_ingredient():
         current_app.cache.delete(f'recupera_ricette_{user_id}')
         current_app.cache.delete(f'recipe_{recipe_id}_{user_id}')
         return jsonify({'status': 'success', 'message': 'Ingrediente eliminato correttamente.'}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -344,6 +381,10 @@ def get_all_ingredients():
     try:
         alimenti = carica_alimenti(user_id)
         return jsonify({'status': 'success', 'alimenti': alimenti}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -365,6 +406,10 @@ def modifica_ingredienti_ricetta():
         current_app.cache.delete(f'recupera_ricette_{user_id}')
         current_app.cache.delete(f'recipe_{recipe_id}_{user_id}')
         return jsonify({'status': 'success', 'message': 'Ingrediente inserito correttamente.'}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -386,6 +431,10 @@ def update_ingredient():
         current_app.cache.delete(f'recipe_{recipe_id}_{user_id}')
         current_app.cache.delete(f'recupera_ricette_{user_id}')
         return jsonify({'status': 'success', 'message': 'Quantità aggiornata correttamente.'}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -410,6 +459,10 @@ def nuova_ricetta():
         current_app.cache.delete(f'recupera_ricette_{user_id}')
 
         return jsonify({"status": "success"}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -444,6 +497,10 @@ def nuovo_alimento():
         current_app.cache.delete(f'recupera_ricette_{user_id}')
 
         return jsonify({'status': 'success'}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -469,6 +526,10 @@ def submit_weight():
         current_app.cache.delete(f'get_peso_data_{user_id}')
 
         return jsonify({'status': 'success', 'peso': peso}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -500,15 +561,19 @@ def salva_dati():
         carboidrati = int(request.form['carboidrati'])
         proteine = int(request.form['proteine'])
         grassi = int(request.form['grassi'])
-        diet = request.form['diet']
+        dieta = request.form['diet']
 
         salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
                            meta_basale, meta_giornaliero, calorie_giornaliere, settimane_dieta, carboidrati,
-                           proteine, grassi, diet)
+                           proteine, grassi, dieta)
 
         current_app.cache.delete(f'get_data_utente_{user_id}')
         current_app.cache.delete(f'get_peso_data_{user_id}')
         return redirect(url_for('views.dashboard'))
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -524,6 +589,10 @@ def get_peso_data():
     try:
         peso = get_peso_hist(user_id)
         return jsonify({'status': 'success', 'peso': peso}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -538,12 +607,16 @@ def get_data_utente():
     try:
         utente = get_dati_utente(user_id)
         return jsonify(utente), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-@views.route('/save_alimento', methods=['POST'])
+@views.route('/aggiorna_alimento', methods=['POST'])
 @login_required
-def save_alimento():
+def aggiorna_alimento():
     """
     Questa funzione salva un alimento esistente nel database, aggiornandone i dati.
     """
@@ -564,11 +637,15 @@ def save_alimento():
         vegan = data.get('vegan')
         pesce = data.get('pesce')
 
-        salva_alimento(alimento_id, nome, carboidrati, proteine, grassi, fibre, frutta, carne_bianca, carne_rossa, verdura,
-                       confezionato, vegan, pesce, user_id)
+        update_alimento(alimento_id, nome, carboidrati, proteine, grassi, fibre, frutta, carne_bianca, carne_rossa, verdura,
+                        confezionato, vegan, pesce, user_id)
         current_app.cache.delete(f'get_all_ingredients_{user_id}')
         current_app.cache.delete(f'recupera_alimenti_{user_id}')
         return jsonify({'status': 'success', 'message': 'Alimento salvato con successo!'}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -588,6 +665,10 @@ def delete_alimento():
         current_app.cache.delete(f'get_all_ingredients_{user_id}')
         current_app.cache.delete(f'recupera_alimenti_{user_id}')
         return jsonify({'status': 'success', 'message': 'Alimento eliminato con successo!'}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -635,6 +716,10 @@ def get_available_meals():
             available_meals = [ricetta for ricetta in available_meals if ricetta['id'] not in ricette_presenti_ids]
 
         return jsonify(available_meals), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -672,6 +757,10 @@ def aggiungi_ricetta_menu(week_id):
             'menu': menu_corrente['menu'],  # Restituisce il menu aggiornato
             'remaining_macronutrienti': remaining_macronutrienti
         }), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -707,6 +796,10 @@ def rimuovi_ricetta(week_id):
             'menu': menu_corrente['menu'],
             'remaining_macronutrienti': remaining_macronutrienti
         }), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -758,6 +851,10 @@ def aggiorna_quantita_ingrediente():
             'menu': menu_corrente['menu'],
             'remaining_macronutrienti': remaining_macronutrienti
         }), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -797,6 +894,9 @@ def generate_pdf():
         img_display_width = width - 2 * margin_x
         img_display_height = img_display_width * aspect
 
+        if img_display_width > width or img_display_height > height:
+            img = img.resize((int(width * 0.8), int(height * 0.8)))
+
         # Inserisci l'immagine nel PDF con margini
         c.drawImage(ImageReader(img), margin_x, height - img_display_height - margin_y,
                     width=img_display_width, height=img_display_height)
@@ -822,6 +922,10 @@ def generate_pdf():
         # Ritorna il PDF generato come risposta alla richiesta
         pdf_file.seek(0)
         return send_file(pdf_file, as_attachment=True, download_name='menu_settimanale.pdf', mimetype='application/pdf')
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -838,6 +942,10 @@ def delete_menu(week_id):
         current_app.cache.delete(f'dashboard_{user_id}')
         current_app.cache.delete(f'view//menu_settimana/{week_id}')
         return jsonify({'status': 'success', 'message': 'Menu eliminato con successo!'}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -851,24 +959,10 @@ def complete_tutorial():
         db.session.commit()
         current_app.cache.delete(f'dashboard_{user_id}')
         return jsonify({'status': 'success'}), 200
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-@views.route('/delete_ricetta', methods=['POST'])
-@login_required
-def delete_ricetta():
-    """
-    Questa funzione cancella una ricetta basata sui dati forniti dal form.
-    """
-    user_id = current_user.user_id
-    try:
-        data = request.get_json()
-        ricetta_id = data['id']
-
-        elimina_ricetta(ricetta_id, user_id)
-
-        current_app.cache.delete(f'recupera_ricette_{user_id}')
-        return jsonify({'status': 'success', 'message': 'Ricetta cancellata con successo!'}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -906,6 +1000,10 @@ def inverti_pasti(week_id):
             'menu': settimana['menu'],
             'remaining_macronutrienti': remaining_macronutrienti
         }), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -955,6 +1053,10 @@ def delete_meal_daily(week_id):
             'menu': settimana['menu'],
             'remaining_macronutrienti': remaining_macronutrienti
         }), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -992,6 +1094,10 @@ def inverti_pasti_giorni(week_id):
             'menu': settimana['menu'],
             'remaining_macronutrienti': remaining_macronutrienti
         }), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -1026,6 +1132,10 @@ def get_complemento():
                            any(ricetta[generic_meal_type] for generic_meal_type in generic_meal_types)]
 
         return jsonify({'status':'success', 'ricette':available_meals}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -1043,6 +1153,10 @@ def get_contorno():
         results = carica_ricette(user_id, attive=True, contorno=True)
 
         return jsonify({'status':'success', 'ricette':results}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -1054,6 +1168,10 @@ def get_ricette_con_alimento(alimento_id):
     try:
         ricette_data = recupera_ricette_per_alimento(alimento_id, user_id)
         return jsonify({'status': 'success', 'ricette': ricette_data}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -1077,6 +1195,10 @@ def copy_week():
         current_app.cache.delete(f'dashboard_{user_id}')
         current_app.cache.delete(f'view//menu_settimana/{week_to}')
         return jsonify({'status': 'success'}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -1088,5 +1210,9 @@ def get_weeks():
     try:
         weeks_list = recupera_settimane(user_id)
         return jsonify({'status': 'success', 'weeks': weeks_list}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500

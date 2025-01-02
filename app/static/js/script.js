@@ -303,23 +303,6 @@ function toggleStatusRicetta(ricettaData) {
         });
 }
 
-function deleteRicetta(ricettaData) {
-        fetch('/delete_ricetta', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(ricettaData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            recupera_tutte_le_ricette();
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
 function filterTable() {
     const nomeFilter = document.getElementById('filter-nome').value.toLowerCase();
 
@@ -503,7 +486,7 @@ function populateIngredientsModal(ingredients) {
 
 
 function deleteIngredient(ingredientId, recipeId, button) {
-    fetch('/delete_ingredient', {
+    fetch('/delete_ingredienti', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -638,8 +621,7 @@ function populateRicetteTable(ricette) {
                 <div class="btn-group" role="group">
                     <button class="btn btn-primary btn-sm save-btn" data-ricetta-id="${ricetta.id}" data-ricetta-nome="${ricetta.nome_ricetta}" data-ricetta-colazione="${ricetta.colazione}" data-ricetta-colazione_sec="${ricetta.colazione_sec}" data-ricetta-spuntino="${ricetta.spuntino}" data-ricetta-principale="${ricetta.principale}" data-ricetta-contorno="${ricetta.contorno}" data-ricetta-complemento="${ricetta.complemento}" data-ricetta-attiva="${ricetta.attiva}" data-bs-toggle="tooltip" title="Salva"><i class="fas fa-save"></i></button>
                     <button class="btn btn-primary btn-sm edit-btn" data-ricetta-id="${ricetta.id}" data-bs-toggle="modal" data-bs-target="#editRecipeModal" data-bs-toggle="tooltip" title="Modifica"><i class="fas fa-edit"></i></button>
-                    <button class="btn btn-primary btn-sm toggle-btn" data-ricetta-id="${ricetta.id}" data-ricetta-attiva="${ricetta.attiva}" data-bs-toggle="tooltip" title="Attiva/Disattiva"><i class="fas fa-toggle-on"></i></button>
-                    <button class="btn btn-danger btn-sm delete-btn" data-ricetta-id="${ricetta.id}" data-bs-toggle="tooltip" title="Elimina"><i class="fas fa-trash-alt"></i></button>
+                    <button class="btn btn-danger btn-sm toggle-btn" data-ricetta-id="${ricetta.id}" data-ricetta-attiva="${ricetta.attiva}" data-bs-toggle="tooltip" title="Attiva/Disattiva"><i class="fas fa-toggle-on"></i></button>
                 </div>
             </td>
         `;
@@ -677,16 +659,6 @@ function populateRicetteTable(ricette) {
             if (checkbox) {
                 checkbox.checked = !checkbox.checked;
             }
-        });
-    });
-
-    document.querySelectorAll('.delete-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const ricettaId = this.getAttribute('data-ricetta-id');
-            const ricettaData = {
-                id: ricettaId
-            };
-            deleteRicetta(ricettaData);
         });
     });
 
@@ -951,7 +923,7 @@ function calculateResults() {
 
 // Funzione per salvare l'alimento
 function saveAlimento(alimentoData) {
-    fetch('/save_alimento', {
+    fetch('/aggiorna_alimento', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

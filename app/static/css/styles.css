@@ -1,22 +1,27 @@
 /* app/static/css/styles.css */
-/* === Stili Globali === */
-body {
+/* ====== Stili Generali ====== */
+html, body {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Roboto', sans-serif;
     background-color: #f8f9fa !important;
-    font-family: 'Roboto', sans-serif !important;
-    font-size: 0.8rem !important;
-    padding: 1em;
+    font-size: 1rem !important;
 }
 
 /* === Tab Stili === */
 .tab {
-    overflow: hidden;
+    display: flex; /* Allinea i pulsanti in una riga flessibile */
+    justify-content: space-between; /* Spaziatura uniforme tra i pulsanti */
+    width: 100%; /* Occupa l'intera larghezza disponibile */
     border-bottom: 1px solid #ccc;
     background-color: #f1f1f1;
 }
 
 .tab button {
-    background-color: inherit;
-    float: left;
+    flex: 1; /* Ogni pulsante occupa una frazione uguale */
+    text-align: center; /* Centra il testo */
     border: none;
     outline: none;
     cursor: pointer;
@@ -160,25 +165,28 @@ td div:last-child {
 
 /* Stile per rimuovere i bordi e migliorare l'aspetto del campo input */
 .input-hidden-border {
-    border: none !important;
-    border-bottom: 1px dashed #ccc !important; /* Linea inferiore tratteggiata */
-    background-color: transparent !important;
-    outline: none !important;
-    transition: border-color 0.3s ease !important;
-    width: 100% !important;
-}
-
-.input-hidden-border:hover {
-    border-bottom: 1px solid #007bff; /* Cambia colore al passaggio del mouse */
+    border: none !important; /* Rimuove completamente il bordo */
+    background-color: transparent !important; /* Sfondo trasparente */
+    outline: none !important; /* Rimuove il bordo al focus */
+    font-size: inherit !important; /* Usa il font-size della tabella */
+    color: inherit !important; /* Usa il colore del testo della tabella */
+    width: 100% !important; /* Si adatta alla larghezza della cella */
+    padding: 0 !important; /* Rimuove padding extra */
+    margin: 0 !important; /* Rimuove margini extra */
 }
 
 .input-hidden-border:focus {
-    border-bottom: 1px solid #007bff; /* Cambia colore quando il campo è in focus */
+    border: none !important; /* Evita bordi anche durante il focus */
+    box-shadow: none !important; /* Rimuove eventuali ombre */
+}
+
+.input-hidden-border:hover {
+    border: none !important; /* Evita bordi anche al passaggio del mouse */
 }
 
 .input-hidden-border::placeholder {
-    color: #999;
-    opacity: 0.7;
+    color: inherit !important; /* Placeholder con stesso stile del testo */
+    opacity: 0.7; /* Placeholder meno evidente */
 }
 
 /* Stile moderno per tabelle con bordi */

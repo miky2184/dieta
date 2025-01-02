@@ -39,7 +39,7 @@
     {% block head %}{% endblock %}
 </head>
 <body  data-tutorial-active="{{ show_tutorial }}">
-<div class="container my-4">
+<div class="container-fluid my-4">
             {% block content %}{% endblock %}
 </div>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
