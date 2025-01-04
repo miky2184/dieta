@@ -4,8 +4,7 @@ import random
 from datetime import datetime, timedelta, date
 from copy import deepcopy
 import re
-import time
-import math
+import sqlalchemy
 from app.models.models import (db, Utente, MenuSettimanale, RegistroPeso )
 from app.models.VAlimento import VAlimento
 from app.models.VIngredientiRicetta import VIngredientiRicetta
@@ -21,7 +20,7 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.sql import extract
 from sqlalchemy.dialects.postgresql import insert
 import json
-from sqlalchemy import insert, update, and_, or_, case, func, exists, asc, String, true, false, select, desc, result_tuple
+from sqlalchemy import insert, update, and_, or_, case, func, exists, asc, String, true, false, select, desc
 from collections import defaultdict
 from decimal import Decimal
 from app.models.common import printer
@@ -51,9 +50,10 @@ pasti_config = [
     {'pasto': 'cena', 'tipo': 'contorno', 'ripetibile': True, 'min_ricette': 1},
 ]
 
-def genera_menu_utente(user_id, cache):
+def genera_menu_utente(user_id, cache) -> dict:
     """
-    Genera il menu settimanale per l'utente, sia per la settimana corrente che per la successiva.
+    Genera il menu settimanale per l'utente. Include la settimana corrente, successiva
+    e una nuova settimana successiva all'ultima presente, se necessario.
 
     Args:
         user_id (int): ID dell'utente.
@@ -66,43 +66,59 @@ def genera_menu_utente(user_id, cache):
     if not macronutrienti.calorie_giornaliere:
         raise ValueError('Macronutrienti non definiti!')
 
-    progress = 0
-    total_steps = 4  # Numero totale di passaggi nella generazione del menu
+    # Trova l'ultima settimana presente nel database
+    with db.session() as session:
+        ultima_settimana = session.query(MenuSettimanale).filter_by(user_id=user_id).order_by(
+            desc(MenuSettimanale.data_fine)).first()
 
-    # Calcolo delle settimane corrente e successiva
+    periodi = []
     oggi = datetime.now().date()
     giorni_indietro = (oggi.weekday() - 0) % 7
     lunedi_corrente = oggi - timedelta(days=giorni_indietro)
     domenica_corrente = lunedi_corrente + timedelta(days=6)
-    lunedi_prossimo = oggi + timedelta(days=(7 - oggi.weekday()))
-    domenica_prossima = lunedi_prossimo + timedelta(days=6)
 
-    periodi = [
-        {"data_inizio": lunedi_corrente, "data_fine": domenica_corrente},
-        {"data_inizio": lunedi_prossimo, "data_fine": domenica_prossima}
-    ]
+    if ultima_settimana:
+        nuova_settimana_inizio = ultima_settimana.data_fine + timedelta(days=1)
+        nuova_settimana_fine = nuova_settimana_inizio + timedelta(days=6)
+        periodi.append({"data_inizio": nuova_settimana_inizio, "data_fine": nuova_settimana_fine})
+    else:
+        lunedi_prossimo = lunedi_corrente + timedelta(days=7)
+        domenica_prossima = lunedi_prossimo + timedelta(days=6)
+        periodi.extend([
+            {"data_inizio": lunedi_corrente, "data_fine": domenica_corrente},
+            {"data_inizio": lunedi_prossimo, "data_fine": domenica_prossima}
+        ])
 
+    # Genera menu per i periodi definiti
     for period in periodi:
-        ricette_menu = carica_ricette(user_id, stagionalita=True, data_stagionalita=period["data_fine"])
-        if not get_menu(user_id, period=period):
-            settimana = deepcopy(get_settimana(macronutrienti))
-            genera_menu(settimana, False, ricette_menu, user_id)
-            progress += 1 / total_steps * 100
-
-            # Ordina la settimana in base alle kcal giornaliere rimanenti in ordine decrescente
-            settimana_ordinata = ordina_settimana_per_kcal(settimana)
-
-            genera_menu(settimana_ordinata, True, ricette_menu, user_id)
-            progress += 1 / total_steps * 100
-
-            salva_menu(settimana_ordinata, user_id, period=period)
-            progress += 1 / total_steps * 100
-        else:
-            progress += 3 / total_steps * 100
+        genera_e_salva_menu(user_id, period, macronutrienti)
 
     # Invalida la cache
     cache.delete(f'dashboard_{user_id}')
-    return {'status': 'success', 'progress': progress}
+    return {'status': 'success', 'progress': 100}
+
+
+def genera_e_salva_menu(user_id, period, macronutrienti):
+    """
+    Genera e salva il menu per un periodo specifico, se non già esistente.
+
+    Args:
+        user_id (int): ID dell'utente.
+        period (dict): Periodo con data_inizio e data_fine.
+        macronutrienti (dict): Dati sui macronutrienti dell'utente.
+
+    Returns:
+        None
+    """
+    ricette_menu = carica_ricette(user_id, stagionalita=True, data_stagionalita=period["data_fine"])
+    if not get_menu(user_id, period=period):
+        settimana = deepcopy(get_settimana(macronutrienti))
+        genera_menu(settimana, False, ricette_menu, user_id)
+
+        # Ordina la settimana per kcal rimanenti
+        settimana_ordinata = ordina_settimana_per_kcal(settimana)
+        genera_menu(settimana_ordinata, True, ricette_menu, user_id)
+        salva_menu(settimana_ordinata, user_id, period=period)
 
 def verifica_e_seleziona(settimana, giorno, pasto, tipo, ripetibile, min_ricette, controllo_macro, ricette, user_id):
     """
@@ -232,23 +248,67 @@ def select_food(ricette, settimana, giorno_settimana, pasto, ripetibile, control
     return found
 
 
-def calcola_percentuale_effettiva(ricetta, day):
-    percentuali_possibili = [
-        day[macro] / ricetta[macro]
-        for macro in ['kcal', 'carboidrati', 'proteine', 'grassi']
-        if ricetta[macro] > 0
-    ]
-    if not percentuali_possibili:
-        return 0
-    return max(0.5, min(1.0, min(percentuali_possibili)))
+def calcola_percentuale_effettiva(ricetta, day) -> float:
+    """
+    Calcola la percentuale massima utilizzabile di una ricetta,
+    rispettando i limiti giornalieri dei macronutrienti e delle calorie.
+
+    Args:
+        ricetta (dict): Dizionario contenente valori di macronutrienti e calorie della ricetta.
+        day (dict): Dizionario contenente valori rimanenti di macronutrienti e calorie per il giorno.
+
+    Returns:
+        float: Percentuale massima utilizzabile, compresa tra 0.5 e 1.0. Restituisce 0 se non calcolabile.
+    """
+    try:
+        # Calcola le percentuali possibili per ciascun macronutriente
+        percentuali_possibili = [
+            day[macro] / ricetta[macro]
+            for macro in ['kcal', 'carboidrati', 'proteine', 'grassi']
+            if ricetta.get(macro, 0) > 0
+        ]
+
+        # Se nessuna percentuale è calcolabile, restituisci 0
+        if not percentuali_possibili:
+            return 0
+
+        # Restituisci la percentuale effettiva limitata al range [0.5, 1.0]
+        return max(0.5, min(1.0, min(percentuali_possibili)))
+
+    except KeyError as e:
+        raise ValueError(f"Chiave mancante nei dati: {e}")
+    except Exception as e:
+        raise RuntimeError(f"Errore durante il calcolo della percentuale: {str(e)}")
 
 
-def aggiorna_settimana(settimana, giorno_settimana, pasto, ricetta, percentuale, user_id):
+def aggiorna_settimana(settimana, giorno_settimana, pasto, ricetta, percentuale, user_id) -> None:
+    """
+        Aggiorna la struttura del menu settimanale aggiungendo una ricetta al giorno e al pasto specificati.
+        Regola i macronutrienti e i consumi settimanali in base alla percentuale della ricetta utilizzata.
+
+        Args:
+            settimana (dict): Struttura del menu settimanale.
+            giorno_settimana (str): Giorno della settimana (es. "lunedi").
+            pasto (str): Nome del pasto (es. "colazione").
+            ricetta (dict): Informazioni sulla ricetta selezionata.
+            percentuale (float): Percentuale di utilizzo della ricetta.
+            user_id (int): ID dell'utente.
+
+        Returns:
+            None
+        """
+    # Validazione preliminare
+    if giorno_settimana not in settimana['day']:
+        raise KeyError(f"Giorno '{giorno_settimana}' non trovato nella struttura settimanale.")
+    if pasto not in settimana['day'][giorno_settimana]['pasto']:
+        raise KeyError(f"Pasto '{pasto}' non trovato nel giorno '{giorno_settimana}'.")
+
+    # Ottenere riferimenti al giorno e alla settimana
     mt = settimana['day'][giorno_settimana]['pasto'][pasto]
     day = settimana['day'][giorno_settimana]
     weekly = settimana['weekly']
 
-    # Aggiungi l'ID della ricetta a 'all_food' per tracciare tutte le ricette selezionate
+    # Aggiungi l'ID della ricetta a 'all_food'
     settimana['all_food'].append(ricetta['id'])
 
     # Aggiungi la ricetta al menu del pasto
@@ -272,43 +332,116 @@ def aggiorna_settimana(settimana, giorno_settimana, pasto, ricetta, percentuale,
     # Aggiorna i consumi settimanali per i gruppi alimentari
     aggiorna_limiti_gruppi(ricetta, settimana['consumi'])
 
-def determina_ids_disponibili(ricette, settimana, giorno_settimana, pasto, ripetibile, ids_specifici):
-    if ids_specifici:
+def determina_ids_disponibili(ricette, settimana, giorno_settimana, pasto, ripetibile, ids_specifici) -> list:
+    """
+    Determina gli ID delle ricette disponibili in base ai criteri forniti.
+
+    Args:
+        ricette (list): Lista di ricette disponibili, ciascuna con almeno una chiave `'id'`.
+        settimana (dict): Struttura del menu settimanale.
+        giorno_settimana (str): Giorno della settimana (es. "lunedi").
+        pasto (str): Nome del pasto (es. "colazione").
+        ripetibile (bool): Se True, consente di ripetere ricette nello stesso pasto.
+        ids_specifici (list o None): Lista opzionale di ID ricette da considerare.
+
+    Returns:
+        list: Lista di ID ricette disponibili.
+
+    Raises:
+        KeyError: Se `giorno_settimana` o `pasto` non sono presenti nella struttura `settimana`.
+        ValueError: Se la lista `ricette` è vuota o non valida.
+    """
+    try:
+        if not ricette:
+            raise ValueError("La lista delle ricette è vuota o non valida.")
+
+        # Controlla che le chiavi esistano
+        if giorno_settimana not in settimana['day']:
+            raise KeyError(f"Giorno '{giorno_settimana}' non trovato in 'settimana'.")
+        if pasto not in settimana['day'][giorno_settimana]['pasto']:
+            raise KeyError(f"Pasto '{pasto}' non trovato nel giorno '{giorno_settimana}'.")
+
+        if ids_specifici:
+            return [
+                r['id'] for r in ricette
+                if r['id'] in ids_specifici and r['id'] not in settimana['all_food']
+            ]
+        if ripetibile:
+            return [
+                r['id'] for r in ricette
+                if r['id'] not in settimana['day'][giorno_settimana]['pasto'][pasto]['ids']
+            ]
         return [
             r['id'] for r in ricette
-            if r['id'] in ids_specifici and r['id'] not in settimana['all_food']
+            if r['id'] not in settimana['all_food']
         ]
-    if ripetibile:
-        return [
-            r['id'] for r in ricette
-            if r['id'] not in settimana['day'][giorno_settimana]['pasto'][pasto]['ids']
-        ]
-    return [
-        r['id'] for r in ricette
-        if r['id'] not in settimana['all_food']
-    ]
+    except KeyError as e:
+        raise KeyError(f"Errore nella struttura 'settimana': {e}")
+    except Exception as e:
+        raise RuntimeError(f"Errore durante la determinazione degli ID disponibili: {str(e)}")
 
-def check_limiti_consumo_ricetta(ricetta, consumi):
-    ricetta_ok = True
-    for gruppo in ricetta['ingredienti']:
-        id_gruppo = gruppo['id_gruppo']
-        qta = gruppo['qta_totale']
-        if id_gruppo in consumi and qta > consumi[id_gruppo]:
-            ricetta_ok = False  # Supera il limite
 
-    return ricetta_ok
+def check_limiti_consumo_ricetta(ricetta, consumi) -> bool:
+    """
+    Verifica se una ricetta rispetta i limiti di consumo settimanale.
+
+    Args:
+        ricetta (dict): Ricetta contenente una lista di ingredienti con quantità totali e ID di gruppo.
+        consumi (dict): Dizionario dei limiti di consumo rimanenti per ogni gruppo alimentare.
+
+    Returns:
+        bool: True se la ricetta rispetta i limiti, False altrimenti.
+
+    Raises:
+        KeyError: Se 'ingredienti' manca in 'ricetta'.
+        ValueError: Se i dati in 'ricetta' o 'consumi' non sono validi.
+    """
+    if 'ingredienti' not in ricetta:
+        raise KeyError("La chiave 'ingredienti' è mancante nella ricetta.")
+    if not isinstance(consumi, dict):
+        raise ValueError("Il parametro 'consumi' deve essere un dizionario.")
+
+    try:
+        for gruppo in ricetta['ingredienti']:
+            id_gruppo = gruppo.get('id_gruppo')
+            qta = gruppo.get('qta_totale', 0)
+
+            if id_gruppo in consumi and qta > consumi[id_gruppo]:
+                return False  # Supera il limite
+        return True
+    except Exception as e:
+        raise RuntimeError(f"Errore durante il controllo dei limiti di consumo: {str(e)}")
 
 
 def aggiorna_limiti_gruppi(ricetta, consumi, rimuovi: bool = False):
-    # Normalizza le chiavi di `consumi` a stringhe
-    consumi = {str(k): v for k, v in consumi.items()}
+    """
+    Aggiorna i consumi rimanenti per i gruppi alimentari in base agli ingredienti di una ricetta.
+
+    Args:
+        ricetta (dict): Ricetta contenente una lista di ingredienti con quantità totali e ID di gruppo.
+        consumi (dict): Dizionario dei consumi rimanenti per ciascun gruppo alimentare.
+        rimuovi (bool, opzionale): Indica se aggiungere (`True`) o sottrarre (`False`) le quantità.
+
+    Raises:
+        KeyError: Se la chiave 'ingredienti' manca nella ricetta.
+        ValueError: Se i dati nella ricetta o in consumi non sono validi.
+    """
+    if 'ingredienti' not in ricetta:
+        raise KeyError("La chiave 'ingredienti' è mancante nella ricetta.")
+    if not isinstance(consumi, dict):
+        raise ValueError("Il parametro 'consumi' deve essere un dizionario.")
 
     moltiplicatore = 1 if rimuovi else -1
-    for gruppo in ricetta['ingredienti']:
-        id_gruppo = gruppo['id_gruppo']
-        qta = gruppo['qta_totale']
-        if str(id_gruppo) in consumi:
-            consumi[str(id_gruppo)] += (moltiplicatore * float(qta))
+
+    try:
+        for gruppo in ricetta['ingredienti']:
+            id_gruppo = str(gruppo.get('id_gruppo'))
+            qta = float(gruppo.get('qta_totale', 0))
+
+            if id_gruppo in consumi:
+                consumi[id_gruppo] += moltiplicatore * qta
+    except Exception as e:
+        raise RuntimeError(f"Errore durante l'aggiornamento dei limiti dei gruppi: {str(e)}")
 
 
 def recupera_ingredienti_ricetta(ricetta_id, user_id, percentuale) -> str:
@@ -549,41 +682,87 @@ def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=Fals
     return ricette
 
 
-def ordina_settimana_per_kcal(settimana):
+def ordina_settimana_per_kcal(settimana) -> dict:
     """
     Ordina i giorni della settimana in base alle calorie giornaliere rimanenti in ordine decrescente.
+
+    Args:
+        settimana (dict): Struttura settimanale con dati giornalieri, settimanali, e consumi.
+
+    Returns:
+        dict: Nuova struttura della settimana con giorni ordinati per calorie rimanenti.
+
+    Raises:
+        KeyError: Se un giorno manca della chiave 'kcal'.
+        ValueError: Se il valore di 'kcal' non è numerico.
     """
-    giorni_ordinati = sorted(settimana['day'].keys(), key=lambda giorno: settimana['day'][giorno]['kcal'], reverse=True)
+    try:
+        giorni_ordinati = sorted(settimana['day'].keys(), key=lambda giorno: settimana['day'][giorno]['kcal'], reverse=True)
 
-    # Crea una nuova struttura della settimana con i giorni ordinati
-    settimana_ordinata = {
-        'weekly': settimana['weekly'],
-        'day': {giorno: settimana['day'][giorno] for giorno in giorni_ordinati},
-        'all_food': settimana['all_food'],
-        'consumi': settimana['consumi']
-    }
+        # Crea una nuova struttura della settimana con i giorni ordinati
+        settimana_ordinata = {
+            'weekly': settimana['weekly'],
+            'day': {giorno: settimana['day'][giorno] for giorno in giorni_ordinati},
+            'all_food': settimana['all_food'],
+            'consumi': settimana['consumi']
+        }
 
-    return settimana_ordinata
+        return settimana_ordinata
+    except KeyError as e:
+        raise KeyError(f"Errore: La chiave 'kcal' è mancante in uno dei giorni ({str(e)}).")
+    except (ValueError, TypeError) as e:
+        raise ValueError(f"Errore: Il valore di 'kcal' non è numerico. Dettagli: {str(e)}")
 
 
-def numero_ricette(p, pasto, tipo_ricetta, ricette):
-    cerca_ricette = [r for r in p[pasto]['ricette'] if r['id'] in [ricetta['id'] for ricetta in ricette if ricetta[tipo_ricetta]]]
-    return len(cerca_ricette)
+def numero_ricette(p, pasto, tipo_ricetta, ricette) -> int:
+    """
+    Conta il numero di ricette di un certo tipo già presenti in un pasto specifico.
+
+    Args:
+        p (dict): Struttura che rappresenta i pasti di un giorno, contenente i dettagli di ciascun pasto.
+        pasto (str): Nome del pasto (es. 'colazione', 'pranzo', 'cena').
+        tipo_ricetta (str): Tipo di ricetta da cercare (es. 'principale', 'contorno').
+        ricette (list): Lista delle ricette disponibili, ogni ricetta è un dizionario con dettagli come id e tipo.
+
+    Returns:
+        int: Numero di ricette trovate nel pasto specificato del tipo richiesto.
+    """
+    if pasto not in p or 'ricette' not in p[pasto]:
+        return 0
+
+    tipo_ids = {ricetta['id'] for ricetta in ricette if ricetta.get(tipo_ricetta)}
+    return sum(1 for r in p[pasto]['ricette'] if r['id'] in tipo_ids)
 
 
 def get_utente(user_id) -> Utente:
-    rows = Utente.query.filter_by(id=user_id).one()
-    return rows
+    """
+    Recupera le informazioni di un utente specifico dal database.
+
+    Args:
+        user_id (int): L'ID dell'utente da recuperare.
+
+    Returns:
+        Utente: Istanza del modello `Utente` contenente i dettagli dell'utente.
+
+    Raises:
+        sqlalchemy.orm.exc.NoResultFound: Se non esiste un utente con l'ID specificato.
+        sqlalchemy.orm.exc.MultipleResultsFound: Se più utenti con lo stesso ID vengono trovati (scenario improbabile).
+    """
+    try:
+        return Utente.query.filter_by(id=user_id).one()
+    except sqlalchemy.orm.exc.NoResultFound:
+        raise ValueError(f"Utente con ID {user_id} non trovato.")
+    except sqlalchemy.orm.exc.MultipleResultsFound:
+        raise ValueError(f"Errore: Più utenti trovati con ID {user_id}.")
 
 
-def stampa_lista_della_spesa(user_id: int, menu: dict, print_macro: bool = False) -> list[dict]:
+def stampa_lista_della_spesa(user_id: int, menu: dict) -> list[dict]:
     """
     Genera una lista della spesa basata sul menu settimanale.
 
     Args:
         user_id (int): ID dell'utente per cui generare la lista della spesa.
         menu (dict): Struttura del menu settimanale contenente giorni, pasti e ricette.
-        print_macro (bool): Se True, include i macronutrienti nella lista.
 
     Returns:
         list[dict]: Lista di ingredienti e relative quantità totali necessarie.
@@ -597,20 +776,23 @@ def stampa_lista_della_spesa(user_id: int, menu: dict, print_macro: bool = False
     a = aliased(VAlimento)
     r = aliased(VRicetta)
 
-    results = (
-        db.session.query((r.id).label('id_ricetta'),
-                         (a.nome).label('nome'),
-                         func.sum(ir.qta).label('qta_totale')
-                         )
-        .join(a, a.id == ir.id_alimento)
-        .join(r, r.id == ir.id_ricetta)
-        .filter(ir.removed == False)
-        .filter(func.coalesce(ir.user_id, user_id) == user_id)
-        .filter(ir.id_ricetta.in_(menu['all_food']))
-        .group_by(r.id, a.nome )
-        .order_by(a.nome)
-        .all()
-    )
+    if menu['all_food']:
+        results = (
+            db.session.query((r.id).label('id_ricetta'),
+                             (a.nome).label('nome'),
+                             func.sum(ir.qta).label('qta_totale')
+                             )
+            .join(a, a.id == ir.id_alimento)
+            .join(r, r.id == ir.id_ricetta)
+            .filter(ir.removed == False)
+            .filter(func.coalesce(ir.user_id, user_id) == user_id)
+            .filter(ir.id_ricetta.in_(menu['all_food']))
+            .group_by(r.id, a.nome )
+            .order_by(a.nome)
+            .all()
+        )
+    else:
+        results = []  # Gestione nel caso di lista vuota
 
     # Calcolo delle quantità totali
     ingredient_totals = defaultdict(float)
@@ -702,6 +884,26 @@ def salva_menu(menu, user_id, period: dict = None) -> None:
 
 
 def get_menu(user_id: int, period: dict = None, ids: int = None):
+    """
+    Recupera un menu settimanale per un utente specifico.
+
+    Args:
+        user_id (int): ID dell'utente per il quale recuperare il menu.
+        period (dict, optional): Dizionario contenente le date di inizio e fine della settimana.
+                                  Esempio: {"data_inizio": <data>, "data_fine": <data>}.
+        ids (int, optional): ID specifico del menu da recuperare. Se specificato, ignora `period`.
+
+    Returns:
+        dict: Dizionario contenente il menu e la data di fine,
+              con struttura {"menu": <menu>, "data_fine": <data>} se trovato.
+        None: Se nessun menu corrispondente è trovato.
+
+    Raises:
+        KeyError: Se il parametro `period` è fornito ma non contiene le chiavi `data_inizio` o `data_fine`.
+    """
+    if period and ('data_inizio' not in period or 'data_fine' not in period):
+        raise ValueError("Il parametro 'period' deve contenere 'data_inizio' e 'data_fine'.")
+
     query = db.session.query(
         MenuSettimanale.menu.label('menu'),
         MenuSettimanale.data_fine.label('data_fine')

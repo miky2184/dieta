@@ -158,12 +158,6 @@ def generate_menu():
         error_trace = traceback.format_exc()
         return jsonify({'status': 'error', 'message': 'Errore sconosciuto.', 'details': str(e), 'trace': error_trace}), 500
 
-        # Risposta JSON con messaggio e riga dell'errore
-        return jsonify({
-            'status': 'error',
-            'message': str(e),
-            'trace': error_trace}), 500
-
 
 @views.route('/menu_settimana/<int:settimana_id>', methods=['GET'])
 @current_app.cache.cached(timeout=300)
@@ -832,7 +826,7 @@ def generate_pdf():
 
         # Aggiungi la lista della spesa al PDF
         y = height - margin_y  # Posiziona la lista sotto l'immagine
-        shopping_list = stampa_lista_della_spesa(user_id, menu_selezionato['menu'], True)
+        shopping_list = stampa_lista_della_spesa(user_id, menu_selezionato['menu'])
         c.setFont("Helvetica", 12)
         c.drawString(margin_x, y, "Lista della Spesa:")
         y -= 20
