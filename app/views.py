@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, request, send_file, jsonify, current_app
-from .services.menu_services import (definisci_calorie_macronutrienti, save_weight, genera_menu,
+from .services.menu_services import (get_utente, save_weight, genera_menu,
                                      stampa_lista_della_spesa, get_menu,
                                      carica_ricette, get_settimane_salvate,
                                      salva_menu, get_settimana, aggiorna_ricetta,
@@ -9,7 +9,7 @@ from .services.menu_services import (definisci_calorie_macronutrienti, save_weig
                                      calcola_macronutrienti_rimanenti,
                                      carica_alimenti, update_alimento, elimina_alimento, salva_nuovo_alimento,
                                      aggiungi_ricetta_al_menu, update_menu_corrente, rimuovi_pasto_dal_menu,
-                                     delete_week_menu, ordina_settimana_per_kcal,
+                                     delete_week_menu, ordina_settimana_per_kcal, genera_menu_utente,
                                      recupera_ricette_per_alimento, copia_menu, recupera_settimane, cancella_tutti_pasti_menu,
                                      recupera_ingredienti_ricetta, get_gruppi_data)
 from copy import deepcopy
@@ -28,6 +28,8 @@ from sqlalchemy.exc import SQLAlchemyError
 
 views = Blueprint('views', __name__)
 
+import traceback
+
 
 @views.route('/dashboard', methods=['GET'])
 @current_app.cache.cached(timeout=300, key_prefix=lambda: f"dashboard_{current_user.user_id}")
@@ -39,7 +41,7 @@ def dashboard():
     """
     user_id = current_user.user_id
     # Calcola le calorie e i macronutrienti giornalieri dell'utente.
-    macronutrienti = definisci_calorie_macronutrienti(user_id)
+    macronutrienti = get_utente(user_id)
 
     period = {
         "data_inizio": datetime.now().date(),
@@ -142,92 +144,25 @@ def recupera_ricette():
 @login_required
 def generate_menu():
     """
-    Questa funzione gestisce la generazione del menu per la settimana corrente e quella successiva.
-    Viene chiamata tramite una richiesta POST e restituisce un aggiornamento del progresso della generazione.
+    Gestisce la generazione del menu settimanale per l'utente.
     """
     user_id = current_user.user_id
     try:
-        macronutrienti = definisci_calorie_macronutrienti(user_id)
-        if not macronutrienti.calorie_giornaliere:
-            return jsonify({'status': 'error', 'message': 'Macronutrienti non definiti!!!'}), 500
-
-        progress = 0
-        total_steps = 4  # Numero totale di passaggi nella generazione del menu
-        # Calcola l'inizio e la fine della prossima settimana
-        oggi = datetime.now().date()
-        giorni_indietro = (oggi.weekday() - 0) % 7
-        lunedi_corrente = oggi - timedelta(days=giorni_indietro)
-        domenica_corrente = lunedi_corrente + timedelta(days=6)
-
-        period = {
-            "data_inizio": lunedi_corrente,
-            "data_fine": domenica_corrente
-        }
-
-        ricette_menu = carica_ricette(user_id, stagionalita=True, data_stagionalita=domenica_corrente)
-
-        # Generazione del menu per la settimana corrente
-
-        if not get_menu(user_id, period=period):
-            settimana_corrente = deepcopy(get_settimana(macronutrienti))
-            genera_menu(settimana_corrente, False, ricette_menu, user_id)
-            progress += 1 / total_steps * 100
-            time.sleep(1)  # Simula tempo di elaborazione
-
-            # Ordina la settimana in base alle kcal giornaliere rimanenti in ordine decrescente
-            settimana_corrente_ordinata = ordina_settimana_per_kcal(settimana_corrente)
-
-            genera_menu(settimana_corrente_ordinata, True, ricette_menu, user_id)
-            progress += 1 / total_steps * 100
-            time.sleep(1)
-
-            salva_menu(settimana_corrente_ordinata, user_id, period=period)
-            progress += 1 / total_steps * 100
-        else:
-            progress += 3 / total_steps * 100
-
-        lunedi_prossimo = oggi + timedelta(days=(7 - oggi.weekday()))
-        domenica_prossima = lunedi_prossimo + timedelta(days=6)
-
-        period = {
-            "data_inizio": lunedi_prossimo,
-            "data_fine": domenica_prossima
-        }
-
-        ricette_menu = carica_ricette(user_id, stagionalita=True, data_stagionalita=domenica_prossima)
-
-        # Generazione del menu per la settimana successiva
-        if not get_menu(user_id, period=period):
-            prossima_settimana = deepcopy(get_settimana(macronutrienti))
-            genera_menu(prossima_settimana, False, ricette_menu, user_id)
-            progress += 1 / total_steps * 100
-            time.sleep(1)
-
-            # Ordina la settimana in base alle kcal giornaliere rimanenti in ordine decrescente
-            prossima_settimana_ordinata = ordina_settimana_per_kcal(prossima_settimana)
-
-            genera_menu(prossima_settimana_ordinata, True, ricette_menu, user_id)
-            salva_menu(prossima_settimana_ordinata, user_id, period=period)
-        else:
-            prossima_settimana = deepcopy(get_settimana(macronutrienti))
-            genera_menu(prossima_settimana, False, ricette_menu, user_id)
-            progress += 1 / total_steps * 100
-            time.sleep(1)
-
-            # Ordina la settimana in base alle kcal giornaliere rimanenti in ordine decrescente
-            prossima_settimana_ordinata = ordina_settimana_per_kcal(prossima_settimana)
-
-            genera_menu(prossima_settimana_ordinata, True, ricette_menu, user_id)
-            salva_menu(prossima_settimana_ordinata, user_id)
-
-        current_app.cache.delete(f'dashboard_{user_id}')
-        return jsonify({'status': 'success', 'progress': progress}), 200
+        response = genera_menu_utente(user_id, current_app.cache)
+        return jsonify(response), 200
+    except ValueError as val_err:
+        return jsonify({'status': 'error', 'message': str(val_err)}), 400
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        error_trace = traceback.format_exc()
+        return jsonify({'status': 'error', 'message': 'Errore sconosciuto.', 'details': str(e), 'trace': error_trace}), 500
+
+        # Risposta JSON con messaggio e riga dell'errore
+        return jsonify({
+            'status': 'error',
+            'message': str(e),
+            'trace': error_trace}), 500
 
 
 @views.route('/menu_settimana/<int:settimana_id>', methods=['GET'])
@@ -773,7 +708,7 @@ def rimuovi_ricetta(week_id):
         menu_corrente = get_menu(user_id, ids=week_id)
 
         # Rimuove il pasto dal menu
-        rimuovi_pasto_dal_menu(menu_corrente['menu'], day, meal, meal_id)
+        rimuovi_pasto_dal_menu(menu_corrente['menu'], day, meal, meal_id, user_id)
 
         # Salva il menu aggiornato nel database
         update_menu_corrente(menu_corrente['menu'], week_id, user_id)
@@ -1128,7 +1063,12 @@ def get_complemento():
     except KeyError as key_err:
         return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        error_trace = traceback.format_exc()
+        # Risposta JSON con messaggio e riga dell'errore
+        return jsonify({
+            'status': 'error',
+            'message': str(e),
+            'trace': error_trace}), 500
 
 
 @views.route('/get_contorno', methods=['GET'])

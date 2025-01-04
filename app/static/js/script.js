@@ -995,6 +995,34 @@ function formatMealName(meal) {
 }
 
 
+function buildRemainingGruppiTable(menuConsumi, gruppi) {
+    // Filtra i gruppi in base agli ID presenti in menuConsumi
+    const filteredGruppi = gruppi.filter(gruppo => menuConsumi.hasOwnProperty(gruppo.id.toString()));
+
+    // Seleziona gli elementi HTML della tabella
+    const remainingGruppiTableHeader = document.querySelector('#remaining-consumi-table thead');
+    const remainingGruppiTableBody = document.querySelector('#remaining-consumi-table tbody');
+
+    // Costruisce l'header dinamicamente
+    let headerHTML = '<tr>';
+    filteredGruppi.forEach(gruppo => {
+        headerHTML += `<th style="text-align: center;">${gruppo.nome}</th>`;
+    });
+    headerHTML += '</tr>';
+    remainingGruppiTableHeader.innerHTML = headerHTML;
+
+    // Costruisce la riga dei consumi rimanenti
+    let bodyHTML = '<tr>';
+    filteredGruppi.forEach(gruppo => {
+        const id = gruppo.id.toString();
+        const consumoRimanente = menuConsumi[id] || 0; // Prendi il consumo rimanente o 0 se non trovato
+        bodyHTML += `<td style="text-align: center;">${consumoRimanente} g</td>`;
+    });
+    bodyHTML += '</tr>';
+    remainingGruppiTableBody.innerHTML = bodyHTML;
+}
+
+
 function renderMenuEditor(data) {
 
     // Chiama questa funzione quando la pagina viene caricata per popolare i dropdown
@@ -1072,9 +1100,10 @@ function renderMenuEditor(data) {
     remainingTable.appendChild(remainingTableBody);
     macrosContainer.appendChild(remainingTable); // Inserisci la card nel macrosContainer
 
+    buildRemainingGruppiTable(menu['consumi'], gruppi);
+
     // Aggiungi la tabella sotto al week selector
     const menuContainer = document.getElementById('menuEditor');
-    //menuContainer.parentNode.insertBefore(macrosContainer, menuContainer);
 
     // Creazione delle card per ogni giorno
     days.forEach(day => {
