@@ -936,7 +936,6 @@ def delete_meal_daily(week_id):
         data = request.json
         day = data.get('day')
         meal_type = data.get('meal_type')
-        ids_remove = []
 
         # Recupera il menu della settimana per l'utente
         settimana = get_menu(user_id, ids=week_id)
@@ -944,22 +943,15 @@ def delete_meal_daily(week_id):
         if not settimana:
             return jsonify({'status': 'error', 'message': 'Menu non trovato'}), 404
 
-        if meal_type == 'colazione':
-            cancella_tutti_pasti_menu(settimana['menu'], day, 'colazione')
-        elif meal_type == 'principali':
-            cancella_tutti_pasti_menu(settimana['menu'], day, 'pranzo')
-            cancella_tutti_pasti_menu(settimana['menu'], day, 'cena')
-        elif meal_type == 'spuntini':
-            cancella_tutti_pasti_menu(settimana['menu'], day, 'spuntino_mattina')
-            cancella_tutti_pasti_menu(settimana['menu'], day, 'spuntino_pomeriggio')
-            cancella_tutti_pasti_menu(settimana['menu'], day, 'spuntino_sera')
-        else:
-            cancella_tutti_pasti_menu(settimana['menu'], day, 'colazione')
-            cancella_tutti_pasti_menu(settimana['menu'], day, 'pranzo')
-            cancella_tutti_pasti_menu(settimana['menu'], day, 'cena')
-            cancella_tutti_pasti_menu(settimana['menu'], day, 'spuntino_mattina')
-            cancella_tutti_pasti_menu(settimana['menu'], day, 'spuntino_pomeriggio')
-            cancella_tutti_pasti_menu(settimana['menu'], day, 'spuntino_sera')
+        meal_mapping = {
+            'colazione': ['colazione'],
+            'principali': ['pranzo', 'cena'],
+            'spuntini': ['spuntino_mattina', 'spuntino_pomeriggio', 'spuntino_sera'],
+            'all': ['colazione', 'pranzo', 'cena', 'spuntino_mattina', 'spuntino_pomeriggio', 'spuntino_sera']
+        }
+
+        for meal in meal_mapping.get(meal_type, []):
+            cancella_tutti_pasti_menu(settimana['menu'], day, meal, user_id)
 
         # Salva le modifiche nel database
         update_menu_corrente(settimana['menu'], week_id, user_id)

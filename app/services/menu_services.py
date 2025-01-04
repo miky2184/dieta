@@ -28,14 +28,14 @@ from app.models.common import printer
 MAX_RETRY = int(os.getenv('MAX_RETRY'))
 
 LIMITI_CONSUMO = {
-    1: 240,   # Uova
-    2: 600,   # Pesce
-    4: 150,   # Carne Rossa
-    3: 400,   # Carne Bianca
-    5: 700,   # Legumi
-    8: 700,    # Cereali
-    12: 100,     #Frutta secca
-    15: 140     #Olio o grassi da condimento
+    '1': 240,   # Uova
+    '2': 600,   # Pesce
+    '4': 150,   # Carne Rossa
+    '3': 400,   # Carne Bianca
+    '5': 700,   # Legumi
+    '8': 700,    # Cereali
+    '12': 100,     #Frutta secca
+    '15': 140     #Olio o grassi da condimento
 }
 
 pasti_config = [
@@ -403,7 +403,7 @@ def check_limiti_consumo_ricetta(ricetta, consumi) -> bool:
 
     try:
         for gruppo in ricetta['ingredienti']:
-            id_gruppo = gruppo.get('id_gruppo')
+            id_gruppo = str(gruppo.get('id_gruppo'))
             qta = gruppo.get('qta_totale', 0)
 
             if id_gruppo in consumi and qta > consumi[id_gruppo]:
@@ -432,14 +432,13 @@ def aggiorna_limiti_gruppi(ricetta, consumi, rimuovi: bool = False):
         raise ValueError("Il parametro 'consumi' deve essere un dizionario.")
 
     moltiplicatore = 1 if rimuovi else -1
-
     try:
         for gruppo in ricetta['ingredienti']:
-            id_gruppo = str(gruppo.get('id_gruppo'))
-            qta = float(gruppo.get('qta_totale', 0))
+            id_gruppo = gruppo.get('id_gruppo')
+            qta = gruppo.get('qta_totale', 0)
 
-            if id_gruppo in consumi:
-                consumi[id_gruppo] += moltiplicatore * qta
+            if str(id_gruppo) in consumi:
+                consumi[str(id_gruppo)] += moltiplicatore * qta
     except Exception as e:
         raise RuntimeError(f"Errore durante l'aggiornamento dei limiti dei gruppi: {str(e)}")
 
@@ -1439,8 +1438,8 @@ def qta_gruppo_ricetta(ricetta_id, user_id):
     res = [{"ingredienti": []}]
 
     alimenti = [{
-        'id_gruppo': r.id_gruppo,
-        'qta_totale': r.qta
+        'id_gruppo': int(r.id_gruppo),
+        'qta_totale': float(r.qta)
     } for r in results]
 
     res[0]['ingredienti'] = alimenti
@@ -1461,10 +1460,11 @@ def rimuovi_pasto_dal_menu(menu, day, meal, meal_id, user_id):
         aggiorna_macronutrienti(menu, day, ricetta_da_rimuovere, True)
         aggiorna_limiti_gruppi(qta_gruppo_ricetta(ricetta_da_rimuovere['id'], user_id), menu['consumi'], True)
 
-def cancella_tutti_pasti_menu(settimana, day, meal_type):
-    for ricetta in settimana['day'][day]['pasto'][meal_type]["ricette"]:
+def cancella_tutti_pasti_menu(settimana, day, meal_type, user_id):
+    for ricetta in settimana['day'][day]['pasto'][meal_type]['ricette']:
         settimana['all_food'].remove(ricetta['id'])
         aggiorna_macronutrienti(settimana, day, ricetta, True)
+        aggiorna_limiti_gruppi(qta_gruppo_ricetta(ricetta['id'], user_id), settimana['consumi'], True)
 
     settimana['day'][day]['pasto'][meal_type] = {"ids": [], "ricette": []}
 
