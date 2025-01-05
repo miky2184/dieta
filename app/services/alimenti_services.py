@@ -28,21 +28,6 @@ from app.services.common_db_service import get_sequence_value
 def create_alimento_service(name, carboidrati, proteine, grassi, fibre, confezionato, vegan, gruppo, user_id):
     seq_id = get_sequence_value('dieta.seq_id_alimento')
 
-    # alimento_base = AlimentoBase(
-    #     id=id,
-    #     nome=name.upper(),
-    #     carboidrati=carboidrati,
-    #     proteine=proteine,
-    #     grassi=grassi,
-    #     fibre=fibre,
-    #     confezionato=confezionato,
-    #     vegan=vegan,
-    #     id_gruppo=gruppo
-    # )
-    #
-    # db.session.add(alimento_base)
-    # db.session.commit()
-
     alimento = Alimento(
         id=seq_id,
         nome_override=name.upper(),
@@ -85,7 +70,11 @@ def get_alimenti_service(user_id):
     filtro = VAlimento.filtro_alimenti(user_id)
 
     # Query con filtro
-    results = db.session.query(VAlimento).filter(filtro).order_by(VAlimento.nome).all()
+    query = db.session.query(VAlimento).filter(filtro).order_by(VAlimento.nome)
+
+    results = query.all()
+
+    printer(str(query.statement.compile(compile_kwargs={"literal_binds": True})), "DEBUG")
 
     alimenti = [{
         'id': r.id,
@@ -103,11 +92,12 @@ def get_alimenti_service(user_id):
 
 
 def update_alimento_service(id, nome, carboidrati, proteine, grassi, fibre, confezionato, vegan, id_gruppo, user_id):
-    alimento_base = (AlimentoBase.query.filter(AlimentoBase.id==id)).one()
+    alimento_base = (AlimentoBase.query.filter(AlimentoBase.id==id)).first()
     alimento = Alimento.query.filter(
         Alimento.id == (id if alimento_base is None else alimento_base.id),
         Alimento.user_id == user_id
-    ).one_or_none()
+    ).first()
+
     if not alimento:
         alimento = Alimento(
             id=id,
@@ -137,12 +127,52 @@ def update_alimento_service(id, nome, carboidrati, proteine, grassi, fibre, conf
 
 
 def delete_alimento_service(alimento_id, user_id):
-    alimento = Alimento.query.filter_by(id=alimento_id, user_id=user_id).first()
-    alimento.removed = True
+    alimento_base = (AlimentoBase.query.filter(AlimentoBase.id==alimento_id)).first()
+    alimento = Alimento.query.filter(
+        Alimento.id == (alimento_id if alimento_base is None else alimento_base.id),
+        Alimento.user_id == user_id
+    ).first()
 
-    alimenti = IngredientiRicetta.query.filter_by(id_alimento_base=alimento_id, user_id=user_id).all()
-    for a in alimenti:
-        a.removed = True
+    if not alimento:
+        alimento = Alimento(
+            id=alimento_id,
+            nome_override=alimento_base.nome.upper(),
+            carboidrati_override=alimento_base.carboidrati,
+            proteine_override=alimento_base.proteine,
+            grassi_override=alimento_base.grassi,
+            fibre_override=alimento_base.fibre,
+            confezionato_override=alimento_base.confezionato,
+            vegan_override=alimento_base.vegan,
+            stagionalita_override=alimento_base.stagionalita,
+            id_gruppo_override = alimento_base.id_gruppo,
+            removed = True,
+            user_id=user_id
+        )
+        db.session.add(alimento)
+    else:
+        alimento.removed = True
+
+    ingredienti_ricetta = IngredientiRicetta.query.filter_by(id_alimento_base=alimento_id, user_id=user_id).all()
+
+    for ir in ingredienti_ricetta:
+        ir.removed = True
+
+    ingredienti_ricetta_base = IngredientiRicettaBase.query.filter_by(id_alimento=alimento_id).all()
+
+    for irb in ingredienti_ricetta_base:
+        ingredienti_ricetta = IngredientiRicetta.query.filter(
+        IngredientiRicetta.id_ricetta_base == irb.id_ricetta,
+        IngredientiRicetta.id_alimento_base == irb.id_alimento,
+        Alimento.user_id == user_id).first()
+
+        if not ingredienti_ricetta:
+            i = IngredientiRicetta(
+            id_ricetta_base=irb.id_ricetta,
+            id_alimento_base = irb.id_alimento,
+            user_id = user_id,
+            qta_override = irb.qta,
+            removed = True)
+            db.session.add(i)
 
     db.session.commit()
 

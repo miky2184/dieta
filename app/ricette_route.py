@@ -4,7 +4,7 @@ from app.services.menu_services import (get_utente, save_weight, genera_menu,
                                         get_ricette_service, get_settimane_salvate,
                                         salva_menu, get_settimana,
                                         elimina_ingredienti, salva_utente_dieta,
-                                        salva_nuova_ricetta, salva_ingredienti,
+                                        salva_ingredienti,
                                         get_peso_hist, get_dati_utente,
                                         calcola_macronutrienti_rimanenti,
                                         aggiungi_ricetta_al_menu, update_menu_corrente, rimuovi_pasto_dal_menu,
@@ -12,7 +12,7 @@ from app.services.menu_services import (get_utente, save_weight, genera_menu,
                                         recupera_ricette_per_alimento, copia_menu, recupera_settimane, cancella_tutti_pasti_menu,
                                         recupera_ingredienti_ricetta, get_gruppi_data)
 from app.services.alimenti_services import create_alimento_service, get_alimenti_service, update_alimento_service, delete_alimento_service
-from app.services.ricette_services import create_ricetta_service, get_ricette_service, attiva_disattiva_ricetta_service, get_ingredienti_ricetta_service
+from app.services.ricette_services import update_ricetta_service, get_ricette_service, attiva_disattiva_ricetta_service, get_ingredienti_ricetta_service, salva_nuova_ricetta
 from copy import deepcopy
 import time
 from reportlab.lib.pagesizes import letter, landscape
@@ -47,9 +47,37 @@ def list_ricette():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
-@ricette.route('/ricette', methods=['POST'])
+@ricette.route('/ricetta', methods=['POST'])
 @login_required
 def create_ricetta():
+    """
+    Questa funzione salva una nuova ricetta basata sui dati forniti dal form.
+    """
+    user_id = current_user.user_id
+    try:
+        name = request.form['name']
+        breakfast = 'colazione' in request.form
+        snack = 'spuntino' in request.form
+        main = 'principale' in request.form
+        side = 'contorno' in request.form
+        second_breakfast = 'colazione/biscotti' in request.form
+        complemento = 'complemento' in request.form
+
+        salva_nuova_ricetta(name.upper(), breakfast, snack, main, side, second_breakfast, complemento, user_id)
+        current_app.cache.delete(f'list_ricette_{user_id}')
+
+        return jsonify({"status": "success"}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@ricette.route('/ricette/<int:id>', methods=['PUT'])
+@login_required
+def update_ricetta(id):
     """
     Questa funzione salva o aggiorna una ricetta nel database in base ai dati forniti dal client.
     """
@@ -65,7 +93,7 @@ def create_ricetta():
         nome = data['nome']
         complemento = data['complemento']
 
-        create_ricetta_service(nome, colazione, colazione_sec, spuntino, principale, contorno, complemento, ricetta_id, user_id)
+        update_ricetta_service(nome, colazione, colazione_sec, spuntino, principale, contorno, complemento, ricetta_id, user_id)
 
         current_app.cache.delete(f'list_ricette_{user_id}')
         return jsonify({'status': 'success', 'message': 'Ricetta salvata con successo!'}), 200
@@ -79,13 +107,12 @@ def create_ricetta():
 
 @ricette.route('/ricette/<int:ricetta_id>/stato', methods=['PATCH'])
 @login_required
-def toggle_ricetta(id):
+def toggle_ricetta(ricetta_id):
     """
     Questa funzione attiva o disattiva una ricetta specifica nel database, basandosi sull'ID della ricetta.
     """
     user_id = current_user.user_id
     try:
-        ricetta_id = id
         attiva_disattiva_ricetta_service(ricetta_id, user_id)
         current_app.cache.delete(f'list_ricette_{user_id}')
         return jsonify({'status': 'success', 'message': 'Ricetta modificata con successo!'}), 200
@@ -114,3 +141,6 @@ def get_ricetta(recipe_id):
         return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+

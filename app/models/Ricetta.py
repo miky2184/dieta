@@ -6,7 +6,7 @@ class Ricetta(db.Model):
     __table_args__ = {'schema': 'dieta'}
 
     id = db.Column(db.BigInteger, primary_key=True)
-    user_id = db.Column(db.BigInteger, db.ForeignKey('dieta.utente.id', ondelete="CASCADE"), nullable=False)
+    user_id = db.Column(db.BigInteger, db.ForeignKey('dieta.utente.id', ondelete="CASCADE"), nullable=False, primary_key=True)
     nome_ricetta_override = db.Column(db.String)
     colazione_override = db.Column(db.Boolean)
     spuntino_override = db.Column(db.Boolean)

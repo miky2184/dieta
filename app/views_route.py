@@ -16,7 +16,7 @@ from app.models.models import db
 from app.services.menu_services import (get_utente, save_weight, stampa_lista_della_spesa, get_menu,
                                         get_settimane_salvate,
                                         elimina_ingredienti, salva_utente_dieta,
-                                        salva_nuova_ricetta, salva_ingredienti,
+                                         salva_ingredienti,
                                         get_peso_hist, get_dati_utente,
                                         calcola_macronutrienti_rimanenti,
                                         aggiungi_ricetta_al_menu, update_menu_corrente, rimuovi_pasto_dal_menu,
@@ -239,34 +239,6 @@ def update_ingredient():
         current_app.cache.delete(f'ricette_{recipe_id}_{user_id}')
         current_app.cache.delete(f'list_ricette_{user_id}')
         return jsonify({'status': 'success', 'message': 'Quantità aggiornata correttamente.'}), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-
-@views.route('/nuova_ricetta', methods=['POST'])
-@login_required
-def nuova_ricetta():
-    """
-    Questa funzione salva una nuova ricetta basata sui dati forniti dal form.
-    """
-    user_id = current_user.user_id
-    try:
-        name = request.form['name']
-        breakfast = 'colazione' in request.form
-        snack = 'spuntino' in request.form
-        main = 'principale' in request.form
-        side = 'contorno' in request.form
-        second_breakfast = 'colazione/biscotti' in request.form
-        complemento = 'complemento' in request.form
-
-        salva_nuova_ricetta(name.upper(), breakfast, snack, main, side, second_breakfast, complemento, user_id)
-        current_app.cache.delete(f'list_ricette_{user_id}')
-
-        return jsonify({"status": "success"}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
     except KeyError as key_err:

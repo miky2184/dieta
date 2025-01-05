@@ -4,7 +4,7 @@ from app.services.menu_services import (get_utente, save_weight, genera_menu,
                                         get_ricette_service, get_settimane_salvate,
                                         salva_menu, get_settimana,
                                         elimina_ingredienti, salva_utente_dieta,
-                                        salva_nuova_ricetta, salva_ingredienti,
+                                        salva_ingredienti,
                                         get_peso_hist, get_dati_utente,
                                         calcola_macronutrienti_rimanenti,
                                         aggiungi_ricetta_al_menu, update_menu_corrente, rimuovi_pasto_dal_menu,
@@ -12,7 +12,7 @@ from app.services.menu_services import (get_utente, save_weight, genera_menu,
                                         recupera_ricette_per_alimento, copia_menu, recupera_settimane, cancella_tutti_pasti_menu,
                                         recupera_ingredienti_ricetta, get_gruppi_data)
 from app.services.alimenti_services import create_alimento_service, get_alimenti_service, update_alimento_service, delete_alimento_service
-from app.services.ricette_services import create_ricetta_service, get_ricette_service, attiva_disattiva_ricetta_service
+from app.services.ricette_services import update_ricetta_service, get_ricette_service, attiva_disattiva_ricetta_service
 from copy import deepcopy
 import time
 from reportlab.lib.pagesizes import letter, landscape

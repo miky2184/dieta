@@ -72,8 +72,7 @@ def genera_menu_utente(user_id, cache) -> dict:
         raise ValueError('Macronutrienti non definiti!')
 
     # Trova l'ultima settimana presente nel database
-    with db.session() as session:
-        ultima_settimana = session.query(MenuSettimanale).filter_by(user_id=user_id).order_by(
+    ultima_settimana = db.session.query(MenuSettimanale).filter_by(user_id=user_id).order_by(
             desc(MenuSettimanale.data_fine)).first()
 
     periodi = []
@@ -970,24 +969,6 @@ def salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, defic
 
     db.session.commit()
 
-
-def salva_nuova_ricetta(name, breakfast, snack, main, side, second_breakfast, complemento, user_id):
-
-    ricetta = Ricetta(
-        id=get_sequence_value('dieta.seq_id_ricetta'),
-        nome_ricetta_override=name.upper(),
-        colazione_override=breakfast,
-        spuntino_override=snack,
-        principale_override=main,
-        contorno_override=side,
-        colazione_sec_override=second_breakfast,
-        complemento_override=complemento,
-        enabled=True,
-        user_id=user_id
-    )
-
-    db.session.add(ricetta)
-    db.session.commit()
 
 def salva_ingredienti(recipe_id, ingredient_id, quantity, user_id):
 

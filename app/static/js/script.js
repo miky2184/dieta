@@ -270,7 +270,7 @@ function aggiornaTabellaListaDellaSpesa() {
         .catch(error => console.error('Errore nel recupero della lista della spesa:', error));
 }
 
-function saveRicetta(ricettaData) {
+function updateRicetta(ricettaData) {
     fetch('/ricette', {
             method: 'POST',
             headers: {
@@ -601,7 +601,7 @@ function populateRicetteTable(ricette) {
             </td>
             <td style="text-align: center;">
                 <div class="btn-group" role="group">
-                    <button class="btn btn-primary btn-sm save-btn" data-ricetta-id="${ricetta.id}" data-ricetta-nome="${ricetta.nome_ricetta}" data-ricetta-colazione="${ricetta.colazione}" data-ricetta-colazione_sec="${ricetta.colazione_sec}" data-ricetta-spuntino="${ricetta.spuntino}" data-ricetta-principale="${ricetta.principale}" data-ricetta-contorno="${ricetta.contorno}" data-ricetta-complemento="${ricetta.complemento}" data-ricetta-attiva="${ricetta.attiva}" data-bs-toggle="tooltip" title="Salva"><i class="fas fa-save"></i></button>
+                    <button class="btn btn-primary btn-sm update-ricetta-btn" data-ricetta-id="${ricetta.id}" data-ricetta-nome="${ricetta.nome_ricetta}" data-ricetta-colazione="${ricetta.colazione}" data-ricetta-colazione_sec="${ricetta.colazione_sec}" data-ricetta-spuntino="${ricetta.spuntino}" data-ricetta-principale="${ricetta.principale}" data-ricetta-contorno="${ricetta.contorno}" data-ricetta-complemento="${ricetta.complemento}" data-ricetta-attiva="${ricetta.attiva}" data-bs-toggle="tooltip" title="Salva"><i class="fas fa-save"></i></button>
                     <button class="btn btn-primary btn-sm edit-btn" data-ricetta-id="${ricetta.id}" data-bs-toggle="modal" data-bs-target="#editRecipeModal" data-bs-toggle="tooltip" title="Modifica"><i class="fas fa-edit"></i></button>
                     <button class="btn btn-danger btn-sm toggle-btn" data-ricetta-id="${ricetta.id}" data-ricetta-attiva="${ricetta.attiva}" data-bs-toggle="tooltip" title="Attiva/Disattiva"><i class="fas fa-toggle-on"></i></button>
                 </div>
@@ -611,7 +611,7 @@ function populateRicetteTable(ricette) {
     });
 
     // Attacca i listener per i bottoni
-    document.querySelectorAll('.save-btn').forEach(button => {
+    document.querySelectorAll('.update-ricetta-btn').forEach(button => {
         button.addEventListener('click', function() {
             const ricettaId = this.getAttribute('data-ricetta-id');
             const ricettaData = {
@@ -624,7 +624,7 @@ function populateRicetteTable(ricette) {
                 contorno: document.querySelector(`input[name='contorno_${ricettaId}']`).checked,
                 complemento: document.querySelector(`input[name='complemento_${ricettaId}']`).checked
             };
-            saveRicetta(ricettaData);
+            updateRicetta(ricettaData);
         });
     });
 
