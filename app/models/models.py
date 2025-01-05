@@ -9,90 +9,6 @@ from app.models.VIngredientiRicetta import VIngredientiRicetta
 from app.models.VRicetta import VRicetta
 from . import db
 
-
-# Definizione del modello per utente con autenticazione
-class UtenteAuth(UserMixin, db.Model):
-    __tablename__ = 'utente_auth'
-    __table_args__ = (
-        UniqueConstraint('username', name='utente_auth_username_key'),
-        {'schema': 'dieta'}
-    )
-
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(255), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('dieta.utente.id'), nullable=False)
-    tutorial_completed = db.Column(db.Boolean, default=False)
-    admin = db.Column(db.Boolean, default=False)
-
-    utente = db.relationship('Utente', back_populates='auth', overlaps="utente_auth,utente_assoc")
-    utente_assoc = db.relationship('Utente', overlaps="auth,utente_auth")
-
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
-
-# Definizione del modello per i dettagli dell utente
-class Utente(db.Model):
-    __tablename__ = 'utente'
-    __table_args__ = (
-        CheckConstraint("sesso = ANY (ARRAY['M', 'F'])", name='utente_sesso_check'),
-        {'schema': 'dieta'}
-    )
-
-    id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(255), nullable=False)
-    cognome = db.Column(db.String(255), nullable=False)
-    sesso = db.Column(db.String(1), nullable=False)
-    eta = db.Column(db.Integer, nullable=False)
-    altezza = db.Column(db.Numeric(5, 2), nullable=False)
-    peso = db.Column(db.Numeric(5, 2), nullable=False)
-    tdee = db.Column(db.Numeric(4, 3), nullable=True)
-    deficit_calorico = db.Column(db.Numeric(5, 2), nullable=True)
-    bmi = db.Column(db.Numeric(5, 2), nullable=True)
-    peso_ideale = db.Column(db.Numeric(5, 2), nullable=True)
-    meta_basale = db.Column(db.Numeric(8, 2), nullable=True)
-    meta_giornaliero = db.Column(db.Numeric(8, 2), nullable=True)
-    calorie_giornaliere = db.Column(db.Numeric(8, 2), nullable=True)
-    settimane_dieta = db.Column(db.String, nullable=True)
-    carboidrati = db.Column(db.Integer, nullable=True)
-    proteine = db.Column(db.Integer, nullable=True)
-    grassi = db.Column(db.Integer, nullable=True)
-    email = db.Column(db.String, nullable=False)
-    dieta = db.Column(db.String, nullable=True)
-
-    # Relazione verso la vista VAlimento
-    alimenti = db.relationship(
-        'VAlimento',
-        primaryjoin=(
-                db.foreign(id) == func.coalesce(db.remote(VAlimento.user_id), id)
-        ),
-        viewonly=True  # La relazione è sola lettura
-    )
-    ingredienti_ricette = db.relationship(
-        'VIngredientiRicetta',
-        primaryjoin=(
-                db.foreign(id) == func.coalesce(db.remote(VIngredientiRicetta.user_id), id)
-        ),
-        viewonly=True  # La relazione è sola lettura
-    )
-    menu_settimanale = db.relationship('MenuSettimanale', backref='utente', cascade='all, delete-orphan')
-    registro_peso = db.relationship('RegistroPeso', backref='utente', cascade='all, delete-orphan')
-    ricette = db.relationship(
-        'VRicetta',
-        primaryjoin=(
-                db.foreign(id) == func.coalesce(db.remote(VRicetta.user_id), id)
-        ),
-        viewonly=True  # La relazione è sola lettura
-    )
-    auth = db.relationship('UtenteAuth', back_populates='utente', overlaps="utente_auth,utente_assoc")
-    utente_auth = db.relationship('UtenteAuth', overlaps="auth,utente_assoc")
-
-    def to_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
-
 # class Alimento(db.Model):
 #     __tablename__ = 'alimento'
 #     __table_args__ = (
@@ -131,7 +47,6 @@ class Utente(db.Model):
 #     def to_dict(self):
 #         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
-
 # class IngredientiRicetta(db.Model):
 #     __tablename__ = 'ingredienti_ricetta'
 #     __table_args__ = (
@@ -151,36 +66,6 @@ class Utente(db.Model):
 #         self.meals.append(meal)
 #         db.session.add(self)
 
-
-class MenuSettimanale(db.Model):
-    __tablename__ = 'menu_settimanale'
-    __table_args__ = (
-        UniqueConstraint('data_inizio', 'data_fine', 'user_id', name='menu_settimanale_data_inizio_data_fine_key'),
-        {'schema': 'dieta'}
-    )
-
-    id = db.Column(db.Integer, primary_key=True)
-    data_inizio = db.Column(db.Date, nullable=False)
-    data_fine = db.Column(db.Date, nullable=False)
-    menu = db.Column(JSON, nullable=False)
-    user_id = db.Column(db.BigInteger, ForeignKey('dieta.utente.id', ondelete='CASCADE'))
-
-class RegistroPeso(db.Model):
-    __tablename__ = 'registro_peso'
-    __table_args__ = (
-        UniqueConstraint('data_rilevazione', 'user_id', name='registro_peso_unique'),
-        {'schema': 'dieta'}
-    )
-
-    data_rilevazione = db.Column(db.Date, primary_key=True)
-    peso = db.Column(db.Numeric)
-    vita = db.Column(db.Numeric)
-    fianchi = db.Column(db.Numeric)
-    peso_ideale = db.Column(db.Numeric)
-    user_id = db.Column(db.BigInteger, ForeignKey('dieta.utente.id', ondelete='CASCADE'), primary_key=True)
-
-    def to_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 # class Ricetta(db.Model):
 #     __tablename__ = 'ricetta'

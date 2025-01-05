@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, date
 from copy import deepcopy
 import re
 import sqlalchemy
-from app.models.models import (db, Utente, MenuSettimanale, RegistroPeso )
+from app.models import db
 from app.models.VAlimento import VAlimento
 from app.models.VIngredientiRicetta import VIngredientiRicetta
 from app.models.VRicetta import VRicetta
@@ -22,7 +22,7 @@ import json
 from sqlalchemy import insert, update, and_, or_, case, func, exists, asc, String, true, false, select, desc
 from collections import defaultdict
 from decimal import Decimal
-from app.models.common import printer
+from app.services.util_services import printer
 from app.services.common_db_service import get_sequence_value
 
 def create_alimento_service(name, carboidrati, proteine, grassi, fibre, confezionato, vegan, gruppo, user_id):

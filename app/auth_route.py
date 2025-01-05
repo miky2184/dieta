@@ -2,7 +2,9 @@
 from flask import Blueprint, render_template, redirect, url_for, current_app
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
-from app.models.models import db, UtenteAuth, Utente
+from app.models.models import db
+from app.models.Utente import Utente
+from app.models.UtenteAuth import UtenteAuth
 from app.services.menu_services import is_valid_email, copia_alimenti_ricette
 from flask import jsonify, request
 

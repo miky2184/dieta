@@ -4,7 +4,8 @@ from datetime import datetime, timedelta, date
 from copy import deepcopy
 import re
 import sqlalchemy
-from app.models.models import (db, Utente, MenuSettimanale, RegistroPeso )
+from app.models.Utente import Utente
+from app.models import db
 from app.models.VAlimento import VAlimento
 from app.models.VIngredientiRicetta import VIngredientiRicetta
 from app.models.VRicetta import VRicetta
@@ -22,7 +23,7 @@ import json
 from sqlalchemy import insert, update, and_, or_, case, func, exists, asc, String, true, false, select, desc
 from collections import defaultdict
 from decimal import Decimal
-from app.models.common import printer
+from app.services.util_services import printer
 from sqlalchemy.exc import SQLAlchemyError
 
 

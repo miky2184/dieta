@@ -3,7 +3,9 @@ from flask_caching import Cache
 from flask import Flask, request, redirect, url_for
 from flask_login import LoginManager, current_user
 from dotenv import load_dotenv
-from app.models.models import db, UtenteAuth, Utente
+from app.models.Utente import Utente
+from app.models.UtenteAuth import UtenteAuth
+from app.models import db
 
 
 def create_app():
