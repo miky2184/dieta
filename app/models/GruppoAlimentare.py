@@ -16,3 +16,11 @@ class GruppoAlimentare(db.Model):
         back_populates='gruppo_alimentare',
         lazy='select'
     )
+
+    # Relazione con Alimento
+    alimenti = db.relationship(
+        'Alimento',
+        primaryjoin='GruppoAlimentare.id == Alimento.id_gruppo_override',
+        back_populates='gruppo_alimentare',
+        lazy='select'
+    )

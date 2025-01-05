@@ -13,7 +13,7 @@ class VRicetta(db.Model):
     principale = db.Column(db.Boolean)
     contorno = db.Column(db.Boolean)
     colazione_sec = db.Column(db.Boolean)
-    pane = db.Column(db.Boolean)
     complemento = db.Column(db.Boolean)
     enabled = db.Column(db.Boolean)
     user_id = db.Column(db.BigInteger)
+    removed = db.Column(db.Boolean, default=False)

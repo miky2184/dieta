@@ -12,5 +12,4 @@ class RicettaBase(db.Model):
     principale = db.Column(db.Boolean, default=False)
     contorno = db.Column(db.Boolean, default=False)
     colazione_sec = db.Column(db.Boolean, default=False)
-    pane = db.Column(db.Boolean, default=False)
     complemento = db.Column(db.Boolean, default=False)

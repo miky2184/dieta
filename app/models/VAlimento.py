@@ -2,6 +2,8 @@ from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy import func
 from sqlalchemy.orm import foreign
 from . import db
+from sqlalchemy.orm import aliased
+from sqlalchemy import or_, and_, exists, not_
 
 
 class VAlimento(db.Model):
@@ -20,7 +22,29 @@ class VAlimento(db.Model):
     macro = db.Column(db.String(1))
     kcal = db.Column(db.Numeric)
     id_gruppo = db.Column(db.BigInteger)
+    nome_gruppo = db.Column(db.String)
     user_id = db.Column(db.Integer, nullable=True)
+    removed = db.Column(db.Boolean, default=False)
 
     def to_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+    def filtro_alimenti(user_id):
+        # Alias per la tabella VAlimento
+        va2 = aliased(VAlimento)
+
+        # Subquery per la clausola NOT EXISTS
+        not_exists_clause = ~exists().where(
+            and_(
+                va2.id == VAlimento.id,  # Confronta l'ID dell'alimento
+                va2.user_id == user_id  # Confronta con l'utente corrente
+            )
+        )
+
+        # Costruisci il filtro combinando le due condizioni
+        filtro = or_(
+            and_(VAlimento.user_id == user_id, not_(VAlimento.removed)),  # user_id = 2 AND not removed
+            and_(VAlimento.user_id == 0, not_exists_clause)  # user_id = 0 AND NOT EXISTS(...)
+        )
+
+        return filtro

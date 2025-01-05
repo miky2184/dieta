@@ -24,18 +24,20 @@ from sqlalchemy import insert, update, and_, or_, case, func, exists, asc, Strin
 from collections import defaultdict
 from decimal import Decimal
 from app.models.common import printer
+from app.services.common_db_service import get_sequence_value
+from app.services.ricette_services import get_ricette_service
 
 MAX_RETRY = int(os.getenv('MAX_RETRY'))
 
 LIMITI_CONSUMO = {
-    '1': 240,   # Uova
-    '2': 600,   # Pesce
-    '4': 150,   # Carne Rossa
-    '3': 400,   # Carne Bianca
-    '5': 700,   # Legumi
-    '8': 700,    # Cereali
-    '12': 100,     #Frutta secca
-    '15': 140     #Olio o grassi da condimento
+    '1': 240,   # Uova (2-4 a settimana)
+    '2': 0,     # Pesce (2-3 porzioni settimanali)
+    '4': 150,   # Carne Rossa (1 porzione settimanale)
+    '3': 350,   # Carne Bianca (1-2 porzioni settimanali)
+    '5': 800,   # Legumi (2-4 porzioni settimanali)
+    '8': 800,   # Cereali (100-120 g al giorno)
+    '12': 150,  # Frutta secca (20-30 g al giorno)
+    '15': 150   # Olio o grassi da condimento (20-30 g al giorno)
 }
 
 pasti_config = [
@@ -110,7 +112,7 @@ def genera_e_salva_menu(user_id, period, macronutrienti):
     Returns:
         None
     """
-    ricette_menu = carica_ricette(user_id, stagionalita=True, data_stagionalita=period["data_fine"])
+    ricette_menu = get_ricette_service(user_id, stagionalita=True, data_stagionalita=period["data_fine"])
     if not get_menu(user_id, period=period):
         settimana = deepcopy(get_settimana(macronutrienti))
         genera_menu(settimana, False, ricette_menu, user_id)
@@ -513,174 +515,6 @@ def controlla_limiti_macronutrienti(ricetta, day, weekly, controllo_macro_settim
         raise ValueError(f"Chiave mancante: {e}")
 
 
-def carica_ricette(user_id, ids=None, stagionalita: bool=False, attive:bool=False, complemento=None, contorno=False, data_stagionalita=None) -> list[dict]:
-    """
-    Carica tutte le ricette disponibili dal database, arricchendole con informazioni nutrizionali e ingredienti.
-
-    Args:
-        user_id (int): ID dell'utente per il quale caricare le ricette.
-        ids (list[int], optional): Filtra le ricette con gli ID specificati.
-        stagionalita (bool, optional): Se True, applica un filtro per la stagionalità degli ingredienti.
-        attive (bool, optional): Se True, filtra le ricette che sono attive.
-        complemento (bool, optional): Se specificato, filtra le ricette con o senza il flag `complemento`.
-        contorno (bool, optional): Se True, filtra le ricette con il flag `contorno` attivo.
-        data_stagionalita (date, optional): Data specifica per applicare il filtro di stagionalità (predefinito è la data corrente).
-
-    Returns:
-        list[dict]: Lista di ricette arricchite con informazioni nutrizionali, stagionalità e ingredienti.
-    """
-    # Alias per le tabelle
-    ir = aliased(VIngredientiRicetta)
-    a = aliased(VAlimento)
-    r = aliased(VRicetta)
-
-    # Subquery per calcolare 'ricetta' con COALESCE per gestire informazioni base e override
-    ricetta_subquery = (
-        db.session.query(
-            func.string_agg(a.nome + ': ' + func.cast(ir.qta, String) + 'g', ', ')
-        ).distinct()
-        .join(ir, ir.id_alimento == a.id)
-        .filter(ir.id_ricetta == r.id)
-        .filter(func.coalesce(ir.user_id, user_id) == user_id)
-        .filter(ir.removed == False)
-        .correlate(r)
-        .label('ricetta')
-    )
-
-        # Subquery per gli ingredienti della ricetta
-    ingredienti_subquery = (
-        db.session.query(
-            ir.id_ricetta.label("id_ricetta"),
-            a.id_gruppo.label("id_gruppo"),
-            func.sum(ir.qta).label("qta_totale")
-        )
-        .join(a, ir.id_alimento == a.id)
-        .filter(func.coalesce(ir.user_id, user_id) == user_id, ir.removed == False)
-        .group_by(ir.id_ricetta, a.id_gruppo)
-        .subquery()
-    )
-
-    # Base query
-    query = db.session.query(
-        r.user_id,
-        r.id,
-        r.nome_ricetta,
-        func.ceil(func.sum(
-            (a.carboidrati / 100 * ir.qta * 4) +
-            (a.proteine / 100 * ir.qta * 4) +
-            (a.grassi / 100 * ir.qta * 9) +
-            (a.fibre / 100 * ir.qta * 2)
-        ).over(partition_by=r.id)).label('kcal'),
-        func.round(func.sum(a.carboidrati / 100 * ir.qta).over(partition_by=r.id), 2).label('carboidrati'),
-        func.round(func.sum(a.proteine / 100 * ir.qta).over(partition_by=r.id), 2).label('proteine'),
-        func.round(func.sum(a.grassi / 100 * ir.qta).over(partition_by=r.id), 2).label('grassi'),
-        func.round(func.sum(a.fibre / 100 * ir.qta).over(partition_by=r.id), 2).label('fibre'),
-        r.colazione,
-        r.spuntino,
-        r.principale,
-        r.contorno,
-        r.colazione_sec,
-        r.complemento,
-        r.enabled.label('attiva'),
-        func.coalesce(ricetta_subquery, '').label('ricetta'),
-        func.cast(
-            func.json_agg(
-                func.json_build_object(
-                    'id_gruppo', ingredienti_subquery.c.id_gruppo,
-                    'qta_totale', ingredienti_subquery.c.qta_totale
-                )
-            ), String
-        ).label("ingredienti")
-    ).outerjoin(
-        ir, ir.id_ricetta == r.id
-    ).outerjoin(
-        a, ir.id_alimento == a.id
-    ).outerjoin(
-        ingredienti_subquery, ingredienti_subquery.c.id_ricetta == r.id
-    ).filter(
-        func.coalesce(r.user_id, user_id) == user_id
-    )
-
-    # Applicazione dei filtri
-    if stagionalita:
-        data = func.current_date()
-        if data_stagionalita:
-            data = data_stagionalita
-
-        query = query.filter(
-            or_(
-                and_(
-                    a.id_gruppo == 6, (extract('month', data) == func.any(a.stagionalita))
-                ),
-                (
-                        a.id_gruppo != 6)
-                )
-        )
-
-    if ids:
-        query = query.filter(r.id == ids)
-
-    if attive:
-        query = query.filter(r.enabled.is_(True), func.coalesce(r.user_id, user_id) == user_id)
-
-    if complemento:
-        query = query.filter(r.complemento.is_(True), func.coalesce(r.user_id, user_id) == user_id)
-    elif complemento is False:
-        query = query.filter(r.complemento.is_(False), func.coalesce(r.user_id, user_id) == user_id)
-
-    if contorno:
-        query = query.filter(r.contorno.is_(True), func.coalesce(r.user_id, user_id) == user_id)
-
-    # Raggruppamento e ordinamento
-    query = query.group_by(
-        r.user_id,
-        r.id,
-        r.nome_ricetta,
-        a.carboidrati,
-        a.proteine,
-        a.grassi,
-        a.fibre,
-        ir.qta,
-        r.colazione,
-        r.spuntino,
-        r.principale,
-        r.contorno,
-        r.colazione_sec,
-        r.complemento,
-        r.enabled
-    ).order_by(
-        r.enabled.desc(),
-        r.nome_ricetta
-    )
-
-    # Esecuzione della query
-    results = query.distinct().all()
-    # Conversione dei risultati in una lista di dizionari serializzabili in JSON
-    ricette = []
-    for row in results:
-        ricette.append({
-            'user_id': row.user_id,
-            'id': row.id,
-            'nome_ricetta': row.nome_ricetta,
-            'kcal': float(row.kcal or 0),
-            'carboidrati': float(row.carboidrati or 0),
-            'proteine': float(row.proteine or 0),
-            'grassi': float(row.grassi or 0),
-            'fibre': float(row.fibre or 0),
-            'colazione': row.colazione,
-            'spuntino': row.spuntino,
-            'principale': row.principale,
-            'contorno': row.contorno,
-            'colazione_sec': row.colazione_sec,
-            'complemento': row.complemento,
-            'attiva': row.attiva,
-            'ricetta': row.ricetta,
-            'ingredienti': json.loads(row.ingredienti) if row.ingredienti else []  # Include gli ingredienti
-        })
-
-    return ricette
-
-
 def ordina_settimana_per_kcal(settimana) -> dict:
     """
     Ordina i giorni della settimana in base alle calorie giornaliere rimanenti in ordine decrescente.
@@ -1026,78 +860,6 @@ def get_settimana(macronutrienti: Utente):
             }
 
 
-def aggiorna_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, complemento, ricetta_id, user_id):
-    ricetta_base = VRicetta.query.filter(VRicetta.id==ricetta_id).filter(func.coalesce(VRicetta.user_id, user_id)==user_id).first()
-    ricetta = Ricetta.query.filter_by(id=ricetta_base.id, user_id=user_id).first()
-
-    if not ricetta:
-        ricetta = Ricetta(
-            id = ricetta_base.id,
-            nome_ricetta_override = nome.upper(),
-            colazione_override = colazione,
-            colazione_sec_override = colazione_sec,
-            spuntino_override = spuntino,
-            principale_override = principale,
-            contorno_override = contorno,
-            complemento_override = complemento,
-            user_id=user_id
-        )
-    else:
-        ricetta.nome_ricetta_override = nome.upper()
-        ricetta.colazione_override = colazione
-        ricetta.colazione_sec_override = colazione_sec
-        ricetta.spuntino_override = spuntino
-        ricetta.principale_override = principale
-        ricetta.contorno_override = contorno
-        ricetta.complemento_override = complemento
-
-    db.session.add(ricetta)
-    db.session.commit()
-
-def attiva_o_disattiva_ricetta(ricetta_id, user_id):
-    ricetta = (Ricetta.query.filter(Ricetta.id == ricetta_id)
-               .filter(Ricetta.user_id == user_id)).first()
-
-    if not ricetta:
-        ricetta = Ricetta(
-            id=ricetta_id,
-            user_id=user_id,
-            enabled=False
-        )
-    else:
-        ricetta.id = ricetta_id
-        ricetta.user_id = user_id
-        ricetta.enabled = not ricetta.enabled
-
-    db.session.add(ricetta)
-    db.session.commit()
-
-
-def get_ricette(recipe_id, user_id):
-
-    ir = aliased(VIngredientiRicetta)
-    r = aliased(VRicetta)
-    a = aliased(VAlimento)
-
-    results = (db.session.query(a.id, a.nome, r.id.label('id_ricetta'), r.nome_ricetta, ir.qta)
-               .join(a, and_(a.id == ir.id_alimento))
-               .join(r, and_(r.id == ir.id_ricetta))
-               .filter(func.coalesce(ir.user_id, user_id) == user_id)
-               .filter(ir.id_ricetta == recipe_id)
-               .filter(ir.removed == False).all())
-
-    r = []
-    for res in results:
-        r.append({
-            "id": res.id,
-            "nome": res.nome,
-            "nome_ricetta": res.nome_ricetta,
-            "qta": res.qta,
-            "id_ricetta": res.id_ricetta
-        })
-
-    return r
-
 
 def elimina_ingredienti(ingredient_id: int, recipe_id: int, user_id: int):
     ingredienti_ricetta = (IngredientiRicetta.query.filter(IngredientiRicetta.id_ricetta_base == recipe_id,
@@ -1273,133 +1035,8 @@ def calcola_macronutrienti_rimanenti(menu: json):
     return remaining_macronutrienti
 
 
-def carica_alimenti(user_id):
-    results = (db.session.query(
-        VAlimento.id,
-        VAlimento.nome,
-        VAlimento.carboidrati,
-        VAlimento.proteine,
-        VAlimento.grassi,
-        VAlimento.fibre,
-        VAlimento.kcal,
-        VAlimento.vegan,
-        VAlimento.confezionato,
-        GruppoAlimentare.nome.label("gruppo")
-    )
-    .join(GruppoAlimentare, VAlimento.id_gruppo == GruppoAlimentare.id, isouter=True)
-    .filter(func.coalesce(VAlimento.user_id, user_id) == user_id)
-    .order_by(VAlimento.nome)
-    ).all()
-
-    alimenti = [{
-        'id': r.id,
-        'nome': r.nome,
-        'carboidrati': r.carboidrati,
-        'proteine': r.proteine,
-        'grassi': r.grassi,
-        'fibre': r.fibre,
-        'kcal': r.kcal,
-        'vegan': r.vegan,
-        'confezionato': r.confezionato,
-        'gruppo': r.gruppo or "N/A"
-    } for r in results]
-    return alimenti
-
-
-def update_alimento(id, nome, carboidrati, proteine, grassi, fibre, confezionato, vegan, id_gruppo, user_id):
-    alimento_base = (VAlimento.query.filter(VAlimento.id==id, func.coalesce(VAlimento.user_id, user_id)==user_id)).first()
-    alimento = Alimento.query.filter_by(id=alimento_base.id, user_id=user_id).first()
-    if not alimento:
-        alimento = Alimento(
-            id=id,
-            id_alimento_base=id,
-            nome_override=nome.upper(),
-            carboidrati_override=carboidrati,
-            proteine_override=proteine,
-            grassi_override=grassi,
-            fibre_override=fibre,
-            confezionato_override=confezionato,
-            vegan_override=vegan,
-            id_gruppo_override = id_gruppo if id_gruppo is not None else alimento_base.id_gruppo,
-            user_id=user_id
-        )
-        db.session.add(alimento)
-    else:
-        alimento.nome_override = nome.upper()
-        alimento.carboidrati_override = carboidrati
-        alimento.proteine_override = proteine
-        alimento.grassi_override = grassi
-        alimento.fibre_override = fibre
-        alimento.confezionato_override = confezionato
-        alimento.vegan_override = vegan
-        alimento.id_gruppo_override = id_gruppo
-
-    db.session.commit()
-
-
-def elimina_alimento(alimento_id, user_id):
-    Alimento.query.filter_by(id=alimento_id, user_id=user_id).delete()
-    db.session.commit()
-
-
-def get_sequence_value(seq_name):
-
-    # Creare una query per ottenere il valore successivo dalla sequenza
-    nextval_query = select(func.nextval(seq_name))
-
-    # Eseguire la query con il metodo session.execute()
-    result = db.session.execute(nextval_query)
-
-    # Estrarre il valore dal risultato
-    nextval = result.scalar()
-
-    return nextval
-
-
-def salva_nuovo_alimento(name, carboidrati, proteine, grassi, fibre, confezionato, vegan, gruppo, user_id):
-
-    alimento = Alimento(
-        id=get_sequence_value('dieta.seq_id_alimento'),
-        nome_override=name.upper(),
-        carboidrati_override=carboidrati,
-        proteine_override=proteine,
-        grassi_override=grassi,
-        fibre_override=fibre,
-        confezionato_override=confezionato,
-        vegan_override=vegan,
-        id_gruppo_override=gruppo,
-        user_id=user_id
-    )
-
-    db.session.add(alimento)
-    db.session.commit()
-
-    alimento_id = alimento.id
-
-    if confezionato:
-        ricetta_id = get_sequence_value('dieta.seq_id_ricetta')
-        ricetta = Ricetta(
-            id=ricetta_id,
-            nome_ricetta=name.upper(),
-            user_id=user_id
-        )
-
-        db.session.add(ricetta)
-        db.session.commit()
-
-        ingredienti_ricetta = IngredientiRicetta(
-            id_ricetta=ricetta_id,
-            id_alimento=alimento_id,
-            qta=100,
-            user_id=user_id
-        )
-
-        db.session.add(ingredienti_ricetta)
-        db.session.commit()
-
-
 def aggiungi_ricetta_al_menu(menu, day, meal, meal_id, user_id):
-    ricetta = carica_ricette(user_id, ids=meal_id)
+    ricetta = get_ricette_service(user_id, ids=meal_id)
     ricetta[0]['qta'] = 1
     menu['all_food'].append(ricetta[0]['id'])
     menu['day'][day]['pasto'][meal]['ids'].append(ricetta[0]['id'])

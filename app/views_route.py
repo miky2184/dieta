@@ -1,30 +1,30 @@
-from flask import Blueprint, render_template, redirect, url_for, request, send_file, jsonify, current_app
-from .services.menu_services import (get_utente, save_weight, genera_menu,
-                                     stampa_lista_della_spesa, get_menu,
-                                     carica_ricette, get_settimane_salvate,
-                                     salva_menu, get_settimana, aggiorna_ricetta,
-                                     attiva_o_disattiva_ricetta, get_ricette, elimina_ingredienti, salva_utente_dieta,
-                                     salva_nuova_ricetta, salva_ingredienti,
-                                     get_peso_hist, get_dati_utente,
-                                     calcola_macronutrienti_rimanenti,
-                                     carica_alimenti, update_alimento, elimina_alimento, salva_nuovo_alimento,
-                                     aggiungi_ricetta_al_menu, update_menu_corrente, rimuovi_pasto_dal_menu,
-                                     delete_week_menu, ordina_settimana_per_kcal, genera_menu_utente,
-                                     recupera_ricette_per_alimento, copia_menu, recupera_settimane, cancella_tutti_pasti_menu,
-                                     recupera_ingredienti_ricetta, get_gruppi_data)
-from copy import deepcopy
-import time
-from reportlab.lib.pagesizes import letter, landscape
-from reportlab.pdfgen import canvas
-from reportlab.lib.utils import ImageReader
-from reportlab.lib.units import inch
-from io import BytesIO
 import base64
+from copy import deepcopy
+from datetime import datetime
+from io import BytesIO
+
 from PIL import Image
+from flask import Blueprint, render_template, redirect, url_for, request, send_file, jsonify, current_app
 from flask_login import login_required, current_user
-from app.models.models import db
-from datetime import datetime, timedelta
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.lib.units import inch
+from reportlab.lib.utils import ImageReader
+from reportlab.pdfgen import canvas
 from sqlalchemy.exc import SQLAlchemyError
+
+from app.models.models import db
+from app.services.menu_services import (get_utente, save_weight, stampa_lista_della_spesa, get_menu,
+                                        get_settimane_salvate,
+                                        elimina_ingredienti, salva_utente_dieta,
+                                        salva_nuova_ricetta, salva_ingredienti,
+                                        get_peso_hist, get_dati_utente,
+                                        calcola_macronutrienti_rimanenti,
+                                        aggiungi_ricetta_al_menu, update_menu_corrente, rimuovi_pasto_dal_menu,
+                                        delete_week_menu, genera_menu_utente,
+                                        recupera_ricette_per_alimento, copia_menu, recupera_settimane,
+                                        cancella_tutti_pasti_menu,
+                                        recupera_ingredienti_ricetta, get_gruppi_data)
+from app.services.ricette_services import get_ricette_service, attiva_disattiva_ricetta_service
 
 views = Blueprint('views', __name__)
 
@@ -108,38 +108,6 @@ def dashboard():
                            )
 
 
-@views.route('/recupera_alimenti')
-@current_app.cache.cached(timeout=300, key_prefix=lambda: f"recupera_alimenti_{current_user.user_id}")
-@login_required
-def recupera_alimenti():
-    user_id = current_user.user_id
-    try:
-        # Recupera tutti gli alimenti dal database.
-        alimenti = carica_alimenti(user_id)
-        return jsonify({'status': 'success', 'alimenti': alimenti}), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-@views.route('/recupera_ricette', methods=['GET', 'POST'])
-@current_app.cache.cached(timeout=300, key_prefix=lambda: f"recupera_ricette_{current_user.user_id}")
-@login_required
-def recupera_ricette():
-    user_id = current_user.user_id
-    try:
-        # Recupera le ricette disponibili dal database.
-        ricette = carica_ricette(user_id, stagionalita=False)
-        return jsonify({"status": 'success', 'ricette': ricette}), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
 @views.route('/generate_menu', methods=['POST'])
 @login_required
 def generate_menu():
@@ -204,77 +172,6 @@ def get_lista_spesa(settimana_id):
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
-@views.route('/salva_ricetta', methods=['POST'])
-@login_required
-def salva_ricetta():
-    """
-    Questa funzione salva o aggiorna una ricetta nel database in base ai dati forniti dal client.
-    """
-    user_id = current_user.user_id
-    try:
-        data = request.get_json()
-        ricetta_id = data['id']
-        colazione = data['colazione']
-        colazione_sec = data['colazione_sec']
-        spuntino = data['spuntino']
-        principale = data['principale']
-        contorno = data['contorno']
-        nome = data['nome']
-        complemento = data['complemento']
-
-        aggiorna_ricetta(nome, colazione, colazione_sec, spuntino, principale, contorno, complemento, ricetta_id, user_id)
-
-        current_app.cache.delete(f'recupera_ricette_{user_id}')
-        return jsonify({'status': 'success', 'message': 'Ricetta salvata con successo!'}), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-@views.route('/attiva_disattiva_ricetta', methods=['POST'])
-@login_required
-def attiva_disattiva_ricetta():
-    """
-    Questa funzione attiva o disattiva una ricetta specifica nel database, basandosi sull'ID della ricetta.
-    """
-    user_id = current_user.user_id
-    try:
-        data = request.get_json()
-        ricetta_id = data['id']
-
-        attiva_o_disattiva_ricetta(ricetta_id, user_id)
-
-        current_app.cache.delete(f'recupera_ricette_{user_id}')
-        return jsonify({'status': 'success', 'message': 'Ricetta modificata con successo!'}), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-
-@views.route('/get_ricetta/<int:recipe_id>', methods=['GET'])
-@current_app.cache.cached(timeout=300, key_prefix=lambda: f"recipe_{request.view_args['recipe_id']}_{current_user.user_id}")
-@login_required
-def recipe(recipe_id):
-    """
-    Questa funzione restituisce i dettagli di una ricetta specifica basata sul suo ID.
-    """
-    user_id = current_user.user_id
-    try:
-        ricette = get_ricette(recipe_id, user_id)
-        return jsonify({'status': 'success', 'ricette': ricette}), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-
 @views.route('/delete_ingredienti', methods=['POST'])
 @login_required
 def delete_ingredienti():
@@ -288,8 +185,8 @@ def delete_ingredienti():
         user_id = current_user.user_id
 
         elimina_ingredienti(ingredient_id, recipe_id, user_id)
-        current_app.cache.delete(f'recupera_ricette_{user_id}')
-        current_app.cache.delete(f'recipe_{recipe_id}_{user_id}')
+        current_app.cache.delete(f'list_ricette_{user_id}')
+        current_app.cache.delete(f'ricette_{recipe_id}_{user_id}')
         return jsonify({'status': 'success', 'message': 'Ingrediente eliminato correttamente.'}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
@@ -298,24 +195,6 @@ def delete_ingredienti():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-
-@views.route('/get_all_ingredients', methods=['GET'] )
-@login_required
-@current_app.cache.cached(timeout=300, key_prefix=lambda: f"get_all_ingredients_{current_user.user_id}")
-def get_all_ingredients():
-    """
-    Questa funzione restituisce tutti gli ingredienti disponibili nel database.
-    """
-    user_id = current_user.user_id
-    try:
-        alimenti = carica_alimenti(user_id)
-        return jsonify({'status': 'success', 'alimenti': alimenti}), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
 @views.route('/modifica_ingredienti_ricetta', methods=['POST'])
@@ -332,8 +211,8 @@ def modifica_ingredienti_ricetta():
         quantity = data['quantity']
 
         salva_ingredienti(recipe_id, ingredient_id, quantity, user_id)
-        current_app.cache.delete(f'recupera_ricette_{user_id}')
-        current_app.cache.delete(f'recipe_{recipe_id}_{user_id}')
+        current_app.cache.delete(f'list_ricette_{user_id}')
+        current_app.cache.delete(f'ricette_{recipe_id}_{user_id}')
         return jsonify({'status': 'success', 'message': 'Ingrediente inserito correttamente.'}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
@@ -357,8 +236,8 @@ def update_ingredient():
         quantity = data['quantity']
 
         salva_ingredienti(recipe_id, ingredient_id, quantity, user_id)
-        current_app.cache.delete(f'recipe_{recipe_id}_{user_id}')
-        current_app.cache.delete(f'recupera_ricette_{user_id}')
+        current_app.cache.delete(f'ricette_{recipe_id}_{user_id}')
+        current_app.cache.delete(f'list_ricette_{user_id}')
         return jsonify({'status': 'success', 'message': 'Quantità aggiornata correttamente.'}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
@@ -385,43 +264,9 @@ def nuova_ricetta():
         complemento = 'complemento' in request.form
 
         salva_nuova_ricetta(name.upper(), breakfast, snack, main, side, second_breakfast, complemento, user_id)
-        current_app.cache.delete(f'recupera_ricette_{user_id}')
+        current_app.cache.delete(f'list_ricette_{user_id}')
 
         return jsonify({"status": "success"}), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-
-@views.route('/nuovo_alimento', methods=['POST'])
-@login_required
-def nuovo_alimento():
-    """
-    Questa funzione salva un nuovo alimento basato sui dati forniti dal form.
-    """
-    user_id = current_user.user_id
-    try:
-        name = request.form['alimento']
-        carboidrati = request.form['carbs']
-        proteine = request.form['prot']
-        grassi = request.form['fat']
-        fibre = request.form['fibre']
-        confezionato = 'confezionato' in request.form
-        vegan = 'vegan' in request.form
-        gruppo = request.form['gruppo']
-
-        salva_nuovo_alimento(name, carboidrati, proteine, grassi, fibre,
-                             confezionato, vegan, gruppo, user_id)
-
-        current_app.cache.delete(f'dashboard_{user_id}')
-        current_app.cache.delete(f'get_all_ingredients_{user_id}')
-        current_app.cache.delete(f'recupera_alimenti_{user_id}')
-        current_app.cache.delete(f'recupera_ricette_{user_id}')
-
-        return jsonify({'status': 'success'}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
     except KeyError as key_err:
@@ -539,63 +384,10 @@ def get_data_utente():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-@views.route('/aggiorna_alimento', methods=['POST'])
+
+@views.route('/get_ricette_disponibili', methods=['GET'])
 @login_required
-def aggiorna_alimento():
-    """
-    Questa funzione salva un alimento esistente nel database, aggiornandone i dati.
-    """
-    user_id = current_user.user_id
-    try:
-        data = request.get_json()
-        alimento_id = data.get('id')
-        nome = data.get('nome')
-        carboidrati = data.get('carboidrati')
-        proteine = data.get('proteine')
-        grassi = data.get('grassi')
-        fibre = data.get('fibre')
-        confezionato = data.get('confezionato')
-        vegan = data.get('vegan')
-        gruppo = data.get('gruppo')
-
-        update_alimento(alimento_id, nome, carboidrati, proteine, grassi, fibre, confezionato, vegan, gruppo, user_id)
-        current_app.cache.delete(f'get_all_ingredients_{user_id}')
-        current_app.cache.delete(f'recupera_alimenti_{user_id}')
-        return jsonify({'status': 'success', 'message': 'Alimento salvato con successo!'}), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-
-@views.route('/delete_alimento', methods=['POST'])
-@login_required
-def delete_alimento():
-    """
-    Questa funzione elimina un alimento dal database basandosi sul suo ID.
-    """
-    user_id = current_user.user_id
-    try:
-        data = request.get_json()
-        alimento_id = data.get('id')
-
-        elimina_alimento(alimento_id, user_id)
-        current_app.cache.delete(f'get_all_ingredients_{user_id}')
-        current_app.cache.delete(f'recupera_alimenti_{user_id}')
-        return jsonify({'status': 'success', 'message': 'Alimento eliminato con successo!'}), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-
-@views.route('/get_available_meals', methods=['GET'])
-@login_required
-def get_available_meals():
+def get_ricette_disponibili():
     """
     Questa funzione restituisce le ricette disponibili per un pasto specifico in un giorno specifico,
     escludendo quelle già presenti nel menu corrente.
@@ -621,7 +413,7 @@ def get_available_meals():
         menu_corrente = get_menu(user_id, ids=week_id)
 
         # Recupera tutte le ricette attive
-        ricette = carica_ricette(user_id, stagionalita=True, attive=True, complemento=False, data_stagionalita=menu_corrente['data_fine'])
+        ricette = get_ricette_service(user_id, stagionalita=True, attive=True, complemento=False, data_stagionalita=menu_corrente['data_fine'])
 
         # Filtra le ricette disponibili in base al tipo di pasto
         available_meals = [ricetta for ricetta in ricette if
@@ -1037,7 +829,7 @@ def get_complemento():
 
     try:
         # Recupera tutte le ricette complemento
-        ricette = carica_ricette(user_id, complemento=True)
+        ricette = get_ricette_service(user_id, complemento=True)
 
         # Filtra le ricette disponibili in base al tipo di pasto
         available_meals = [ricetta for ricetta in ricette if
@@ -1067,7 +859,7 @@ def get_contorno():
     user_id = current_user.user_id
     try:
         # Recupera tutte le ricette complemento
-        results = carica_ricette(user_id, attive=True, contorno=True)
+        results = get_ricette_service(user_id, attive=True, contorno=True)
 
         return jsonify({'status':'success', 'ricette':results}), 200
     except SQLAlchemyError as db_err:

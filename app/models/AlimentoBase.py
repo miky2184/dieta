@@ -1,5 +1,5 @@
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy import Computed
 from . import db
 
 class AlimentoBase(db.Model):
@@ -11,18 +11,22 @@ class AlimentoBase(db.Model):
     carboidrati = db.Column(db.Numeric)
     proteine = db.Column(db.Numeric)
     grassi = db.Column(db.Numeric)
-    fibre = db.Column(db.Numeric, default=0)
-    frutta = db.Column(db.Boolean, default=False)
-    carne_bianca = db.Column(db.Boolean, default=False)
-    carne_rossa = db.Column(db.Boolean, default=False)
-    pane = db.Column(db.Boolean, default=False)
     stagionalita = db.Column(ARRAY(db.BigInteger))
-    verdura = db.Column(db.Boolean, default=False)
     confezionato = db.Column(db.Boolean, default=False)
     vegan = db.Column(db.Boolean, default=False)
-    pesce = db.Column(db.Boolean, default=False)
-    macro = db.Column(db.String(1))  # Generato
-    kcal = db.Column(db.Numeric)  # Generato
+    macro = db.Column(db.String(1), Computed("""
+            CASE
+                WHEN (carboidrati * 4) >= (proteine * 4) AND (carboidrati * 4) >= (grassi * 9) THEN 'C'
+                WHEN (proteine * 4) >= (carboidrati * 4) AND (proteine * 4) >= (grassi * 9) THEN 'P'
+                WHEN (grassi * 9) >= (proteine * 4) AND (grassi * 9) >= (carboidrati * 4) THEN 'G'
+                ELSE NULL
+            END
+            """, persisted=True))
+    fibre = db.Column(db.Numeric, default=0)
+    kcal = db.Column(db.Numeric,
+                              Computed("((carboidrati * 4) + (proteine * 4) + (grassi * 9) + (fibre * 2))",
+                                       persisted=True))
+
     id_gruppo = db.Column(db.BigInteger, db.ForeignKey('dieta.gruppo_alimentare.id', ondelete="CASCADE"))
 
     # Relazione con GruppoAlimentare

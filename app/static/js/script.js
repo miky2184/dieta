@@ -271,7 +271,7 @@ function aggiornaTabellaListaDellaSpesa() {
 }
 
 function saveRicetta(ricettaData) {
-    fetch('/salva_ricetta', {
+    fetch('/ricette', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -287,13 +287,12 @@ function saveRicetta(ricettaData) {
         });
 }
 
-function toggleStatusRicetta(ricettaData) {
-    fetch('/attiva_disattiva_ricetta', {
-            method: 'POST',
+function toggleStatusRicetta(ricettaId) {
+    fetch(`/ricette/${ricettaId}/stato`, {
+            method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(ricettaData)
+            }
         })
         .then(response => response.json())
         .then(data => {
@@ -633,11 +632,7 @@ function populateRicetteTable(ricette) {
         button.addEventListener('click', function() {
             const ricettaId = this.getAttribute('data-ricetta-id');
             const ricettaAttiva = this.getAttribute('data-ricetta-attiva') === 'true';
-            const ricettaData = {
-                id: ricettaId,
-                attiva: !ricettaAttiva
-            };
-            toggleStatusRicetta(ricettaData);
+            toggleStatusRicetta(ricettaId);
             const checkbox = document.querySelector(`.attiva-checkbox[data-ricetta-id='${ricettaId}']`);
             if (checkbox) {
                 checkbox.checked = !checkbox.checked;
@@ -649,7 +644,7 @@ function populateRicetteTable(ricette) {
     document.querySelectorAll('.edit-btn').forEach(button => {
         button.addEventListener('click', function() {
             const recipeId = this.getAttribute('data-ricetta-id');
-            fetch(`/get_ricetta/${recipeId}`)
+            fetch(`/ingredienti_ricetta/${recipeId}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.status == 'success'){
@@ -906,8 +901,8 @@ function calculateResults() {
 
 // Funzione per salvare l'alimento
 function saveAlimento(alimentoData) {
-    fetch('/aggiorna_alimento', {
-            method: 'POST',
+    fetch(`/alimenti/${alimentoData.id}`, {
+            method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -924,14 +919,11 @@ function saveAlimento(alimentoData) {
 
 // Funzione per eliminare l'alimento
 function deleteAlimento(alimentoId) {
-    fetch('/delete_alimento', {
-            method: 'POST',
+    fetch(`/alimenti/${alimentoId}`, {
+            method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                id: alimentoId
-            })
+            }
         })
         .then(response => response.json())
         .then(data => {
@@ -1356,7 +1348,7 @@ function addNewMeal(day, meal) {
     currentMeal = meal;
 
     // Fetch delle ricette disponibili per quel pasto
-    fetch(`/get_available_meals?meal=${meal}&day=${day}&week_id=${selectedWeekId}`)
+    fetch(`/get_ricette_disponibili?meal=${meal}&day=${day}&week_id=${selectedWeekId}`)
         .then(response => response.json())
         .then(data => {
             const mealSelectionBody = document.getElementById('mealSelectionBody');
@@ -1737,7 +1729,7 @@ function deleteMenu() {
 }
 
 function recupera_tutte_le_ricette()  {
-            fetch('/recupera_ricette')
+            fetch('/ricette')
                 .then(response => response.json())
                 .then(data => {
                     if (data) {
@@ -1749,7 +1741,7 @@ function recupera_tutte_le_ricette()  {
 
 
 function fetchAlimentiData() {
-    fetch('/recupera_alimenti')
+    fetch('/alimenti')
         .then(response => response.json())
         .then(data => {
             populateAlimentiTable(data.alimenti);
@@ -2001,7 +1993,7 @@ document.getElementById('addFoodForm').addEventListener('submit', function(event
     const form = event.target;
     const formData = new FormData(form);
 
-    fetch('/nuovo_alimento', {
+    fetch('/alimento', {
         method: 'POST',
         body: formData
     }).then(response => response.json())
@@ -2243,7 +2235,7 @@ document.getElementById('addFoodForm').addEventListener('submit', function(event
             const select = document.getElementById('ingredient-select');
             select.innerHTML = '';
 
-            fetch('/get_all_ingredients')
+            fetch('/alimenti')
                 .then(response => response.json())
                 .then(data => {
                     if (data.status == 'success'){

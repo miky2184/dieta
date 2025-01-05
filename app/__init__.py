@@ -31,11 +31,15 @@ def create_app():
 
     with app.app_context():
         cache.clear()
-        from .auth import auth as auth_blueprint
-        from .views import views
-        from .admin import admin
+        from .auth_route import auth as auth_blueprint
+        from .views_route import views
+        from .admin_route import admin
+        from .alimenti_route import alimenti
+        from .ricette_route import ricette
         app.register_blueprint(views)
         app.register_blueprint(auth_blueprint)
         app.register_blueprint(admin)
+        app.register_blueprint(alimenti)
+        app.register_blueprint(ricette)
 
     return app

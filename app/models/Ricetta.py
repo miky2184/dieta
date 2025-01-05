@@ -13,7 +13,6 @@ class Ricetta(db.Model):
     principale_override = db.Column(db.Boolean)
     contorno_override = db.Column(db.Boolean)
     colazione_sec_override = db.Column(db.Boolean)
-    pane_override = db.Column(db.Boolean)
     complemento_override = db.Column(db.Boolean)
     enabled = db.Column(db.Boolean)
 
