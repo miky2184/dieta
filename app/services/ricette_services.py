@@ -65,28 +65,6 @@ def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool
         )
     )
 
-    # Subquery per generare la lista degli ingredienti
-    ingredienti_subquery = (
-        db.session.query(
-            vir1.id_ricetta.label("id_ricetta"),
-            func.string_agg(
-                concat(va1.nome, ":", func.cast(vir1.qta, String), "g"), ", "
-            ).label("ingredienti")
-        )
-        .join(
-            va1,
-            and_(
-                va1.id == vir1.id_alimento,
-                or_(
-                    and_(vir1.user_id == user_id, not_(vir1.removed)),
-                    and_(vir1.user_id == literal(0), not_exists_vir)
-                )
-            )
-        )
-        .group_by(vir1.id_ricetta)
-        .subquery()
-    )
-
     # Filtri di NOT EXISTS per VAlimento
     not_exists_va = ~exists().where(
         and_(
@@ -139,9 +117,9 @@ def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool
             vr1.contorno,
             vr1.colazione_sec,
             vr1.complemento,
-            vr1.enabled.label('attiva'),
-            ingredienti_subquery.c.ingredienti.label('ricetta')
+            vr1.enabled.label('attiva')
         )
+        .select_from(vr1)
         .outerjoin(
             vir1,
             and_(
@@ -219,7 +197,7 @@ def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool
             'colazione_sec': row.colazione_sec,
             'complemento': row.complemento,
             'attiva': row.attiva,
-            'ricetta': row.ricetta,
+            'ricetta': '',
             'ingredienti': '' #json.loads(row.ingredienti) if row.ingredienti else []  # Include gli ingredienti
         })
 
@@ -248,19 +226,6 @@ def get_ricette_service_aaa(user_id, ids=None, stagionalita: bool=False, attive:
     ir = aliased(VIngredientiRicetta)
     a = aliased(VAlimento)
     r = aliased(VRicetta)
-
-    # Subquery per calcolare 'ricetta' con COALESCE per gestire informazioni base e override
-    ricetta_subquery = (
-        db.session.query(
-            func.string_agg(a.nome + ': ' + func.cast(ir.qta, String) + 'g', ', ')
-        ).distinct()
-        .join(ir, ir.id_alimento == a.id)
-        .filter(ir.id_ricetta == r.id)
-        .filter(func.coalesce(ir.user_id, user_id) == user_id)
-        .filter(ir.removed == False)
-        .correlate(r)
-        .label('ricetta')
-    )
 
     # Subquery per gli ingredienti della ricetta
     ingredienti_subquery = (
@@ -297,7 +262,6 @@ def get_ricette_service_aaa(user_id, ids=None, stagionalita: bool=False, attive:
         r.colazione_sec,
         r.complemento,
         r.enabled.label('attiva'),
-        func.coalesce(ricetta_subquery, '').label('ricetta'),
         func.cast(
             func.json_agg(
                 func.json_build_object(
@@ -389,7 +353,6 @@ def get_ricette_service_aaa(user_id, ids=None, stagionalita: bool=False, attive:
             'colazione_sec': row.colazione_sec,
             'complemento': row.complemento,
             'attiva': row.attiva,
-            'ricetta': row.ricetta,
             'ingredienti': json.loads(row.ingredienti) if row.ingredienti else []  # Include gli ingredienti
         })
 

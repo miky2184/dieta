@@ -23,7 +23,7 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.sql import extract
 from sqlalchemy.dialects.postgresql import insert
 import json
-from sqlalchemy import insert, update, and_, or_, case, func, exists, asc, String, true, false, select, desc
+from sqlalchemy import insert, update, and_, or_, case, func, exists, asc, String, true, false, select, desc, not_
 from collections import defaultdict
 from decimal import Decimal
 from app.services.util_services import printer
@@ -123,6 +123,7 @@ def genera_e_salva_menu(user_id, period, macronutrienti):
         settimana_ordinata = ordina_settimana_per_kcal(settimana)
         genera_menu(settimana_ordinata, True, ricette_menu, user_id)
         salva_menu(settimana_ordinata, user_id, period=period)
+
 
 def verifica_e_seleziona(settimana, giorno, pasto, tipo, ripetibile, min_ricette, controllo_macro, ricette, user_id):
     """
@@ -336,6 +337,7 @@ def aggiorna_settimana(settimana, giorno_settimana, pasto, ricetta, percentuale,
     # Aggiorna i consumi settimanali per i gruppi alimentari
     aggiorna_limiti_gruppi(ricetta, settimana['consumi'])
 
+
 def determina_ids_disponibili(ricette, settimana, giorno_settimana, pasto, ripetibile, ids_specifici) -> list:
     """
     Determina gli ID delle ricette disponibili in base ai criteri forniti.
@@ -460,32 +462,78 @@ def recupera_ingredienti_ricetta(ricetta_id, user_id, percentuale) -> str:
         str: Una stringa che rappresenta gli ingredienti e le quantità della ricetta, formattata come:
              "Ingrediente1: Quantità1g, Ingrediente2: Quantità2g, ..."
     """
-    ir = aliased(VIngredientiRicetta)
-    r = aliased(VRicetta)
-    a = aliased(VAlimento)
+    vir = aliased(VIngredientiRicetta)
+    vir2 = aliased(VIngredientiRicetta)
+    va = aliased(VAlimento)
+    va2 = aliased(VAlimento)
 
-    ricetta_subquery = (
+    # Subquery per il filtro NOT EXISTS per VAlimento
+    not_exists_va = (
+        db.session.query(va2.id)
+        .filter(
+            and_(
+                va2.id == va.id,
+                va2.user_id == user_id
+            )
+        )
+        .exists()
+    )
+
+    # Subquery per il filtro NOT EXISTS per VIngredientiRicetta
+    not_exists_vir = (
+        db.session.query(vir2.id_ricetta)
+        .filter(
+            and_(
+                vir2.id_ricetta == vir.id_ricetta,
+                vir2.id_alimento == vir.id_alimento,
+                vir2.user_id == user_id
+            )
+        )
+        .exists()
+    )
+
+    # Query principale
+    query = (
         db.session.query(
-            func.string_agg(a.nome + ': ' + func.cast(ir.qta * percentuale, String) + 'g', ', ')
-        ).distinct()
-        .join(ir, ir.id_alimento == a.id)
-        .join(r, ir.id_ricetta == r.id)
-        .filter(ir.id_ricetta == ricetta_id)
-        .filter(func.coalesce(ir.user_id, user_id) == user_id)
-        .filter(ir.removed == False)
-        .label('ingredienti')
+            vir.id_ricetta.label("id_ricetta"),
+            func.string_agg(
+                func.concat(
+                    va.nome,
+                    ":",
+                    func.cast(vir.qta * percentuale, db.String),
+                    "g"
+                ),
+                ", "
+            ).label("ricetta")
+        )
+        .join(
+            va,
+            and_(
+                va.id == vir.id_alimento,
+                or_(
+                    and_(va.user_id == user_id, not_(va.removed)),
+                    and_(va.user_id == 0, not_(not_exists_va))
+                ),
+                or_(
+                    and_(vir.user_id == user_id, not_(vir.removed)),
+                    and_(vir.user_id == 0, not_(not_exists_vir))
+                )
+            )
+        )
+        .filter(vir.id_ricetta == ricetta_id)
+        .group_by(vir.id_ricetta)
     )
 
-    query = db.session.query(
-        func.coalesce(ricetta_subquery, '').label('ricetta')
-    )
+    # Debug della query generata
+    printer(str(query.statement.compile(compile_kwargs={"literal_binds": True})), "DEBUG")
 
-    results = query.distinct().all()
+    # Esecuzione della query
+    results = query.all()
 
     if not results or not results[0].ricetta:
         return "Ingredienti non disponibili"
 
-    return results[0].ricetta
+    return results[0].ingredienti
 
 
 def controlla_limiti_macronutrienti(ricetta, day, weekly, controllo_macro_settimanale) -> bool:
