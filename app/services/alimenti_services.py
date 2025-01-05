@@ -103,8 +103,11 @@ def get_alimenti_service(user_id):
 
 
 def update_alimento_service(id, nome, carboidrati, proteine, grassi, fibre, confezionato, vegan, id_gruppo, user_id):
-    alimento_base = (AlimentoBase.query.filter(AlimentoBase.id==id)).first()
-    alimento = Alimento.query.filter_by(id=id if alimento_base is None else alimento_base.id, user_id=user_id).first()
+    alimento_base = (AlimentoBase.query.filter(AlimentoBase.id==id)).one()
+    alimento = Alimento.query.filter(
+        Alimento.id == (id if alimento_base is None else alimento_base.id),
+        Alimento.user_id == user_id
+    ).one_or_none()
     if not alimento:
         alimento = Alimento(
             id=id,
