@@ -7,7 +7,7 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from sqlalchemy import and_, or_, func, asc, desc, not_, exists
+from sqlalchemy import and_, func, asc, desc
 from sqlalchemy.orm import aliased
 
 from app.models import db
@@ -992,32 +992,6 @@ def salva_utente_dieta(utente_id, nome, cognome, sesso, eta, altezza, peso, tdee
         )
         db.session.add(new_peso)
 
-    db.session.commit()
-
-
-def salva_ingredienti(recipe_id, ingredient_id, quantity, user_id):
-
-    ingredienti_ricetta = (IngredientiRicetta.query.filter(IngredientiRicetta.id_ricetta_base == recipe_id,
-                                                                 IngredientiRicetta.id_alimento_base == ingredient_id,
-                                                                 IngredientiRicetta.user_id == user_id)).first()
-
-    if not ingredienti_ricetta:
-        ingredienti_ricetta = IngredientiRicetta(
-            id_alimento_base=ingredient_id,
-            id_ricetta_base=recipe_id,
-            user_id=user_id,
-            qta_override=quantity,
-            removed=False
-        )
-    else:
-        ingredienti_ricetta.id_alimento_base = ingredient_id
-        ingredienti_ricetta.id_ricetta_base = recipe_id
-        ingredienti_ricetta.user_id = user_id
-        ingredienti_ricetta.qta_override = quantity
-        ingredienti_ricetta.removed = False
-
-
-    db.session.add(ingredienti_ricetta)
     db.session.commit()
 
 

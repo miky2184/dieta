@@ -1,6 +1,8 @@
-from app.models import db
-from sqlalchemy.orm import aliased
 from sqlalchemy import or_, and_, exists, not_
+from sqlalchemy.orm import aliased
+
+from app.models import db
+
 
 class VRicetta(db.Model):
     __tablename__ = 'v_ricetta'

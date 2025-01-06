@@ -493,7 +493,7 @@ function deleteIngredient(ingredientId, recipeId, button) {
 }
 
 function updateIngredient(ingredientId, recipeId, qta) {
-    fetch('/update_ingredient', {
+    fetch('/aggiorna_ingredienti_ricetta', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -519,7 +519,7 @@ function addIngredientToRecipe() {
     const quantity = document.getElementById('ingredient-quantity').value;
     const recipeId = document.getElementById('modal-recipe-id').value;
 
-    fetch('/modifica_ingredienti_ricetta', {
+    fetch('/aggiorna_ingredienti_ricetta', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

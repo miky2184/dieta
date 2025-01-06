@@ -1,8 +1,9 @@
-from sqlalchemy import func, exists, and_, or_, not_, alias
+from sqlalchemy import func, and_, or_
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql import extract
 
 from app.models import db
+from app.models.IngredientiRicetta import IngredientiRicetta
 from app.models.Ricetta import Ricetta
 from app.models.RicettaBase import RicettaBase
 from app.models.VAlimento import VAlimento
@@ -226,7 +227,7 @@ def get_ingredienti_ricetta_service(recipe_id, user_id):
     # Subquery per il filtro NOT EXISTS per VIngredientiRicetta
     filtro_vir = VIngredientiRicetta.filtro_ingredienti(user_id, alias=vir1)
 
-    # Subquery per il filtro NOT EXISTS per VIngredientiRicetta
+    # Subquery per il filtro NOT EXISTS per VRicetta
     filtro_vr = VRicetta.filtro_ricette(user_id, alias=vr1)
 
     # Query principale
@@ -253,10 +254,13 @@ def get_ingredienti_ricetta_service(recipe_id, user_id):
             )
         )
         .filter(filtro_vr)
+        .filter(vr1.id == recipe_id)
         .distinct()
     )
 
     results = query.all()
+
+    print_query(query)
 
     r = []
     for res in results:
@@ -288,4 +292,30 @@ def salva_nuova_ricetta(name, breakfast, snack, main, side, second_breakfast, co
     )
 
     db.session.add(ricetta)
+    db.session.commit()
+
+
+def salva_ingredienti_service(recipe_id, ingredient_id, quantity, user_id):
+
+    ingredienti_ricetta = (IngredientiRicetta.query.filter(IngredientiRicetta.id_ricetta_base == recipe_id,
+                                                                 IngredientiRicetta.id_alimento_base == ingredient_id,
+                                                                 IngredientiRicetta.user_id == user_id)).first()
+
+    if not ingredienti_ricetta:
+        ingredienti_ricetta = IngredientiRicetta(
+            id_alimento_base=ingredient_id,
+            id_ricetta_base=recipe_id,
+            user_id=user_id,
+            qta_override=quantity,
+            removed=False
+        )
+    else:
+        ingredienti_ricetta.id_alimento_base = ingredient_id
+        ingredienti_ricetta.id_ricetta_base = recipe_id
+        ingredienti_ricetta.user_id = user_id
+        ingredienti_ricetta.qta_override = quantity
+        ingredienti_ricetta.removed = False
+
+
+    db.session.add(ingredienti_ricetta)
     db.session.commit()

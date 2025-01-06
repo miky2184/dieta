@@ -14,10 +14,10 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.models import db
 from app.models.Utente import Utente
+from app.ricette_route import invalidate_cache
 from app.services.menu_services import (save_weight, stampa_lista_della_spesa,
                                         get_settimane_salvate,
                                         elimina_ingredienti, salva_utente_dieta,
-                                        salva_ingredienti,
                                         get_peso_hist,
                                         recupera_ricette_per_alimento, recupera_ingredienti_ricetta,
                                         get_totale_gruppi_service)
@@ -118,7 +118,7 @@ def delete_ingredienti():
         user_id = current_user.user_id
 
         elimina_ingredienti(ingredient_id, recipe_id, user_id)
-        current_app.cache.delete(f'list_ricette_{user_id}')
+        current_app.cache.delete(invalidate_cache(user_id))
         current_app.cache.delete(f'ricette_{recipe_id}_{user_id}')
         return jsonify({'status': 'success', 'message': 'Ingrediente eliminato correttamente.'}), 200
     except SQLAlchemyError as db_err:
@@ -127,56 +127,6 @@ def delete_ingredienti():
         return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}', 'trace': traceback.format_exc()}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e), 'trace': traceback.format_exc()}), 500
-
-
-@views.route('/modifica_ingredienti_ricetta', methods=['POST'])
-@login_required
-def modifica_ingredienti_ricetta():
-    """
-    Questa funzione aggiunge un ingrediente a una ricetta esistente nel database.
-    """
-    user_id = current_user.user_id
-    try:
-        data = request.get_json()
-        ingredient_id = data['ingredient_id']
-        recipe_id = data['recipe_id']
-        quantity = data['quantity']
-
-        salva_ingredienti(recipe_id, ingredient_id, quantity, user_id)
-        current_app.cache.delete(f'list_ricette_{user_id}')
-        current_app.cache.delete(f'ricette_{recipe_id}_{user_id}')
-        return jsonify({'status': 'success', 'message': 'Ingrediente inserito correttamente.'}), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err), 'trace': traceback.format_exc()}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}', 'trace': traceback.format_exc()}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e), 'trace': traceback.format_exc()}), 500
-
-
-@views.route('/update_ingredient', methods=['POST'])
-@login_required
-def update_ingredient():
-    """
-    Questa funzione aggiorna la quantità di un ingrediente specifico in una ricetta.
-    """
-    user_id = current_user.user_id
-    try:
-        data = request.get_json()
-        ingredient_id = data['ingredient_id']
-        recipe_id = data['recipe_id']
-        quantity = data['quantity']
-
-        salva_ingredienti(recipe_id, ingredient_id, quantity, user_id)
-        current_app.cache.delete(f'ricette_{recipe_id}_{user_id}')
-        current_app.cache.delete(f'list_ricette_{user_id}')
-        return jsonify({'status': 'success', 'message': 'Quantità aggiornata correttamente.'}), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
 @views.route('/submit_weight', methods=['POST'])

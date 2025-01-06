@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_required, current_user
 from sqlalchemy.exc import SQLAlchemyError
 
+from app.ricette_route import invalidate_cache
 from app.services.alimenti_services import create_alimento_service, get_alimenti_service, update_alimento_service, \
     delete_alimento_service
 
@@ -46,7 +47,7 @@ def create_alimento():
 
         current_app.cache.delete(f'dashboard_{user_id}')
         current_app.cache.delete(f'alimenti_{user_id}')
-        current_app.cache.delete(f'list_ricette_{user_id}')
+        current_app.cache.delete(invalidate_cache(user_id))
 
         return jsonify({'status': 'success'}), 200
     except SQLAlchemyError as db_err:
