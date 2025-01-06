@@ -16,7 +16,7 @@ from app.models import db
 from app.models.Utente import Utente
 from app.ricette_route import invalidate_cache
 from app.services.menu_services import (save_weight, stampa_lista_della_spesa,
-                                        get_settimane_salvate,
+                                        get_settimane_salvate_service,
                                         elimina_ingredienti, salva_utente_dieta,
                                         get_peso_hist,
                                         recupera_ricette_per_alimento, recupera_ingredienti_ricetta,
@@ -87,7 +87,7 @@ def dashboard():
         menu_corrente = menu_corrente['menu']
 
     # Recupera le settimane salvate per la selezione.
-    settimane_salvate = get_settimane_salvate(user_id)
+    settimane_salvate = get_settimane_salvate_service(user_id)
 
     # Calcola i macronutrienti rimanenti per ogni giorno del menu.
     remaining_macronutrienti = calcola_macronutrienti_rimanenti_service(menu_corrente)

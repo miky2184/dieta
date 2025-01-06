@@ -388,7 +388,8 @@ def check_limiti_consumo_ricetta(ricetta, consumi, perc, user_id) -> bool:
     Args:
         ricetta (dict): Ricetta contenente una lista di ingredienti con quantità totali e ID di gruppo.
         consumi (dict): Dizionario dei limiti di consumo rimanenti per ogni gruppo alimentare.
-        user_id:
+        perc (float): percentuale da utilizzare per il calcolo dei limiti
+        user_id: utente abilitato alla funzione
 
     Returns:
         bool: True se la ricetta rispetta i limiti, False altrimenti.
@@ -423,6 +424,8 @@ def aggiorna_limiti_gruppi(ricetta, consumi, user_id, perc: float = 1.0, rimuovi
     Args:
         ricetta (dict): Ricetta contenente una lista di ingredienti con quantità totali e ID di gruppo.
         consumi (dict): Dizionario dei consumi rimanenti per ciascun gruppo alimentare.
+        user_id: utente abilitato alla funzione
+        perc (float): percentuale da utilizzare nei calcoli per i limiti di gruppo
         rimuovi (bool, opzionale): Indica se aggiungere (`True`) o sottrarre (`False`) le quantità.
 
     Raises:
@@ -784,19 +787,6 @@ def salva_menu(menu, user_id, period: dict = None) -> None:
     db.session.commit()
 
 
-def get_settimane_salvate(user_id, show_old_week: bool = False):
-    # Ottieni la data odierna
-    oggi = datetime.now().date()
-
-    query = MenuSettimanale.query.order_by(asc(MenuSettimanale.data_inizio))
-
-    if not show_old_week:
-        query = query.filter(MenuSettimanale.data_fine >= oggi)
-
-    settimane = query.filter(MenuSettimanale.user_id == user_id).all()
-
-    return settimane
-
 def save_weight(data, user_id):
 
     utente = Utente.get_by_id(user_id)
@@ -984,7 +974,7 @@ def salva_utente_dieta(utente_id, nome, cognome, sesso, eta, altezza, peso, tdee
     if new_peso:
         new_peso.peso_ideale = peso_ideale
     else:
-        # altrimento creo la riga
+        # altrimenti creo la riga
         new_peso = RegistroPeso(
             user_id=utente_id,
             data_rilevazione=data_fine_dieta,
@@ -1018,6 +1008,7 @@ def aggiungi_ricetta_al_menu(menu, day, meal, meal_id, user_id):
 def rimuovi_pasto_dal_menu(menu, day, meal, meal_id, user_id):
     # Trova la ricetta da rimuovere
     ricetta_da_rimuovere = None
+    ricetta = None
     for ricetta in menu['day'][day]['pasto'][meal]['ricette']:
         if int(ricetta['id']) == int(meal_id):
             ricetta_da_rimuovere = ricetta
@@ -1077,11 +1068,3 @@ def recupera_ricette_per_alimento(alimento_id, user_id):
 
     ricette_data = [{'nome_ricetta': r.nome_ricetta} for r in ricette]
     return ricette_data
-
-
-def recupera_settimane(user_id):
-    weeks = get_settimane_salvate(user_id, show_old_week=True)
-    return [
-        {'id': week.id, 'name': f"Settimana {index + 1} dal {week.data_inizio.strftime('%Y-%m-%d')} al {week.data_fine.strftime('%Y-%m-%d')}"}
-        for index, week in enumerate(weeks)
-    ]
