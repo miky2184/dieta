@@ -1,5 +1,5 @@
 import base64
-from copy import deepcopy
+import traceback
 from datetime import datetime
 from io import BytesIO
 
@@ -13,22 +13,19 @@ from reportlab.pdfgen import canvas
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.models.models import db
-from app.services.menu_services import (get_utente, save_weight, stampa_lista_della_spesa, get_menu,
+from app.services.menu_services import (get_utente, save_weight, stampa_lista_della_spesa,
                                         get_settimane_salvate,
                                         elimina_ingredienti, salva_utente_dieta,
-                                         salva_ingredienti,
+                                        salva_ingredienti,
                                         get_peso_hist, get_dati_utente,
-                                        calcola_macronutrienti_rimanenti,
-                                        aggiungi_ricetta_al_menu, update_menu_corrente, rimuovi_pasto_dal_menu,
-                                        delete_week_menu, genera_menu_utente,
-                                        recupera_ricette_per_alimento, copia_menu, recupera_settimane,
-                                        cancella_tutti_pasti_menu,
-                                        recupera_ingredienti_ricetta, get_gruppi_data)
-from app.services.ricette_services import get_ricette_service, attiva_disattiva_ricetta_service
+                                        recupera_ricette_per_alimento, recupera_ingredienti_ricetta,
+                                        get_totale_gruppi_service)
+from app.services.modifica_pasti_services import get_menu_service
+from app.services.modifica_pasti_services import update_menu_corrente_service
+from app.services.ricette_services import get_ricette_service
+from app.services.util_services import calcola_macronutrienti_rimanenti_service
 
 views = Blueprint('views', __name__)
-
-import traceback
 
 
 @views.route('/dashboard', methods=['GET'])
@@ -48,7 +45,7 @@ def dashboard():
         "data_fine": datetime.now().date()
     }
     # Recupera il menu corrente dal database.
-    menu_corrente = get_menu(user_id, period)
+    menu_corrente = get_menu_service(user_id, period)
 
     # Se il menu corrente non esiste, crea una struttura vuota con tutti i pasti e i macronutrienti inizializzati.
     if not menu_corrente:
@@ -93,7 +90,7 @@ def dashboard():
     settimane_salvate = get_settimane_salvate(user_id)
 
     # Calcola i macronutrienti rimanenti per ogni giorno del menu.
-    remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente)
+    remaining_macronutrienti = calcola_macronutrienti_rimanenti_service(menu_corrente)
 
     show_tutorial = not current_user.tutorial_completed
 
@@ -108,68 +105,6 @@ def dashboard():
                            )
 
 
-@views.route('/generate_menu', methods=['POST'])
-@login_required
-def generate_menu():
-    """
-    Gestisce la generazione del menu settimanale per l'utente.
-    """
-    user_id = current_user.user_id
-    try:
-        response = genera_menu_utente(user_id, current_app.cache)
-        return jsonify(response), 200
-    except ValueError as val_err:
-        return jsonify({'status': 'error', 'message': str(val_err)}), 400
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except Exception as e:
-        error_trace = traceback.format_exc()
-        return jsonify({'status': 'error', 'message': 'Errore sconosciuto.', 'details': str(e), 'trace': error_trace}), 500
-
-
-@views.route('/menu_settimana/<int:settimana_id>', methods=['GET'])
-@current_app.cache.cached(timeout=300)
-@login_required
-def menu_settimana(settimana_id):
-    """
-    Questa funzione gestisce la richiesta di visualizzazione di un menu specifico per una settimana data.
-    Restituisce il menu selezionato e i macronutrienti rimanenti per quella settimana.
-    """
-    user_id = current_user.user_id
-    try:
-        menu_selezionato = get_menu(user_id, ids=settimana_id)
-        macronutrienti_rimanenti = calcola_macronutrienti_rimanenti(menu_selezionato['menu'])
-
-        return jsonify({'status':'success', 'menu': menu_selezionato['menu'], 'remaining_macronutrienti': macronutrienti_rimanenti}), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-
-@views.route('/get_lista_spesa/<int:settimana_id>', methods=['GET'])
-@login_required
-def get_lista_spesa(settimana_id):
-    """
-    Questa funzione gestisce la richiesta POST per ottenere la lista della spesa basata sugli ID degli alimenti
-    forniti dal client. Restituisce la lista della spesa corrispondente.
-    """
-    user_id = current_user.user_id
-    try:
-        menu = get_menu(user_id, ids=settimana_id)
-
-        # Genera la lista della spesa basata sugli ID degli alimenti.
-        lista_spesa = stampa_lista_della_spesa(user_id, menu['menu'])
-
-        return jsonify({'status': 'success', 'lista_spesa': lista_spesa}), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
 @views.route('/delete_ingredienti', methods=['POST'])
@@ -189,11 +124,11 @@ def delete_ingredienti():
         current_app.cache.delete(f'ricette_{recipe_id}_{user_id}')
         return jsonify({'status': 'success', 'message': 'Ingrediente eliminato correttamente.'}), 200
     except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err), 'trace': traceback.format_exc()}), 500
     except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}', 'trace': traceback.format_exc()}), 400
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        return jsonify({'status': 'error', 'message': str(e), 'trace': traceback.format_exc()}), 500
 
 
 
@@ -215,11 +150,11 @@ def modifica_ingredienti_ricetta():
         current_app.cache.delete(f'ricette_{recipe_id}_{user_id}')
         return jsonify({'status': 'success', 'message': 'Ingrediente inserito correttamente.'}), 200
     except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err), 'trace': traceback.format_exc()}), 500
     except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}', 'trace': traceback.format_exc()}), 400
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        return jsonify({'status': 'error', 'message': str(e), 'trace': traceback.format_exc()}), 500
 
 
 @views.route('/update_ingredient', methods=['POST'])
@@ -269,11 +204,11 @@ def submit_weight():
 
         return jsonify({'status': 'success', 'peso': peso}), 200
     except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err), 'trace': traceback.format_exc()}), 500
     except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}', 'trace': traceback.format_exc()}), 400
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        return jsonify({'status': 'error', 'message': str(e), 'trace': traceback.format_exc()}), 500
 
 
 @views.route('/salva_dati', methods=['POST'])
@@ -357,137 +292,6 @@ def get_data_utente():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
-@views.route('/get_ricette_disponibili', methods=['GET'])
-@login_required
-def get_ricette_disponibili():
-    """
-    Questa funzione restituisce le ricette disponibili per un pasto specifico in un giorno specifico,
-    escludendo quelle già presenti nel menu corrente.
-    """
-    user_id = current_user.user_id
-    try:
-        meal_type = request.args.get('meal')
-        day = request.args.get('day')
-        week_id = request.args.get('week_id')
-
-        meal_type_mapping = {
-            'colazione': ['colazione', 'colazione_sec'],
-            'spuntino_mattina': ['spuntino'],
-            'pranzo': ['principale'],
-            'spuntino_pomeriggio': ['spuntino'],
-            'cena': ['principale'],
-            'spuntino_sera': ['spuntino']
-        }
-
-        generic_meal_types = meal_type_mapping.get(meal_type)
-
-        # Esclude le ricette già presenti nel pasto del giorno specificato
-        menu_corrente = get_menu(user_id, ids=week_id)
-
-        # Recupera tutte le ricette attive
-        ricette = get_ricette_service(user_id, stagionalita=True, attive=True, complemento=False, data_stagionalita=menu_corrente['data_fine'])
-
-        # Filtra le ricette disponibili in base al tipo di pasto
-        available_meals = [ricetta for ricetta in ricette if
-                           any(ricetta[generic_meal_type] for generic_meal_type in generic_meal_types)]
-
-
-        if menu_corrente['menu']:
-            if meal_type in ('pranzo', 'cena'):
-                ricette_presenti_ids = menu_corrente['menu']['all_food']
-            else:
-                ricette_presenti_ids = [r['id'] for r in menu_corrente['menu']['day'][day]['pasto'][meal_type]['ricette']]
-            available_meals = [ricetta for ricetta in available_meals if ricetta['id'] not in ricette_presenti_ids]
-
-        return jsonify(available_meals), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-
-@views.route('/aggiungi_ricetta_menu/<int:week_id>', methods=['POST'])
-@login_required
-def aggiungi_ricetta_menu(week_id):
-    """
-    Questa funzione aggiunge uno o più pasti selezionati al menu per una settimana specifica,
-    aggiorna i macronutrienti rimanenti e salva il menu aggiornato nel database.
-    """
-    user_id = current_user.user_id
-    try:
-        data = request.get_json()
-        day = data['day']
-        meal = data['meal']
-        selected_meals = data['selectedMeals']
-
-        # Recupera il menu corrente dal database
-        menu_corrente = get_menu(user_id, ids=week_id)
-
-        # Aggiunge i pasti selezionati al menu
-        for meal_id in selected_meals:
-            aggiungi_ricetta_al_menu(menu_corrente['menu'], day, meal, meal_id, user_id)
-
-        # Ricalcola i macronutrienti rimanenti
-        remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente['menu'])
-
-        # Salva il menu aggiornato nel database
-        update_menu_corrente(menu_corrente['menu'], week_id, user_id)
-        current_app.cache.delete(f'dashboard_{user_id}')
-        current_app.cache.delete(f'view//menu_settimana/{week_id}')
-        return jsonify({
-            'status': 'success',
-            'menu': menu_corrente['menu'],  # Restituisce il menu aggiornato
-            'remaining_macronutrienti': remaining_macronutrienti
-        }), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-@views.route('/rimuovi_ricetta/<int:week_id>', methods=['POST'])
-@login_required
-def rimuovi_ricetta(week_id):
-    """
-    Questa funzione rimuove un pasto specifico dal menu per un giorno specifico,
-    ricalcola i macronutrienti rimanenti e salva il menu aggiornato.
-    """
-    user_id = current_user.user_id
-    try:
-        data = request.get_json()
-        day = data['day']
-        meal = data['meal']
-        meal_id = data['meal_id']
-
-        # Recupera il menu corrente dal database
-        menu_corrente = get_menu(user_id, ids=week_id)
-
-        # Rimuove il pasto dal menu
-        rimuovi_pasto_dal_menu(menu_corrente['menu'], day, meal, meal_id, user_id)
-
-        # Salva il menu aggiornato nel database
-        update_menu_corrente(menu_corrente['menu'], week_id, user_id)
-
-        # Ricalcola i macronutrienti rimanenti
-        remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente['menu'])
-        current_app.cache.delete(f'dashboard_{user_id}')
-        current_app.cache.delete(f'view//menu_settimana/{week_id}')
-        return jsonify({
-            'status': 'success',
-            'menu': menu_corrente['menu'],
-            'remaining_macronutrienti': remaining_macronutrienti
-        }), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-
 @views.route('/aggiorna_quantita_ingrediente', methods=['POST'])
 @login_required
 def aggiorna_quantita_ingrediente():
@@ -505,9 +309,10 @@ def aggiorna_quantita_ingrediente():
         week_id = data['week_id']
 
         # Recupera il menu corrente dal database
-        menu_corrente = get_menu(user_id, ids=week_id)
+        menu_corrente = get_menu_service(user_id, ids=week_id)
 
         ingredienti_ricetta = recupera_ingredienti_ricetta(ricetta_id, user_id, quantity)
+        totale_gruppi = get_totale_gruppi_service(ricetta_id, user_id, quantity)
 
         # Aggiorna la quantità del pasto nel menu
         for ricetta in menu_corrente['menu']['day'][day]['pasto'][meal]['ricette']:
@@ -515,6 +320,7 @@ def aggiorna_quantita_ingrediente():
                 old_qta = ricetta['qta']
                 ricetta['qta'] = quantity
                 ricetta['ricetta'] = ingredienti_ricetta
+                ricetta['ingredienti'] = totale_gruppi
 
                 # Ricalcola i macronutrienti giornalieri e settimanali
                 for macro in ['kcal', 'carboidrati', 'proteine', 'grassi']:
@@ -523,12 +329,12 @@ def aggiorna_quantita_ingrediente():
                     menu_corrente['menu']['weekly'][macro] += difference
 
         # Salva il menu aggiornato
-        update_menu_corrente(menu_corrente['menu'], week_id, user_id)
+        update_menu_corrente_service(menu_corrente['menu'], week_id, user_id)
 
         # Ricalcola i macronutrienti rimanenti
-        remaining_macronutrienti = calcola_macronutrienti_rimanenti(menu_corrente['menu'])
+        remaining_macronutrienti = calcola_macronutrienti_rimanenti_service(menu_corrente['menu'])
         current_app.cache.delete(f'dashboard_{user_id}')
-        current_app.cache.delete(f'view//menu_settimana/{week_id}')
+        current_app.cache.delete(f'menu//menu_settimana/{week_id}')
 
         return jsonify({
             'status': 'success',
@@ -561,7 +367,7 @@ def generate_pdf():
         img = Image.open(BytesIO(base64.b64decode(img_data)))
 
         # Recupera il menu selezionato dal database
-        menu_selezionato = get_menu(user_id, ids=week_id)
+        menu_selezionato = get_menu_service(user_id, ids=week_id)
 
         # Imposta il PDF in orientamento orizzontale
         pdf_file = BytesIO()
@@ -614,26 +420,6 @@ def generate_pdf():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
-@views.route('/delete_menu/<int:week_id>', methods=['DELETE'])
-@login_required
-def delete_menu(week_id):
-    # Elimina il menu dal database
-    user_id = current_user.user_id
-    try:
-        delete_week_menu(week_id, user_id)
-
-        # Svuota la cache correlata
-        current_app.cache.delete(f'dashboard_{user_id}')
-        current_app.cache.delete(f'view//menu_settimana/{week_id}')
-        return jsonify({'status': 'success', 'message': 'Menu eliminato con successo!'}), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-
 @views.route('/complete_tutorial', methods=['POST'])
 @login_required
 def complete_tutorial():
@@ -650,132 +436,6 @@ def complete_tutorial():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-
-@views.route('/inverti_pasti/<int:week_id>', methods=['POST'])
-@login_required
-def inverti_pasti(week_id):
-    user_id = current_user.user_id
-    try:
-        data = request.json
-        day = data.get('day')
-
-        # Recupera il menu della settimana per l'utente
-        settimana = get_menu(user_id, ids=week_id)
-
-        if not settimana:
-            return jsonify({'status': 'error', 'message': 'Menu non trovato'}), 404
-
-        # Inverti i pasti per il giorno specificato
-        pranzo = settimana['menu']['day'][day]['pasto']['pranzo']
-        cena = settimana['menu']['day'][day]['pasto']['cena']
-
-        settimana['menu']['day'][day]['pasto']['pranzo'] = cena
-        settimana['menu']['day'][day]['pasto']['cena'] = pranzo
-
-        # Salva le modifiche nel database
-        update_menu_corrente(settimana['menu'], week_id, user_id)
-
-        # Ricalcola i macronutrienti rimanenti
-        remaining_macronutrienti = calcola_macronutrienti_rimanenti(settimana['menu'])
-        current_app.cache.delete(f'dashboard_{user_id}')
-        current_app.cache.delete(f'view//menu_settimana/{week_id}')
-        return jsonify({
-            'status': 'success',
-            'menu': settimana['menu'],
-            'remaining_macronutrienti': remaining_macronutrienti
-        }), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-
-@views.route('/delete_meal_daily/<int:week_id>', methods=['POST'])
-@login_required
-def delete_meal_daily(week_id):
-    user_id = current_user.user_id
-    try:
-        data = request.json
-        day = data.get('day')
-        meal_type = data.get('meal_type')
-
-        # Recupera il menu della settimana per l'utente
-        settimana = get_menu(user_id, ids=week_id)
-
-        if not settimana:
-            return jsonify({'status': 'error', 'message': 'Menu non trovato'}), 404
-
-        meal_mapping = {
-            'colazione': ['colazione'],
-            'principali': ['pranzo', 'cena'],
-            'spuntini': ['spuntino_mattina', 'spuntino_pomeriggio', 'spuntino_sera'],
-            'all': ['colazione', 'pranzo', 'cena', 'spuntino_mattina', 'spuntino_pomeriggio', 'spuntino_sera']
-        }
-
-        for meal in meal_mapping.get(meal_type, []):
-            cancella_tutti_pasti_menu(settimana['menu'], day, meal, user_id)
-
-        # Salva le modifiche nel database
-        update_menu_corrente(settimana['menu'], week_id, user_id)
-
-        # Ricalcola i macronutrienti rimanenti
-        remaining_macronutrienti = calcola_macronutrienti_rimanenti(settimana['menu'])
-        current_app.cache.delete(f'dashboard_{user_id}')
-        current_app.cache.delete(f'view//menu_settimana/{week_id}')
-        return jsonify({
-            'status': 'success',
-            'menu': settimana['menu'],
-            'remaining_macronutrienti': remaining_macronutrienti
-        }), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-
-@views.route('/inverti_pasti_giorni/<int:week_id>', methods=['POST'])
-@login_required
-def inverti_pasti_giorni(week_id):
-    user_id = current_user.user_id
-    try:
-        data = request.json
-        day1 = data.get('day1')
-        day2 = data.get('day2')
-
-        # Recupera il menu della settimana per l'utente
-        settimana = get_menu(user_id, ids=week_id)
-
-        if not settimana:
-            return jsonify({'status': 'error', 'message': 'Menu non trovato'}), 404
-
-        # Inverti i pasti dei due giorni specificati
-        temp_day = deepcopy(settimana['menu']['day'][day1])
-        settimana['menu']['day'][day1] = deepcopy(settimana['menu']['day'][day2])
-        settimana['menu']['day'][day2] = temp_day
-
-        # Salva le modifiche nel database
-        update_menu_corrente(settimana['menu'], week_id, user_id)
-
-        # Ricalcola i macronutrienti rimanenti
-        remaining_macronutrienti = calcola_macronutrienti_rimanenti(settimana['menu'])
-        current_app.cache.delete(f'dashboard_{user_id}')
-        current_app.cache.delete(f'view//menu_settimana/{week_id}')
-
-        return jsonify({
-            'status': 'success',
-            'menu': settimana['menu'],
-            'remaining_macronutrienti': remaining_macronutrienti
-        }), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
 @views.route('/get_complemento', methods=['GET'])
@@ -813,12 +473,10 @@ def get_complemento():
     except KeyError as key_err:
         return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
-        error_trace = traceback.format_exc()
         # Risposta JSON con messaggio e riga dell'errore
         return jsonify({
             'status': 'error',
-            'message': str(e),
-            'trace': error_trace}), 500
+            'message': str(e)}), 500
 
 
 @views.route('/get_contorno', methods=['GET'])
@@ -856,58 +514,3 @@ def get_ricette_con_alimento(alimento_id):
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-
-@views.route('/copy_week', methods=['POST'])
-@login_required
-def copy_week():
-    user_id = current_user.user_id
-    try:
-        data = request.json
-        week_from = data.get('week_from')
-        week_to = data.get('week_to')
-        # Ottieni il menu della settimana di origine
-        menu_from = get_menu(current_user.user_id, ids=week_from)
-
-        if not menu_from:
-            return jsonify({'status': 'error', 'message': 'Settimana non trovata.'}), 404
-
-        # Copia il menu dalla settimana di origine alla settimana di destinazione
-        copia_menu(menu_from['menu'], week_to, user_id)
-        current_app.cache.delete(f'dashboard_{user_id}')
-        current_app.cache.delete(f'view//menu_settimana/{week_to}')
-        return jsonify({'status': 'success'}), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-
-@views.route('/get_weeks', methods=['GET'])
-@login_required
-def get_weeks():
-    user_id = current_user.user_id
-    try:
-        weeks_list = recupera_settimane(user_id)
-        return jsonify({'status': 'success', 'weeks': weeks_list}), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-
-@views.route('/get_gruppi', methods=['GET'])
-@login_required
-def get_gruppi():
-    try:
-        gruppi_data = get_gruppi_data()
-        return jsonify({'status': 'success', 'gruppi': gruppi_data})
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500

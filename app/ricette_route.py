@@ -1,31 +1,9 @@
-from flask import Blueprint, render_template, redirect, url_for, request, send_file, jsonify, current_app
-from app.services.menu_services import (get_utente, save_weight, genera_menu,
-                                        stampa_lista_della_spesa, get_menu,
-                                        get_ricette_service, get_settimane_salvate,
-                                        salva_menu, get_settimana,
-                                        elimina_ingredienti, salva_utente_dieta,
-                                        salva_ingredienti,
-                                        get_peso_hist, get_dati_utente,
-                                        calcola_macronutrienti_rimanenti,
-                                        aggiungi_ricetta_al_menu, update_menu_corrente, rimuovi_pasto_dal_menu,
-                                        delete_week_menu, ordina_settimana_per_kcal, genera_menu_utente,
-                                        recupera_ricette_per_alimento, copia_menu, recupera_settimane, cancella_tutti_pasti_menu,
-                                        recupera_ingredienti_ricetta, get_gruppi_data)
-from app.services.alimenti_services import create_alimento_service, get_alimenti_service, update_alimento_service, delete_alimento_service
-from app.services.ricette_services import update_ricetta_service, get_ricette_service, attiva_disattiva_ricetta_service, get_ingredienti_ricetta_service, salva_nuova_ricetta
-from copy import deepcopy
-import time
-from reportlab.lib.pagesizes import letter, landscape
-from reportlab.pdfgen import canvas
-from reportlab.lib.utils import ImageReader
-from reportlab.lib.units import inch
-from io import BytesIO
-import base64
-from PIL import Image
+from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_required, current_user
-from app.models.models import db
-from datetime import datetime, timedelta
 from sqlalchemy.exc import SQLAlchemyError
+
+from app.services.ricette_services import update_ricetta_service, get_ricette_service, attiva_disattiva_ricetta_service, \
+    get_ingredienti_ricetta_service, salva_nuova_ricetta
 
 ricette = Blueprint('ricette', __name__)
 

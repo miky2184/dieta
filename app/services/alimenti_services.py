@@ -1,29 +1,13 @@
-import os
-import random
-from datetime import datetime, timedelta, date
-from copy import deepcopy
-import re
-import sqlalchemy
 from app.models import db
-from app.models.VAlimento import VAlimento
-from app.models.VIngredientiRicetta import VIngredientiRicetta
-from app.models.VRicetta import VRicetta
-from app.models.GruppoAlimentare import GruppoAlimentare
 from app.models.Alimento import Alimento
 from app.models.AlimentoBase import AlimentoBase
-from app.models.Ricetta import Ricetta
-from app.models.RicettaBase import RicettaBase
 from app.models.IngredientiRicetta import IngredientiRicetta
 from app.models.IngredientiRicettaBase import IngredientiRicettaBase
-from sqlalchemy.orm import aliased
-from sqlalchemy.sql import extract
-from sqlalchemy.dialects.postgresql import insert
-import json
-from sqlalchemy import insert, update, and_, or_, case, func, exists, asc, String, true, false, select, desc
-from collections import defaultdict
-from decimal import Decimal
-from app.services.util_services import printer
-from app.services.common_db_service import get_sequence_value
+from app.models.Ricetta import Ricetta
+from app.models.VAlimento import VAlimento
+from app.services.db_services import get_sequence_value
+from app.services.util_services import print_query
+
 
 def create_alimento_service(name, carboidrati, proteine, grassi, fibre, confezionato, vegan, gruppo, user_id):
     seq_id = get_sequence_value('dieta.seq_id_alimento')
@@ -74,7 +58,7 @@ def get_alimenti_service(user_id):
 
     results = query.all()
 
-    printer(str(query.statement.compile(compile_kwargs={"literal_binds": True})), "DEBUG")
+    print_query(query)
 
     alimenti = [{
         'id': r.id,

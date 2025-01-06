@@ -1755,6 +1755,7 @@ function fetchGroupsAndPopulate() {
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
+                gruppi = data.gruppi; // Salva i gruppi nella variabile globale
                 populateGroupDropdown(data.gruppi);
             } else {
                 console.error('Errore nel recupero dei gruppi:', data.message);
@@ -1956,19 +1957,6 @@ function showConfirmDeleteAlimentoModal(alimentoId, alimentoNome) {
         .catch(error => console.error('Errore nel recupero delle ricette:', error));
 }
 
-function fetchGroupsAndPopulate() {
-    fetch('/get_gruppi')
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                gruppi = data.gruppi; // Salva i gruppi nella variabile globale
-                populateGroupDropdown(data.gruppi);
-            } else {
-                console.error('Errore nel recupero dei gruppi:', data.message);
-            }
-        })
-        .catch(error => console.error('Errore di rete:', error));
-}
 
 document.addEventListener('DOMContentLoaded', function() {
 

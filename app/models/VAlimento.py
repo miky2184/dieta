@@ -1,9 +1,8 @@
-from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy import func
-from sqlalchemy.orm import foreign
-from . import db
-from sqlalchemy.orm import aliased
 from sqlalchemy import or_, and_, exists, not_
+from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.orm import aliased
+
+from . import db
 
 
 class VAlimento(db.Model):

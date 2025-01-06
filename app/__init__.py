@@ -1,11 +1,12 @@
 # app/__init__.py
-from flask_caching import Cache
-from flask import Flask, request, redirect, url_for
-from flask_login import LoginManager, current_user
 from dotenv import load_dotenv
+from flask import Flask
+from flask_caching import Cache
+from flask_login import LoginManager
+
+from app.models import db
 from app.models.Utente import Utente
 from app.models.UtenteAuth import UtenteAuth
-from app.models import db
 
 
 def create_app():
@@ -38,10 +39,15 @@ def create_app():
         from .admin_route import admin
         from .alimenti_route import alimenti
         from .ricette_route import ricette
+        from .menu_route import menu
+        from .modifica_pasti_route import pasti
+        from .common_route import common
         app.register_blueprint(views)
         app.register_blueprint(auth_blueprint)
         app.register_blueprint(admin)
         app.register_blueprint(alimenti)
         app.register_blueprint(ricette)
-
+        app.register_blueprint(menu)
+        app.register_blueprint(pasti)
+        app.register_blueprint(common)
     return app

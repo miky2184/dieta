@@ -1,5 +1,3 @@
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.dialects.postgresql import ARRAY
 from . import db
 
 class IngredientiRicettaBase(db.Model):

@@ -1,12 +1,8 @@
-from sqlalchemy import CheckConstraint, UniqueConstraint, ForeignKey, Computed, func
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY, JSON
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import UserMixin
-from sqlalchemy import Column, Numeric
-from app.models.VAlimento import VAlimento
-from app.models.VIngredientiRicetta import VIngredientiRicetta
-from app.models.VRicetta import VRicetta
+from sqlalchemy import UniqueConstraint, ForeignKey
+from sqlalchemy.dialects.postgresql import JSON
+
 from . import db
+
 
 class MenuSettimanale(db.Model):
     __tablename__ = 'menu_settimanale'
@@ -15,8 +11,8 @@ class MenuSettimanale(db.Model):
         {'schema': 'dieta'}
     )
 
-    id = db.Column(db.Integer, primary_key=True)
-    data_inizio = db.Column(db.Date, nullable=False)
-    data_fine = db.Column(db.Date, nullable=False)
+    id = db.Column(db.Integer, nullable=False)
+    data_inizio = db.Column(db.Date, nullable=False, primary_key=True)
+    data_fine = db.Column(db.Date, nullable=False, primary_key=True)
     menu = db.Column(JSON, nullable=False)
-    user_id = db.Column(db.BigInteger, ForeignKey('dieta.utente.id', ondelete='CASCADE'))
+    user_id = db.Column(db.BigInteger, ForeignKey('dieta.utente.id', ondelete='CASCADE'), primary_key=True)

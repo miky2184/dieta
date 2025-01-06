@@ -1,9 +1,3 @@
-from email.policy import default
-
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy import func
-from sqlalchemy.orm import foreign
 from . import db
 
 class VIngredientiRicetta(db.Model):

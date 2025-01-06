@@ -1,12 +1,10 @@
-from sqlalchemy import CheckConstraint, UniqueConstraint, ForeignKey, Computed, func
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY, JSON
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import UserMixin
-from sqlalchemy import Column, Numeric
+from sqlalchemy import CheckConstraint, func
+
 from app.models.VAlimento import VAlimento
 from app.models.VIngredientiRicetta import VIngredientiRicetta
 from app.models.VRicetta import VRicetta
 from . import db
+
 
 # Definizione del modello per i dettagli dell utente
 class Utente(db.Model):

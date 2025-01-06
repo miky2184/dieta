@@ -1,12 +1,9 @@
-from sqlalchemy import CheckConstraint, UniqueConstraint, ForeignKey, Computed, func
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY, JSON
-from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
-from sqlalchemy import Column, Numeric
-from app.models.VAlimento import VAlimento
-from app.models.VIngredientiRicetta import VIngredientiRicetta
-from app.models.VRicetta import VRicetta
+from sqlalchemy import UniqueConstraint
+from werkzeug.security import generate_password_hash, check_password_hash
+
 from . import db
+
 
 # Definizione del modello per utente con autenticazione
 class UtenteAuth(UserMixin, db.Model):

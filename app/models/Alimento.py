@@ -1,6 +1,8 @@
-from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy import Computed
+from sqlalchemy.dialects.postgresql import ARRAY
+
 from . import db
+
 
 class Alimento(db.Model):
     __tablename__ = 'alimento'

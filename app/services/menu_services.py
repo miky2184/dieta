@@ -1,34 +1,35 @@
 #app/services/menu_services.py
 import os
 import random
-from datetime import datetime, timedelta, date
-from copy import deepcopy
 import re
+from collections import defaultdict
+from copy import deepcopy
+from datetime import datetime, timedelta
+from decimal import Decimal
+
 import sqlalchemy
+from sqlalchemy import insert, update, and_, or_, case, func, exists, asc, true, false, desc, not_
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.orm import aliased
+
 from app.models import db
-from app.models.Utente import Utente
+from app.models.Alimento import Alimento
+from app.models.AlimentoBase import AlimentoBase
+from app.models.GruppoAlimentare import GruppoAlimentare
+from app.models.IngredientiRicetta import IngredientiRicetta
+from app.models.IngredientiRicettaBase import IngredientiRicettaBase
 from app.models.MenuSettimanale import MenuSettimanale
 from app.models.RegistroPeso import RegistroPeso
+from app.models.Ricetta import Ricetta
+from app.models.RicettaBase import RicettaBase
+from app.models.Utente import Utente
 from app.models.VAlimento import VAlimento
 from app.models.VIngredientiRicetta import VIngredientiRicetta
 from app.models.VRicetta import VRicetta
-from app.models.GruppoAlimentare import GruppoAlimentare
-from app.models.Alimento import Alimento
-from app.models.AlimentoBase import AlimentoBase
-from app.models.Ricetta import Ricetta
-from app.models.RicettaBase import RicettaBase
-from app.models.IngredientiRicetta import IngredientiRicetta
-from app.models.IngredientiRicettaBase import IngredientiRicettaBase
-from sqlalchemy.orm import aliased
-from sqlalchemy.sql import extract
-from sqlalchemy.dialects.postgresql import insert
-import json
-from sqlalchemy import insert, update, and_, or_, case, func, exists, asc, String, true, false, select, desc, not_
-from collections import defaultdict
-from decimal import Decimal
-from app.services.util_services import printer
-from app.services.common_db_service import get_sequence_value
+from app.services.db_services import get_sequence_value
+from app.services.modifica_pasti_services import get_menu_service
 from app.services.ricette_services import get_ricette_service
+from app.services.util_services import printer, print_query
 
 MAX_RETRY = int(os.getenv('MAX_RETRY'))
 
@@ -72,8 +73,13 @@ def genera_menu_utente(user_id, cache) -> dict:
         raise ValueError('Macronutrienti non definiti!')
 
     # Trova l'ultima settimana presente nel database
-    ultima_settimana = db.session.query(MenuSettimanale).filter_by(user_id=user_id).order_by(
-            desc(MenuSettimanale.data_fine)).first()
+    query = db.session.query(MenuSettimanale).filter(MenuSettimanale.user_id==user_id,
+                                                                func.current_date() <= MenuSettimanale.data_fine).order_by(
+            desc(MenuSettimanale.data_fine))
+
+    ultima_settimana = query.first()
+
+    print_query(query)
 
     periodi = []
     oggi = datetime.now().date()
@@ -102,7 +108,7 @@ def genera_menu_utente(user_id, cache) -> dict:
     return {'status': 'success', 'progress': 100}
 
 
-def genera_e_salva_menu(user_id, period, macronutrienti):
+def genera_e_salva_menu(user_id, period, macronutrienti: Utente):
     """
     Genera e salva il menu per un periodo specifico, se non già esistente.
 
@@ -115,7 +121,7 @@ def genera_e_salva_menu(user_id, period, macronutrienti):
         None
     """
     ricette_menu = get_ricette_service(user_id, stagionalita=True, data_stagionalita=period["data_fine"])
-    if not get_menu(user_id, period=period):
+    if not get_menu_service(user_id, period=period):
         settimana = deepcopy(get_settimana(macronutrienti))
         genera_menu(settimana, False, ricette_menu, user_id)
 
@@ -326,7 +332,8 @@ def aggiorna_settimana(settimana, giorno_settimana, pasto, ricetta, percentuale,
         'kcal': ricetta['kcal'],
         'carboidrati': ricetta['carboidrati'],
         'proteine': ricetta['proteine'],
-        'grassi': ricetta['grassi']
+        'grassi': ricetta['grassi'],
+        'ingredienti': get_totale_gruppi_service(ricetta['id'], user_id, percentuale)
     })
 
     # Aggiorna i macronutrienti giornalieri e settimanali
@@ -525,7 +532,7 @@ def recupera_ingredienti_ricetta(ricetta_id, user_id, percentuale) -> str:
     )
 
     # Debug della query generata
-    printer(str(query.statement.compile(compile_kwargs={"literal_binds": True})), "DEBUG")
+    print_query(query)
 
     # Esecuzione della query
     results = query.all()
@@ -533,7 +540,87 @@ def recupera_ingredienti_ricetta(ricetta_id, user_id, percentuale) -> str:
     if not results or not results[0].ricetta:
         return "Ingredienti non disponibili"
 
-    return results[0].ingredienti
+    return results[0].ricetta
+
+
+def get_totale_gruppi_service(ricetta_id, user_id, percentuale) -> list[dict]:
+    """
+    Recupera gli ingredienti di una ricetta e calcola le quantità basate su una percentuale specifica.
+
+    Args:
+        ricetta_id (int): ID della ricetta di cui recuperare gli ingredienti.
+        user_id (int): ID dell'utente che ha creato o ha accesso alla ricetta.
+        percentuale (float): Percentuale da applicare alle quantità degli ingredienti.
+
+    Returns:
+        str: Una stringa che rappresenta gli ingredienti e le quantità della ricetta, formattata come:
+             "Ingrediente1: Quantità1g, Ingrediente2: Quantità2g, ..."
+    """
+    vir = aliased(VIngredientiRicetta)
+    vir2 = aliased(VIngredientiRicetta)
+    va = aliased(VAlimento)
+    va2 = aliased(VAlimento)
+
+    # Subquery per il filtro NOT EXISTS per VAlimento
+    not_exists_va = (
+        db.session.query(va2.id)
+        .filter(
+            and_(
+                va2.id == va.id,
+                va2.user_id == user_id
+            )
+        )
+        .exists()
+    )
+
+    # Subquery per il filtro NOT EXISTS per VIngredientiRicetta
+    not_exists_vir = (
+        db.session.query(vir2.id_ricetta)
+        .filter(
+            and_(
+                vir2.id_ricetta == vir.id_ricetta,
+                vir2.id_alimento == vir.id_alimento,
+                vir2.user_id == user_id
+            )
+        )
+        .exists()
+    )
+
+    # Query principale
+    query = (
+        db.session.query(
+            vir.id_ricetta,
+            va.id_gruppo,
+            func.sum(vir.qta * percentuale).label('ingredienti'),
+        )
+        .join(
+            va,
+            and_(
+                va.id == vir.id_alimento,
+                or_(
+                    and_(va.user_id == user_id, not_(va.removed)),
+                    and_(va.user_id == 0, not_(not_exists_va))
+                ),
+                or_(
+                    and_(vir.user_id == user_id, not_(vir.removed)),
+                    and_(vir.user_id == 0, not_(not_exists_vir))
+                )
+            )
+        )
+        .filter(vir.id_ricetta == ricetta_id)
+        .group_by(vir.id_ricetta, va.id_gruppo)
+    )
+
+    # Debug della query generata
+    print_query(query)
+
+    # Esecuzione della query
+    results = query.all()
+
+    if not results:
+        return []
+
+    return [{"id_gruppo": int(row.id_gruppo), "qta": float(row.ingredienti)} for row in results]
 
 
 def controlla_limiti_macronutrienti(ricetta, day, weekly, controllo_macro_settimanale) -> bool:
@@ -654,28 +741,66 @@ def stampa_lista_della_spesa(user_id: int, menu: dict) -> list[dict]:
     if not isinstance(menu, dict) or "day" not in menu or "all_food" not in menu:
         raise ValueError("Il menu fornito non è valido.")
 
-    # Alias per le tabelle
-    ir = aliased(VIngredientiRicetta)
-    a = aliased(VAlimento)
-    r = aliased(VRicetta)
-
     if menu['all_food']:
-        results = (
-            db.session.query((r.id).label('id_ricetta'),
-                             (a.nome).label('nome'),
-                             func.sum(ir.qta).label('qta_totale')
-                             )
-            .join(a, a.id == ir.id_alimento)
-            .join(r, r.id == ir.id_ricetta)
-            .filter(ir.removed == False)
-            .filter(func.coalesce(ir.user_id, user_id) == user_id)
-            .filter(ir.id_ricetta.in_(menu['all_food']))
-            .group_by(r.id, a.nome )
-            .order_by(a.nome)
-            .all()
+        # Alias per le tabelle
+        vir = aliased(VIngredientiRicetta)
+        vir2 = aliased(VIngredientiRicetta)
+        va = aliased(VAlimento)
+        va2 = aliased(VAlimento)
+
+        # Subquery per il filtro NOT EXISTS per VAlimento
+        not_exists_va = (
+            db.session.query(va2.id)
+            .filter(
+                and_(
+                    va2.id == va.id,
+                    va2.user_id == user_id
+                )
+            )
+            .exists()
         )
+
+        # Subquery per il filtro NOT EXISTS per VIngredientiRicetta
+        not_exists_vir = (
+            db.session.query(vir2.id_ricetta)
+            .filter(
+                and_(
+                    vir2.id_ricetta == vir.id_ricetta,
+                    vir2.id_alimento == vir.id_alimento,
+                    vir2.user_id == user_id
+                )
+            )
+            .exists()
+        )
+
+        # Query principale
+        results = (
+            db.session.query(
+                vir.id_ricetta,
+                va.nome,
+                func.sum(vir.qta).label('ingredienti'),
+            )
+            .join(
+                va,
+                and_(
+                    va.id == vir.id_alimento,
+                    or_(
+                        and_(va.user_id == user_id, not_(va.removed)),
+                        and_(va.user_id == 0, not_(not_exists_va))
+                    ),
+                    or_(
+                        and_(vir.user_id == user_id, not_(vir.removed)),
+                        and_(vir.user_id == 0, not_(not_exists_vir))
+                    )
+                )
+            )
+            .filter(vir.id_ricetta.in_(menu['all_food']))
+            .group_by(vir.id_ricetta, va.nome)
+            .order_by(va.nome)
+        ).all()
     else:
-        results = []  # Gestione nel caso di lista vuota
+        results = []
+
 
     # Calcolo delle quantità totali
     ingredient_totals = defaultdict(float)
@@ -739,7 +864,6 @@ def salva_menu(menu, user_id, period: dict = None) -> None:
         raise ValueError("Il dizionario 'period' deve contenere le chiavi 'data_inizio' e 'data_fine'.")
 
     if not period:
-        period = {}
         last_menu = MenuSettimanale.query.filter_by(user_id=user_id).order_by(desc(MenuSettimanale.data_fine)).first()
         if last_menu:
             period = {
@@ -756,6 +880,7 @@ def salva_menu(menu, user_id, period: dict = None) -> None:
 
     # Inserisce un nuovo menu per la prossima settimana
     new_menu_settimanale = MenuSettimanale(
+        id=get_sequence_value('dieta.seq_menu_settimanale'),
         data_inizio=period['data_inizio'],
         data_fine=period['data_fine'],
         menu=menu,
@@ -764,47 +889,6 @@ def salva_menu(menu, user_id, period: dict = None) -> None:
 
     db.session.add(new_menu_settimanale)
     db.session.commit()
-
-
-def get_menu(user_id: int, period: dict = None, ids: int = None):
-    """
-    Recupera un menu settimanale per un utente specifico.
-
-    Args:
-        user_id (int): ID dell'utente per il quale recuperare il menu.
-        period (dict, optional): Dizionario contenente le date di inizio e fine della settimana.
-                                  Esempio: {"data_inizio": <data>, "data_fine": <data>}.
-        ids (int, optional): ID specifico del menu da recuperare. Se specificato, ignora `period`.
-
-    Returns:
-        dict: Dizionario contenente il menu e la data di fine,
-              con struttura {"menu": <menu>, "data_fine": <data>} se trovato.
-        None: Se nessun menu corrispondente è trovato.
-
-    Raises:
-        KeyError: Se il parametro `period` è fornito ma non contiene le chiavi `data_inizio` o `data_fine`.
-    """
-    if period and ('data_inizio' not in period or 'data_fine' not in period):
-        raise ValueError("Il parametro 'period' deve contenere 'data_inizio' e 'data_fine'.")
-
-    query = db.session.query(
-        MenuSettimanale.menu.label('menu'),
-        MenuSettimanale.data_fine.label('data_fine')
-    ).filter_by(user_id=user_id)
-
-    if ids:
-        query = query.filter(MenuSettimanale.id == ids)
-    else:
-        query = query.filter(and_(MenuSettimanale.data_inizio == period['data_inizio'],
-                                  MenuSettimanale.data_fine == period['data_fine']))
-
-    result = query.first()
-
-    # Restituisci i valori se il risultato esiste
-    if result:
-        return {'menu': result.menu, 'data_fine': result.data_fine}
-    else:
-        return None  # Nessun risultato trovato
 
 
 def get_settimane_salvate(user_id, show_old_week: bool = False):
@@ -933,11 +1017,11 @@ def elimina_ingredienti(ingredient_id: int, recipe_id: int, user_id: int):
     db.session.commit()
 
 
-def salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
+def salva_utente_dieta(utente_id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
                        meta_basale, meta_giornaliero, calorie_giornaliere, settimane_dieta, carboidrati,
                        proteine, grassi, dieta):
 
-    utente = get_utente(user_id=id)
+    utente = get_utente(user_id=utente_id)
 
     utente.nome = nome
     utente.cognome = cognome
@@ -962,7 +1046,7 @@ def salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, defic
 
     # cancello tutti i record che hanno il peso ideale valorizzato e peso/vita/fianchi null
     db.session.query(RegistroPeso).filter(
-        RegistroPeso.user_id == id,
+        RegistroPeso.user_id == utente_id,
         RegistroPeso.peso_ideale.isnot(None),
         RegistroPeso.peso.is_(None),
         RegistroPeso.vita.is_(None),
@@ -985,11 +1069,11 @@ def salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, defic
     for settimana in range(0, settimane):
         data_intermedia = lunedi_corrente + timedelta(days=7 * settimana)
         peso_ideale_intermedio = peso_iniziale - perdita_peso_settimanale * settimana
-        registro_intermedio = RegistroPeso.query.filter_by(user_id=id, data_rilevazione=data_intermedia.date()).first()
+        registro_intermedio = RegistroPeso.query.filter_by(user_id=utente_id, data_rilevazione=data_intermedia.date()).first()
         if not registro_intermedio:
             # Inserisci il punto intermedio nel database
             registro_intermedio = RegistroPeso(
-                user_id=id,
+                user_id=utente_id,
                 data_rilevazione=data_intermedia.date(),
                 peso=peso_iniziale if settimana == 0 else None,
                 peso_ideale=round(peso_ideale_intermedio, 1)
@@ -1001,7 +1085,7 @@ def salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, defic
 
 
     # cerco se esiste già un record con la data di fine dieta
-    new_peso = RegistroPeso.query.filter_by(user_id=id, data_rilevazione=data_fine_dieta).first()
+    new_peso = RegistroPeso.query.filter_by(user_id=utente_id, data_rilevazione=data_fine_dieta).first()
 
     # se c'è aggiorno solo il peso ideale
     if new_peso:
@@ -1009,7 +1093,7 @@ def salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, defic
     else:
         # altrimento creo la riga
         new_peso = RegistroPeso(
-            user_id=id,
+            user_id=utente_id,
             data_rilevazione=data_fine_dieta,
             peso_ideale=peso_ideale
         )
@@ -1049,24 +1133,6 @@ def get_dati_utente(user_id):
     return results.to_dict()
 
 
-def calcola_macronutrienti_rimanenti(menu: json):
-    remaining_macronutrienti = {}
-    if menu:
-        for giorno, dati_giorno in menu['day'].items():
-            remaining_kcal = round(dati_giorno['kcal'],2)
-            remaining_carboidrati = round(dati_giorno['carboidrati'],2)
-            remaining_proteine = round(dati_giorno['proteine'],2)
-            remaining_grassi = round(dati_giorno['grassi'],2)
-
-            remaining_macronutrienti[giorno] = {
-                'kcal': remaining_kcal,
-                'carboidrati': remaining_carboidrati,
-                'proteine': remaining_proteine,
-                'grassi': remaining_grassi
-            }
-    return remaining_macronutrienti
-
-
 def aggiungi_ricetta_al_menu(menu, day, meal, meal_id, user_id):
     ricetta = get_ricette_service(user_id, ids=meal_id)
     ricetta[0]['qta'] = 1
@@ -1085,18 +1151,12 @@ def aggiungi_ricetta_al_menu(menu, day, meal, meal_id, user_id):
     aggiorna_macronutrienti(menu, day, ricetta[0])
 
 
-def update_menu_corrente(menu, week_id, user_id):
-    menu_settimanale = MenuSettimanale.query.filter_by(id=week_id, user_id=user_id).first()
-    menu_settimanale.menu = menu
-    db.session.commit()
-
-
 def qta_gruppo_ricetta(ricetta_id, user_id):
     vir = aliased(VIngredientiRicetta)
     va = aliased(VAlimento)
 
     results = (db.session.query(
-        (va.id_gruppo).label('id_gruppo'),
+        va.id_gruppo.label('id_gruppo'),
         func.sum(vir.qta).label('qta')
     ).join(va, va.id == vir.id_alimento)
                .filter(vir.removed == False)
@@ -1147,17 +1207,6 @@ def aggiorna_macronutrienti(menu, day, ricetta, rimuovi=False):
 def delete_week_menu(week_id, user_id):
     MenuSettimanale.query.filter_by(id=week_id, user_id=user_id).delete()
     db.session.commit()
-
-
-def is_valid_email(email):
-    # Definizione dell'espressione regolare per validare l'email
-    email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
-
-    # Utilizzo di re.match per verificare se l'email è valida
-    if re.match(email_regex, email):
-        return True
-    else:
-        return False
 
 
 def copia_alimenti_ricette(user_id: int, ricette_vegane: bool, ricette_carne: bool, ricette_pesce: bool):
@@ -1333,15 +1382,6 @@ def recupera_ricette_per_alimento(alimento_id, user_id):
 
     ricette_data = [{'nome_ricetta': r.nome_ricetta} for r in ricette]
     return ricette_data
-
-
-def copia_menu(menu_from, week_to, user_id):
-    menu_destinazione = MenuSettimanale.query.filter_by(user_id=user_id, id=week_to).one()
-
-    if menu_destinazione:
-        menu_destinazione.menu = menu_from
-
-    db.session.commit()
 
 
 def recupera_settimane(user_id):
