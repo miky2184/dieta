@@ -1117,34 +1117,11 @@ def aggiungi_ricetta_al_menu(menu, day, meal, meal_id, user_id):
         'carboidrati': ricetta['carboidrati'],
         'grassi': ricetta['grassi'],
         'proteine': ricetta['proteine'],
-        'ricetta': recupera_ingredienti_ricetta(ricetta['id'], user_id, ricetta['qta'])
+        'ricetta': recupera_ingredienti_ricetta(ricetta['id'], user_id, ricetta['qta']),
+        'ingredienti': get_totale_gruppi_service(ricetta['id'], user_id, ricetta['qta'])
     })
     aggiorna_macronutrienti(menu, day, ricetta)
     aggiorna_limiti_gruppi(ricetta, menu['consumi'], user_id, ricetta['qta'])
-
-
-def qta_gruppo_ricetta(ricetta_id, user_id):
-    vir = aliased(VIngredientiRicetta)
-    va = aliased(VAlimento)
-
-    results = (db.session.query(
-        va.id_gruppo.label('id_gruppo'),
-        func.sum(vir.qta).label('qta')
-    ).join(va, va.id == vir.id_alimento)
-               .filter(vir.removed == False)
-               .filter(func.coalesce(vir.user_id, user_id) == user_id)
-               .filter(vir.id_ricetta == ricetta_id)
-               .group_by(va.id_gruppo).all())
-
-    res = [{"ingredienti": []}]
-
-    alimenti = [{
-        'id_gruppo': int(r.id_gruppo),
-        'qta': float(r.qta)
-    } for r in results]
-
-    res[0]['ingredienti'] = alimenti
-    return res[0]
 
 
 def rimuovi_pasto_dal_menu(menu, day, meal, meal_id, user_id):
