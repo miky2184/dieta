@@ -29,22 +29,26 @@ class VAlimento(db.Model):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
     @classmethod
-    def filtro_alimenti(self, user_id):
-        # Alias per la tabella VAlimento
-        va2 = aliased(VAlimento)
+    @classmethod
+    def filtro_alimenti(cls, user_id, alias=None):
+        # Alias per la tabella (se non fornito, usa il modello originale)
+        table = alias or cls
+
+        # Alias per la tabella interna nella clausola NOT EXISTS
+        va2 = aliased(cls)
 
         # Subquery per la clausola NOT EXISTS
         not_exists_clause = ~exists().where(
             and_(
-                va2.id == VAlimento.id,  # Confronta l'ID dell'alimento
+                va2.id == table.id,  # Confronta l'ID dell'alimento
                 va2.user_id == user_id  # Confronta con l'utente corrente
             )
         )
 
         # Costruisci il filtro combinando le due condizioni
         filtro = or_(
-            and_(VAlimento.user_id == user_id, not_(VAlimento.removed)),  # user_id = 2 AND not removed
-            and_(VAlimento.user_id == 0, not_exists_clause)  # user_id = 0 AND NOT EXISTS(...)
+            and_(table.user_id == user_id, not_(table.removed)),  # user_id = 2 AND not removed
+            and_(table.user_id == 0, not_exists_clause)  # user_id = 0 AND NOT EXISTS(...)
         )
 
         return filtro

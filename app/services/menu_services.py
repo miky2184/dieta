@@ -18,7 +18,6 @@ from app.models.Utente import Utente
 from app.models.VAlimento import VAlimento
 from app.models.VIngredientiRicetta import VIngredientiRicetta
 from app.models.VRicetta import VRicetta
-from app.ricette_route import ricette
 from app.services.db_services import get_sequence_value
 from app.services.modifica_pasti_services import get_menu_service
 from app.services.ricette_services import get_ricette_service
@@ -468,34 +467,13 @@ def recupera_ingredienti_ricetta(ricetta_id, user_id, percentuale) -> str:
              "Ingrediente1: Quantità1g, Ingrediente2: Quantità2g, ..."
     """
     vir = aliased(VIngredientiRicetta)
-    vir2 = aliased(VIngredientiRicetta)
     va = aliased(VAlimento)
-    va2 = aliased(VAlimento)
 
-    # Subquery per il filtro NOT EXISTS per VAlimento
-    not_exists_va = (
-        db.session.query(va2.id)
-        .filter(
-            and_(
-                va2.id == va.id,
-                va2.user_id == user_id
-            )
-        )
-        .exists()
-    )
+    # Filtro per gli alimenti
+    filtro_va = VAlimento.filtro_alimenti(user_id, alias=va)
 
-    # Subquery per il filtro NOT EXISTS per VIngredientiRicetta
-    not_exists_vir = (
-        db.session.query(vir2.id_ricetta)
-        .filter(
-            and_(
-                vir2.id_ricetta == vir.id_ricetta,
-                vir2.id_alimento == vir.id_alimento,
-                vir2.user_id == user_id
-            )
-        )
-        .exists()
-    )
+    # Filtro per gli ingredienti
+    filtro_vir = VIngredientiRicetta.filtro_ingredienti(user_id, alias=vir)
 
     # Query principale
     query = (
@@ -515,14 +493,8 @@ def recupera_ingredienti_ricetta(ricetta_id, user_id, percentuale) -> str:
             va,
             and_(
                 va.id == vir.id_alimento,
-                or_(
-                    and_(va.user_id == user_id, not_(va.removed)),
-                    and_(va.user_id == 0, not_(not_exists_va))
-                ),
-                or_(
-                    and_(vir.user_id == user_id, not_(vir.removed)),
-                    and_(vir.user_id == 0, not_(not_exists_vir))
-                )
+                filtro_va,
+                filtro_vir
             )
         )
         .filter(vir.id_ricetta == ricetta_id)
@@ -555,34 +527,13 @@ def get_totale_gruppi_service(ricetta_id, user_id, percentuale) -> list[dict]:
              "Ingrediente1: Quantità1g, Ingrediente2: Quantità2g, ..."
     """
     vir = aliased(VIngredientiRicetta)
-    vir2 = aliased(VIngredientiRicetta)
     va = aliased(VAlimento)
-    va2 = aliased(VAlimento)
 
-    # Subquery per il filtro NOT EXISTS per VAlimento
-    not_exists_va = (
-        db.session.query(va2.id)
-        .filter(
-            and_(
-                va2.id == va.id,
-                va2.user_id == user_id
-            )
-        )
-        .exists()
-    )
+    # Filtro per gli alimenti
+    filtro_va = VAlimento.filtro_alimenti(user_id, alias=va)
 
-    # Subquery per il filtro NOT EXISTS per VIngredientiRicetta
-    not_exists_vir = (
-        db.session.query(vir2.id_ricetta)
-        .filter(
-            and_(
-                vir2.id_ricetta == vir.id_ricetta,
-                vir2.id_alimento == vir.id_alimento,
-                vir2.user_id == user_id
-            )
-        )
-        .exists()
-    )
+    # Filtro per gli ingredienti
+    filtro_vir = VIngredientiRicetta.filtro_ingredienti(user_id, alias=vir)
 
     # Query principale
     query = (
@@ -595,14 +546,8 @@ def get_totale_gruppi_service(ricetta_id, user_id, percentuale) -> list[dict]:
             va,
             and_(
                 va.id == vir.id_alimento,
-                or_(
-                    and_(va.user_id == user_id, not_(va.removed)),
-                    and_(va.user_id == 0, not_(not_exists_va))
-                ),
-                or_(
-                    and_(vir.user_id == user_id, not_(vir.removed)),
-                    and_(vir.user_id == 0, not_(not_exists_vir))
-                )
+                filtro_va,
+                filtro_vir
             )
         )
         .filter(vir.id_ricetta == ricetta_id)
@@ -720,34 +665,13 @@ def stampa_lista_della_spesa(user_id: int, menu: dict) -> list[dict]:
     if menu['all_food']:
         # Alias per le tabelle
         vir = aliased(VIngredientiRicetta)
-        vir2 = aliased(VIngredientiRicetta)
         va = aliased(VAlimento)
-        va2 = aliased(VAlimento)
 
         # Subquery per il filtro NOT EXISTS per VAlimento
-        not_exists_va = (
-            db.session.query(va2.id)
-            .filter(
-                and_(
-                    va2.id == va.id,
-                    va2.user_id == user_id
-                )
-            )
-            .exists()
-        )
+        filtro_va = VAlimento.filtro_alimenti(user_id, va)
 
         # Subquery per il filtro NOT EXISTS per VIngredientiRicetta
-        not_exists_vir = (
-            db.session.query(vir2.id_ricetta)
-            .filter(
-                and_(
-                    vir2.id_ricetta == vir.id_ricetta,
-                    vir2.id_alimento == vir.id_alimento,
-                    vir2.user_id == user_id
-                )
-            )
-            .exists()
-        )
+        filtro_vir = VIngredientiRicetta.filtro_ingredienti(user_id, vir)
 
         # Query principale
         results = (
@@ -760,14 +684,8 @@ def stampa_lista_della_spesa(user_id: int, menu: dict) -> list[dict]:
                 va,
                 and_(
                     va.id == vir.id_alimento,
-                    or_(
-                        and_(va.user_id == user_id, not_(va.removed)),
-                        and_(va.user_id == 0, not_(not_exists_va))
-                    ),
-                    or_(
-                        and_(vir.user_id == user_id, not_(vir.removed)),
-                        and_(vir.user_id == 0, not_(not_exists_vir))
-                    )
+                    filtro_va,
+                    filtro_vir
                 )
             )
             .filter(vir.id_ricetta.in_(menu['all_food']))
@@ -776,7 +694,6 @@ def stampa_lista_della_spesa(user_id: int, menu: dict) -> list[dict]:
         ).all()
     else:
         results = []
-
 
     # Calcolo delle quantità totali
     ingredient_totals = defaultdict(float)
@@ -1163,23 +1080,12 @@ def delete_week_menu(week_id, user_id):
 def recupera_ricette_per_alimento(alimento_id, user_id):
     vir = aliased(VIngredientiRicetta)
     vr = aliased(VRicetta)
-    vir2 = aliased(VIngredientiRicetta)
-    vr2 = aliased(VRicetta)
 
-    not_exists_vir = ~exists().where(
-        and_(
-            vir2.id_ricetta == vir.id_ricetta,
-            vir2.id_alimento == vir.id_alimento,
-            vir2.user_id == user_id
-        )
-    )
+    # Subquery per il filtro NOT EXISTS per VIngredientiRicetta
+    filtro_vir = VIngredientiRicetta.filtro_ingredienti(user_id, alias=vir)
 
-    not_exists_vr = ~exists().where(
-        and_(
-            vr2.id == vr.id,
-            vr2.user_id == user_id
-        )
-    )
+    # Subquery per il filtro NOT EXISTS per VIngredientiRicetta
+    filtro_vr = VRicetta.filtro_ricette(user_id, alias=vr)
 
     ricette = (db.session.query(vr.nome_ricetta)
                        .select_from(vr)
@@ -1187,19 +1093,11 @@ def recupera_ricette_per_alimento(alimento_id, user_id):
                     vir,
                     and_(
                         vir.id_ricetta == vr.id,
-                        or_(
-                            and_(vir.user_id == user_id, not_(vir.removed)),
-                            and_(vir.user_id == 0, not_exists_vir)
-                        )
+                        filtro_vir
                     )
                 )
                .filter(vir.id_alimento == alimento_id)
-               .filter(
-        or_(
-            and_(vr.user_id == user_id, not_(vr.removed)),
-            and_(vr.user_id == 0, not_exists_vr)
-        )
-    )
+               .filter(filtro_vr)
                .distinct()
                .all())
 

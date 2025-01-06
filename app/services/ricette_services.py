@@ -1,4 +1,4 @@
-from sqlalchemy import func, literal, exists, and_, or_, not_
+from sqlalchemy import func, exists, and_, or_, not_, alias
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql import extract
 
@@ -33,34 +33,14 @@ def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool
     vir1 = aliased(VIngredientiRicetta)
     va1 = aliased(VAlimento)
 
-    vir2 = aliased(VIngredientiRicetta)  # Alias per la subquery di NOT EXISTS
-    va2 = aliased(VAlimento)
-    vr2 = aliased(VRicetta)
+    # Filtro per gli alimenti
+    filtro_va = VAlimento.filtro_alimenti(user_id, alias=va1)
 
-    # Filtri di NOT EXISTS per VIngredientiRicetta
-    not_exists_vir = ~exists().where(
-        and_(
-            vir2.id_ricetta == vir1.id_ricetta,
-            vir2.id_alimento == vir1.id_alimento,
-            vir2.user_id == user_id
-        )
-    )
+    # Filtro per gli ingredienti
+    filtro_vir = VIngredientiRicetta.filtro_ingredienti(user_id, alias=vir1)
 
-    # Filtri di NOT EXISTS per VAlimento
-    not_exists_va = ~exists().where(
-        and_(
-            va2.id == va1.id,
-            va2.user_id == user_id
-        )
-    )
-
-    # Filtri di NOT EXISTS per VRicetta
-    not_exists_vr = ~exists().where(
-        and_(
-            vr2.id == vr1.id,
-            vr2.user_id == user_id
-        )
-    )
+    # Filtro per le ricette
+    filtro_vr = VRicetta.filtro_ricette(user_id, alias=vr1)
 
     # Query principale
     query = (
@@ -105,28 +85,17 @@ def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool
             vir1,
             and_(
                 vir1.id_ricetta == vr1.id,
-                or_(
-                    and_(vir1.user_id == user_id, not_(vir1.removed)),
-                    and_(vir1.user_id == 0, not_exists_vir)
-                )
+                filtro_vir
             )
         )
         .outerjoin(
             va1,
             and_(
                 va1.id == vir1.id_alimento,
-                or_(
-                    and_(va1.user_id == user_id, not_(va1.removed)),
-                    and_(va1.user_id == 0, not_exists_va)
-                )
+                filtro_va
             )
         )
-        .filter(
-            or_(
-                and_(vr1.user_id == user_id, not_(vr1.removed)),
-                and_(vr1.user_id == 0, not_exists_vr)
-            )
-        )
+        .filter(filtro_vr)
         .distinct()
     )
 
@@ -247,37 +216,44 @@ def attiva_disattiva_ricetta_service(ricetta_id, user_id):
 
 def get_ingredienti_ricetta_service(recipe_id, user_id):
 
-    vir = aliased(VIngredientiRicetta)
-    vr = aliased(VRicetta)
-    va = aliased(VAlimento)
+    vir1 = aliased(VIngredientiRicetta)
+    vr1 = aliased(VRicetta)
+    va1 = aliased(VAlimento)
 
-    # Sottoquery EXISTS
-    subquery = (
-        db.session.query(vr.id)
-        .filter(and_(vr.id == recipe_id, vr.user_id == user_id))
-        .exists()
-    )
+    # Subquery per il filtro NOT EXISTS per VAlimento
+    filtro_va = VAlimento.filtro_alimenti(user_id, alias=va1)
+
+    # Subquery per il filtro NOT EXISTS per VIngredientiRicetta
+    filtro_vir = VIngredientiRicetta.filtro_ingredienti(user_id, alias=vir1)
+
+    # Subquery per il filtro NOT EXISTS per VIngredientiRicetta
+    filtro_vr = VRicetta.filtro_ricette(user_id, alias=vr1)
 
     # Query principale
     query = (
         db.session.query(
-            va.id.label("id_alimento"),
-            va.nome.label("nome_alimento"),
-            vr.id.label("id_ricetta"),
-            vr.nome_ricetta.label("nome_ricetta"),
-            vir.qta.label("quantita")
-        )
-        .join(va, and_(va.id == vir.id_alimento, vir.user_id == va.user_id))
-        .join(vr, and_(vr.id == vir.id_ricetta, vir.user_id == vr.user_id))
-        .filter(
+            va1.id.label("id_alimento"),
+            va1.nome.label("nome_alimento"),
+            vr1.id.label("id_ricetta"),
+            vr1.nome_ricetta.label("nome_ricetta"),
+            vir1.qta.label("quantita")
+        ).select_from(vr1)
+        .outerjoin(
+            vir1,
             and_(
-                vr.id == recipe_id,
-                or_(
-                    and_(vr.user_id == user_id, not_(vr.removed)),
-                    and_(vr.user_id == 0, not_(subquery))
-                )
+                vir1.id_ricetta == vr1.id,
+                filtro_vir
             )
         )
+        .outerjoin(
+            va1,
+            and_(
+                va1.id == vir1.id_alimento,
+                filtro_va
+            )
+        )
+        .filter(filtro_vr)
+        .distinct()
     )
 
     results = query.all()

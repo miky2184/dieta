@@ -1,9 +1,6 @@
-from sqlalchemy import CheckConstraint, func
+from sqlalchemy import CheckConstraint
 
 from app.models import db
-from app.models.VAlimento import VAlimento
-from app.models.VIngredientiRicetta import VIngredientiRicetta
-from app.models.VRicetta import VRicetta
 
 
 # Definizione del modello per i dettagli dell utente
@@ -35,30 +32,9 @@ class Utente(db.Model):
     email = db.Column(db.String, nullable=False)
     dieta = db.Column(db.String, nullable=True)
 
-    # Relazione verso la vista VAlimento
-    alimenti = db.relationship(
-        'VAlimento',
-        primaryjoin=(
-                db.foreign(id) == func.coalesce(db.remote(VAlimento.user_id), id)
-        ),
-        viewonly=True  # La relazione è sola lettura
-    )
-    ingredienti_ricette = db.relationship(
-        'VIngredientiRicetta',
-        primaryjoin=(
-                db.foreign(id) == func.coalesce(db.remote(VIngredientiRicetta.user_id), id)
-        ),
-        viewonly=True  # La relazione è sola lettura
-    )
     menu_settimanale = db.relationship('MenuSettimanale', backref='utente', cascade='all, delete-orphan')
     registro_peso = db.relationship('RegistroPeso', backref='utente', cascade='all, delete-orphan')
-    ricette = db.relationship(
-        'VRicetta',
-        primaryjoin=(
-                db.foreign(id) == func.coalesce(db.remote(VRicetta.user_id), id)
-        ),
-        viewonly=True  # La relazione è sola lettura
-    )
+
     auth = db.relationship('UtenteAuth', back_populates='utente', overlaps="utente_auth,utente_assoc")
     utente_auth = db.relationship('UtenteAuth', overlaps="auth,utente_assoc")
 

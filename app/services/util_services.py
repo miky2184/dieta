@@ -4,8 +4,6 @@ import os
 import re
 import sys
 from datetime import datetime
-from flask_login import login_required, current_user
-from flask import Blueprint, request
 
 
 def printer(text, level="DEBUG", include_timestamp=False, output=sys.stdout):
