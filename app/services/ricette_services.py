@@ -13,7 +13,7 @@ from app.services.db_services import get_sequence_value
 from app.services.util_services import print_query
 
 
-def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool=False, complemento=False, contorno=False, data_stagionalita=None) -> list[dict]:
+def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool=False, complemento=None, contorno=False, data_stagionalita=None) -> list[dict]:
     """
         Carica tutte le ricette disponibili dal database, arricchendole con informazioni nutrizionali e ingredienti.
 
@@ -124,6 +124,9 @@ def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool
 
     if complemento:
         query = query.filter(vr1.complemento.is_(True))
+
+    if not complemento:
+        query = query.filter(vr1.complemento.is_(False))
 
     if contorno:
         query = query.filter(vr1.contorno.is_(True))
