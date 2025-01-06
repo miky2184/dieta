@@ -6,7 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from app.models.Utente import Utente
 from app.models.UtenteAuth import UtenteAuth
-from app.models.models import db
+from app.models import db
 from app.services.util_services import is_valid_email
 
 auth = Blueprint('auth', __name__)

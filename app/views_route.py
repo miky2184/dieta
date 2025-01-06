@@ -12,7 +12,7 @@ from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.models.models import db
+from app.models import db
 from app.services.menu_services import (get_utente, save_weight, stampa_lista_della_spesa,
                                         get_settimane_salvate,
                                         elimina_ingredienti, salva_utente_dieta,

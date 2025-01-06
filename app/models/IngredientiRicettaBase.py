@@ -1,4 +1,4 @@
-from . import db
+from app.models import db
 
 class IngredientiRicettaBase(db.Model):
     __tablename__ = 'ingredienti_ricetta_base'

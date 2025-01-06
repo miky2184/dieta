@@ -1,4 +1,4 @@
-from . import db
+from app.models import db
 
 class GruppoAlimentare(db.Model):
     __tablename__ = 'gruppo_alimentare'

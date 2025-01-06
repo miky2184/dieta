@@ -2,7 +2,7 @@ from flask_login import UserMixin
 from sqlalchemy import UniqueConstraint
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from . import db
+from app.models import db
 
 
 # Definizione del modello per utente con autenticazione

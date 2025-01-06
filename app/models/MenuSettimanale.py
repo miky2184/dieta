@@ -1,7 +1,7 @@
 from sqlalchemy import UniqueConstraint, ForeignKey
 from sqlalchemy.dialects.postgresql import JSON
 
-from . import db
+from app.models import db
 
 
 class MenuSettimanale(db.Model):

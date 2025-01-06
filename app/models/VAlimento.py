@@ -2,7 +2,7 @@ from sqlalchemy import or_, and_, exists, not_
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import aliased
 
-from . import db
+from app.models import db
 
 
 class VAlimento(db.Model):

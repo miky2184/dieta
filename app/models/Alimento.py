@@ -1,7 +1,7 @@
 from sqlalchemy import Computed
 from sqlalchemy.dialects.postgresql import ARRAY
 
-from . import db
+from app.models import db
 
 
 class Alimento(db.Model):

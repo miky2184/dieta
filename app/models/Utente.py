@@ -3,7 +3,7 @@ from sqlalchemy import CheckConstraint, func
 from app.models.VAlimento import VAlimento
 from app.models.VIngredientiRicetta import VIngredientiRicetta
 from app.models.VRicetta import VRicetta
-from . import db
+from app.models import db
 
 
 # Definizione del modello per i dettagli dell utente

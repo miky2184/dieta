@@ -1,6 +1,6 @@
 from sqlalchemy import UniqueConstraint, ForeignKey
 
-from . import db
+from app.models import db
 
 
 class RegistroPeso(db.Model):

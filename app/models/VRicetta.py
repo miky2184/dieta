@@ -1,4 +1,4 @@
-from . import db
+from app.models import db
 
 class VRicetta(db.Model):
     __tablename__ = 'v_ricetta'
