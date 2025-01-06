@@ -7,7 +7,7 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from sqlalchemy import and_, or_, func, asc, desc, not_
+from sqlalchemy import and_, or_, func, asc, desc, not_, exists
 from sqlalchemy.orm import aliased
 
 from app.models import db
@@ -29,12 +29,12 @@ MAX_RETRY = int(os.getenv('MAX_RETRY'))
 LIMITI_CONSUMO = {
     '1': 240,   # Uova (2-4 a settimana)
     '2': 0,     # Pesce (2-3 porzioni settimanali)
+    '3': 400,   # Carne Bianca (1-2 porzioni settimanali)
     '4': 150,   # Carne Rossa (1 porzione settimanale)
-    '3': 350,   # Carne Bianca (1-2 porzioni settimanali)
-    '5': 800,   # Legumi (2-4 porzioni settimanali)
-    '8': 800,   # Cereali (100-120 g al giorno)
-    '12': 150,  # Frutta secca (20-30 g al giorno)
-    '15': 150   # Olio o grassi da condimento (20-30 g al giorno)
+    '5': 700,   # Legumi (2-4 porzioni settimanali)
+    '8': 700,   # Cereali (100-120 g al giorno)
+    '12': 190,  # Frutta secca (20-30 g al giorno)
+    '15': 140   # Olio o grassi da condimento (20-30 g al giorno)
 }
 
 pasti_config = [
@@ -1184,15 +1184,47 @@ def delete_week_menu(week_id, user_id):
 
 
 def recupera_ricette_per_alimento(alimento_id, user_id):
-    ir = aliased(VIngredientiRicetta)
-    r = aliased(VRicetta)
+    vir = aliased(VIngredientiRicetta)
+    vr = aliased(VRicetta)
+    vir2 = aliased(VIngredientiRicetta)
+    vr2 = aliased(VRicetta)
 
-    ricette = (db.session.query(r.nome_ricetta)
-               .select_from(ir)
-               .join(r, and_(r.id == ir.id_ricetta))
-               .filter(func.coalesce(ir.user_id, user_id) == user_id)
-               .filter(ir.id_alimento == alimento_id)
-               .filter(ir.removed == False).all())
+    not_exists_vir = ~exists().where(
+        and_(
+            vir2.id_ricetta == vir.id_ricetta,
+            vir2.id_alimento == vir.id_alimento,
+            vir2.user_id == user_id
+        )
+    )
+
+    not_exists_vr = ~exists().where(
+        and_(
+            vr2.id == vr.id,
+            vr2.user_id == user_id
+        )
+    )
+
+    ricette = (db.session.query(vr.nome_ricetta)
+                       .select_from(vr)
+                .outerjoin(
+                    vir,
+                    and_(
+                        vir.id_ricetta == vr.id,
+                        or_(
+                            and_(vir.user_id == user_id, not_(vir.removed)),
+                            and_(vir.user_id == 0, not_exists_vir)
+                        )
+                    )
+                )
+               .filter(vir.id_alimento == alimento_id)
+               .filter(
+        or_(
+            and_(vr.user_id == user_id, not_(vr.removed)),
+            and_(vr.user_id == 0, not_exists_vr)
+        )
+    )
+               .distinct()
+               .all())
 
     ricette_data = [{'nome_ricetta': r.nome_ricetta} for r in ricette]
     return ricette_data

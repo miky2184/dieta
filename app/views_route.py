@@ -106,8 +106,6 @@ def dashboard():
                            )
 
 
-
-
 @views.route('/delete_ingredienti', methods=['POST'])
 @login_required
 def delete_ingredienti():

@@ -124,7 +124,7 @@ def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool
         .filter(
             or_(
                 and_(vr1.user_id == user_id, not_(vr1.removed)),
-                and_(vr1.user_id == literal(0), not_exists_vr)
+                and_(vr1.user_id == 0, not_exists_vr)
             )
         )
         .distinct()
