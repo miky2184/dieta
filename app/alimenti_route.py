@@ -88,16 +88,15 @@ def update_alimento(alimento_id):
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
-@alimenti.route('/alimenti/<int:id>', methods=['DELETE'])
+@alimenti.route('/alimenti/<int:alimento_id>', methods=['DELETE'])
 @login_required
-def delete_alimento(id):
+def delete_alimento(alimento_id):
     """
     Questa funzione elimina un alimento dal database basandosi sul suo ID.
     """
     user_id = current_user.user_id
     try:
-        delete_alimento_service(id, user_id)
-        current_app.cache.delete(f'alimenti_{user_id}')
+        delete_alimento_service(alimento_id, user_id)
         current_app.cache.delete(f'alimenti_{user_id}')
         return jsonify({'status': 'success', 'message': 'Alimento eliminato con successo!'}), 200
     except SQLAlchemyError as db_err:

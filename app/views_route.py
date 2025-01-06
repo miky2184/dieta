@@ -15,12 +15,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.models import db
 from app.models.Utente import Utente
 from app.ricette_route import invalidate_cache
-from app.services.menu_services import (save_weight, stampa_lista_della_spesa,
-                                        get_settimane_salvate_service,
-                                        elimina_ingredienti, salva_utente_dieta,
-                                        get_peso_hist,
-                                        recupera_ricette_per_alimento, recupera_ingredienti_ricetta,
-                                        get_totale_gruppi_service)
+from app.services.common_services import get_settimane_salvate_service
+from app.services.menu_services import save_weight, stampa_lista_della_spesa, elimina_ingredienti, salva_utente_dieta, \
+    get_peso_hist, recupera_ricette_per_alimento, recupera_ingredienti_ricetta, get_totale_gruppi_service
 from app.services.modifica_pasti_services import get_menu_service
 from app.services.modifica_pasti_services import update_menu_corrente_service
 from app.services.util_services import calcola_macronutrienti_rimanenti_service
@@ -167,7 +164,6 @@ def salva_dati():
 
     user_id = current_user.user_id
     try:
-        id = request.form['id']
         nome = request.form['nome']
         cognome = request.form['cognome']
         sesso = request.form['sesso']
@@ -187,7 +183,7 @@ def salva_dati():
         grassi = int(request.form['grassi'])
         dieta = request.form['dieta']
 
-        salva_utente_dieta(id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
+        salva_utente_dieta(user_id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
                            meta_basale, meta_giornaliero, calorie_giornaliere, settimane_dieta, carboidrati,
                            proteine, grassi, dieta)
 
