@@ -7,15 +7,83 @@ from app.services.ricette_services import update_ricetta_service, get_ricette_se
 
 ricette = Blueprint('ricette', __name__)
 
+def generate_cache_key():
+    """
+    Genera una chiave cache unica basata sui parametri della richiesta.
+    """
+    user_id = current_user.user_id
+    stagionalita = request.args.get('stagionalita', 'false').lower()
+    complemento = request.args.get('complemento', 'false').lower()
+    contorno = request.args.get('contorno', 'false').lower()
+    attive = request.args.get('attive', 'false').lower()
+    meal = request.args.get('meal', 'none')
+
+    # Genera una chiave univoca
+    return f"ricette_{user_id}_{stagionalita}_{complemento}_{contorno}_{attive}_{meal}"
+
+
+def invalidate_cache(user_id):
+    """
+    Invalida tutte le chiavi di cache associate alle ricette dell'utente.
+    """
+    cache_keys = [
+        f"ricette_{user_id}_{stagionalita}_{complemento}_{contorno}_{attive}_{meal}"
+        for stagionalita in ['true', 'false']
+        for complemento in ['true', 'false']
+        for contorno in ['true', 'false']
+        for attive in ['true', 'false']
+        for meal in ['colazione', 'pranzo', 'cena', 'spuntino', 'none']
+    ]
+    for key in cache_keys:
+        current_app.cache.delete(key)
+
 
 @ricette.route('/ricette', methods=['GET'])
-@current_app.cache.cached(timeout=300, key_prefix=lambda: f"list_ricette_{current_user.user_id}")
+@current_app.cache.cached(timeout=300, key_prefix=lambda: generate_cache_key())
 @login_required
 def list_ricette():
+    """
+    Funzione consolidata per recuperare le ricette in base a filtri dinamici.
+    Supporta stagionalità, complemento, contorno e filtri per tipo di pasto.
+    """
     user_id = current_user.user_id
+
+    # Parametri dinamici dai query string
+    stagionalita = request.args.get('stagionalita', 'false').lower() == 'true'
+    complemento = request.args.get('complemento', 'false').lower() == 'true'
+    contorno = request.args.get('contorno', 'false').lower() == 'true'
+    attive = request.args.get('attive', 'false').lower() == 'true'
+    meal_type = request.args.get('meal')
+
+    # Mappatura dei tipi di pasto (opzionale)
+    meal_type_mapping = {
+        'colazione': ['colazione', 'colazione_sec'],
+        'spuntino_mattina': ['spuntino'],
+        'pranzo': ['principale'],
+        'spuntino_pomeriggio': ['spuntino'],
+        'cena': ['principale'],
+        'spuntino_sera': ['spuntino']
+    }
+
+    generic_meal_types = meal_type_mapping.get(meal_type)
+
     try:
-        # Recupera le ricette disponibili dal database.
-        ricette = get_ricette_service(user_id, stagionalita=False)
+        # Recupera le ricette dal servizio
+        ricette = get_ricette_service(
+            user_id,
+            stagionalita=stagionalita,
+            complemento=complemento,
+            contorno=contorno,
+            attive=attive
+        )
+
+        # Filtra ulteriormente in base al tipo di pasto, se specificato
+        if generic_meal_types:
+            ricette = [
+                ricetta for ricetta in ricette if
+                any(ricetta[generic_meal_type] for generic_meal_type in generic_meal_types)
+            ]
+
         return jsonify({"status": 'success', 'ricette': ricette}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500

@@ -23,7 +23,6 @@ from app.services.menu_services import (save_weight, stampa_lista_della_spesa,
                                         get_totale_gruppi_service)
 from app.services.modifica_pasti_services import get_menu_service
 from app.services.modifica_pasti_services import update_menu_corrente_service
-from app.services.ricette_services import get_ricette_service
 from app.services.util_services import calcola_macronutrienti_rimanenti_service
 
 views = Blueprint('views', __name__)
@@ -128,7 +127,6 @@ def delete_ingredienti():
         return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}', 'trace': traceback.format_exc()}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e), 'trace': traceback.format_exc()}), 500
-
 
 
 @views.route('/modifica_ingredienti_ricetta', methods=['POST'])
@@ -271,6 +269,7 @@ def get_peso_data():
         return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
 
 @views.route('/get_data_utente', methods=['GET'])
 @current_app.cache.cached(timeout=300, key_prefix=lambda: f"get_data_utente_{current_user.user_id}")
@@ -428,69 +427,6 @@ def complete_tutorial():
         db.session.commit()
         current_app.cache.delete(f'dashboard_{user_id}')
         return jsonify({'status': 'success'}), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-
-
-@views.route('/get_complemento', methods=['GET'])
-@login_required
-def get_complemento():
-    """
-    Questa funzione restituisce le ricette disponibili per un pasto specifico in un giorno specifico,
-    escludendo quelle già presenti nel menu corrente.
-    """
-    user_id = current_user.user_id
-    meal_type = request.args.get('meal')
-
-    meal_type_mapping = {
-        'colazione': ['colazione', 'colazione_sec'],
-        'spuntino_mattina': ['spuntino'],
-        'pranzo': ['principale'],
-        'spuntino_pomeriggio': ['spuntino'],
-        'cena': ['principale'],
-        'spuntino_sera': ['spuntino']
-    }
-
-    generic_meal_types = meal_type_mapping.get(meal_type)
-
-    try:
-        # Recupera tutte le ricette complemento
-        ricette = get_ricette_service(user_id, complemento=True)
-
-        # Filtra le ricette disponibili in base al tipo di pasto
-        available_meals = [ricetta for ricetta in ricette if
-                           any(ricetta[generic_meal_type] for generic_meal_type in generic_meal_types)]
-
-        return jsonify({'status':'success', 'ricette':available_meals}), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        # Risposta JSON con messaggio e riga dell'errore
-        return jsonify({
-            'status': 'error',
-            'message': str(e)}), 500
-
-
-@views.route('/get_contorno', methods=['GET'])
-@login_required
-def get_contorno():
-    """
-    Questa funzione restituisce le ricette disponibili per un pasto specifico in un giorno specifico,
-    escludendo quelle già presenti nel menu corrente.
-    """
-    user_id = current_user.user_id
-    try:
-        # Recupera tutte le ricette complemento
-        results = get_ricette_service(user_id, attive=True, contorno=True)
-
-        return jsonify({'status':'success', 'ricette':results}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
     except KeyError as key_err:
