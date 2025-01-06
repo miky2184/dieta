@@ -1,9 +1,9 @@
 from sqlalchemy import CheckConstraint, func
 
+from app.models import db
 from app.models.VAlimento import VAlimento
 from app.models.VIngredientiRicetta import VIngredientiRicetta
 from app.models.VRicetta import VRicetta
-from app.models import db
 
 
 # Definizione del modello per i dettagli dell utente
@@ -64,3 +64,30 @@ class Utente(db.Model):
 
     def to_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+
+    @classmethod
+    def get_by_email(cls, email: str):
+        """
+        Recupera un utente dal database in base all'email.
+
+        Args:
+            email (str): Email dell'utente.
+
+        Returns:
+            Utente: Istanza del modello Utente o None se non trovato.
+        """
+        return cls.query.filter_by(email=email.lower()).first()
+
+    @classmethod
+    def get_by_id(cls, user_id: int):
+        """
+        Recupera un utente dal database in base al id.
+
+        Args:
+            user_id (int): Email dell'utente.
+
+        Returns:
+            Utente: Istanza del modello Utente o None se non trovato.
+        """
+        return cls.query.filter_by(id=user_id).first()

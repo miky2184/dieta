@@ -1,6 +1,6 @@
 #config.py
 import os
-from datetime import timedelta
+
 
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', '2a1ca5c0eda9a548321057ce98a95d84a5f604726ba627ecba27270f1248d501')

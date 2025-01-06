@@ -4,7 +4,7 @@ from app.models import db
 from app.models.MenuSettimanale import MenuSettimanale
 
 
-def get_menu_service(user_id: int, period: dict = None, ids: int = None):
+def get_menu_service(user_id: int, period: dict = None, menu_id: int = None):
     """
     Recupera un menu settimanale per un utente specifico.
 
@@ -12,7 +12,7 @@ def get_menu_service(user_id: int, period: dict = None, ids: int = None):
         user_id (int): ID dell'utente per il quale recuperare il menu.
         period (dict, optional): Dizionario contenente le date di inizio e fine della settimana.
                                   Esempio: {"data_inizio": <data>, "data_fine": <data>}.
-        ids (int, optional): ID specifico del menu da recuperare. Se specificato, ignora `period`.
+        menu_id (int, optional): ID specifico del menu da recuperare. Se specificato, ignora `period`.
 
     Returns:
         dict: Dizionario contenente il menu e la data di fine,
@@ -30,8 +30,8 @@ def get_menu_service(user_id: int, period: dict = None, ids: int = None):
         MenuSettimanale.data_fine.label('data_fine')
     ).filter_by(user_id=user_id)
 
-    if ids:
-        query = query.filter(MenuSettimanale.id == ids)
+    if menu_id:
+        query = query.filter(MenuSettimanale.id == menu_id)
     else:
         query = query.filter(and_(MenuSettimanale.data_inizio == period['data_inizio'],
                                   MenuSettimanale.data_fine == period['data_fine']))
@@ -41,20 +41,12 @@ def get_menu_service(user_id: int, period: dict = None, ids: int = None):
     # Restituisci i valori se il risultato esiste
     if result:
         return {'menu': result.menu, 'data_fine': result.data_fine}
-    else:
-        return None  # Nessun risultato trovato
 
-
-def copia_menu_service(menu_from, week_to, user_id):
-    menu_destinazione = MenuSettimanale.query.filter_by(user_id=user_id, id=week_to).one()
-
-    if menu_destinazione:
-        menu_destinazione.menu = menu_from
-
-    db.session.commit()
+    return None  # Nessun risultato trovato
 
 
 def update_menu_corrente_service(menu, week_id, user_id):
-    menu_settimanale = MenuSettimanale.query.filter_by(id=week_id, user_id=user_id).first()
-    menu_settimanale.menu = menu
-    db.session.commit()
+    menu_update = MenuSettimanale.get_by_id_and_user(week_id, user_id)
+    if menu_update:
+        menu_update.menu = menu
+        db.session.commit()

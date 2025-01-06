@@ -34,7 +34,7 @@ def get_lista_spesa(settimana_id):
     """
     user_id = current_user.user_id
     try:
-        menu = get_menu_service(user_id, ids=settimana_id)
+        menu = get_menu_service(user_id, menu_id=settimana_id)
 
         # Genera la lista della spesa basata sugli ID degli alimenti.
         lista_spesa = stampa_lista_della_spesa(user_id, menu['menu'])

@@ -188,9 +188,10 @@ def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool
 
 
 def update_ricetta_service(nome, colazione, colazione_sec, spuntino, principale, contorno, complemento, ricetta_id, user_id):
-    ricetta_base = RicettaBase.query.filter(VRicetta.id == ricetta_id).first()
-    ricetta = Ricetta.query.filter(Ricetta.id == id if ricetta_base is None else ricetta_base.id,
-                                   Ricetta.user_id == user_id).first()
+    ricetta_base = RicettaBase.get_by_id(ricetta_id)
+    if ricetta_base:
+        ricetta_id = ricetta_base.id
+    ricetta = Ricetta.get_by_id_and_user(ricetta_id, user_id)
 
     if not ricetta:
         ricetta = Ricetta(
@@ -218,9 +219,10 @@ def update_ricetta_service(nome, colazione, colazione_sec, spuntino, principale,
 
 
 def attiva_disattiva_ricetta_service(ricetta_id, user_id):
-    ricetta_base = RicettaBase.query.filter(RicettaBase.id == ricetta_id).first()
-    ricetta = Ricetta.query.filter(Ricetta.id == (ricetta_id if ricetta_base is None else ricetta_base.id),
-                                   Ricetta.user_id == user_id).first()
+    ricetta_base = RicettaBase.get_by_id(ricetta_id)
+    if ricetta_base:
+        ricetta_id = ricetta_base.id
+    ricetta = Ricetta.get_by_id_and_user(ricetta_id, user_id)
 
     if not ricetta:
         ricetta = Ricetta(

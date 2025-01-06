@@ -1,4 +1,7 @@
+from sqlalchemy.orm import Query
+
 from app.models import db
+
 
 class Ricetta(db.Model):
     __tablename__ = 'ricetta'
@@ -17,3 +20,20 @@ class Ricetta(db.Model):
 
     #ricetta_base = db.relationship('RicettaBase', backref='varianti')
     #utente = db.relationship('Utente', backref='ricette')
+
+    @classmethod
+    def get_by_id_and_user(cls, ricetta_id, user_id) -> Query:
+        """
+        Recupera un record di Alimento basato su ID e user_id.
+
+        Args:
+            ricetta_id (int): ID della ricetta.
+            user_id (int): ID dell'utente.
+
+        Returns:
+            Query: Record di Alimento o None.
+        """
+        return cls.query.filter(
+            cls.id == ricetta_id,
+            cls.user_id == user_id
+        ).first()

@@ -23,3 +23,14 @@ class GruppoAlimentare(db.Model):
         back_populates='gruppo_alimentare',
         lazy='select'
     )
+
+    @classmethod
+    def get_all(cls):
+        """
+        Recupera tutti i record di GruppoAlimentare dal database.
+
+        Returns:
+            list[dict]: Una lista di dizionari con i dati dei gruppi alimentari.
+        """
+        gruppi = cls.query.all()
+        return [{'id': g.id, 'nome': g.nome} for g in gruppi]

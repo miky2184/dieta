@@ -4,9 +4,9 @@ from flask import jsonify, request
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 
+from app.models import db
 from app.models.Utente import Utente
 from app.models.UtenteAuth import UtenteAuth
-from app.models import db
 from app.services.util_services import is_valid_email
 
 auth = Blueprint('auth', __name__)
@@ -27,7 +27,7 @@ def check_email():
     if not is_valid_email(email):
         return jsonify({'bad': True})
 
-    user = Utente.query.filter_by(email=email.lower()).first()
+    user = Utente.get_by_email(email)
     if user:
         return jsonify({'exists': True})
     return jsonify({'exists': False})
@@ -60,9 +60,6 @@ def register():
     altezza = request.form.get('altezza')
     peso = request.form.get('peso')
     email = request.form.get('email')
-    vegane = request.form.get('include_vegan')
-    carne = request.form.get('include_carne')
-    pesce = request.form.get('include_pesce')
 
     # Crea l'utente nella tabella Utenti
     new_user_details = Utente(
@@ -88,8 +85,6 @@ def register():
 
     db.session.add(new_user_auth)
     db.session.commit()
-
-    #copia_alimenti_ricette(user_id, bool(vegane), bool(carne), bool(pesce))
 
     # Logga automaticamente l'utente appena registrato
     login_user(new_user_auth, remember=True)

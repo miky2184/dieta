@@ -28,7 +28,8 @@ class VAlimento(db.Model):
     def to_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
-    def filtro_alimenti(user_id):
+    @classmethod
+    def filtro_alimenti(self, user_id):
         # Alias per la tabella VAlimento
         va2 = aliased(VAlimento)
 

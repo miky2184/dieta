@@ -75,16 +75,15 @@ def get_alimenti_service(user_id):
     return alimenti
 
 
-def update_alimento_service(id, nome, carboidrati, proteine, grassi, fibre, confezionato, vegan, id_gruppo, user_id):
-    alimento_base = (AlimentoBase.query.filter(AlimentoBase.id==id)).first()
-    alimento = Alimento.query.filter(
-        Alimento.id == (id if alimento_base is None else alimento_base.id),
-        Alimento.user_id == user_id
-    ).first()
+def update_alimento_service(alimento_id, nome, carboidrati, proteine, grassi, fibre, confezionato, vegan, id_gruppo, user_id):
+    alimento_base = AlimentoBase.get_by_id(alimento_id)
+    if alimento_base:
+        alimento_id = alimento_base.id
+    alimento = Alimento.get_by_id_and_user(alimento_id, user_id)
 
     if not alimento:
         alimento = Alimento(
-            id=id,
+            id=alimento_id,
             nome_override=nome.upper(),
             carboidrati_override=carboidrati,
             proteine_override=proteine,
@@ -111,11 +110,10 @@ def update_alimento_service(id, nome, carboidrati, proteine, grassi, fibre, conf
 
 
 def delete_alimento_service(alimento_id, user_id):
-    alimento_base = (AlimentoBase.query.filter(AlimentoBase.id==alimento_id)).first()
-    alimento = Alimento.query.filter(
-        Alimento.id == (alimento_id if alimento_base is None else alimento_base.id),
-        Alimento.user_id == user_id
-    ).first()
+    alimento_base = AlimentoBase.get_by_id(alimento_id)
+    if alimento_base:
+        alimento_id = alimento_base.id
+    alimento = Alimento.get_by_id_and_user(alimento_id, user_id)
 
     if not alimento:
         alimento = Alimento(

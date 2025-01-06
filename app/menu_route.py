@@ -4,8 +4,8 @@ from flask import Blueprint, jsonify, current_app
 from flask_login import login_required, current_user
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.services.menu_services import (delete_week_menu, genera_menu_utente,
-                                        get_gruppi_data)
+from app.models.GruppoAlimentare import GruppoAlimentare
+from app.services.menu_services import delete_week_menu, genera_menu_utente
 from app.services.modifica_pasti_services import get_menu_service
 from app.services.util_services import calcola_macronutrienti_rimanenti_service
 
@@ -23,7 +23,6 @@ def generate_menu():
 
         current_app.cache.delete(f'dashboard_{user_id}')
         return {'status': 'success', 'progress': 100}
-        return jsonify(response), 200
     except ValueError as val_err:
         return jsonify({'status': 'error', 'message': str(val_err), 'trace': traceback.format_exc()}), 400
     except SQLAlchemyError as db_err:
@@ -36,8 +35,7 @@ def generate_menu():
 @login_required
 def get_gruppi():
     try:
-        gruppi_data = get_gruppi_data()
-        return jsonify({'status': 'success', 'gruppi': gruppi_data})
+        return jsonify({'status': 'success', 'gruppi': GruppoAlimentare.get_all()})
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err), 'trace': traceback.format_exc()}), 500
     except KeyError as key_err:
@@ -76,7 +74,7 @@ def menu_settimana(settimana_id):
     """
     user_id = current_user.user_id
     try:
-        menu_selezionato = get_menu_service(user_id, ids=settimana_id)
+        menu_selezionato = get_menu_service(user_id, menu_id=settimana_id)
         macronutrienti_rimanenti = calcola_macronutrienti_rimanenti_service(menu_selezionato['menu'])
 
         return jsonify({'status':'success', 'menu': menu_selezionato['menu'], 'remaining_macronutrienti': macronutrienti_rimanenti}), 200

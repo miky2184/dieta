@@ -2,7 +2,8 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_required, current_user
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.services.alimenti_services import create_alimento_service, get_alimenti_service, update_alimento_service, delete_alimento_service
+from app.services.alimenti_services import create_alimento_service, get_alimenti_service, update_alimento_service, \
+    delete_alimento_service
 
 alimenti = Blueprint('alimenti', __name__)
 
@@ -58,14 +59,13 @@ def create_alimento():
 
 @alimenti.route('/alimenti/<int:id>', methods=['PUT'])
 @login_required
-def update_alimento(id):
+def update_alimento(alimento_id):
     """
     Questa funzione salva un alimento esistente nel database, aggiornandone i dati.
     """
     user_id = current_user.user_id
     try:
         data = request.get_json()
-        alimento_id = data.get('id')
         nome = data.get('nome')
         carboidrati = data.get('carboidrati')
         proteine = data.get('proteine')

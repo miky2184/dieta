@@ -1,7 +1,9 @@
 #run.py
-from app import create_app
-from dotenv import load_dotenv
 import os
+
+from dotenv import load_dotenv
+
+from app import create_app
 
 # Carica le variabili d'ambiente dal file .env
 load_dotenv()

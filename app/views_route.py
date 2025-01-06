@@ -13,11 +13,12 @@ from reportlab.pdfgen import canvas
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.models import db
-from app.services.menu_services import (get_utente, save_weight, stampa_lista_della_spesa,
+from app.models.Utente import Utente
+from app.services.menu_services import (save_weight, stampa_lista_della_spesa,
                                         get_settimane_salvate,
                                         elimina_ingredienti, salva_utente_dieta,
                                         salva_ingredienti,
-                                        get_peso_hist, get_dati_utente,
+                                        get_peso_hist,
                                         recupera_ricette_per_alimento, recupera_ingredienti_ricetta,
                                         get_totale_gruppi_service)
 from app.services.modifica_pasti_services import get_menu_service
@@ -38,7 +39,7 @@ def dashboard():
     """
     user_id = current_user.user_id
     # Calcola le calorie e i macronutrienti giornalieri dell'utente.
-    macronutrienti = get_utente(user_id)
+    macronutrienti = Utente.get_by_id(user_id)
 
     period = {
         "data_inizio": datetime.now().date(),
@@ -282,7 +283,7 @@ def get_data_utente():
     """
     user_id = current_user.user_id
     try:
-        utente = get_dati_utente(user_id)
+        utente = Utente.get_by_id(user_id)
         return jsonify(utente), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
@@ -309,7 +310,7 @@ def aggiorna_quantita_ingrediente():
         week_id = data['week_id']
 
         # Recupera il menu corrente dal database
-        menu_corrente = get_menu_service(user_id, ids=week_id)
+        menu_corrente = get_menu_service(user_id, menu_id=week_id)
 
         ingredienti_ricetta = recupera_ingredienti_ricetta(ricetta_id, user_id, quantity)
         totale_gruppi = get_totale_gruppi_service(ricetta_id, user_id, quantity)
@@ -367,7 +368,7 @@ def generate_pdf():
         img = Image.open(BytesIO(base64.b64decode(img_data)))
 
         # Recupera il menu selezionato dal database
-        menu_selezionato = get_menu_service(user_id, ids=week_id)
+        menu_selezionato = get_menu_service(user_id, menu_id=week_id)
 
         # Imposta il PDF in orientamento orizzontale
         pdf_file = BytesIO()

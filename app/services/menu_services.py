@@ -7,21 +7,13 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-import sqlalchemy
-from sqlalchemy import insert, update, and_, or_, case, func, exists, asc, true, false, desc, not_
-from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy import and_, or_, func, asc, desc, not_
 from sqlalchemy.orm import aliased
 
 from app.models import db
-from app.models.Alimento import Alimento
-from app.models.AlimentoBase import AlimentoBase
-from app.models.GruppoAlimentare import GruppoAlimentare
 from app.models.IngredientiRicetta import IngredientiRicetta
-from app.models.IngredientiRicettaBase import IngredientiRicettaBase
 from app.models.MenuSettimanale import MenuSettimanale
 from app.models.RegistroPeso import RegistroPeso
-from app.models.Ricetta import Ricetta
-from app.models.RicettaBase import RicettaBase
 from app.models.Utente import Utente
 from app.models.VAlimento import VAlimento
 from app.models.VIngredientiRicetta import VIngredientiRicetta
@@ -56,26 +48,26 @@ pasti_config = [
     {'pasto': 'cena', 'tipo': 'contorno', 'ripetibile': True, 'min_ricette': 1},
 ]
 
-def genera_menu_utente(user_id, cache) -> None:
+def genera_menu_utente(user_id) -> None:
     """
     Genera il menu settimanale per l'utente. Include la settimana corrente, successiva
     e una nuova settimana successiva all'ultima presente, se necessario.
 
     Args:
         user_id (int): ID dell'utente.
-        cache (Cache): Istanza della cache per gestire i dati temporanei.
 
     Returns:
         None
     """
-    macronutrienti = get_utente(user_id)
+    macronutrienti = Utente.get_by_id(user_id)
     if not macronutrienti.calorie_giornaliere:
         raise ValueError('Macronutrienti non definiti!')
 
     # Trova l'ultima settimana presente nel database
-    query = db.session.query(MenuSettimanale).filter(MenuSettimanale.user_id==user_id,
-                                                                func.current_date() <= MenuSettimanale.data_fine).order_by(
-            desc(MenuSettimanale.data_fine))
+    query = (db.session.query(MenuSettimanale)
+             .filter(MenuSettimanale.user_id==user_id,
+                     func.current_date() <= MenuSettimanale.data_fine)
+             .order_by(desc(MenuSettimanale.data_fine)))
 
     ultima_settimana = query.first()
 
@@ -236,7 +228,7 @@ def select_food(ricette, settimana, giorno_settimana, pasto, ripetibile, control
         if ricetta['id'] in ids_disponibili
            and (skip_check or controlla_limiti_macronutrienti(ricetta, settimana['day'][giorno_settimana], settimana['weekly'],
                                                               controllo_macro_settimanale))
-           and check_limiti_consumo_ricetta(ricetta, settimana['consumi'])
+           and check_limiti_consumo_ricetta(ricetta, settimana['consumi'], user_id)
     ]
 
     if not ricette_filtrate:
@@ -390,13 +382,14 @@ def determina_ids_disponibili(ricette, settimana, giorno_settimana, pasto, ripet
         raise RuntimeError(f"Errore durante la determinazione degli ID disponibili: {str(e)}")
 
 
-def check_limiti_consumo_ricetta(ricetta, consumi) -> bool:
+def check_limiti_consumo_ricetta(ricetta, consumi, user_id) -> bool:
     """
     Verifica se una ricetta rispetta i limiti di consumo settimanale.
 
     Args:
         ricetta (dict): Ricetta contenente una lista di ingredienti con quantità totali e ID di gruppo.
         consumi (dict): Dizionario dei limiti di consumo rimanenti per ogni gruppo alimentare.
+        user_id:
 
     Returns:
         bool: True se la ricetta rispetta i limiti, False altrimenti.
@@ -410,6 +403,7 @@ def check_limiti_consumo_ricetta(ricetta, consumi) -> bool:
     if not isinstance(consumi, dict):
         raise ValueError("Il parametro 'consumi' deve essere un dizionario.")
 
+    ricetta['ingredienti'] = get_totale_gruppi_service(ricetta['id'], user_id, ricetta['perc'])
     try:
         for gruppo in ricetta['ingredienti']:
             id_gruppo = str(gruppo.get('id_gruppo'))
@@ -700,28 +694,6 @@ def numero_ricette(p, pasto, tipo_ricetta, ricette) -> int:
     return sum(1 for r in p[pasto]['ricette'] if r['id'] in tipo_ids)
 
 
-def get_utente(user_id) -> Utente:
-    """
-    Recupera le informazioni di un utente specifico dal database.
-
-    Args:
-        user_id (int): L'ID dell'utente da recuperare.
-
-    Returns:
-        Utente: Istanza del modello `Utente` contenente i dettagli dell'utente.
-
-    Raises:
-        sqlalchemy.orm.exc.NoResultFound: Se non esiste un utente con l'ID specificato.
-        sqlalchemy.orm.exc.MultipleResultsFound: Se più utenti con lo stesso ID vengono trovati (scenario improbabile).
-    """
-    try:
-        return Utente.query.filter_by(id=user_id).one()
-    except sqlalchemy.orm.exc.NoResultFound:
-        raise ValueError(f"Utente con ID {user_id} non trovato.")
-    except sqlalchemy.orm.exc.MultipleResultsFound:
-        raise ValueError(f"Errore: Più utenti trovati con ID {user_id}.")
-
-
 def stampa_lista_della_spesa(user_id: int, menu: dict) -> list[dict]:
     """
     Genera una lista della spesa basata sul menu settimanale.
@@ -902,7 +874,7 @@ def get_settimane_salvate(user_id, show_old_week: bool = False):
 
 def save_weight(data, user_id):
 
-    utente = get_utente(user_id)
+    utente = Utente.get_by_id(user_id)
 
     if utente.peso_ideale is None:
         return False
@@ -1017,7 +989,7 @@ def salva_utente_dieta(utente_id, nome, cognome, sesso, eta, altezza, peso, tdee
                        meta_basale, meta_giornaliero, calorie_giornaliere, settimane_dieta, carboidrati,
                        proteine, grassi, dieta):
 
-    utente = get_utente(user_id=utente_id)
+    utente = Utente.get_by_id(utente_id)
 
     utente.nome = nome
     utente.cognome = cognome
@@ -1124,11 +1096,6 @@ def salva_ingredienti(recipe_id, ingredient_id, quantity, user_id):
     db.session.commit()
 
 
-def get_dati_utente(user_id):
-    results = Utente.query.filter_by(id=user_id).first()
-    return results.to_dict()
-
-
 def aggiungi_ricetta_al_menu(menu, day, meal, meal_id, user_id):
     ricetta = get_ricette_service(user_id, ids=meal_id)
     ricetta[0]['qta'] = 1
@@ -1185,6 +1152,7 @@ def rimuovi_pasto_dal_menu(menu, day, meal, meal_id, user_id):
         aggiorna_macronutrienti(menu, day, ricetta_da_rimuovere, True)
         aggiorna_limiti_gruppi(qta_gruppo_ricetta(ricetta_da_rimuovere['id'], user_id), menu['consumi'], True)
 
+
 def cancella_tutti_pasti_menu(settimana, day, meal_type, user_id):
     for ricetta in settimana['day'][day]['pasto'][meal_type]['ricette']:
         settimana['all_food'].remove(ricetta['id'])
@@ -1200,168 +1168,9 @@ def aggiorna_macronutrienti(menu, day, ricetta, rimuovi=False):
         menu['day'][day][macro] += moltiplicatore * ricetta[macro] * ricetta['qta']
         menu['weekly'][macro] += moltiplicatore * ricetta[macro] * ricetta['qta']
 
+
 def delete_week_menu(week_id, user_id):
     MenuSettimanale.query.filter_by(id=week_id, user_id=user_id).delete()
-    db.session.commit()
-
-
-def copia_alimenti_ricette(user_id: int, ricette_vegane: bool, ricette_carne: bool, ricette_pesce: bool):
-    # 1. Copia dati dalla tabella alimento_base a alimento
-    subquery_alimento = db.session.query(
-        AlimentoBase.id,
-        AlimentoBase.nome,
-        AlimentoBase.carboidrati,
-        AlimentoBase.proteine,
-        AlimentoBase.grassi,
-        AlimentoBase.frutta,
-        AlimentoBase.carne_bianca,
-        AlimentoBase.carne_rossa,
-        AlimentoBase.stagionalita,
-        AlimentoBase.verdura,
-        AlimentoBase.confezionato,
-        AlimentoBase.vegan,
-        AlimentoBase.pesce,
-        user_id
-    ).distinct()
-
-    db.session.execute(
-        insert(Alimento).from_select(
-            [
-                Alimento.id,
-                Alimento.nome,
-                Alimento.carboidrati,
-                Alimento.proteine,
-                Alimento.grassi,
-                Alimento.frutta,
-                Alimento.carne_bianca,
-                Alimento.carne_rossa,
-                Alimento.stagionalita,
-                Alimento.verdura,
-                Alimento.confezionato,
-                Alimento.vegan,
-                Alimento.pesce,
-                Alimento.user_id
-            ],
-            subquery_alimento
-        )
-    )
-
-    # 2. Copia dati dalla tabella ricetta_base a ricetta
-    subquery_ricetta = db.session.query(
-        RicettaBase.id,
-        RicettaBase.nome_ricetta,
-        RicettaBase.colazione,
-        RicettaBase.spuntino,
-        RicettaBase.principale,
-        RicettaBase.contorno,
-        false(),  # Set enabled to False
-        RicettaBase.colazione_sec,
-        RicettaBase.complemento,
-        user_id
-    )
-
-    db.session.execute(
-        insert(Ricetta).from_select(
-            [
-                Ricetta.id,
-                Ricetta.nome_ricetta,
-                Ricetta.colazione,
-                Ricetta.spuntino,
-                Ricetta.principale,
-                Ricetta.contorno,
-                Ricetta.enabled,
-                Ricetta.colazione_sec,
-                Ricetta.complemento,
-                Ricetta.user_id
-            ],
-            subquery_ricetta
-        )
-    )
-
-    # 3. Copia dati dalla tabella ingredienti_ricetta_base a ingredienti_ricetta
-    subquery_ingredienti = db.session.query(
-        IngredientiRicettaBase.id_ricetta,
-        IngredientiRicettaBase.id_alimento,
-        IngredientiRicettaBase.qta,
-        user_id
-    )
-
-    db.session.execute(
-        insert(IngredientiRicetta).from_select(
-            [
-                IngredientiRicetta.id_ricetta,
-                IngredientiRicetta.id_alimento,
-                IngredientiRicetta.qta,
-                IngredientiRicetta.user_id
-            ],
-            subquery_ingredienti
-        )
-    )
-
-    # 4. Logica per l'abilitazione delle ricette vegane, con carne, o con pesce
-    if ricette_vegane:
-        subquery_ricette_vegane = db.session.query(
-            RicettaBase.id
-        ).join(
-            IngredientiRicettaBase, RicettaBase.id == IngredientiRicettaBase.id_ricetta
-        ).join(
-            AlimentoBase, IngredientiRicettaBase.id_alimento == AlimentoBase.id
-        ).group_by(
-            RicettaBase.id, RicettaBase.nome_ricetta
-        ).having(
-            func.count() == func.sum(
-                case(
-                    (AlimentoBase.vegan == true(), 1),
-                    else_=0
-                )
-            )
-        ).subquery()
-
-        db.session.execute(
-            update(Ricetta).where(
-                and_(Ricetta.id.in_(subquery_ricette_vegane), Ricetta.user_id == user_id)
-            ).values(enabled=True)
-        )
-    else:
-        if ricette_carne and ricette_pesce:
-            db.session.execute(
-                update(Ricetta).where(
-                    Ricetta.user_id == user_id
-                ).values(enabled=True)
-            )
-        elif ricette_carne and not ricette_pesce:
-            subquery_no_pesce = db.session.query(
-                RicettaBase.id
-            ).filter(~exists().where(
-                and_(
-                    IngredientiRicettaBase.id_ricetta == RicettaBase.id,
-                    AlimentoBase.id == IngredientiRicettaBase.id_alimento,
-                    AlimentoBase.pesce == True
-                )
-            )).subquery()
-
-            db.session.execute(
-                update(Ricetta).where(
-                    and_(Ricetta.id.in_(subquery_no_pesce), Ricetta.user_id == user_id)
-                ).values(enabled=True)
-            )
-        elif not ricette_carne and ricette_pesce:
-            subquery_no_carne = db.session.query(
-                RicettaBase.id
-            ).filter(~exists().where(
-                and_(
-                    IngredientiRicettaBase.id_ricetta == RicettaBase.id,
-                    AlimentoBase.id == IngredientiRicettaBase.id_alimento,
-                    (AlimentoBase.carne_bianca == True) | (AlimentoBase.carne_rossa == True)
-                )
-            )).subquery()
-
-            db.session.execute(
-                update(Ricetta).where(
-                    and_(Ricetta.id.in_(subquery_no_carne), Ricetta.user_id == user_id)
-                ).values(enabled=True)
-            )
-
     db.session.commit()
 
 
@@ -1386,8 +1195,3 @@ def recupera_settimane(user_id):
         {'id': week.id, 'name': f"Settimana {index + 1} dal {week.data_inizio.strftime('%Y-%m-%d')} al {week.data_fine.strftime('%Y-%m-%d')}"}
         for index, week in enumerate(weeks)
     ]
-
-def get_gruppi_data():
-    gruppi = GruppoAlimentare.query.all()
-    gruppi_data = [{'id': g.id, 'nome': g.nome} for g in gruppi]
-    return gruppi_data

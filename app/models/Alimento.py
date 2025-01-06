@@ -1,5 +1,6 @@
 from sqlalchemy import Computed
 from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.orm import Query
 
 from app.models import db
 
@@ -36,3 +37,21 @@ class Alimento(db.Model):
         back_populates='alimenti',
         lazy='joined'
     )
+
+
+    @classmethod
+    def get_by_id_and_user(cls, alimento_id, user_id) -> Query:
+        """
+        Recupera un record di Alimento basato su ID e user_id.
+
+        Args:
+            alimento_id (int): ID dell'alimento.
+            user_id (int): ID dell'utente.
+
+        Returns:
+            Query: Record di Alimento o None.
+        """
+        return cls.query.filter(
+            cls.id == alimento_id,
+            cls.user_id == user_id
+        ).first()

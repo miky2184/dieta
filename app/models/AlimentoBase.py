@@ -38,3 +38,16 @@ class AlimentoBase(db.Model):
         back_populates='alimenti_base',
         lazy='joined'
     )
+
+    @classmethod
+    def get_by_id(cls, alimento_id):
+        """
+        Recupera un record di AlimentoBase dal database usando il suo ID.
+
+        Args:
+            alimento_id (int): ID dell'alimento base.
+
+        Returns:
+            AlimentoBase: Istanza del modello AlimentoBase se trovata, altrimenti None.
+        """
+        return cls.query.filter(cls.id == alimento_id).first()
