@@ -171,7 +171,7 @@ function invertMeals(day) {
 }
 
 function cancellaMealDaily(day, meal_type) {
-    fetch(`/delete_meal_daily/${selectedWeekId}`, {
+    fetch(`/cancella_pasto/${selectedWeekId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -271,8 +271,8 @@ function aggiornaTabellaListaDellaSpesa() {
 }
 
 function updateRicetta(ricettaData) {
-    fetch('/ricette', {
-            method: 'POST',
+    fetch(`/ricette/${ricettaData.id}`, {
+            method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
             },

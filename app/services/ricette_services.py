@@ -161,7 +161,7 @@ def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool
         query = query.filter(vr1.contorno.is_(True))
 
     ricette = []
-    for row in query.all():
+    for row in query.order_by(vr1.nome_ricetta).all():
         ricette.append({
             'user_id': row.user_id,
             'id': row.id_ricetta,
@@ -203,6 +203,7 @@ def update_ricetta_service(nome, colazione, colazione_sec, spuntino, principale,
             contorno_override=contorno,
             colazione_sec_override=colazione_sec,
             complemento_override=complemento,
+            enabled=True,
             user_id=user_id
         )
         db.session.add(ricetta)

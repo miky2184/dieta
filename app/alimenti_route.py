@@ -57,7 +57,7 @@ def create_alimento():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
-@alimenti.route('/alimenti/<int:id>', methods=['PUT'])
+@alimenti.route('/alimenti/<int:alimento_id>', methods=['PUT'])
 @login_required
 def update_alimento(alimento_id):
     """

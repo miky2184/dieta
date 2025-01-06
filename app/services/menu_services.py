@@ -18,6 +18,7 @@ from app.models.Utente import Utente
 from app.models.VAlimento import VAlimento
 from app.models.VIngredientiRicetta import VIngredientiRicetta
 from app.models.VRicetta import VRicetta
+from app.ricette_route import ricette
 from app.services.db_services import get_sequence_value
 from app.services.modifica_pasti_services import get_menu_service
 from app.services.ricette_services import get_ricette_service
@@ -228,7 +229,6 @@ def select_food(ricette, settimana, giorno_settimana, pasto, ripetibile, control
         if ricetta['id'] in ids_disponibili
            and (skip_check or controlla_limiti_macronutrienti(ricetta, settimana['day'][giorno_settimana], settimana['weekly'],
                                                               controllo_macro_settimanale))
-           and check_limiti_consumo_ricetta(ricetta, settimana['consumi'], user_id)
     ]
 
     if not ricette_filtrate:
@@ -240,9 +240,10 @@ def select_food(ricette, settimana, giorno_settimana, pasto, ripetibile, control
     for ricetta in ricette_filtrate:
         percentuale_effettiva = calcola_percentuale_effettiva(ricetta, settimana['day'][giorno_settimana])
         if percentuale_effettiva >= 0.5:
-            aggiorna_settimana(settimana, giorno_settimana, pasto, ricetta, percentuale_effettiva, user_id)
-            found = True
-            break
+            if check_limiti_consumo_ricetta(ricetta, settimana['consumi'], percentuale_effettiva, user_id):
+                aggiorna_settimana(settimana, giorno_settimana, pasto, ricetta, percentuale_effettiva, user_id)
+                found = True
+                break
 
     return found
 
@@ -329,8 +330,7 @@ def aggiorna_settimana(settimana, giorno_settimana, pasto, ricetta, percentuale,
         day[macro] -= round(ricetta[macro] * percentuale, 2)
         weekly[macro] -= round(ricetta[macro] * percentuale, 2)
 
-    # Aggiorna i consumi settimanali per i gruppi alimentari
-    aggiorna_limiti_gruppi(ricetta, settimana['consumi'])
+    aggiorna_limiti_gruppi(ricetta, settimana['consumi'], user_id, percentuale)
 
 
 def determina_ids_disponibili(ricette, settimana, giorno_settimana, pasto, ripetibile, ids_specifici) -> list:
@@ -382,7 +382,7 @@ def determina_ids_disponibili(ricette, settimana, giorno_settimana, pasto, ripet
         raise RuntimeError(f"Errore durante la determinazione degli ID disponibili: {str(e)}")
 
 
-def check_limiti_consumo_ricetta(ricetta, consumi, user_id) -> bool:
+def check_limiti_consumo_ricetta(ricetta, consumi, perc, user_id) -> bool:
     """
     Verifica se una ricetta rispetta i limiti di consumo settimanale.
 
@@ -403,11 +403,12 @@ def check_limiti_consumo_ricetta(ricetta, consumi, user_id) -> bool:
     if not isinstance(consumi, dict):
         raise ValueError("Il parametro 'consumi' deve essere un dizionario.")
 
-    ricetta['ingredienti'] = get_totale_gruppi_service(ricetta['id'], user_id, ricetta['perc'])
+    ricetta['ingredienti'] = get_totale_gruppi_service(ricetta['id'], user_id, perc)
+
     try:
         for gruppo in ricetta['ingredienti']:
             id_gruppo = str(gruppo.get('id_gruppo'))
-            qta = gruppo.get('qta_totale', 0)
+            qta = gruppo.get('qta', 0)
 
             if id_gruppo in consumi and qta > consumi[id_gruppo]:
                 return False  # Supera il limite
@@ -416,7 +417,7 @@ def check_limiti_consumo_ricetta(ricetta, consumi, user_id) -> bool:
         raise RuntimeError(f"Errore durante il controllo dei limiti di consumo: {str(e)}")
 
 
-def aggiorna_limiti_gruppi(ricetta, consumi, rimuovi: bool = False):
+def aggiorna_limiti_gruppi(ricetta, consumi, user_id, perc: float = 1.0, rimuovi: bool = False):
     """
     Aggiorna i consumi rimanenti per i gruppi alimentari in base agli ingredienti di una ricetta.
 
@@ -436,12 +437,19 @@ def aggiorna_limiti_gruppi(ricetta, consumi, rimuovi: bool = False):
 
     moltiplicatore = 1 if rimuovi else -1
     try:
+
+        if not ricetta['ingredienti'] or (ricetta and len(ricetta['ingredienti']) == 0):
+            ricetta['ingredienti'] = get_totale_gruppi_service(ricetta['id'], user_id, perc)
+
         for gruppo in ricetta['ingredienti']:
             id_gruppo = gruppo.get('id_gruppo')
-            qta = gruppo.get('qta_totale', 0)
+            qta = gruppo.get('qta', 0)
 
             if str(id_gruppo) in consumi:
-                consumi[str(id_gruppo)] += moltiplicatore * qta
+                nuovo_consumo = consumi[str(id_gruppo)] + (moltiplicatore * qta * perc)
+                if nuovo_consumo < 0:
+                    printer(f"Il consumo del gruppo {id_gruppo} diventerebbe negativo: {nuovo_consumo}", "INFO")
+                consumi[str(id_gruppo)] = nuovo_consumo
     except Exception as e:
         raise RuntimeError(f"Errore durante l'aggiornamento dei limiti dei gruppi: {str(e)}")
 
@@ -1097,21 +1105,22 @@ def salva_ingredienti(recipe_id, ingredient_id, quantity, user_id):
 
 
 def aggiungi_ricetta_al_menu(menu, day, meal, meal_id, user_id):
-    ricetta = get_ricette_service(user_id, ids=meal_id)
-    ricetta[0]['qta'] = 1
-    menu['all_food'].append(ricetta[0]['id'])
-    menu['day'][day]['pasto'][meal]['ids'].append(ricetta[0]['id'])
+    ricetta = get_ricette_service(user_id, ids=meal_id)[0]
+    ricetta['qta'] = 1
+    menu['all_food'].append(ricetta['id'])
+    menu['day'][day]['pasto'][meal]['ids'].append(ricetta['id'])
     menu['day'][day]['pasto'][meal]['ricette'].append({
-        'id': ricetta[0]['id'],
-        'nome_ricetta': ricetta[0]['nome_ricetta'],
-        'qta': ricetta[0]['qta'],
-        'ricetta': ricetta[0]['ricetta'],
-        'kcal':ricetta[0]['kcal'],
-        'carboidrati': ricetta[0]['carboidrati'],
-        'grassi': ricetta[0]['grassi'],
-        'proteine': ricetta[0]['proteine']
+        'id': ricetta['id'],
+        'nome_ricetta': ricetta['nome_ricetta'],
+        'qta': ricetta['qta'],
+        'kcal':ricetta['kcal'],
+        'carboidrati': ricetta['carboidrati'],
+        'grassi': ricetta['grassi'],
+        'proteine': ricetta['proteine'],
+        'ricetta': recupera_ingredienti_ricetta(ricetta['id'], user_id, ricetta['qta'])
     })
-    aggiorna_macronutrienti(menu, day, ricetta[0])
+    aggiorna_macronutrienti(menu, day, ricetta)
+    aggiorna_limiti_gruppi(ricetta, menu['consumi'], user_id, ricetta['qta'])
 
 
 def qta_gruppo_ricetta(ricetta_id, user_id):
@@ -1131,7 +1140,7 @@ def qta_gruppo_ricetta(ricetta_id, user_id):
 
     alimenti = [{
         'id_gruppo': int(r.id_gruppo),
-        'qta_totale': float(r.qta)
+        'qta': float(r.qta)
     } for r in results]
 
     res[0]['ingredienti'] = alimenti
@@ -1150,14 +1159,14 @@ def rimuovi_pasto_dal_menu(menu, day, meal, meal_id, user_id):
         menu['day'][day]['pasto'][meal]['ids'].remove(ricetta_da_rimuovere['id'])
         menu['day'][day]['pasto'][meal]['ricette'].remove(ricetta_da_rimuovere)
         aggiorna_macronutrienti(menu, day, ricetta_da_rimuovere, True)
-        aggiorna_limiti_gruppi(qta_gruppo_ricetta(ricetta_da_rimuovere['id'], user_id), menu['consumi'], True)
+        aggiorna_limiti_gruppi(ricetta, menu['consumi'], user_id, ricetta['qta'],True)
 
 
 def cancella_tutti_pasti_menu(settimana, day, meal_type, user_id):
     for ricetta in settimana['day'][day]['pasto'][meal_type]['ricette']:
         settimana['all_food'].remove(ricetta['id'])
         aggiorna_macronutrienti(settimana, day, ricetta, True)
-        aggiorna_limiti_gruppi(qta_gruppo_ricetta(ricetta['id'], user_id), settimana['consumi'], True)
+        aggiorna_limiti_gruppi(ricetta, settimana['consumi'], user_id, ricetta['qta'], True)
 
     settimana['day'][day]['pasto'][meal_type] = {"ids": [], "ricette": []}
 

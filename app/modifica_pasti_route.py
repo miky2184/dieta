@@ -122,9 +122,9 @@ def inverti_pasti(week_id):
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
-@pasti.route('/delete_meal_daily/<int:week_id>', methods=['POST'])
+@pasti.route('/cancella_pasto/<int:week_id>', methods=['POST'])
 @login_required
-def delete_meal_daily(week_id):
+def cancella_pasto(week_id):
     user_id = current_user.user_id
     try:
         data = request.json
