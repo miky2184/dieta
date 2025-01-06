@@ -65,7 +65,6 @@ class Utente(db.Model):
     def to_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
-
     @classmethod
     def get_by_email(cls, email: str):
         """

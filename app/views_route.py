@@ -284,7 +284,7 @@ def get_data_utente():
     user_id = current_user.user_id
     try:
         utente = Utente.get_by_id(user_id)
-        return jsonify(utente), 200
+        return jsonify(utente.to_dict()), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
     except KeyError as key_err:
