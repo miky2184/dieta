@@ -262,6 +262,7 @@ function aggiornaTabellaListaDellaSpesa() {
                 const tdQuantita = document.createElement('td');
                 tdAlimento.textContent = item.alimento;
                 tdQuantita.textContent = item.qta_totale;
+                tdQuantita.style.textAlign = 'right';
                 tr.appendChild(tdAlimento);
                 tr.appendChild(tdQuantita);
                 tbody.appendChild(tr);
