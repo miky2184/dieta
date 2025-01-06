@@ -56,7 +56,7 @@ pasti_config = [
     {'pasto': 'cena', 'tipo': 'contorno', 'ripetibile': True, 'min_ricette': 1},
 ]
 
-def genera_menu_utente(user_id, cache) -> dict:
+def genera_menu_utente(user_id, cache) -> None:
     """
     Genera il menu settimanale per l'utente. Include la settimana corrente, successiva
     e una nuova settimana successiva all'ultima presente, se necessario.
@@ -66,7 +66,7 @@ def genera_menu_utente(user_id, cache) -> dict:
         cache (Cache): Istanza della cache per gestire i dati temporanei.
 
     Returns:
-        dict: Stato dell'operazione e progressione completata.
+        None
     """
     macronutrienti = get_utente(user_id)
     if not macronutrienti.calorie_giornaliere:
@@ -103,12 +103,8 @@ def genera_menu_utente(user_id, cache) -> dict:
     for period in periodi:
         genera_e_salva_menu(user_id, period, macronutrienti)
 
-    # Invalida la cache
-    cache.delete(f'dashboard_{user_id}')
-    return {'status': 'success', 'progress': 100}
 
-
-def genera_e_salva_menu(user_id, period, macronutrienti: Utente):
+def genera_e_salva_menu(user_id, period, macronutrienti: Utente) -> None:
     """
     Genera e salva il menu per un periodo specifico, se non già esistente.
 
@@ -131,7 +127,7 @@ def genera_e_salva_menu(user_id, period, macronutrienti: Utente):
         salva_menu(settimana_ordinata, user_id, period=period)
 
 
-def verifica_e_seleziona(settimana, giorno, pasto, tipo, ripetibile, min_ricette, controllo_macro, ricette, user_id):
+def verifica_e_seleziona(settimana, giorno, pasto, tipo, ripetibile, min_ricette, controllo_macro, ricette, user_id) -> None:
     """
     Verifica se un pasto specifico ha il numero minimo di ricette richiesto e, se necessario, ne aggiunge altre.
 

@@ -19,7 +19,10 @@ def generate_menu():
     """
     user_id = current_user.user_id
     try:
-        response = genera_menu_utente(user_id, current_app.cache)
+        genera_menu_utente(user_id)
+
+        current_app.cache.delete(f'dashboard_{user_id}')
+        return {'status': 'success', 'progress': 100}
         return jsonify(response), 200
     except ValueError as val_err:
         return jsonify({'status': 'error', 'message': str(val_err), 'trace': traceback.format_exc()}), 400

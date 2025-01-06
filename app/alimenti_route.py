@@ -2,8 +2,7 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_required, current_user
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.services.alimenti_services import create_alimento_service, get_alimenti_service, update_alimento_service, \
-    delete_alimento_service
+from app.services.alimenti_services import create_alimento_service, get_alimenti_service, update_alimento_service, delete_alimento_service
 
 alimenti = Blueprint('alimenti', __name__)
 
@@ -15,8 +14,7 @@ def get_alimenti():
     user_id = current_user.user_id
     try:
         # Recupera tutti gli alimenti dal database.
-        alimenti = get_alimenti_service(user_id)
-        return jsonify({'status': 'success', 'alimenti': alimenti}), 200
+        return jsonify({'status': 'success', 'alimenti': get_alimenti_service(user_id)}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
     except KeyError as key_err:
@@ -46,7 +44,6 @@ def create_alimento():
                                 confezionato, vegan, gruppo, user_id)
 
         current_app.cache.delete(f'dashboard_{user_id}')
-        current_app.cache.delete(f'alimenti_{user_id}')
         current_app.cache.delete(f'alimenti_{user_id}')
         current_app.cache.delete(f'list_ricette_{user_id}')
 
