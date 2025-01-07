@@ -38,12 +38,10 @@ def create_alimento():
         proteine = request.form['prot']
         grassi = request.form['fat']
         fibre = request.form['fibre']
-        confezionato = 'confezionato' in request.form
         vegan = 'vegan' in request.form
         gruppo = request.form['gruppo']
 
-        create_alimento_service(name, carboidrati, proteine, grassi, fibre,
-                                confezionato, vegan, gruppo, user_id)
+        create_alimento_service(name, carboidrati, proteine, grassi, fibre, vegan, gruppo, user_id)
 
         current_app.cache.delete(f'dashboard_{user_id}')
         current_app.cache.delete(f'alimenti_{user_id}')
@@ -72,11 +70,10 @@ def update_alimento(alimento_id):
         proteine = data.get('proteine')
         grassi = data.get('grassi')
         fibre = data.get('fibre')
-        confezionato = data.get('confezionato')
         vegan = data.get('vegan')
         gruppo = data.get('gruppo')
 
-        update_alimento_service(alimento_id, nome, carboidrati, proteine, grassi, fibre, confezionato, vegan, gruppo, user_id)
+        update_alimento_service(alimento_id, nome, carboidrati, proteine, grassi, fibre, vegan, gruppo, user_id)
         current_app.cache.delete(f'alimenti_{user_id}')
         current_app.cache.delete(f'alimenti_{user_id}')
         return jsonify({'status': 'success', 'message': 'Alimento salvato con successo!'}), 200

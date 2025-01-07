@@ -17,7 +17,6 @@ class Alimento(db.Model):
     grassi_override = db.Column(db.Numeric)
     fibre_override = db.Column(db.Numeric, default=0)
     stagionalita_override = db.Column(ARRAY(db.BigInteger))
-    confezionato_override = db.Column(db.Boolean, default=False)
     vegan_override = db.Column(db.Boolean, default=False)
     macro_override = db.Column(db.String(1), Computed("""
         CASE

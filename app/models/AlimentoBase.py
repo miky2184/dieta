@@ -14,7 +14,6 @@ class AlimentoBase(db.Model):
     proteine = db.Column(db.Numeric)
     grassi = db.Column(db.Numeric)
     stagionalita = db.Column(ARRAY(db.BigInteger))
-    confezionato = db.Column(db.Boolean, default=False)
     vegan = db.Column(db.Boolean, default=False)
     macro = db.Column(db.String(1), Computed("""
             CASE

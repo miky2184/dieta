@@ -395,7 +395,6 @@ function filterAlimentiTable() {
     const grassiMax = parseFloat(document.getElementById('filter-grassi-max').value) || Infinity;
     const fibreMin = parseFloat(document.getElementById('filter-fibre-min').value) || -Infinity;
     const fibreMax = parseFloat(document.getElementById('filter-fibre-max').value) || Infinity;
-    const confezionatoFilter = document.getElementById('filter-confezionato').value;
     const veganFilter = document.getElementById('filter-vegan').value;
     const gruppoFilter = document.getElementById('filter-gruppo').value;
 
@@ -413,7 +412,6 @@ function filterAlimentiTable() {
         const fibreCell = parseFloat(cells[5].textContent) || 0;
         const gruppoCell = cells[6].querySelector('select').value;
         const veganCell = cells[7].querySelector('input').checked.toString();
-        const confezionatoCell = cells[8].querySelector('input').checked.toString();
 
         const calorieMatch = calorieCell >= calorieMin && calorieCell <= calorieMax;
         const carboMatch = carboCell >= carboMin && carboCell <= carboMax;
@@ -421,7 +419,6 @@ function filterAlimentiTable() {
         const grassiMatch = grassiCell >= grassiMin && grassiCell <= grassiMax;
         const fibreMatch = fibreCell >= fibreMin && fibreCell <= fibreMax;
 
-        const confezionatoMatch = (confezionatoFilter === 'all') || (confezionatoFilter === confezionatoCell);
         const veganMatch = (veganFilter === 'all') || (veganFilter === veganCell);
         const gruppoMatch = (gruppoFilter === 'all') || (gruppoFilter === gruppoCell);
 
@@ -432,7 +429,6 @@ function filterAlimentiTable() {
             proteineMatch &&
             grassiMatch &&
             fibreMatch &&
-            confezionatoMatch &&
             veganMatch &&
             gruppoMatch
         ) {
@@ -1699,7 +1695,6 @@ function cleanFiltersAlimenti() {
     document.getElementById('filter-proteine-max').value = '';
     document.getElementById('filter-grassi-min').value = '';
     document.getElementById('filter-grassi-max').value = '';
-    document.getElementById('filter-confezionato').value = 'all';
     document.getElementById('filter-vegan').value = 'all';
     document.getElementById('filter-gruppo').value = 'all';
 
@@ -1839,9 +1834,6 @@ function populateAlimentiTable(alimenti) {
                 <div><input type="checkbox" name="vegan_${alimento.id}" ${alimento.vegan ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.vegan}</label></div>
             </td>
             <td  style="text-align: center;" >
-                <div><input type="checkbox" name="confezionato_${alimento.id}" ${alimento.confezionato ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.confezionato}</label></div>
-            </td>
-            <td  style="text-align: center;" >
                 <div class="btn-group" role="group">
                     <button class="btn btn-primary btn-sm save-alimento-btn" data-alimento-id="${alimento.id}" data-bs-toggle="tooltip" title="Salva"><i class="fas fa-save"></i></button>
                     <button class="btn btn-danger  btn-sm delete-alimento-btn" data-alimento-id="${alimento.id}" data-bs-toggle="tooltip" title="Elimina"><i class="fas fa-trash-alt"></i></button>
@@ -1880,7 +1872,6 @@ function populateAlimentiTable(alimenti) {
                 proteine: parseFloat(document.querySelector(`input[name='proteine_${alimentoId}']`).value),
                 grassi: parseFloat(document.querySelector(`input[name='grassi_${alimentoId}']`).value),
                 fibre: parseFloat(document.querySelector(`input[name='fibre_${alimentoId}']`).value),
-                confezionato: document.querySelector(`input[name='confezionato_${alimentoId}']`).checked,
                 vegan: document.querySelector(`input[name='vegan_${alimentoId}']`).checked,
                 gruppo: document.querySelector(`select[name='gruppo_${alimentoId}']`).value
             };

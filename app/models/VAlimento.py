@@ -16,7 +16,6 @@ class VAlimento(db.Model):
     grassi = db.Column(db.Numeric)
     fibre = db.Column(db.Numeric)
     stagionalita = db.Column(ARRAY(db.BigInteger))
-    confezionato = db.Column(db.Boolean)
     vegan = db.Column(db.Boolean)
     macro = db.Column(db.String(1))
     kcal = db.Column(db.Numeric)
