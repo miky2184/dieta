@@ -203,6 +203,118 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
         .label("contains_uova")
     )
 
+    contains_legumi_subquery = (
+        db.session.query(
+            func.bool_or(va.id_gruppo == 5)
+        )
+        .join(
+            vir,
+            vir.id_alimento == va.id
+        )
+        .filter(
+            vir.id_ricetta == vr.id,
+            filtro_vir,
+            filtro_va
+        )
+        .label("contains_legumi")
+    )
+
+    contains_cereali_subquery = (
+        db.session.query(
+            func.bool_or(va.id_gruppo == 8)
+        )
+        .join(
+            vir,
+            vir.id_alimento == va.id
+        )
+        .filter(
+            vir.id_ricetta == vr.id,
+            filtro_vir,
+            filtro_va
+        )
+        .label("contains_cereali")
+    )
+
+    contains_pane_subquery = (
+        db.session.query(
+            func.bool_or(va.id_gruppo == 9)
+        )
+        .join(
+            vir,
+            vir.id_alimento == va.id
+        )
+        .filter(
+            vir.id_ricetta == vr.id,
+            filtro_vir,
+            filtro_va
+        )
+        .label("contains_pane")
+    )
+
+    contains_latticini_subquery = (
+        db.session.query(
+            func.bool_or(va.id_gruppo == 10)
+        )
+        .join(
+            vir,
+            vir.id_alimento == va.id
+        )
+        .filter(
+            vir.id_ricetta == vr.id,
+            filtro_vir,
+            filtro_va
+        )
+        .label("contains_latticini")
+    )
+
+    contains_frutta_secca_subquery = (
+        db.session.query(
+            func.bool_or(va.id_gruppo == 12)
+        )
+        .join(
+            vir,
+            vir.id_alimento == va.id
+        )
+        .filter(
+            vir.id_ricetta == vr.id,
+            filtro_vir,
+            filtro_va
+        )
+        .label("contains_frutta_secca")
+    )
+
+    contains_patate_subquery = (
+        db.session.query(
+            func.bool_or(va.id_gruppo == 14)
+        )
+        .join(
+            vir,
+            vir.id_alimento == va.id
+        )
+        .filter(
+            vir.id_ricetta == vr.id,
+            filtro_vir,
+            filtro_va
+        )
+        .label("contains_patate")
+    )
+
+    contains_grassi_subquery = (
+        db.session.query(
+            func.bool_or(va.id_gruppo == 15)
+        )
+        .join(
+            vir,
+            vir.id_alimento == va.id
+        )
+        .filter(
+            vir.id_ricetta == vr.id,
+            filtro_vir,
+            filtro_va
+        )
+        .label("contains_grassi")
+    )
+
     # Query principale
     query = (
         db.session.query(
@@ -247,6 +359,13 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
             is_frutta_subquery.label("is_frutta"),
             is_verdura_subquery.label("is_verdura"),
             contains_uova_subquery.label("contains_uova"),
+            contains_legumi_subquery.label("contains_legumi"),
+            contains_cereali_subquery.label("contains_cereali"),
+            contains_pane_subquery.label("contains_pane"),
+            contains_latticini_subquery.label("contains_latticini"),
+            contains_frutta_secca_subquery.label("contains_frutta_secca"),
+            contains_patate_subquery.label("contains_patate"),
+            contains_grassi_subquery.label("contains_grassi"),
             func.json_agg(
                 func.json_build_object(
                     'nome', ricetta_subquery.c.nome,
@@ -366,6 +485,13 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
             'is_verdura': row.is_verdura,
             'is_carne_bianca': row.is_carne_bianca,
             'contains_uova': row.contains_uova,
+            'contains_legumi': row.contains_legumi,
+            'contains_cereali': row.contains_cereali,
+            'contains_pane': row.contains_pane,
+            'contains_latticini': row.contains_latticini,
+            'contains_frutta_secca': row.contains_frutta_secca,
+            'contains_patate': row.contains_patate,
+            'contains_grassi': row.contains_grassi,
             'ricetta': row.ricetta,
             'ingredienti': row.ingredienti,
             'qta': percentuale,

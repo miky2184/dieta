@@ -565,6 +565,13 @@ function populateRicetteTable(ricette) {
         if (ricetta.is_verdura) infoEmoji += '🥕';
         if (ricetta.is_carne_bianca) infoEmoji += '🍗';
         if (ricetta.contains_uova) infoEmoji += '🥚';
+        if (ricetta.contains_legumi) infoEmoji += '🫛';
+        if (ricetta.contains_cereali) infoEmoji += '🌾';
+        if (ricetta.contains_pane) infoEmoji += '🍞';
+        if (ricetta.contains_latticini) infoEmoji += '🧀';
+        if (ricetta.contains_frutta_secca) infoEmoji += '🥜';
+        if (ricetta.contains_patate) infoEmoji += '🥔';
+        if (ricetta.contains_grassi) infoEmoji += '🧈';
 
         row.innerHTML = `
             <td>
