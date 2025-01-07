@@ -43,6 +43,104 @@ def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool
     # Filtro per le ricette
     filtro_vr = VRicetta.filtro_ricette(user_id, alias=vr1)
 
+    # Subquery per verificare se una ricetta è vegana
+    is_vegan_subquery = (
+        db.session.query(
+            func.bool_and(va1.vegan)
+        )
+        .join(
+            vir1,
+            vir1.id_alimento == va1.id
+        )
+        .filter(
+            vir1.id_ricetta == vr1.id,
+            filtro_vir,
+            filtro_va
+        )
+        .label("is_vegan")
+    )
+
+    # Subquery per verificare se una ricetta contiene carne rossa (id_gruppo = 4)
+    is_carne_rossa_subquery = (
+        db.session.query(
+            func.bool_or(va1.id_gruppo == 4)
+        )
+        .join(
+            vir1,
+            vir1.id_alimento == va1.id
+        )
+        .filter(
+            vir1.id_ricetta == vr1.id,
+            filtro_vir,
+            filtro_va
+        )
+        .label("is_carne_rossa")
+    )
+
+    contains_fish_subquery = (
+        db.session.query(
+            func.bool_or(va1.id_gruppo == 2)
+        )
+        .join(
+            vir1,
+            vir1.id_alimento == va1.id
+        )
+        .filter(
+            vir1.id_ricetta == vr1.id,
+            filtro_vir,
+            filtro_va
+        )
+        .label("contains_fish")
+    )
+
+    is_frutta_subquery = (
+        db.session.query(
+            func.bool_and(va1.id_gruppo == 6)
+        )
+        .join(
+            vir1,
+            vir1.id_alimento == va1.id
+        )
+        .filter(
+            vir1.id_ricetta == vr1.id,
+            filtro_vir,
+            filtro_va
+        )
+        .label("is_frutta")
+    )
+
+    is_verdura_subquery = (
+        db.session.query(
+            func.bool_and(va1.id_gruppo == 7)
+        )
+        .join(
+            vir1,
+            vir1.id_alimento == va1.id
+        )
+        .filter(
+            vir1.id_ricetta == vr1.id,
+            filtro_vir,
+            filtro_va
+        )
+        .label("is_verdura")
+    )
+
+    is_carne_bianca_subquery = (
+        db.session.query(
+            func.bool_or(va1.id_gruppo == 3)
+        )
+        .join(
+            vir1,
+            vir1.id_alimento == va1.id
+        )
+        .filter(
+            vir1.id_ricetta == vr1.id,
+            filtro_vir,
+            filtro_va
+        )
+        .label("is_carne_bianca")
+    )
+
     # Query principale
     query = (
         db.session.query(
@@ -79,7 +177,13 @@ def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool
             vr1.contorno,
             vr1.colazione_sec,
             vr1.complemento,
-            vr1.enabled.label('attiva')
+            vr1.enabled.label('attiva'),
+            is_vegan_subquery.label("is_vegan"),  # Campo per indicare se la ricetta è vegana
+            is_carne_rossa_subquery.label("is_carne_rossa"),
+            is_carne_bianca_subquery.label("is_carne_bianca"),
+            contains_fish_subquery.label("contains_fish"),
+            is_frutta_subquery.label("is_frutta"),
+            is_verdura_subquery.label("is_verdura"),
         )
         .select_from(vr1)
         .outerjoin(
@@ -133,6 +237,21 @@ def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool
 
     ricette = []
     for row in query.order_by(vr1.nome_ricetta).all():
+
+        info = []
+        if row.is_vegan:
+            info.append("🌱")  # Emoji per vegano
+        if row.is_carne_rossa:
+            info.append("🥩")  # Emoji per carne rossa
+        if row.contains_fish:
+            info.append("🐟")  # Emoji per pesce
+        if row.is_frutta:
+            info.append("🍎")  # Emoji per frutta
+        if row.is_verdura:
+            info.append("🥦")  # Emoji per verdura
+        if row.is_carne_bianca:
+            info.append("🍗")  # Emoji per carne bianca
+
         ricette.append({
             'user_id': row.user_id,
             'id': row.id_ricetta,
@@ -149,8 +268,15 @@ def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool
             'colazione_sec': row.colazione_sec,
             'complemento': row.complemento,
             'attiva': row.attiva,
+            'is_vegan': row.is_vegan,  # Flag se è vegana
+            'is_carne_rossa': row.is_carne_rossa,  # Flag se contiene carne rossa
+            'contains_fish': row.contains_fish,
+            'is_frutta': row.is_frutta,
+            'is_verdura': row.is_verdura,
+            'is_carne_bianca': row.is_carne_bianca,
             'ricetta': '',
-            'ingredienti': []
+            'ingredienti': [],
+            'info': ''.join(info)
         })
 
     # Visualizza la query SQL generata

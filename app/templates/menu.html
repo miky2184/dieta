@@ -23,33 +23,17 @@
                 <table class="table table-sm table-striped table-bordered">
                     <thead>
                     <tr>
-                        <th style="width:12.5%; text-align: center;">Pasto</th>
-                        <th style="width:12.5%; text-align: center;">Lunedì</th>
-                        <th style="width:12.5%; text-align: center;">Martedì</th>
-                        <th style="width:12.5%; text-align: center;">Mercoledì</th>
-                        <th style="width:12.5%; text-align: center;">Giovedì</th>
-                        <th style="width:12.5%; text-align: center;">Venerdì</th>
-                        <th style="width:12.5%; text-align: center;">Sabato</th>
-                        <th style="width:12.5%; text-align: center;">Domenica</th>
+                        <th style="width:9%; text-align: center;">Pasto</th>
+                        <th style="width:13%; text-align: center;">Lunedì</th>
+                        <th style="width:13%; text-align: center;">Martedì</th>
+                        <th style="width:13%; text-align: center;">Mercoledì</th>
+                        <th style="width:13%; text-align: center;">Giovedì</th>
+                        <th style="width:13%; text-align: center;">Venerdì</th>
+                        <th style="width:13%; text-align: center;">Sabato</th>
+                        <th style="width:13%; text-align: center;">Domenica</th>
                     </tr>
                     </thead>
                     <tbody id="menu_tbody">
-                    {% for pasto in ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena',
-                    'spuntino_sera'] %}
-                    <tr>
-                        <td><strong>{{ pasto.replace('_', ' ').capitalize() }}</strong></td>
-                        {% for dati_giorno in ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato',
-                        'domenica'] %}
-                        <td>
-                            {% for ricetta in menu.day[dati_giorno].pasto[pasto].ricette %}
-                            <div data-bs-toggle="tooltip" data-bs-title="{{ ricetta.ricetta }}" class="recipe-cell">{{
-                                ricetta.nome_ricetta }} ({{ ricetta.qta }}x)
-                            </div>
-                            {% endfor %}
-                        </td>
-                        {% endfor %}
-                    </tr>
-                    {% endfor %}
                     </tbody>
                     <tfoot>
                     <tr>

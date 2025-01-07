@@ -210,7 +210,7 @@ function aggiornaTabellaMenu(menu) {
                 menu.day[giorno].pasto[pasto].ricette.forEach(ricetta => {
                     const div = document.createElement('div');
                     // Aggiungi il contenuto di testo
-                    div.textContent = `${ricetta.nome_ricetta} (${ricetta.qta}x)`;
+                    div.textContent = `${ricetta.nome_ricetta} (${ricetta.qta}x) ${ricetta.info}`;
 
                     // Aggiungi gli attributi per il popover
                     div.setAttribute('data-bs-toggle', 'tooltip');
@@ -326,9 +326,13 @@ function filterTable() {
     const complementoFilter = document.getElementById('filter-complemento-ricette').value;
     const attivaFilter = document.getElementById('filter-attiva').value;
 
-    const table = document.getElementById('ricette-table').querySelector('tbody');
+    const infoFilterOptions = Array.from(document.getElementById('filter-info').selectedOptions).map(option => option.value);
 
+    const table = document.getElementById('ricette-table').querySelector('tbody');
     const rows = table.getElementsByTagName('tr');
+
+    // Se "Tutti" è selezionato, ignora i filtri "Info"
+    const infoFilterActive = !infoFilterOptions.includes("all");
 
     for (let i = 0; i < rows.length; i++) {
         const cells = rows[i].getElementsByTagName('td');
@@ -339,14 +343,14 @@ function filterTable() {
         const proteineCell = parseFloat(cells[3].textContent) || 0;
         const grassiCell = parseFloat(cells[4].textContent) || 0;
         const fibreCell = parseFloat(cells[5].textContent) || 0;
-
-        const colazioneCell = cells[6].querySelector('input').checked.toString();
-        const colazioneSecCell = cells[7].querySelector('input').checked.toString();
-        const spuntinoCell = cells[8].querySelector('input').checked.toString();
-        const principaleCell = cells[9].querySelector('input').checked.toString();
-        const contornoCell = cells[10].querySelector('input').checked.toString();
-        const complementoCell = cells[11].querySelector('input').checked.toString();
-        const attivaCell = cells[12].querySelector('input').checked.toString();
+        const infoCell = cells[6].textContent; // Colonna "Info"
+        const colazioneCell = cells[7].querySelector('input').checked.toString();
+        const colazioneSecCell = cells[8].querySelector('input').checked.toString();
+        const spuntinoCell = cells[9].querySelector('input').checked.toString();
+        const principaleCell = cells[10].querySelector('input').checked.toString();
+        const contornoCell = cells[11].querySelector('input').checked.toString();
+        const complementoCell = cells[12].querySelector('input').checked.toString();
+        const attivaCell = cells[13].querySelector('input').checked.toString();
 
         const colazioneMatch = (colazioneFilter === 'all') || (colazioneFilter === colazioneCell);
         const colazioneSecMatch = (colazioneSecFilter === 'all') || (colazioneSecFilter === colazioneSecCell);
@@ -362,18 +366,23 @@ function filterTable() {
         const grassiMatch = grassiCell >= grassiMin && grassiCell <= grassiMax;
         const fibreMatch = fibreCell >= fibreMin && fibreCell <= fibreMax;
 
+        // Se il filtro "Info" è attivo, verifica la corrispondenza
+        const infoMatch = !infoFilterActive || infoFilterOptions.some(option => infoCell.includes(option));
+
         if (nomeCell.includes(nomeFilter) &&
             calorieMatch &&
             carboMatch &&
             proteineMatch &&
             grassiMatch &&
+            fibreMatch &&
             colazioneMatch &&
             colazioneSecMatch &&
             spuntinoMatch &&
             principaleMatch &&
             contornoMatch &&
             complementoMatch &&
-            attivaMatch) {
+            attivaMatch &&
+            infoMatch) {
             rows[i].style.display = '';
         } else {
             rows[i].style.display = 'none';
@@ -542,6 +551,15 @@ function populateRicetteTable(ricette) {
     ricette.forEach(ricetta => {
         const row = document.createElement('tr');
 
+        // Determina le emoji per le caratteristiche della ricetta
+        let infoEmoji = '';
+        if (ricetta.is_vegan) infoEmoji += '🌱'; // Emoji per ricetta vegana
+        if (ricetta.is_carne_rossa) infoEmoji += '🥩'; // Emoji per ricetta di carne rossa
+        if (ricetta.contains_fish) infoEmoji += '🐟'; // Emoji per ricetta con pesce
+        if (ricetta.is_frutta) infoEmoji += '🍎';
+        if (ricetta.is_verdura) infoEmoji += '🥕';
+        if (ricetta.is_carne_bianca) infoEmoji += '🍗';
+
         row.innerHTML = `
             <td>
                 <div>
@@ -554,6 +572,7 @@ function populateRicetteTable(ricette) {
             <td style="text-align: center;">${ricetta.proteine}</td>
             <td style="text-align: center;">${ricetta.grassi}</td>
             <td style="text-align: center;">${ricetta.fibre}</td>
+            <td style="text-align: center;">${infoEmoji}</td>
             <td style="text-align: center;">
                 <div>
                     <input type="checkbox" name="colazione_${ricetta.id}" ${ricetta.colazione ? 'checked' : ''}>
@@ -1679,6 +1698,7 @@ function cleanFilters() {
     document.getElementById('filter-principale').value = 'all';
     document.getElementById('filter-contorno').value = 'all';
     document.getElementById('filter-attiva').value = 'all';
+    document.getElementById('filter-info').value = 'all';
 
     // Chiama la funzione che filtra la tabella per aggiornare i risultati
     filterTable();

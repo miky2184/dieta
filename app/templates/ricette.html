@@ -18,13 +18,14 @@
                     <th style="text-align: center;" onclick="sortTable('ricette-table', 3)">Prot</th>
                     <th style="text-align: center;" onclick="sortTable('ricette-table', 4)">Fat</th>
                     <th style="text-align: center;" onclick="sortTable('ricette-table', 5)">Fibre</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 6)">Colazione</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 7)">Merenda</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 8)">Spuntino</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 9)">Principale</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 10)">Contorno</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 11)">Complemento</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 12)">Attiva</th>
+                    <th style="text-align: center;">Info</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 7)">Colazione</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 8)">Merenda</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 9)">Spuntino</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 10)">Principale</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 11)">Contorno</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 12)">Complemento</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 13)">Attiva</th>
                     <th style="text-align: center;">Azioni</th>
                 </tr>
                 <tr>
@@ -60,6 +61,19 @@
                         <input type="number" id="filter-fibre-max"
                                class="form-control form-control-sm" placeholder="Max"
                                oninput="filterTable()"></th>
+                    <th>
+                        <div id="filter-info-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;">
+                            <select id="filter-info" class="form-select form-select-sm" multiple onchange="filterTable()">
+                                <option selected value="all">Tutti</option>
+                                <option value="🌱">🌱</option>
+                                <option value="🥩">🥩</option>
+                                <option value="🍗">🍗</option>
+                                <option value="🐟">🐟</option>
+                                <option value="🥕">🥕</option>
+                                <option value="🍎">🍎</option>
+                            </select>
+                        </div>
+                    </th>
                     <th>
                         <select id="filter-colazione" class="form-select form-select-sm" onchange="filterTable()">
                             <option value="all"></option>

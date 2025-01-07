@@ -191,7 +191,7 @@ def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, rip
     # Prepara le ricette modificate
     ricette_modificate = [
         {k: r[k] for k in ['id', 'nome_ricetta', 'kcal', 'carboidrati', 'proteine', 'grassi',
-                           'colazione', 'spuntino', 'principale', 'contorno', 'ricetta', 'ingredienti']}
+                           'colazione', 'spuntino', 'principale', 'contorno', 'ricetta', 'ingredienti', 'info']}
         for r in ricette_filtrate
     ]
 
@@ -321,7 +321,8 @@ def aggiorna_settimana(settimana, giorno_settimana, pasto, ricetta, percentuale,
         'carboidrati': ricetta['carboidrati'],
         'proteine': ricetta['proteine'],
         'grassi': ricetta['grassi'],
-        'ingredienti': get_totale_gruppi_service(ricetta['id'], user_id, percentuale)
+        'ingredienti': get_totale_gruppi_service(ricetta['id'], user_id, percentuale),
+        'info': ricetta['info']
     })
 
     # Aggiorna i macronutrienti giornalieri e settimanali
@@ -999,7 +1000,8 @@ def aggiungi_ricetta_al_menu(menu, day, meal, meal_id, user_id):
         'grassi': ricetta['grassi'],
         'proteine': ricetta['proteine'],
         'ricetta': recupera_ingredienti_ricetta(ricetta['id'], user_id, ricetta['qta']),
-        'ingredienti': get_totale_gruppi_service(ricetta['id'], user_id, ricetta['qta'])
+        'ingredienti': get_totale_gruppi_service(ricetta['id'], user_id, ricetta['qta']),
+        'info': ricetta['info']
     })
     aggiorna_macronutrienti(menu, day, ricetta)
     aggiorna_limiti_gruppi(ricetta, menu['consumi'], user_id, ricetta['qta'])

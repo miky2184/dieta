@@ -75,7 +75,7 @@ def update_alimento(alimento_id):
 
         update_alimento_service(alimento_id, nome, carboidrati, proteine, grassi, fibre, vegan, gruppo, user_id)
         current_app.cache.delete(f'alimenti_{user_id}')
-        current_app.cache.delete(f'alimenti_{user_id}')
+        current_app.cache.delete(invalidate_cache(user_id))
         return jsonify({'status': 'success', 'message': 'Alimento salvato con successo!'}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
