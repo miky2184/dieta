@@ -214,7 +214,12 @@ function aggiornaTabellaMenu(menu) {
 
                     // Aggiungi gli attributi per il popover
                     div.setAttribute('data-bs-toggle', 'tooltip');
-                    div.setAttribute('data-bs-title', ricetta.ricetta || 'vuoto');
+                    div.setAttribute(
+                        'data-bs-title',
+                        ricetta.ricetta && ricetta.ricetta.length > 0
+                            ? ricetta.ricetta.map(item => `Nome: ${item.nome}, Quantità: ${item.qta}`).join("; ")
+                            : 'vuoto'
+                    );
 
                     // Aggiungi la classe "recipe-cell"
                     div.classList.add('recipe-cell');
@@ -1219,7 +1224,7 @@ function renderMenuEditor(data) {
                     const row = document.createElement('tr');
                     row.id = `meal-${ricetta.id}-${day}-${meal}`;
                     row.innerHTML = `
-                        <td><div data-bs-toggle="tooltip" data-bs-title="${ricetta.ricetta}" class="recipe-cell">${ricetta.nome_ricetta}</div></td>
+                        <td><div data-bs-toggle="tooltip" data-bs-title='${ricetta.ricetta.map(item => `Nome: ${item.nome}, Quantità: ${item.qta}`).join("; ")}' class="recipe-cell">${ricetta.nome_ricetta}</div></td>
                         <td style="text-align: center;">${(ricetta.kcal * ricetta.qta).toFixed(2)}</td>
                         <td style="text-align: center;">${(ricetta.carboidrati * ricetta.qta).toFixed(2)}</td>
                         <td style="text-align: center;">${(ricetta.proteine * ricetta.qta).toFixed(2)}</td>

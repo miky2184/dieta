@@ -13,7 +13,7 @@ from app.services.db_services import get_sequence_value
 from app.services.util_services import print_query
 
 
-def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool=False, complemento=None, contorno=False, data_stagionalita=None) -> list[dict]:
+def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=False, complemento=None, contorno=False, data_stagionalita=None, percentuale:float = 1.0) -> list[dict]:
     """
         Carica tutte le ricette disponibili dal database, arricchendole con informazioni nutrizionali e ingredienti.
 
@@ -25,35 +25,81 @@ def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool
             complemento (bool, optional): Se specificato, filtra le ricette con o senza il flag `complemento`.
             contorno (bool, optional): Se True, filtra le ricette con il flag `contorno` attivo.
             data_stagionalita (date, optional): Data specifica per applicare il filtro di stagionalità (predefinito è la data corrente).
+            percentuale (float, optional): Percentuale
 
         Returns:
             list[dict]: Lista di ricette arricchite con informazioni nutrizionali, stagionalità e ingredienti.
         """
     # Alias per le tabelle
-    vr1 = aliased(VRicetta)
-    vir1 = aliased(VIngredientiRicetta)
-    va1 = aliased(VAlimento)
+    vr = aliased(VRicetta)
+    vir = aliased(VIngredientiRicetta)
+    va = aliased(VAlimento)
 
     # Filtro per gli alimenti
-    filtro_va = VAlimento.filtro_alimenti(user_id, alias=va1)
+    filtro_va = VAlimento.filtro_alimenti(user_id, alias=va)
 
     # Filtro per gli ingredienti
-    filtro_vir = VIngredientiRicetta.filtro_ingredienti(user_id, alias=vir1)
+    filtro_vir = VIngredientiRicetta.filtro_ingredienti(user_id, alias=vir)
 
     # Filtro per le ricette
-    filtro_vr = VRicetta.filtro_ricette(user_id, alias=vr1)
+    filtro_vr = VRicetta.filtro_ricette(user_id, alias=vr)
+
+    # Query principale
+    ricetta_subquery = (
+        db.session.query(
+            vir.id_ricetta.label("id_ricetta"),
+            va.nome,
+            func.sum(vir.qta * percentuale).label("qta")
+        )
+        .join(
+            va,
+            and_(
+                va.id == vir.id_alimento,
+                filtro_va,
+                filtro_vir
+            )
+        )
+        .filter(vir.id_ricetta == vr.id)
+        .filter(vir.id_alimento == va.id)
+        .filter(vir.user_id == vr.user_id)
+        .group_by(vir.id_ricetta, va.nome)
+        .subquery()
+    )
+
+    ingredienti_subquery = (
+        db.session.query(
+            vir.id_ricetta.label("id_ricetta"),
+            va.id_gruppo,
+            func.sum(vir.qta * percentuale).label("qta")
+        )
+        .join(
+            va,
+            and_(
+                va.id == vir.id_alimento,
+                filtro_va,
+                filtro_vir
+            )
+        )
+        .filter(vir.id_ricetta == vr.id)
+        .filter(vir.id_alimento == va.id)
+        .filter(vir.user_id == vr.user_id)
+        .group_by(vir.id_ricetta, va.id_gruppo)
+        .subquery()
+    )
+
+
 
     # Subquery per verificare se una ricetta è vegana
     is_vegan_subquery = (
         db.session.query(
-            func.bool_and(va1.vegan)
+            func.bool_and(va.vegan)
         )
         .join(
-            vir1,
-            vir1.id_alimento == va1.id
+            vir,
+            vir.id_alimento == va.id
         )
         .filter(
-            vir1.id_ricetta == vr1.id,
+            vir.id_ricetta == vr.id,
             filtro_vir,
             filtro_va
         )
@@ -63,14 +109,14 @@ def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool
     # Subquery per verificare se una ricetta contiene carne rossa (id_gruppo = 4)
     is_carne_rossa_subquery = (
         db.session.query(
-            func.bool_or(va1.id_gruppo == 4)
+            func.bool_or(va.id_gruppo == 4)
         )
         .join(
-            vir1,
-            vir1.id_alimento == va1.id
+            vir,
+            vir.id_alimento == va.id
         )
         .filter(
-            vir1.id_ricetta == vr1.id,
+            vir.id_ricetta == vr.id,
             filtro_vir,
             filtro_va
         )
@@ -79,14 +125,14 @@ def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool
 
     contains_fish_subquery = (
         db.session.query(
-            func.bool_or(va1.id_gruppo == 2)
+            func.bool_or(va.id_gruppo == 2)
         )
         .join(
-            vir1,
-            vir1.id_alimento == va1.id
+            vir,
+            vir.id_alimento == va.id
         )
         .filter(
-            vir1.id_ricetta == vr1.id,
+            vir.id_ricetta == vr.id,
             filtro_vir,
             filtro_va
         )
@@ -95,14 +141,14 @@ def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool
 
     is_frutta_subquery = (
         db.session.query(
-            func.bool_and(va1.id_gruppo == 6)
+            func.bool_and(va.id_gruppo == 6)
         )
         .join(
-            vir1,
-            vir1.id_alimento == va1.id
+            vir,
+            vir.id_alimento == va.id
         )
         .filter(
-            vir1.id_ricetta == vr1.id,
+            vir.id_ricetta == vr.id,
             filtro_vir,
             filtro_va
         )
@@ -111,14 +157,14 @@ def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool
 
     is_verdura_subquery = (
         db.session.query(
-            func.bool_and(va1.id_gruppo == 7)
+            func.bool_and(va.id_gruppo == 7)
         )
         .join(
-            vir1,
-            vir1.id_alimento == va1.id
+            vir,
+            vir.id_alimento == va.id
         )
         .filter(
-            vir1.id_ricetta == vr1.id,
+            vir.id_ricetta == vr.id,
             filtro_vir,
             filtro_va
         )
@@ -127,14 +173,14 @@ def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool
 
     is_carne_bianca_subquery = (
         db.session.query(
-            func.bool_or(va1.id_gruppo == 3)
+            func.bool_or(va.id_gruppo == 3)
         )
         .join(
-            vir1,
-            vir1.id_alimento == va1.id
+            vir,
+            vir.id_alimento == va.id
         )
         .filter(
-            vir1.id_ricetta == vr1.id,
+            vir.id_ricetta == vr.id,
             filtro_vir,
             filtro_va
         )
@@ -144,64 +190,79 @@ def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool
     # Query principale
     query = (
         db.session.query(
-            vr1.user_id.label("user_id"),
-            vr1.id.label("id_ricetta"),
-            vr1.nome_ricetta.label("nome_ricetta"),
+            vr.user_id.label("user_id"),
+            vr.id.label("id_ricetta"),
+            vr.nome_ricetta.label("nome_ricetta"),
             func.ceil(
                 func.sum(
-                    (va1.carboidrati / 100) * vir1.qta * 4 +
-                    (va1.proteine / 100) * vir1.qta * 4 +
-                    (va1.grassi / 100) * vir1.qta * 9 +
-                    (va1.fibre / 100) * vir1.qta * 2
-                ).over(partition_by=vr1.id)
+                    (va.carboidrati / 100) * vir.qta * 4 +
+                    (va.proteine / 100) * vir.qta * 4 +
+                    (va.grassi / 100) * vir.qta * 9 +
+                    (va.fibre / 100) * vir.qta * 2
+                )
             ).label('kcal'),
             func.round(
-                func.sum((va1.carboidrati / 100) * vir1.qta).over(partition_by=vr1.id),
+                func.sum((va.carboidrati / 100) * vir.qta),
                 2
             ).label('carboidrati'),
             func.round(
-                func.sum((va1.proteine / 100) * vir1.qta).over(partition_by=vr1.id),
+                func.sum((va.proteine / 100) * vir.qta),
                 2
             ).label('proteine'),
             func.round(
-                func.sum((va1.grassi / 100) * vir1.qta).over(partition_by=vr1.id),
+                func.sum((va.grassi / 100) * vir.qta),
                 2
             ).label('grassi'),
             func.round(
-                func.sum((va1.fibre / 100) * vir1.qta).over(partition_by=vr1.id),
+                func.sum((va.fibre / 100) * vir.qta),
                 2
             ).label('fibre'),
-            vr1.colazione,
-            vr1.spuntino,
-            vr1.principale,
-            vr1.contorno,
-            vr1.colazione_sec,
-            vr1.complemento,
-            vr1.enabled.label('attiva'),
+            vr.colazione,
+            vr.spuntino,
+            vr.principale,
+            vr.contorno,
+            vr.colazione_sec,
+            vr.complemento,
+            vr.enabled.label('attiva'),
             is_vegan_subquery.label("is_vegan"),  # Campo per indicare se la ricetta è vegana
             is_carne_rossa_subquery.label("is_carne_rossa"),
             is_carne_bianca_subquery.label("is_carne_bianca"),
             contains_fish_subquery.label("contains_fish"),
             is_frutta_subquery.label("is_frutta"),
             is_verdura_subquery.label("is_verdura"),
+            func.json_agg(
+                func.json_build_object(
+                    'nome', ricetta_subquery.c.nome,
+                    'qta', ricetta_subquery.c.qta
+                )
+            ).label("ricetta"),
+            func.json_agg(
+                func.json_build_object(
+                    'id_gruppo', ingredienti_subquery.c.id_gruppo,
+                    'qta', ingredienti_subquery.c.qta
+                )
+            ).label("ingredienti")
         )
-        .select_from(vr1)
+        .select_from(vr)
         .outerjoin(
-            vir1,
+            vir,
             and_(
-                vir1.id_ricetta == vr1.id,
+                vir.id_ricetta == vr.id,
                 filtro_vir
             )
         )
         .outerjoin(
-            va1,
+            va,
             and_(
-                va1.id == vir1.id_alimento,
+                va.id == vir.id_alimento,
                 filtro_va
             )
         )
         .filter(filtro_vr)
-        .distinct()
+        .filter(ingredienti_subquery.c.id_ricetta == vr.id)
+        .filter(ingredienti_subquery.c.id_gruppo == va.id_gruppo)
+        .filter(ricetta_subquery.c.id_ricetta == vr.id)
+        .filter(ricetta_subquery.c.nome == va.nome)
     )
 
     # Applicazione dei filtri
@@ -213,30 +274,41 @@ def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool
         query = query.filter(
             or_(
                 and_(
-                    va1.id_gruppo == 6, (extract('month', data) == func.any(va1.stagionalita))
+                    va.id_gruppo == 6, (extract('month', data) == func.any(va.stagionalita))
                 ),
                 (
-                        va1.id_gruppo != 6)
+                        va.id_gruppo != 6)
                 )
         )
 
     if ids:
-        query = query.filter(vr1.id == ids)
+        query = query.filter(vr.id == ids)
 
     if attive:
-        query = query.filter(vr1.enabled.is_(True))
+        query = query.filter(vr.enabled.is_(True))
 
     if complemento:
-        query = query.filter(vr1.complemento.is_(True))
+        query = query.filter(vr.complemento.is_(True))
 
     if not complemento:
-        query = query.filter(vr1.complemento.is_(False))
+        query = query.filter(vr.complemento.is_(False))
 
     if contorno:
-        query = query.filter(vr1.contorno.is_(True))
+        query = query.filter(vr.contorno.is_(True))
+
+    query = query.group_by(vr.user_id,
+                           vr.id,
+                           vr.nome_ricetta,
+                           vr.colazione,
+                           vr.spuntino,
+                           vr.principale,
+                           vr.contorno,
+                           vr.colazione_sec,
+                           vr.complemento,
+                           vr.enabled)
 
     ricette = []
-    for row in query.order_by(vr1.nome_ricetta).all():
+    for row in query.order_by(vr.nome_ricetta).all():
 
         info = []
         if row.is_vegan:
@@ -274,8 +346,9 @@ def get_ricette_service(user_id, ids=None, stagionalita: bool=False, attive:bool
             'is_frutta': row.is_frutta,
             'is_verdura': row.is_verdura,
             'is_carne_bianca': row.is_carne_bianca,
-            'ricetta': '',
-            'ingredienti': [],
+            'ricetta': row.ricetta,
+            'ingredienti': row.ingredienti,
+            'qta': percentuale,
             'info': ''.join(info)
         })
 

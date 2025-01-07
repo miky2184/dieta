@@ -22,6 +22,7 @@ from app.services.db_services import get_sequence_value
 from app.services.modifica_pasti_services import get_menu_service
 from app.services.ricette_services import get_ricette_service
 from app.services.util_services import printer, print_query
+import json
 
 MAX_RETRY = int(os.getenv('MAX_RETRY'))
 
@@ -191,7 +192,7 @@ def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, rip
     # Prepara le ricette modificate
     ricette_modificate = [
         {k: r[k] for k in ['id', 'nome_ricetta', 'kcal', 'carboidrati', 'proteine', 'grassi',
-                           'colazione', 'spuntino', 'principale', 'contorno', 'ricetta', 'ingredienti', 'info']}
+                           'colazione', 'spuntino', 'principale', 'contorno', 'ricetta', 'ingredienti', 'info', 'qta']}
         for r in ricette_filtrate
     ]
 
@@ -239,8 +240,8 @@ def select_food(ricette, settimana, giorno_settimana, pasto, ripetibile, control
     for ricetta in ricette_filtrate:
         percentuale_effettiva = calcola_percentuale_effettiva(ricetta, settimana['day'][giorno_settimana])
         if percentuale_effettiva >= 0.5:
-            if check_limiti_consumo_ricetta(ricetta, settimana['consumi'], percentuale_effettiva, user_id):
-                aggiorna_settimana(settimana, giorno_settimana, pasto, ricetta, percentuale_effettiva, user_id)
+            if check_limiti_consumo_ricetta(ricetta, settimana['consumi'], percentuale_effettiva):
+                aggiorna_settimana(settimana, giorno_settimana, pasto, ricetta, percentuale_effettiva)
                 found = True
                 break
 
@@ -280,7 +281,7 @@ def calcola_percentuale_effettiva(ricetta, day) -> float:
         raise RuntimeError(f"Errore durante il calcolo della percentuale: {str(e)}")
 
 
-def aggiorna_settimana(settimana, giorno_settimana, pasto, ricetta, percentuale, user_id) -> None:
+def aggiorna_settimana(settimana, giorno_settimana, pasto, ricetta, percentuale) -> None:
     """
         Aggiorna la struttura del menu settimanale aggiungendo una ricetta al giorno e al pasto specificati.
         Regola i macronutrienti e i consumi settimanali in base alla percentuale della ricetta utilizzata.
@@ -316,12 +317,12 @@ def aggiorna_settimana(settimana, giorno_settimana, pasto, ricetta, percentuale,
         'qta': percentuale,
         'id': ricetta['id'],
         'nome_ricetta': ricetta['nome_ricetta'],
-        'ricetta': recupera_ingredienti_ricetta(ricetta['id'], user_id, percentuale),
+        'ricetta': recupera_ingredienti_ricetta(ricetta, percentuale),
         'kcal': ricetta['kcal'],
         'carboidrati': ricetta['carboidrati'],
         'proteine': ricetta['proteine'],
         'grassi': ricetta['grassi'],
-        'ingredienti': get_totale_gruppi_service(ricetta['id'], user_id, percentuale),
+        'ingredienti': get_totale_gruppi_service(ricetta, percentuale),
         'info': ricetta['info']
     })
 
@@ -330,7 +331,7 @@ def aggiorna_settimana(settimana, giorno_settimana, pasto, ricetta, percentuale,
         day[macro] -= round(ricetta[macro] * percentuale, 2)
         weekly[macro] -= round(ricetta[macro] * percentuale, 2)
 
-    aggiorna_limiti_gruppi(ricetta, settimana['consumi'], user_id, percentuale)
+    aggiorna_limiti_gruppi(ricetta, settimana['consumi'], percentuale)
 
 
 def determina_ids_disponibili(ricette, settimana, giorno_settimana, pasto, ripetibile, ids_specifici) -> list:
@@ -382,7 +383,7 @@ def determina_ids_disponibili(ricette, settimana, giorno_settimana, pasto, ripet
         raise RuntimeError(f"Errore durante la determinazione degli ID disponibili: {str(e)}")
 
 
-def check_limiti_consumo_ricetta(ricetta, consumi, perc, user_id) -> bool:
+def check_limiti_consumo_ricetta(ricetta, consumi, perc) -> bool:
     """
     Verifica se una ricetta rispetta i limiti di consumo settimanale.
 
@@ -390,7 +391,6 @@ def check_limiti_consumo_ricetta(ricetta, consumi, perc, user_id) -> bool:
         ricetta (dict): Ricetta contenente una lista di ingredienti con quantità totali e ID di gruppo.
         consumi (dict): Dizionario dei limiti di consumo rimanenti per ogni gruppo alimentare.
         perc (float): percentuale da utilizzare per il calcolo dei limiti
-        user_id: utente abilitato alla funzione
 
     Returns:
         bool: True se la ricetta rispetta i limiti, False altrimenti.
@@ -404,21 +404,19 @@ def check_limiti_consumo_ricetta(ricetta, consumi, perc, user_id) -> bool:
     if not isinstance(consumi, dict):
         raise ValueError("Il parametro 'consumi' deve essere un dizionario.")
 
-    ricetta['ingredienti'] = get_totale_gruppi_service(ricetta['id'], user_id, perc)
-
     try:
         for gruppo in ricetta['ingredienti']:
             id_gruppo = str(gruppo.get('id_gruppo'))
             qta = gruppo.get('qta', 0)
 
-            if id_gruppo in consumi and qta > consumi[id_gruppo]:
+            if id_gruppo in consumi and (qta * perc) > consumi[id_gruppo]:
                 return False  # Supera il limite
         return True
     except Exception as e:
         raise RuntimeError(f"Errore durante il controllo dei limiti di consumo: {str(e)}")
 
 
-def aggiorna_limiti_gruppi(ricetta, consumi, user_id, perc: float = 1.0, rimuovi: bool = False):
+def aggiorna_limiti_gruppi(ricetta, consumi, perc: float = 1.0, rimuovi: bool = False):
     """
     Aggiorna i consumi rimanenti per i gruppi alimentari in base agli ingredienti di una ricetta.
 
@@ -441,133 +439,38 @@ def aggiorna_limiti_gruppi(ricetta, consumi, user_id, perc: float = 1.0, rimuovi
     moltiplicatore = 1 if rimuovi else -1
     try:
 
-        if not ricetta['ingredienti'] or (ricetta and len(ricetta['ingredienti']) == 0):
-            ricetta['ingredienti'] = get_totale_gruppi_service(ricetta['id'], user_id, perc)
+        for ingrediente in ricetta['ingredienti']:
+            id_gruppo = ingrediente['id_gruppo']
+            qta = ingrediente['qta']
 
-        for gruppo in ricetta['ingredienti']:
-            id_gruppo = gruppo.get('id_gruppo')
-            qta = gruppo.get('qta', 0)
-
-            if str(id_gruppo) in consumi:
-                nuovo_consumo = consumi[str(id_gruppo)] + (moltiplicatore * qta * perc)
-                if nuovo_consumo < 0:
-                    printer(f"Il consumo del gruppo {id_gruppo} diventerebbe negativo: {nuovo_consumo}", "INFO")
-                consumi[str(id_gruppo)] = nuovo_consumo
+            if id_gruppo in consumi:
+                consumi[id_gruppo] = consumi[id_gruppo] + (moltiplicatore * qta * perc)
     except Exception as e:
         raise RuntimeError(f"Errore durante l'aggiornamento dei limiti dei gruppi: {str(e)}")
 
 
-def recupera_ingredienti_ricetta(ricetta_id, user_id, percentuale) -> str:
-    """
-    Recupera gli ingredienti di una ricetta e calcola le quantità basate su una percentuale specifica.
+def recupera_ingredienti_ricetta(ricetta, percentuale) -> list[dict]:
+    if 'ricetta' not in ricetta:
+        raise ValueError("Il dizionario della ricetta non contiene la chiave 'ricetta'.")
 
-    Args:
-        ricetta_id (int): ID della ricetta di cui recuperare gli ingredienti.
-        user_id (int): ID dell'utente che ha creato o ha accesso alla ricetta.
-        percentuale (float): Percentuale da applicare alle quantità degli ingredienti.
+    risultati = []
 
-    Returns:
-        str: Una stringa che rappresenta gli ingredienti e le quantità della ricetta, formattata come:
-             "Ingrediente1: Quantità1g, Ingrediente2: Quantità2g, ..."
-    """
-    vir = aliased(VIngredientiRicetta)
-    va = aliased(VAlimento)
+    for ingrediente in ricetta['ricetta']:
+        risultati.append({'nome': ingrediente['nome'], 'qta': (ingrediente['qta'] / ricetta['qta']) * percentuale})
 
-    # Filtro per gli alimenti
-    filtro_va = VAlimento.filtro_alimenti(user_id, alias=va)
-
-    # Filtro per gli ingredienti
-    filtro_vir = VIngredientiRicetta.filtro_ingredienti(user_id, alias=vir)
-
-    # Query principale
-    query = (
-        db.session.query(
-            vir.id_ricetta.label("id_ricetta"),
-            func.string_agg(
-                func.concat(
-                    va.nome,
-                    ":",
-                    func.cast(vir.qta * percentuale, db.String),
-                    "g"
-                ),
-                ", "
-            ).label("ricetta")
-        )
-        .join(
-            va,
-            and_(
-                va.id == vir.id_alimento,
-                filtro_va,
-                filtro_vir
-            )
-        )
-        .filter(vir.id_ricetta == ricetta_id)
-        .group_by(vir.id_ricetta)
-    )
-
-    # Debug della query generata
-    print_query(query)
-
-    # Esecuzione della query
-    results = query.all()
-
-    if not results or not results[0].ricetta:
-        return "Ingredienti non disponibili"
-
-    return results[0].ricetta
+    return risultati
 
 
-def get_totale_gruppi_service(ricetta_id, user_id, percentuale) -> list[dict]:
-    """
-    Recupera gli ingredienti di una ricetta e calcola le quantità basate su una percentuale specifica.
+def get_totale_gruppi_service(ricetta, percentuale:float) -> list[dict]:
+    if 'ingredienti' not in ricetta:
+        raise ValueError("Il dizionario della ricetta non contiene la chiave 'ingredienti'.")
 
-    Args:
-        ricetta_id (int): ID della ricetta di cui recuperare gli ingredienti.
-        user_id (int): ID dell'utente che ha creato o ha accesso alla ricetta.
-        percentuale (float): Percentuale da applicare alle quantità degli ingredienti.
+    risultati = []
 
-    Returns:
-        str: Una stringa che rappresenta gli ingredienti e le quantità della ricetta, formattata come:
-             "Ingrediente1: Quantità1g, Ingrediente2: Quantità2g, ..."
-    """
-    vir = aliased(VIngredientiRicetta)
-    va = aliased(VAlimento)
+    for ingrediente in ricetta['ingredienti']:
+        risultati.append({'id_gruppo': ingrediente['id_gruppo'], 'qta': (ingrediente['qta'] / ricetta['qta']) * percentuale})
 
-    # Filtro per gli alimenti
-    filtro_va = VAlimento.filtro_alimenti(user_id, alias=va)
-
-    # Filtro per gli ingredienti
-    filtro_vir = VIngredientiRicetta.filtro_ingredienti(user_id, alias=vir)
-
-    # Query principale
-    query = (
-        db.session.query(
-            vir.id_ricetta,
-            va.id_gruppo,
-            func.sum(vir.qta * percentuale).label('ingredienti'),
-        )
-        .join(
-            va,
-            and_(
-                va.id == vir.id_alimento,
-                filtro_va,
-                filtro_vir
-            )
-        )
-        .filter(vir.id_ricetta == ricetta_id)
-        .group_by(vir.id_ricetta, va.id_gruppo)
-    )
-
-    # Debug della query generata
-    print_query(query)
-
-    # Esecuzione della query
-    results = query.all()
-
-    if not results:
-        return []
-
-    return [{"id_gruppo": int(row.id_gruppo), "qta": float(row.ingredienti)} for row in results]
+    return risultati
 
 
 def controlla_limiti_macronutrienti(ricetta, day, weekly, controllo_macro_settimanale) -> bool:
@@ -999,12 +902,12 @@ def aggiungi_ricetta_al_menu(menu, day, meal, meal_id, user_id):
         'carboidrati': ricetta['carboidrati'],
         'grassi': ricetta['grassi'],
         'proteine': ricetta['proteine'],
-        'ricetta': recupera_ingredienti_ricetta(ricetta['id'], user_id, ricetta['qta']),
-        'ingredienti': get_totale_gruppi_service(ricetta['id'], user_id, ricetta['qta']),
+        'ricetta': recupera_ingredienti_ricetta(ricetta, ricetta['qta']),
+        'ingredienti': get_totale_gruppi_service(ricetta, ricetta['qta']),
         'info': ricetta['info']
     })
     aggiorna_macronutrienti(menu, day, ricetta)
-    aggiorna_limiti_gruppi(ricetta, menu['consumi'], user_id, ricetta['qta'])
+    aggiorna_limiti_gruppi(ricetta, menu['consumi'], ricetta['qta'])
 
 
 def rimuovi_pasto_dal_menu(menu, day, meal, meal_id, user_id):
@@ -1020,14 +923,14 @@ def rimuovi_pasto_dal_menu(menu, day, meal, meal_id, user_id):
         menu['day'][day]['pasto'][meal]['ids'].remove(ricetta_da_rimuovere['id'])
         menu['day'][day]['pasto'][meal]['ricette'].remove(ricetta_da_rimuovere)
         aggiorna_macronutrienti(menu, day, ricetta_da_rimuovere, True)
-        aggiorna_limiti_gruppi(ricetta, menu['consumi'], user_id, ricetta['qta'],True)
+        aggiorna_limiti_gruppi(ricetta, menu['consumi'], ricetta['qta'],True)
 
 
 def cancella_tutti_pasti_menu(settimana, day, meal_type, user_id):
     for ricetta in settimana['day'][day]['pasto'][meal_type]['ricette']:
         settimana['all_food'].remove(ricetta['id'])
         aggiorna_macronutrienti(settimana, day, ricetta, True)
-        aggiorna_limiti_gruppi(ricetta, settimana['consumi'], user_id, ricetta['qta'], True)
+        aggiorna_limiti_gruppi(ricetta, settimana['consumi'], ricetta['qta'], True)
 
     settimana['day'][day]['pasto'][meal_type] = {"ids": [], "ricette": []}
 

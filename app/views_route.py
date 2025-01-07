@@ -255,16 +255,13 @@ def aggiorna_quantita_ingrediente():
         # Recupera il menu corrente dal database
         menu_corrente = get_menu_service(user_id, menu_id=week_id)
 
-        ingredienti_ricetta = recupera_ingredienti_ricetta(ricetta_id, user_id, quantity)
-        totale_gruppi = get_totale_gruppi_service(ricetta_id, user_id, quantity)
-
         # Aggiorna la quantità del pasto nel menu
         for ricetta in menu_corrente['menu']['day'][day]['pasto'][meal]['ricette']:
             if int(ricetta['id']) == ricetta_id:
                 old_qta = ricetta['qta']
                 ricetta['qta'] = quantity
-                ricetta['ricetta'] = ingredienti_ricetta
-                ricetta['ingredienti'] = totale_gruppi
+                ricetta['ricetta'] = recupera_ingredienti_ricetta(ricetta, quantity)
+                ricetta['ingredienti'] = get_totale_gruppi_service(ricetta, quantity)
 
                 # Ricalcola i macronutrienti giornalieri e settimanali
                 for macro in ['kcal', 'carboidrati', 'proteine', 'grassi']:
