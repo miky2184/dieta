@@ -564,6 +564,7 @@ function populateRicetteTable(ricette) {
         if (ricetta.is_frutta) infoEmoji += '🍎';
         if (ricetta.is_verdura) infoEmoji += '🥕';
         if (ricetta.is_carne_bianca) infoEmoji += '🍗';
+        if (ricetta.contains_uova) infoEmoji += '🥚';
 
         row.innerHTML = `
             <td>

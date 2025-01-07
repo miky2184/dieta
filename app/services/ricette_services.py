@@ -187,6 +187,22 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
         .label("is_carne_bianca")
     )
 
+    contains_uova_subquery = (
+        db.session.query(
+            func.bool_or(va.id_gruppo == 1)
+        )
+        .join(
+            vir,
+            vir.id_alimento == va.id
+        )
+        .filter(
+            vir.id_ricetta == vr.id,
+            filtro_vir,
+            filtro_va
+        )
+        .label("contains_uova")
+    )
+
     # Query principale
     query = (
         db.session.query(
@@ -230,6 +246,7 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
             contains_fish_subquery.label("contains_fish"),
             is_frutta_subquery.label("is_frutta"),
             is_verdura_subquery.label("is_verdura"),
+            contains_uova_subquery.label("contains_uova"),
             func.json_agg(
                 func.json_build_object(
                     'nome', ricetta_subquery.c.nome,
@@ -323,6 +340,8 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
             info.append("🥦")  # Emoji per verdura
         if row.is_carne_bianca:
             info.append("🍗")  # Emoji per carne bianca
+        if row.contains_uova:
+            info.append("🥚")
 
         ricette.append({
             'user_id': row.user_id,
@@ -346,6 +365,7 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
             'is_frutta': row.is_frutta,
             'is_verdura': row.is_verdura,
             'is_carne_bianca': row.is_carne_bianca,
+            'contains_uova': row.contains_uova,
             'ricetta': row.ricetta,
             'ingredienti': row.ingredienti,
             'qta': percentuale,
