@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_required, current_user
 from sqlalchemy.exc import SQLAlchemyError
-
+from app.services.modifica_pasti_services import get_menu_service
 from app.services.ricette_services import update_ricetta_service, get_ricette_service, attiva_disattiva_ricetta_service, \
     get_ingredienti_ricetta_service, salva_nuova_ricetta, salva_ingredienti_service
 
@@ -39,12 +39,12 @@ def invalidate_cache(user_id):
 
 
 @ricette.route('/ricette', methods=['GET'])
-@current_app.cache.cached(timeout=300, key_prefix=lambda: generate_cache_key())
 @login_required
-def list_ricette():
+def handle_ricette():
     """
-    Funzione consolidata per recuperare le ricette in base a filtri dinamici.
-    Supporta stagionalità, complemento, contorno e filtri per tipo di pasto.
+    Funzione consolidata per gestire entrambe le richieste:
+    - Recuperare ricette in base a filtri dinamici.
+    - Recuperare ricette disponibili per un pasto specifico, escludendo quelle già presenti.
     """
     user_id = current_user.user_id
 
@@ -53,35 +53,66 @@ def list_ricette():
     complemento = request.args.get('complemento', 'false').lower() == 'true'
     contorno = request.args.get('contorno', 'false').lower() == 'true'
     attive = request.args.get('attive', 'false').lower() == 'true'
-    meal_type = request.args.get('meal')
+    meal_time = request.args.get('meal_time')
+    meal_type = request.args.get('meal_type')
+    day = request.args.get('day')  # Per menu specifico
+    week_id = request.args.get('week_id')  # Per menu specifico
 
     # Mappatura dei tipi di pasto (opzionale)
     meal_type_mapping = {
         'colazione': ['colazione', 'colazione_sec'],
         'spuntino_mattina': ['spuntino'],
-        'pranzo': ['principale'],
+        'pranzo': ['principale', 'contorno'],
         'spuntino_pomeriggio': ['spuntino'],
-        'cena': ['principale'],
+        'cena': ['principale', 'contorno'],
         'spuntino_sera': ['spuntino']
     }
 
-    generic_meal_types = meal_type_mapping.get(meal_type)
+    generic_meal_types = meal_type_mapping.get(meal_time, [])
+    generic_meal_types = [meal_type] if meal_type in generic_meal_types else generic_meal_types
 
     try:
-        # Recupera le ricette dal servizio
-        ricette_list = get_ricette_service(
-            user_id,
-            stagionalita=stagionalita,
-            complemento=complemento,
-            contorno=contorno,
-            attive=attive
-        )
+
+        # Logica aggiuntiva per le ricette disponibili (se day e week_id sono specificati)
+        if day and week_id:
+            menu_corrente = get_menu_service(user_id, menu_id=week_id)
+
+            # Recupera la data di fine stagionalità dal menu corrente
+            data_stagionalita = menu_corrente.get('data_fine')
+
+            # Aggiorna la lista delle ricette con i dati stagionali
+            ricette_list = get_ricette_service(
+                user_id,
+                stagionalita=True,
+                attive=True,
+                complemento=False,
+                data_stagionalita=data_stagionalita
+            )
+
+            # Escludi le ricette già presenti nel menu
+            if menu_corrente['menu']:
+                if meal_time in ('pranzo', 'cena'):
+                    ricette_presenti_ids = menu_corrente['menu']['all_food']
+                else:
+                    ricette_presenti_ids = [
+                        r['id'] for r in menu_corrente['menu']['day'][day]['pasto'][meal_time]['ricette']
+                    ]
+                ricette_list = [ricetta for ricetta in ricette_list if ricetta['id'] not in ricette_presenti_ids]
+        else:
+            # Recupera le ricette dal servizio
+            ricette_list = get_ricette_service(
+                user_id,
+                stagionalita=stagionalita,
+                complemento=complemento,
+                contorno=contorno,
+                attive=attive
+            )
 
         # Filtra ulteriormente in base al tipo di pasto, se specificato
         if generic_meal_types:
             ricette_list = [
-                ricetta for ricetta in ricette_list if
-                any(ricetta[generic_meal_type] for generic_meal_type in generic_meal_types)
+                ricetta for ricetta in ricette_list
+                if any(ricetta.get(meal_key, False) for meal_key in generic_meal_types)
             ]
 
         return jsonify({"status": 'success', 'ricette': ricette_list}), 200

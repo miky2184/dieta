@@ -1377,13 +1377,13 @@ function addNewMeal(day, meal) {
     currentMeal = meal;
 
     // Fetch delle ricette disponibili per quel pasto
-    fetch(`/get_ricette_disponibili?meal=${meal}&day=${day}&week_id=${selectedWeekId}`)
+    fetch(`/ricette?meal_time=${meal}&meal_type=principale&day=${day}&week_id=${selectedWeekId}`)
         .then(response => response.json())
         .then(data => {
             const mealSelectionBody = document.getElementById('mealSelectionBody');
             mealSelectionBody.innerHTML = ''; // Pulisce la tabella
 
-            data.forEach(ricetta => {
+            data.ricette.forEach(ricetta => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${ricetta.nome_ricetta}</td>
@@ -1408,7 +1408,7 @@ function addNewComplemento(day, meal) {
     currentMeal = meal;
 
     // Fetch delle ricette disponibili per quel pasto
-    fetch(`/ricette?stagionalita=false&complemento=true&contorno=false&attive=false&meal=${meal}`)
+    fetch(`/ricette?stagionalita=false&complemento=true&contorno=false&attive=true&meal_time=${meal}`)
         .then(response => response.json())
         .then(data => {
             if (data.status == 'success'){
@@ -1441,7 +1441,7 @@ function addNewContorno(day, meal) {
     currentMeal = meal;
 
     // Fetch delle ricette disponibili per quel pasto
-    fetch(`/ricette?stagionalita=false&complemento=false&contorno=true&attive=false&meal=${meal}`)
+    fetch(`/ricette?stagionalita=false&complemento=false&contorno=true&attive=true&meal_time=${meal}&meal_type=contorno`)
         .then(response => response.json())
         .then(data => {
             if (data.status == 'success'){

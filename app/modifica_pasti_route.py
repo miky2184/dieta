@@ -167,56 +167,6 @@ def cancella_pasto(week_id):
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
-@pasti.route('/get_ricette_disponibili', methods=['GET'])
-@login_required
-def get_ricette_disponibili():
-    """
-    Questa funzione restituisce le ricette disponibili per un pasto specifico in un giorno specifico,
-    escludendo quelle già presenti nel menu corrente.
-    """
-    user_id = current_user.user_id
-    try:
-        meal_type = request.args.get('meal')
-        day = request.args.get('day')
-        week_id = request.args.get('week_id')
-
-        meal_type_mapping = {
-            'colazione': ['colazione', 'colazione_sec'],
-            'spuntino_mattina': ['spuntino'],
-            'pranzo': ['principale'],
-            'spuntino_pomeriggio': ['spuntino'],
-            'cena': ['principale'],
-            'spuntino_sera': ['spuntino']
-        }
-
-        generic_meal_types = meal_type_mapping.get(meal_type)
-
-        # Esclude le ricette già presenti nel pasto del giorno specificato
-        menu_corrente = get_menu_service(user_id, menu_id=week_id)
-
-        # Recupera tutte le ricette attive
-        ricette = get_ricette_service(user_id, stagionalita=True, attive=True, complemento=False, data_stagionalita=menu_corrente['data_fine'])
-
-        # Filtra le ricette disponibili in base al tipo di pasto
-        available_meals = [ricetta for ricetta in ricette if
-                           any(ricetta[generic_meal_type] for generic_meal_type in generic_meal_types)]
-
-
-        if menu_corrente['menu']:
-            if meal_type in ('pranzo', 'cena'):
-                ricette_presenti_ids = menu_corrente['menu']['all_food']
-            else:
-                ricette_presenti_ids = [r['id'] for r in menu_corrente['menu']['day'][day]['pasto'][meal_type]['ricette']]
-            available_meals = [ricetta for ricetta in available_meals if ricetta['id'] not in ricette_presenti_ids]
-
-        return jsonify(available_meals), 200
-    except SQLAlchemyError as db_err:
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
 
 @pasti.route('/aggiungi_ricetta_menu/<int:week_id>', methods=['POST'])
 @login_required

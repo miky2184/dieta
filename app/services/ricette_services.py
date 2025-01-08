@@ -80,7 +80,7 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
             vr.contorno,
             vr.colazione_sec,
             vr.complemento,
-            vr.enabled.label('attiva'),
+            func.bool_and(vr.enabled).label('attiva'),
             func.bool_and(va.vegan).label("is_vegan"),
             func.bool_or(va.id_gruppo == 4).label("is_carne_rossa"),
             func.bool_or(va.id_gruppo == 2).label("contains_fish"),
