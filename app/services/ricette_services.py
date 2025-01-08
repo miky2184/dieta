@@ -90,7 +90,7 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
             func.bool_or(va.id_gruppo == 1).label("contains_uova"),
             func.bool_or(va.id_gruppo == 5).label("contains_legumi"),
             func.bool_or(va.id_gruppo == 8).label("contains_cereali"),
-            func.bool_or(va.id_gruppo == 9).label("contains_pane"),
+            func.bool_and(va.id_gruppo == 9).label("contains_pane"),
             func.bool_or(va.id_gruppo == 10).label("contains_latticini"),
             func.bool_or(va.id_gruppo == 12).label("contains_frutta_secca"),
             func.bool_or(va.id_gruppo == 14).label("contains_patate"),
@@ -182,11 +182,25 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
         if row.is_frutta:
             info.append("🍎")  # Emoji per frutta
         if row.is_verdura:
-            info.append("🥦")  # Emoji per verdura
+            info.append("🥕")  # Emoji per verdura
         if row.is_carne_bianca:
             info.append("🍗")  # Emoji per carne bianca
         if row.contains_uova:
             info.append("🥚")
+        if row.contains_legumi:
+            info.append("🫛")
+        if row.contains_cereali:
+            info.append("🌾")
+        if row.contains_pane:
+            info.append("🍞")
+        if row.contains_latticini:
+            info.append("🧀")
+        if row.contains_frutta_secca:
+            info.append("🥜")
+        if row.contains_patate:
+            info.append("🥔")
+        if row.contains_grassi:
+            info.append("🧈")
 
         ricette.append({
             'user_id': row.user_id,
