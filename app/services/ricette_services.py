@@ -45,277 +45,6 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
     filtro_vr = VRicetta.filtro_ricette(user_id, alias=vr)
 
     # Query principale
-    ricetta_subquery = (
-        db.session.query(
-            vir.id_ricetta.label("id_ricetta"),
-            va.nome,
-            func.sum(vir.qta * percentuale).label("qta")
-        )
-        .join(
-            va,
-            and_(
-                va.id == vir.id_alimento,
-                filtro_va,
-                filtro_vir
-            )
-        )
-        .filter(vir.id_ricetta == vr.id)
-        .filter(vir.id_alimento == va.id)
-        .filter(vir.user_id == vr.user_id)
-        .group_by(vir.id_ricetta, va.nome)
-        .subquery()
-    )
-
-    ingredienti_subquery = (
-        db.session.query(
-            vir.id_ricetta.label("id_ricetta"),
-            va.id_gruppo,
-            func.sum(vir.qta * percentuale).label("qta")
-        )
-        .join(
-            va,
-            and_(
-                va.id == vir.id_alimento,
-                filtro_va,
-                filtro_vir
-            )
-        )
-        .filter(vir.id_ricetta == vr.id)
-        .filter(vir.id_alimento == va.id)
-        .filter(vir.user_id == vr.user_id)
-        .group_by(vir.id_ricetta, va.id_gruppo)
-        .subquery()
-    )
-
-
-
-    # Subquery per verificare se una ricetta è vegana
-    is_vegan_subquery = (
-        db.session.query(
-            func.bool_and(va.vegan)
-        )
-        .join(
-            vir,
-            vir.id_alimento == va.id
-        )
-        .filter(
-            vir.id_ricetta == vr.id,
-            filtro_vir,
-            filtro_va
-        )
-        .label("is_vegan")
-    )
-
-    # Subquery per verificare se una ricetta contiene carne rossa (id_gruppo = 4)
-    is_carne_rossa_subquery = (
-        db.session.query(
-            func.bool_or(va.id_gruppo == 4)
-        )
-        .join(
-            vir,
-            vir.id_alimento == va.id
-        )
-        .filter(
-            vir.id_ricetta == vr.id,
-            filtro_vir,
-            filtro_va
-        )
-        .label("is_carne_rossa")
-    )
-
-    contains_fish_subquery = (
-        db.session.query(
-            func.bool_or(va.id_gruppo == 2)
-        )
-        .join(
-            vir,
-            vir.id_alimento == va.id
-        )
-        .filter(
-            vir.id_ricetta == vr.id,
-            filtro_vir,
-            filtro_va
-        )
-        .label("contains_fish")
-    )
-
-    is_frutta_subquery = (
-        db.session.query(
-            func.bool_and(va.id_gruppo == 6)
-        )
-        .join(
-            vir,
-            vir.id_alimento == va.id
-        )
-        .filter(
-            vir.id_ricetta == vr.id,
-            filtro_vir,
-            filtro_va
-        )
-        .label("is_frutta")
-    )
-
-    is_verdura_subquery = (
-        db.session.query(
-            func.bool_and(va.id_gruppo == 7)
-        )
-        .join(
-            vir,
-            vir.id_alimento == va.id
-        )
-        .filter(
-            vir.id_ricetta == vr.id,
-            filtro_vir,
-            filtro_va
-        )
-        .label("is_verdura")
-    )
-
-    is_carne_bianca_subquery = (
-        db.session.query(
-            func.bool_or(va.id_gruppo == 3)
-        )
-        .join(
-            vir,
-            vir.id_alimento == va.id
-        )
-        .filter(
-            vir.id_ricetta == vr.id,
-            filtro_vir,
-            filtro_va
-        )
-        .label("is_carne_bianca")
-    )
-
-    contains_uova_subquery = (
-        db.session.query(
-            func.bool_or(va.id_gruppo == 1)
-        )
-        .join(
-            vir,
-            vir.id_alimento == va.id
-        )
-        .filter(
-            vir.id_ricetta == vr.id,
-            filtro_vir,
-            filtro_va
-        )
-        .label("contains_uova")
-    )
-
-    contains_legumi_subquery = (
-        db.session.query(
-            func.bool_or(va.id_gruppo == 5)
-        )
-        .join(
-            vir,
-            vir.id_alimento == va.id
-        )
-        .filter(
-            vir.id_ricetta == vr.id,
-            filtro_vir,
-            filtro_va
-        )
-        .label("contains_legumi")
-    )
-
-    contains_cereali_subquery = (
-        db.session.query(
-            func.bool_or(va.id_gruppo == 8)
-        )
-        .join(
-            vir,
-            vir.id_alimento == va.id
-        )
-        .filter(
-            vir.id_ricetta == vr.id,
-            filtro_vir,
-            filtro_va
-        )
-        .label("contains_cereali")
-    )
-
-    contains_pane_subquery = (
-        db.session.query(
-            func.bool_or(va.id_gruppo == 9)
-        )
-        .join(
-            vir,
-            vir.id_alimento == va.id
-        )
-        .filter(
-            vir.id_ricetta == vr.id,
-            filtro_vir,
-            filtro_va
-        )
-        .label("contains_pane")
-    )
-
-    contains_latticini_subquery = (
-        db.session.query(
-            func.bool_or(va.id_gruppo == 10)
-        )
-        .join(
-            vir,
-            vir.id_alimento == va.id
-        )
-        .filter(
-            vir.id_ricetta == vr.id,
-            filtro_vir,
-            filtro_va
-        )
-        .label("contains_latticini")
-    )
-
-    contains_frutta_secca_subquery = (
-        db.session.query(
-            func.bool_or(va.id_gruppo == 12)
-        )
-        .join(
-            vir,
-            vir.id_alimento == va.id
-        )
-        .filter(
-            vir.id_ricetta == vr.id,
-            filtro_vir,
-            filtro_va
-        )
-        .label("contains_frutta_secca")
-    )
-
-    contains_patate_subquery = (
-        db.session.query(
-            func.bool_or(va.id_gruppo == 14)
-        )
-        .join(
-            vir,
-            vir.id_alimento == va.id
-        )
-        .filter(
-            vir.id_ricetta == vr.id,
-            filtro_vir,
-            filtro_va
-        )
-        .label("contains_patate")
-    )
-
-    contains_grassi_subquery = (
-        db.session.query(
-            func.bool_or(va.id_gruppo == 15)
-        )
-        .join(
-            vir,
-            vir.id_alimento == va.id
-        )
-        .filter(
-            vir.id_ricetta == vr.id,
-            filtro_vir,
-            filtro_va
-        )
-        .label("contains_grassi")
-    )
-
-    # Query principale
     query = (
         db.session.query(
             vr.user_id.label("user_id"),
@@ -352,32 +81,33 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
             vr.colazione_sec,
             vr.complemento,
             vr.enabled.label('attiva'),
-            is_vegan_subquery.label("is_vegan"),  # Campo per indicare se la ricetta è vegana
-            is_carne_rossa_subquery.label("is_carne_rossa"),
-            is_carne_bianca_subquery.label("is_carne_bianca"),
-            contains_fish_subquery.label("contains_fish"),
-            is_frutta_subquery.label("is_frutta"),
-            is_verdura_subquery.label("is_verdura"),
-            contains_uova_subquery.label("contains_uova"),
-            contains_legumi_subquery.label("contains_legumi"),
-            contains_cereali_subquery.label("contains_cereali"),
-            contains_pane_subquery.label("contains_pane"),
-            contains_latticini_subquery.label("contains_latticini"),
-            contains_frutta_secca_subquery.label("contains_frutta_secca"),
-            contains_patate_subquery.label("contains_patate"),
-            contains_grassi_subquery.label("contains_grassi"),
+            func.bool_and(va.vegan).label("is_vegan"),
+            func.bool_or(va.id_gruppo == 4).label("is_carne_rossa"),
+            func.bool_or(va.id_gruppo == 2).label("contains_fish"),
+            func.bool_and(va.id_gruppo == 6).label("is_frutta"),
+            func.bool_and(va.id_gruppo == 7).label("is_verdura"),
+            func.bool_or(va.id_gruppo == 3).label("is_carne_bianca"),
+            func.bool_or(va.id_gruppo == 1).label("contains_uova"),
+            func.bool_or(va.id_gruppo == 5).label("contains_legumi"),
+            func.bool_or(va.id_gruppo == 8).label("contains_cereali"),
+            func.bool_or(va.id_gruppo == 9).label("contains_pane"),
+            func.bool_or(va.id_gruppo == 10).label("contains_latticini"),
+            func.bool_or(va.id_gruppo == 12).label("contains_frutta_secca"),
+            func.bool_or(va.id_gruppo == 14).label("contains_patate"),
+            func.bool_or(va.id_gruppo == 15).label("contains_grassi"),
             func.json_agg(
                 func.json_build_object(
-                    'nome', ricetta_subquery.c.nome,
-                    'qta', ricetta_subquery.c.qta
+                    'nome', va.nome,
+                    'qta', vir.qta
                 )
             ).label("ricetta"),
             func.json_agg(
                 func.json_build_object(
-                    'id_gruppo', ingredienti_subquery.c.id_gruppo,
-                    'qta', ingredienti_subquery.c.qta
+                    'id_gruppo', va.id_gruppo,
+                    'qta', vir.qta
                 )
             ).label("ingredienti")
+
         )
         .select_from(vr)
         .outerjoin(
@@ -395,10 +125,6 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
             )
         )
         .filter(filtro_vr)
-        .filter(ingredienti_subquery.c.id_ricetta == vr.id)
-        .filter(ingredienti_subquery.c.id_gruppo == va.id_gruppo)
-        .filter(ricetta_subquery.c.id_ricetta == vr.id)
-        .filter(ricetta_subquery.c.nome == va.nome)
     )
 
     # Applicazione dei filtri

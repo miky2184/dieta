@@ -440,7 +440,7 @@ def aggiorna_limiti_gruppi(ricetta, consumi, perc: float = 1.0, rimuovi: bool = 
     try:
 
         for ingrediente in ricetta['ingredienti']:
-            id_gruppo = ingrediente['id_gruppo']
+            id_gruppo = str(ingrediente['id_gruppo'])
             qta = ingrediente['qta']
 
             if id_gruppo in consumi:
