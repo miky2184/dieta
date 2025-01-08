@@ -14,7 +14,7 @@ from app.services.db_services import get_sequence_value
 from app.services.util_services import print_query
 
 
-def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=False, complemento=None, contorno=False, data_stagionalita=None, percentuale:float = 1.0) -> list[dict]:
+def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=False, complemento:str='all', contorno=False, data_stagionalita=None, percentuale:float = 1.0) -> list[dict]:
     """
         Carica tutte le ricette disponibili dal database, arricchendole con informazioni nutrizionali e ingredienti.
 
@@ -23,7 +23,7 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
             ids (list[int], optional): Filtra le ricette con gli ID specificati.
             stagionalita (bool, optional): Se True, applica un filtro per la stagionalità degli ingredienti.
             attive (bool, optional): Se True, filtra le ricette che sono attive.
-            complemento (bool, optional): Se specificato, filtra le ricette con o senza il flag `complemento`.
+            complemento (str, optional): Se specificato, filtra le ricette con o senza il flag `complemento`.
             contorno (bool, optional): Se True, filtra le ricette con il flag `contorno` attivo.
             data_stagionalita (date, optional): Data specifica per applicare il filtro di stagionalità (predefinito è la data corrente).
             percentuale (float, optional): Percentuale
@@ -150,10 +150,10 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
     if attive:
         query = query.filter(vr.enabled.is_(True))
 
-    if complemento:
+    if complemento.lower() == 'yes':
         query = query.filter(vr.complemento.is_(True))
 
-    if not complemento:
+    if complemento.lower() == 'no':
         query = query.filter(vr.complemento.is_(False))
 
     if contorno:

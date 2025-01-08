@@ -1453,7 +1453,7 @@ function addNewComplemento(day, meal) {
     currentMeal = meal;
 
     // Fetch delle ricette disponibili per quel pasto
-    fetch(`/ricette?stagionalita=false&complemento=true&contorno=false&attive=true&meal_time=${meal}`)
+    fetch(`/ricette?stagionalita=false&complemento=yes&contorno=false&attive=true&meal_time=${meal}`)
         .then(response => response.json())
         .then(data => {
             if (data.status == 'success'){
@@ -1486,7 +1486,7 @@ function addNewContorno(day, meal) {
     currentMeal = meal;
 
     // Fetch delle ricette disponibili per quel pasto
-    fetch(`/ricette?stagionalita=false&complemento=false&contorno=true&attive=true&meal_time=${meal}&meal_type=contorno`)
+    fetch(`/ricette?stagionalita=false&complemento=no&contorno=true&attive=true&meal_time=${meal}&meal_type=contorno`)
         .then(response => response.json())
         .then(data => {
             if (data.status == 'success'){
@@ -1803,7 +1803,7 @@ function deleteMenu() {
 }
 
 function recupera_tutte_le_ricette()  {
-            fetch('/ricette?stagionalita=false&complemento=false&contorno=false&attive=false')
+            fetch('/ricette?stagionalita=false&complemento=all&contorno=false&attive=false')
                 .then(response => response.json())
                 .then(data => {
                     if (data) {

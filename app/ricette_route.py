@@ -50,7 +50,7 @@ def handle_ricette():
 
     # Parametri dinamici dai query string
     stagionalita = request.args.get('stagionalita', 'false').lower() == 'true'
-    complemento = request.args.get('complemento', 'false').lower() == 'true'
+    complemento = request.args.get('complemento', 'all').lower()
     contorno = request.args.get('contorno', 'false').lower() == 'true'
     attive = request.args.get('attive', 'false').lower() == 'true'
     meal_time = request.args.get('meal_time')
@@ -85,7 +85,7 @@ def handle_ricette():
                 user_id,
                 stagionalita=True,
                 attive=True,
-                complemento=False,
+                complemento='no',
                 data_stagionalita=data_stagionalita
             )
 
