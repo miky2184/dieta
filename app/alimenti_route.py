@@ -72,8 +72,9 @@ def update_alimento(alimento_id):
         fibre = data.get('fibre')
         vegan = data.get('vegan')
         gruppo = data.get('gruppo')
+        stagionalita = data.get('stagionalita')
 
-        update_alimento_service(alimento_id, nome, carboidrati, proteine, grassi, fibre, vegan, gruppo, user_id)
+        update_alimento_service(alimento_id, nome, carboidrati, proteine, grassi, fibre, vegan, gruppo, stagionalita, user_id)
         current_app.cache.delete(f'alimenti_{user_id}')
         current_app.cache.delete(invalidate_cache(user_id))
         return jsonify({'status': 'success', 'message': 'Alimento salvato con successo!'}), 200

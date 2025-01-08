@@ -1,3 +1,5 @@
+from email.policy import default
+
 from sqlalchemy.orm import Query
 
 from app.models import db
@@ -10,13 +12,14 @@ class Ricetta(db.Model):
     id = db.Column(db.BigInteger, primary_key=True)
     user_id = db.Column(db.BigInteger, db.ForeignKey('dieta.utente.id', ondelete="CASCADE"), nullable=False, primary_key=True)
     nome_ricetta_override = db.Column(db.String)
-    colazione_override = db.Column(db.Boolean)
-    spuntino_override = db.Column(db.Boolean)
-    principale_override = db.Column(db.Boolean)
-    contorno_override = db.Column(db.Boolean)
-    colazione_sec_override = db.Column(db.Boolean)
-    complemento_override = db.Column(db.Boolean)
-    enabled = db.Column(db.Boolean)
+    colazione_override = db.Column(db.Boolean, default=False)
+    spuntino_override = db.Column(db.Boolean, default=False)
+    principale_override = db.Column(db.Boolean, default=False)
+    contorno_override = db.Column(db.Boolean, default=False)
+    colazione_sec_override = db.Column(db.Boolean, default=False)
+    complemento_override = db.Column(db.Boolean, default=False)
+    enabled = db.Column(db.Boolean, default=True)
+    removed = db.Column(db.Boolean, default=False)
 
     #ricetta_base = db.relationship('RicettaBase', backref='varianti')
     #utente = db.relationship('Utente', backref='ricette')

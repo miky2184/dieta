@@ -1,3 +1,5 @@
+from email.policy import default
+
 from sqlalchemy import or_, and_, exists, not_
 from sqlalchemy.orm import aliased
 
@@ -16,7 +18,7 @@ class VRicetta(db.Model):
     contorno = db.Column(db.Boolean)
     colazione_sec = db.Column(db.Boolean)
     complemento = db.Column(db.Boolean)
-    enabled = db.Column(db.Boolean)
+    enabled = db.Column(db.Boolean, default=True)
     user_id = db.Column(db.BigInteger)
     removed = db.Column(db.Boolean, default=False)
 

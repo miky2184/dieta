@@ -45,12 +45,13 @@ def get_alimenti_service(user_id):
         'fibre': r.fibre,
         'kcal': r.kcal,
         'vegan': r.vegan,
-        'gruppo': r.nome_gruppo
+        'gruppo': r.nome_gruppo,
+        'stagionalita': r.stagionalita
     } for r in results]
     return alimenti
 
 
-def update_alimento_service(alimento_id, nome, carboidrati, proteine, grassi, fibre, vegan, id_gruppo, user_id):
+def update_alimento_service(alimento_id, nome, carboidrati, proteine, grassi, fibre, vegan, id_gruppo, stagionalita, user_id):
     alimento_base = AlimentoBase.get_by_id(alimento_id)
     if alimento_base:
         alimento_id = alimento_base.id
@@ -65,7 +66,7 @@ def update_alimento_service(alimento_id, nome, carboidrati, proteine, grassi, fi
             grassi_override=grassi,
             fibre_override=fibre,
             vegan_override=vegan,
-            stagionalita_override=alimento_base.stagionalita,
+            stagionalita_override=stagionalita if stagionalita is not None else alimento_base.stagionalita,
             id_gruppo_override = id_gruppo if id_gruppo is not None else alimento_base.id_gruppo,
             user_id=user_id
         )
@@ -77,7 +78,8 @@ def update_alimento_service(alimento_id, nome, carboidrati, proteine, grassi, fi
         alimento.grassi_override = grassi
         alimento.fibre_override = fibre
         alimento.vegan_override = vegan
-        alimento.id_gruppo_override = id_gruppo
+        alimento.stagionalita_override = stagionalita if stagionalita is not None else alimento.stagionalita_override
+        alimento.id_gruppo_override = id_gruppo if id_gruppo is not None else alimento.id_gruppo_override
 
     db.session.commit()
 

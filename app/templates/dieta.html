@@ -97,13 +97,14 @@
                     <div class="input-group input-group-sm mb-3">
                         <span   class="input-group-text span-width">Scegli una dieta</span>
                         <select class="form-control" id="dieta" name="dieta" required>
-            <option value="balanced">Dieta Equilibrata</option>
-            <option value="low_carb">Dieta Low Carb</option>
-            <option value="keto">Dieta Chetogenica</option>
-            <option value="high_protein">Dieta Ricca di Proteine</option>
-            <option value="low_fat">Dieta a Basso Contenuto di Grassi</option>
-            <option value="mediterranean">Dieta Mediterranea</option>
-        </select>
+                            <option value="personalizzata">Dieta Personalizzata</option>
+                            <option value="balanced">Dieta Equilibrata</option>
+                            <option value="low_carb">Dieta Low Carb</option>
+                            <option value="keto">Dieta Chetogenica</option>
+                            <option value="high_protein">Dieta Ricca di Proteine</option>
+                            <option value="low_fat">Dieta a Basso Contenuto di Grassi</option>
+                            <option value="mediterranean">Dieta Mediterranea</option>
+                        </select>
                     </div>
                  <div class="input-group input-group-sm mb-3">
                     <span   class="input-group-text span-width" id="carboidrati-span">Carbs</span>
@@ -117,6 +118,12 @@
                     <input type="hidden" name="grassi" id="grassi_hidden">
                     <span   class="input-group-text span-width">gr</span>
                 </div>
+
+                    <!-- Pulsante per abilitare l'override -->
+<div class="d-flex justify-content-end">
+    <button type="button" class="btn btn-secondary btn-sm" id="override_macros_btn">Override</button>
+</div>
+
                 </div>
             </div>
               <button type="submit" class="btn btn-primary btn-sm">Salva</button>

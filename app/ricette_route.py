@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from sqlalchemy.exc import SQLAlchemyError
 from app.services.modifica_pasti_services import get_menu_service
 from app.services.ricette_services import update_ricetta_service, get_ricette_service, attiva_disattiva_ricetta_service, \
-    get_ingredienti_ricetta_service, salva_nuova_ricetta, salva_ingredienti_service
+    get_ingredienti_ricetta_service, salva_nuova_ricetta, salva_ingredienti_service, delete_ricetta_service
 
 ricette = Blueprint('ricette', __name__)
 
@@ -236,6 +236,25 @@ def aggiorna_ingredienti_ricetta():
         current_app.cache.delete(invalidate_cache(user_id))
         current_app.cache.delete(f'ricette_{recipe_id}_{user_id}')
         return jsonify({'status': 'success', 'message': 'Quantità aggiornata correttamente.'}), 200
+    except SQLAlchemyError as db_err:
+        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+    except KeyError as key_err:
+        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@ricette.route('/ricette/<int:ricette_id>', methods=['DELETE'])
+@login_required
+def delete_ricetta(ricette_id):
+    """
+    Questa funzione elimina un alimento dal database basandosi sul suo ID.
+    """
+    user_id = current_user.user_id
+    try:
+        delete_ricetta_service(ricette_id, user_id)
+        current_app.cache.delete(invalidate_cache(user_id))
+        return jsonify({'status': 'success', 'message': 'Ricetta eliminata con successo!'}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
     except KeyError as key_err:

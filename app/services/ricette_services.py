@@ -4,6 +4,7 @@ from sqlalchemy.sql import extract
 
 from app.models import db
 from app.models.IngredientiRicetta import IngredientiRicetta
+from app.models.IngredientiRicettaBase import IngredientiRicettaBase
 from app.models.Ricetta import Ricetta
 from app.models.RicettaBase import RicettaBase
 from app.models.VAlimento import VAlimento
@@ -406,4 +407,47 @@ def salva_ingredienti_service(recipe_id, ingredient_id, quantity, user_id):
 
 
     db.session.add(ingredienti_ricetta)
+    db.session.commit()
+
+def delete_ricetta_service(ricetta_id, user_id):
+    ricetta_base = RicettaBase.get_by_id(ricetta_id)
+    if ricetta_base:
+        ricetta_id = ricetta_base.id
+    ricetta = Ricetta.get_by_id_and_user(ricetta_id, user_id)
+
+    if not ricetta:
+        ricetta = Ricetta(
+            id=ricetta_id,
+            removed = True,
+            user_id=user_id
+        )
+        db.session.add(ricetta)
+    else:
+        ricetta.removed = True
+
+    db.session.commit()
+
+    ingredienti_ricetta = IngredientiRicetta.query.filter_by(id_alimento_base=ricetta_id, user_id=user_id).all()
+
+    for ir in ingredienti_ricetta:
+        ir.removed = True
+
+    db.session.commit()
+
+    ingredienti_ricetta_base = IngredientiRicettaBase.query.filter_by(id_alimento=ricetta_id).all()
+
+    for irb in ingredienti_ricetta_base:
+        ingredienti_ricetta = IngredientiRicetta.query.filter(
+        IngredientiRicetta.id_ricetta_base == irb.id_ricetta,
+        IngredientiRicetta.id_alimento_base == irb.id_alimento,
+        Ricetta.user_id == user_id).first()
+
+        if not ingredienti_ricetta:
+            i = IngredientiRicetta(
+            id_ricetta_base=irb.id_ricetta,
+            id_alimento_base = irb.id_alimento,
+            user_id = user_id,
+            removed = True)
+            db.session.add(i)
+
     db.session.commit()

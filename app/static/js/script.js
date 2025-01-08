@@ -309,6 +309,22 @@ function toggleStatusRicetta(ricettaId) {
         });
 }
 
+function deleteRicetta(ricettaId) {
+        fetch(`/ricette/${ricettaId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            recupera_tutte_le_ricette();
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
 function filterTable() {
     const nomeFilter = document.getElementById('filter-nome').value.toLowerCase();
 
@@ -632,7 +648,8 @@ function populateRicetteTable(ricette) {
                 <div class="btn-group" role="group">
                     <button class="btn btn-primary btn-sm update-ricetta-btn" data-ricetta-id="${ricetta.id}" data-ricetta-nome="${ricetta.nome_ricetta}" data-ricetta-colazione="${ricetta.colazione}" data-ricetta-colazione_sec="${ricetta.colazione_sec}" data-ricetta-spuntino="${ricetta.spuntino}" data-ricetta-principale="${ricetta.principale}" data-ricetta-contorno="${ricetta.contorno}" data-ricetta-complemento="${ricetta.complemento}" data-ricetta-attiva="${ricetta.attiva}" data-bs-toggle="tooltip" title="Salva"><i class="fas fa-save"></i></button>
                     <button class="btn btn-primary btn-sm edit-btn" data-ricetta-id="${ricetta.id}" data-bs-toggle="modal" data-bs-target="#editRecipeModal" data-bs-toggle="tooltip" title="Modifica"><i class="fas fa-edit"></i></button>
-                    <button class="btn btn-danger btn-sm toggle-btn" data-ricetta-id="${ricetta.id}" data-ricetta-attiva="${ricetta.attiva}" data-bs-toggle="tooltip" title="Attiva/Disattiva"><i class="fas fa-toggle-on"></i></button>
+                    <button class="btn btn-warning btn-sm toggle-btn" data-ricetta-id="${ricetta.id}" data-ricetta-attiva="${ricetta.attiva}" data-bs-toggle="tooltip" title="Attiva/Disattiva"><i class="fas fa-toggle-on"></i></button>
+                    <button class="btn btn-danger btn-sm delete-btn" data-ricetta-id="${ricetta.id}" data-bs-toggle="tooltip" title="Elimina"><i class="fas fa-trash-alt"></i></button>
                 </div>
             </td>
         `;
@@ -666,6 +683,13 @@ function populateRicetteTable(ricette) {
             if (checkbox) {
                 checkbox.checked = !checkbox.checked;
             }
+        });
+    });
+
+    document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const ricettaId = this.getAttribute('data-ricetta-id');
+            deleteRicetta(ricettaId);
         });
     });
 
@@ -877,6 +901,11 @@ function calculateResults() {
             proteinRatio = 0.20;
             fatRatio = 0.30;
             break;
+        case 'personalizzata':
+            carbsRatio = 0.50;
+            proteinRatio = 0.20;
+            fatRatio = 0.30;
+            break;
     }
 
     var carboidratiValue = (calorieGiornaliereValue * carbsRatio / 4).toFixed(0);
@@ -919,11 +948,22 @@ function calculateResults() {
     idealWeightInput.value = idealWeight;
     metaBasale.value = metaBasaleValue;
     metaDaily.value = metaDailyValue;
-    calorieGiornaliere.value = calorieGiornaliereValue;
+    if (carboidrati.disabled && proteine.disabled && grassi.disabled){
+        calorieGiornaliere.value = calorieGiornaliereValue;
+    } else {
+        calorieGiornaliere.value = (carboidrati.value * 4) + (proteine.value * 4) + (grassi.value * 9);
+    }
+
     settimaneDieta.value = settimaneDietaValue;
-    carboidrati.value = carboidratiValue;
-    proteine.value = proteineValue;
-    grassi.value = grassiValue;
+    if (carboidrati.disabled) {
+        carboidrati.value = carboidratiValue;
+    }
+    if (proteine.disabled) {
+        proteine.value = proteineValue;
+    }
+    if (grassi.disabled){
+        grassi.value = grassiValue;
+    }
 
     synchronizeFields();
 }
@@ -931,19 +971,24 @@ function calculateResults() {
 // Funzione per salvare l'alimento
 function saveAlimento(alimentoData) {
     fetch(`/alimenti/${alimentoData.id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(alimentoData)
-        })
-        .then(response => response.json())
-        .then(data => {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(alimentoData),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            console.log('Alimento salvato con successo.');
             fetchAlimentiData();
-        })
-        .catch((error) => {
-            console.error('Errore:', error);
-        });
+        } else {
+            console.error('Errore nel salvataggio:', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Errore:', error);
+    });
 }
 
 // Funzione per eliminare l'alimento
@@ -1866,9 +1911,18 @@ function populateAlimentiTable(alimenti) {
             <td  style="text-align: center;" >
                 <div><input type="checkbox" name="vegan_${alimento.id}" ${alimento.vegan ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.vegan}</label></div>
             </td>
+            <td>
+                <div class="month-toggle-group" id="stagionalita_${alimento.id}">
+                    ${[...Array(12).keys()].map(month => `
+                        <button type="button" class="btn btn-sm month-toggle-btn ${alimento.stagionalita.includes(month + 1) ? 'btn-primary' : 'btn-outline-secondary'}" data-month="${month + 1}">
+                            ${new Date(2000, month).toLocaleString('it', { month: 'short' })}
+                        </button>
+                    `).join('')}
+                </div>
+            </td>
             <td  style="text-align: center;" >
                 <div class="btn-group" role="group">
-                    <button class="btn btn-primary btn-sm save-alimento-btn" data-alimento-id="${alimento.id}" data-bs-toggle="tooltip" title="Salva"><i class="fas fa-save"></i></button>
+                    <button class="btn btn-success btn-sm save-alimento-btn" data-alimento-id="${alimento.id}" data-bs-toggle="tooltip" title="Salva"><i class="fas fa-save"></i></button>
                     <button class="btn btn-danger  btn-sm delete-alimento-btn" data-alimento-id="${alimento.id}" data-bs-toggle="tooltip" title="Elimina"><i class="fas fa-trash-alt"></i></button>
                 </div>
             </td>
@@ -1891,6 +1945,38 @@ function populateAlimentiTable(alimenti) {
 
         document.querySelector(`input[name='fibre_${alimento.id}']`).addEventListener('input', () => {
             recalculateCalories(alimento.id);
+        });
+    });
+
+    document.querySelectorAll('.month-toggle-group').forEach(group => {
+        group.addEventListener('click', function (event) {
+            const button = event.target.closest('.month-toggle-btn');
+            if (!button) return;
+
+            const alimentoId = this.id.split('_')[1]; // Estrai l'ID dell'alimento
+            const month = parseInt(button.getAttribute('data-month')); // Estrai il mese
+
+            // Alterna lo stile del pulsante
+            button.classList.toggle('btn-primary');
+            button.classList.toggle('btn-outline-secondary');
+
+            // Ottieni i mesi selezionati
+            const selectedMonths = Array.from(this.querySelectorAll('.btn-primary')).map(btn => parseInt(btn.getAttribute('data-month')));
+
+            const alimentoData = {
+                id: alimentoId,
+                nome: document.querySelector(`input[name='nome_${alimentoId}']`).value,
+                carboidrati: parseFloat(document.querySelector(`input[name='carboidrati_${alimentoId}']`).value),
+                proteine: parseFloat(document.querySelector(`input[name='proteine_${alimentoId}']`).value),
+                grassi: parseFloat(document.querySelector(`input[name='grassi_${alimentoId}']`).value),
+                fibre: parseFloat(document.querySelector(`input[name='fibre_${alimentoId}']`).value),
+                vegan: document.querySelector(`input[name='vegan_${alimentoId}']`).checked,
+                gruppo: document.querySelector(`select[name='gruppo_${alimentoId}']`).value,
+                stagionalita: selectedMonths,
+            };
+
+            // Salva l'alimento aggiornato
+            saveAlimento(alimentoData);
         });
     });
 
@@ -1984,6 +2070,30 @@ function showConfirmDeleteAlimentoModal(alimentoId, alimentoNome) {
 
 
 document.addEventListener('DOMContentLoaded', function() {
+
+    document.getElementById('override_macros_btn').addEventListener('click', function () {
+        // Rendi i campi modificabili
+        const carbsInput = document.getElementById('carboidrati_input');
+        const proteinInput = document.getElementById('proteine_input');
+        const fatInput = document.getElementById('grassi_input');
+        const dietaInput = document.getElementById('dieta');
+
+        carbsInput.disabled = !carbsInput.disabled; // Toggle stato abilitato/disabilitato
+        proteinInput.disabled = !proteinInput.disabled;
+        fatInput.disabled = !fatInput.disabled;
+
+        // Cambia il testo del pulsante
+        if (!carbsInput.disabled) {
+            this.textContent = 'Lock';
+            this.classList.remove('btn-secondary');
+            this.classList.add('btn-danger');
+            dietaInput.value = 'personalizzata';
+        } else {
+            this.textContent = 'Override';
+            this.classList.remove('btn-danger');
+            this.classList.add('btn-secondary');
+        }
+    });
 
     // Invoca il fetch durante il caricamento della pagina
     fetchGroupsAndPopulate();
