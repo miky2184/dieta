@@ -215,9 +215,12 @@ function aggiornaTabellaMenu(menu) {
                     // Aggiungi gli attributi per il popover
                     div.setAttribute('data-bs-toggle', 'tooltip');
                     div.setAttribute(
+                        'data-bs-html', 'true' // Indica che il tooltip utilizza HTML
+                    );
+                    div.setAttribute(
                         'data-bs-title',
                         ricetta.ricetta && ricetta.ricetta.length > 0
-                            ? ricetta.ricetta.map(item => `Nome: ${item.nome}, Quantità: ${item.qta}`).join("; ")
+                            ? ricetta.ricetta.map(item => `${item.nome} ${item.qta}g.`).join('<br>')
                             : 'vuoto'
                     );
 
