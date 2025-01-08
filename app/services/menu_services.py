@@ -443,7 +443,10 @@ def aggiorna_limiti_gruppi(ricetta, consumi, perc: float = 1.0, rimuovi: bool = 
             qta = ingrediente['qta']
 
             if id_gruppo in consumi:
-                consumi[id_gruppo] = consumi[id_gruppo] + (moltiplicatore * qta * perc)
+                if not rimuovi:
+                    consumi[id_gruppo] = consumi[id_gruppo] + (moltiplicatore * qta * perc)
+                else:
+                    consumi[id_gruppo] = consumi[id_gruppo] + (moltiplicatore * qta)
     except Exception as e:
         raise RuntimeError(f"Errore durante l'aggiornamento dei limiti dei gruppi: {str(e)}")
 
