@@ -22,7 +22,6 @@ from app.services.db_services import get_sequence_value
 from app.services.modifica_pasti_services import get_menu_service
 from app.services.ricette_services import get_ricette_service
 from app.services.util_services import printer, print_query
-import json
 
 MAX_RETRY = int(os.getenv('MAX_RETRY'))
 

@@ -3,7 +3,6 @@ from app.models.Alimento import Alimento
 from app.models.AlimentoBase import AlimentoBase
 from app.models.IngredientiRicetta import IngredientiRicetta
 from app.models.IngredientiRicettaBase import IngredientiRicettaBase
-from app.models.Ricetta import Ricetta
 from app.models.VAlimento import VAlimento
 from app.services.db_services import get_sequence_value
 from app.services.util_services import print_query
