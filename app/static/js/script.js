@@ -1198,7 +1198,7 @@ function renderMenuEditor(data) {
 
         const cancellaColazioneDailyBtn = document.createElement('button');
         cancellaColazioneDailyBtn.innerHTML = `<i class="fa fa-trash"></i> Colazione ${capitalize(day)}`;
-        cancellaColazioneDailyBtn.classList.add('btn', 'btn-warning', 'btn-sm');
+        cancellaColazioneDailyBtn.classList.add('btn', 'btn-danger', 'btn-sm');
 
         const cancellaPranzoCenaDailyBtn = document.createElement('button');
         cancellaPranzoCenaDailyBtn.innerHTML = `<i class="fa fa-trash"></i> Pranzo/Cena ${capitalize(day)}`;
