@@ -1202,15 +1202,15 @@ function renderMenuEditor(data) {
 
         const cancellaPranzoCenaDailyBtn = document.createElement('button');
         cancellaPranzoCenaDailyBtn.innerHTML = `<i class="fa fa-trash"></i> Pranzo/Cena ${capitalize(day)}`;
-        cancellaPranzoCenaDailyBtn.classList.add('btn', 'btn-warning', 'btn-sm');
+        cancellaPranzoCenaDailyBtn.classList.add('btn', 'btn-danger', 'btn-sm');
 
         const cancellaSpuntiniDailyBtn = document.createElement('button');
         cancellaSpuntiniDailyBtn.innerHTML = `<i class="fa fa-trash"></i> Spuntini ${capitalize(day)}`;
-        cancellaSpuntiniDailyBtn.classList.add('btn', 'btn-warning', 'btn-sm');
+        cancellaSpuntiniDailyBtn.classList.add('btn', 'btn-danger', 'btn-sm');
 
         const cancellaTuttoDailyBtn = document.createElement('button');
         cancellaTuttoDailyBtn.innerHTML = `<i class="fa fa-trash"></i> ${capitalize(day)}`;
-        cancellaTuttoDailyBtn.classList.add('btn', 'btn-warning', 'btn-sm');
+        cancellaTuttoDailyBtn.classList.add('btn', 'btn-danger', 'btn-sm');
 
         const invertMealsBtn = document.createElement('button');
         invertMealsBtn.innerHTML = `<i class="fas fa-exchange-alt"></i> Pranzo/Cena`;
