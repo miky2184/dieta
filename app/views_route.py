@@ -280,7 +280,7 @@ def aggiorna_quantita_ingrediente():
         # Ricalcola i macronutrienti rimanenti
         remaining_macronutrienti = calcola_macronutrienti_rimanenti_service(menu_corrente['menu'])
         current_app.cache.delete(f'dashboard_{user_id}')
-        current_app.cache.delete(f'menu//menu_settimana/{week_id}')
+        current_app.cache.delete(f'menu_settimana_{week_id}_{current_user}')
 
         return jsonify({
             'status': 'success',

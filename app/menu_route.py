@@ -1,6 +1,6 @@
 import traceback
 
-from flask import Blueprint, jsonify, current_app
+from flask import Blueprint, jsonify, current_app, request
 from flask_login import login_required, current_user
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -54,7 +54,7 @@ def delete_menu(week_id):
 
         # Svuota la cache correlata
         current_app.cache.delete(f'dashboard_{user_id}')
-        current_app.cache.delete(f'menu//menu_settimana/{week_id}')
+        current_app.cache.delete(f'menu_settimana_{week_id}_{current_user}')
         return jsonify({'status': 'success', 'message': 'Menu eliminato con successo!'}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
@@ -65,7 +65,7 @@ def delete_menu(week_id):
 
 
 @menu.route('/menu_settimana/<int:settimana_id>', methods=['GET'])
-@current_app.cache.cached(timeout=300)
+@current_app.cache.cached(timeout=300, key_prefix=lambda: f"menu_settimana_{request.view_args['settimana_id']}_{current_user.user_id}")
 @login_required
 def menu_settimana(settimana_id):
     """
