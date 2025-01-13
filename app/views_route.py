@@ -6,7 +6,7 @@ from io import BytesIO
 from PIL import Image
 from flask import Blueprint, render_template, redirect, url_for, request, send_file, jsonify, current_app
 from flask_login import login_required, current_user
-from reportlab.lib.pagesizes import letter, landscape
+from reportlab.lib.pagesizes import landscape, A4
 from reportlab.lib.units import inch
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
@@ -295,6 +295,16 @@ def aggiorna_quantita_ingrediente():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.units import inch
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+from flask import send_file, jsonify, request
+from io import BytesIO
+from PIL import Image
+import base64
+from sqlalchemy.exc import SQLAlchemyError
+
 @views.route('/generate_pdf', methods=['POST'])
 @login_required
 def generate_pdf():
@@ -315,32 +325,36 @@ def generate_pdf():
         # Recupera il menu selezionato dal database
         menu_selezionato = get_menu_service(user_id, menu_id=week_id)
 
-        # Imposta il PDF in orientamento orizzontale
+        # Imposta il PDF in orientamento orizzontale su un foglio A4
         pdf_file = BytesIO()
-        c = canvas.Canvas(pdf_file, pagesize=landscape(letter))
-        width, height = landscape(letter)
+        c = canvas.Canvas(pdf_file, pagesize=landscape(A4))
+        width, height = landscape(A4)
 
         # Aggiungi margini al PDF
         margin_x = inch * 0.5
         margin_y = inch * 0.5
 
-        # Calcola le dimensioni dell'immagine da inserire nel PDF
+        # Calcola le dimensioni dell'immagine per riempire il foglio rispettando i margini
         img_width, img_height = img.size
-        aspect = img_height / img_width
+        aspect = img_width / img_height
+
+        # Calcola le dimensioni finali dell'immagine
         img_display_width = width - 2 * margin_x
-        img_display_height = img_display_width * aspect
+        img_display_height = img_display_width / aspect
 
-        if img_display_width > width or img_display_height > height:
-            img = img.resize((int(width * 0.8), int(height * 0.8)))
+        # Adatta l'immagine per non superare i margini verticali
+        if img_display_height > height - 2 * margin_y:
+            img_display_height = height - 2 * margin_y
+            img_display_width = img_display_height * aspect
 
-        # Inserisci l'immagine nel PDF con margini
+        # Inserisci l'immagine nel PDF
         c.drawImage(ImageReader(img), margin_x, height - img_display_height - margin_y,
                     width=img_display_width, height=img_display_height)
 
-        # Aggiungi una nuova pagina al PDF per la lista della spesa
+        # Aggiungi una nuova pagina per la lista della spesa
         c.showPage()
 
-        # Aggiungi la lista della spesa al PDF
+        # Aggiungi la lista della spesa
         y = height - margin_y  # Posiziona la lista sotto l'immagine
         shopping_list = stampa_lista_della_spesa(user_id, menu_selezionato['menu'])
         c.setFont("Helvetica", 12)
@@ -355,7 +369,7 @@ def generate_pdf():
 
         c.save()
 
-        # Ritorna il PDF generato come risposta alla richiesta
+        # Ritorna il PDF generato come risposta
         pdf_file.seek(0)
         return send_file(pdf_file, as_attachment=True, download_name='menu_settimanale.pdf', mimetype='application/pdf')
     except SQLAlchemyError as db_err:
