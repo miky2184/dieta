@@ -85,7 +85,7 @@ def dashboard():
         menu_corrente = menu_corrente['menu']
 
     # Recupera le settimane salvate per la selezione.
-    settimane_salvate = get_settimane_salvate_service(user_id)
+    settimane_salvate = get_settimane_salvate_service(user_id, show_old_week=True)
 
     # Calcola i macronutrienti rimanenti per ogni giorno del menu.
     remaining_macronutrienti = calcola_macronutrienti_rimanenti_service(menu_corrente)

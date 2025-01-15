@@ -36,6 +36,8 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
     vir = aliased(VIngredientiRicetta)
     va = aliased(VAlimento)
 
+    data = func.current_date()
+
     # Filtro per gli alimenti
     filtro_va = VAlimento.filtro_alimenti(user_id, alias=va)
 
@@ -44,6 +46,12 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
 
     # Filtro per le ricette
     filtro_vr = VRicetta.filtro_ricette(user_id, alias=vr)
+
+    # Applicazione dei filtri
+    if stagionalita:
+        if data_stagionalita:
+            data = data_stagionalita
+
 
     # Query principale
     query = (
@@ -107,8 +115,8 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
                     'id_gruppo', va.id_gruppo,
                     'qta', vir.qta
                 )
-            ).label("ingredienti")
-
+            ).label("ingredienti"),
+            func.bool_and(extract('month', data) == func.any(va.stagionalita)).label("stagionalita"),
         )
         .select_from(vr)
         .outerjoin(
@@ -127,22 +135,6 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
         )
         .filter(filtro_vr)
     )
-
-    # Applicazione dei filtri
-    if stagionalita:
-        data = func.current_date()
-        if data_stagionalita:
-            data = data_stagionalita
-
-        query = query.filter(
-            or_(
-                and_(
-                    va.id_gruppo == 6, (extract('month', data) == func.any(va.stagionalita))
-                ),
-                (
-                        va.id_gruppo != 6)
-                )
-        )
 
     if ids:
         query = query.filter(vr.id == ids)
@@ -203,7 +195,8 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
         if row.contains_grassi:
             info.append("🧈")
 
-        ricette.append({
+        if (stagionalita and row.stagionalita) or not stagionalita:
+            ricette.append({
             'user_id': row.user_id,
             'id': row.id_ricetta,
             'nome_ricetta': row.nome_ricetta,

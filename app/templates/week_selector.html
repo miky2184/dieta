@@ -1,11 +1,11 @@
 <!-- app/templates/week_selector.html -->
 <select class="form-select form-select-sm" id="utente_select">
     {% for utente in utenti %}
-    <option value="{{ utente.id }}"> {{ current_user.utente.nome }} {{ current_user.utente.cognome }} </option>
+    <option value="{{ utente.id }}" selected disabled> {{ current_user.utente.nome }} {{ current_user.utente.cognome }} </option>
     {% endfor %}
 </select>
 <select class="form-select form-select-sm week-select" id="settimana_select">
     {% for settimana in settimane %}
-    <option value="{{ settimana.id }}">Settimana dal {{ settimana.data_inizio }} al {{ settimana.data_fine }} </option>
+    <option value="{{ settimana.id }}">{{ settimana.name }}</option>
     {% endfor %}
 </select>

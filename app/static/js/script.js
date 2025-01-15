@@ -1456,7 +1456,7 @@ function addNewComplemento(day, meal) {
     currentMeal = meal;
 
     // Fetch delle ricette disponibili per quel pasto
-    fetch(`/ricette?stagionalita=false&complemento=yes&contorno=false&attive=true&meal_time=${meal}`)
+    fetch(`/ricette?stagionalita=true&complemento=yes&contorno=false&attive=true&meal_time=${meal}`)
         .then(response => response.json())
         .then(data => {
             if (data.status == 'success'){
@@ -1489,7 +1489,7 @@ function addNewContorno(day, meal) {
     currentMeal = meal;
 
     // Fetch delle ricette disponibili per quel pasto
-    fetch(`/ricette?stagionalita=false&complemento=no&contorno=true&attive=true&meal_time=${meal}&meal_type=contorno`)
+    fetch(`/ricette?stagionalita=true&complemento=no&contorno=true&attive=true&meal_time=${meal}&meal_type=contorno`)
         .then(response => response.json())
         .then(data => {
             if (data.status == 'success'){
@@ -1799,6 +1799,12 @@ function deleteMenu() {
         if (response.ok) {
             localStorage.removeItem('selectedWeekId');
             location.reload(); // Ricarica la pagina per aggiornare la selezione dei menu
+        } else {
+            return response.json(); // Elabora il messaggio di errore
+        }
+    }).then(data => {
+        if (data && data.status === 'error') {
+            showAlertModal(data.message); // Mostra il messaggio di errore nel modal
         }
     }).catch(error => {
         console.error("Errore:", error);

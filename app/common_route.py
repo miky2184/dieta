@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify
 from flask_login import login_required, current_user
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.services.common_services import recupera_settimane_service
+from app.services.common_services import get_settimane_salvate_service
 from app.services.menu_services import stampa_lista_della_spesa
 from app.services.modifica_pasti_services import get_menu_service
 
@@ -15,7 +15,7 @@ common = Blueprint('common', __name__)
 def get_weeks():
     user_id = current_user.user_id
     try:
-        weeks_list = recupera_settimane_service(user_id)
+        weeks_list = get_settimane_salvate_service(user_id, show_old_week=True)
         return jsonify({'status': 'success', 'weeks': weeks_list}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err), 'trace': traceback.format_exc()}), 500

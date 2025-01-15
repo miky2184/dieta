@@ -8,6 +8,7 @@ from app.models.GruppoAlimentare import GruppoAlimentare
 from app.services.menu_services import delete_week_menu, genera_menu_utente
 from app.services.modifica_pasti_services import get_menu_service
 from app.services.util_services import calcola_macronutrienti_rimanenti_service
+from app.models.MenuSettimanale import MenuSettimanale
 
 menu = Blueprint('menu', __name__)
 
@@ -44,22 +45,36 @@ def get_gruppi():
         return jsonify({'status': 'error', 'message': str(e), 'trace': traceback.format_exc()}), 500
 
 
+from datetime import date
+
 @menu.route('/delete_menu/<int:week_id>', methods=['DELETE'])
 @login_required
 def delete_menu(week_id):
-    # Elimina il menu dal database
     user_id = current_user.user_id
     try:
+        # Recupera il menu dal database
+        menu = MenuSettimanale.query.filter_by(id=week_id, user_id=user_id).first()
+
+        if not menu:
+            return jsonify({'status': 'error', 'message': 'Menu non trovato.'}), 404
+
+        # Controlla se la data corrente è maggiore della data di inizio del menu
+        if date.today() > menu.data_inizio:
+            return jsonify({
+                'status': 'error',
+                'message': 'Il menu non può essere eliminato perché la data corrente è maggiore della data di inizio.'
+            }), 400
+
+        # Elimina il menu se il controllo passa
         delete_week_menu(week_id, user_id)
 
         # Svuota la cache correlata
         current_app.cache.delete(f'dashboard_{user_id}')
         current_app.cache.delete(f'menu_settimana_{week_id}_{current_user}')
         return jsonify({'status': 'success', 'message': 'Menu eliminato con successo!'}), 200
+
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
-    except KeyError as key_err:
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
