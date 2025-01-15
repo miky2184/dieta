@@ -18,7 +18,9 @@ def get_settimane_salvate_service(user_id, show_old_week: bool = False):
 
     return [
         {'id': week.id,
-         'name': f"Settimana {index + 1} dal {week.data_inizio.strftime('%Y-%m-%d')} al {week.data_fine.strftime('%Y-%m-%d')}"}
+         'name': f"Settimana {index + 1} dal {week.data_inizio.strftime('%Y-%m-%d')} al {week.data_fine.strftime('%Y-%m-%d')}",
+         'attiva': week.data_inizio <= oggi <= week.data_fine
+         }
         for index, week in enumerate(settimane)
     ]
 

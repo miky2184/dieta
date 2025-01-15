@@ -6,6 +6,8 @@
 </select>
 <select class="form-select form-select-sm week-select" id="settimana_select">
     {% for settimana in settimane %}
-    <option value="{{ settimana.id }}">{{ settimana.name }}</option>
+    <option value="{{ settimana.id }}" {% if settimana.attiva %}selected{% endif %}>
+        {{ settimana.name }}
+    </option>
     {% endfor %}
 </select>
