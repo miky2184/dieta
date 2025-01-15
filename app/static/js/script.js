@@ -429,6 +429,7 @@ function filterAlimentiTable() {
     const fibreMin = parseFloat(document.getElementById('filter-fibre-min').value) || -Infinity;
     const fibreMax = parseFloat(document.getElementById('filter-fibre-max').value) || Infinity;
     const veganFilter = document.getElementById('filter-vegan').value;
+    const surgelatoFilter = document.getElementById('filter-surgelato').value;
     const gruppoFilter = document.getElementById('filter-gruppo').value;
 
     // Recupera i mesi selezionati per il filtro stagionalità
@@ -458,10 +459,11 @@ function filterAlimentiTable() {
         const fibreCell = parseFloat(cells[5].textContent) || 0;
         const gruppoCell = cells[6].querySelector('select').value;
         const veganCell = cells[7].querySelector('input').checked.toString();
+        const surgelatoCell = cells[8].querySelector('input').checked.toString();
 
         // Ottieni i mesi di stagionalità dell'alimento
         const stagionalitaCell = Array.from(
-            cells[8].querySelectorAll('.btn-primary')
+            cells[9].querySelectorAll('.btn-primary')
         ).map(button => parseInt(button.getAttribute('data-month')));
 
         const calorieMatch = calorieCell >= calorieMin && calorieCell <= calorieMax;
@@ -471,6 +473,7 @@ function filterAlimentiTable() {
         const fibreMatch = fibreCell >= fibreMin && fibreCell <= fibreMax;
 
         const veganMatch = (veganFilter === 'all') || (veganFilter === veganCell);
+        const surgelatoMatch = (surgelatoFilter === 'all') || (surgelatoFilter === surgelatoCell);
         const gruppoMatch = (gruppoFilter === 'all') || (gruppoFilter === gruppoCell);
 
          // Controllo stagionalità
@@ -486,6 +489,7 @@ function filterAlimentiTable() {
             grassiMatch &&
             fibreMatch &&
             veganMatch &&
+            surgelatoMatch &&
             gruppoMatch &&
             includeMatch &&
             excludeMatch
@@ -1802,6 +1806,7 @@ function cleanFiltersAlimenti() {
     document.getElementById('filter-grassi-min').value = '';
     document.getElementById('filter-grassi-max').value = '';
     document.getElementById('filter-vegan').value = 'all';
+    document.getElementById('filter-surgelato').value = 'all';
     document.getElementById('filter-gruppo').value = 'all';
 
     // Resetta i filtri dei pulsanti di stagionalità
@@ -1951,6 +1956,9 @@ function populateAlimentiTable(alimenti) {
             <td  style="text-align: center;" >
                 <div><input type="checkbox" name="vegan_${alimento.id}" ${alimento.vegan ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.vegan}</label></div>
             </td>
+            <td  style="text-align: center;" >
+                <div><input type="checkbox" name="surgelato_${alimento.id}" ${alimento.surgelato ? 'checked' : ''}><label hidden class="form-control form-control-sm">${alimento.surgelato}</label></div>
+            </td>
             <td>
                 <div class="month-toggle-group" id="stagionalita_${alimento.id}">
                     ${[...Array(12).keys()].map(month => `
@@ -2011,6 +2019,7 @@ function populateAlimentiTable(alimenti) {
                 grassi: parseFloat(document.querySelector(`input[name='grassi_${alimentoId}']`).value),
                 fibre: parseFloat(document.querySelector(`input[name='fibre_${alimentoId}']`).value),
                 vegan: document.querySelector(`input[name='vegan_${alimentoId}']`).checked,
+                surgelato: document.querySelector(`input[name='surgelato_${alimentoId}']`).checked,
                 gruppo: document.querySelector(`select[name='gruppo_${alimentoId}']`).value,
                 stagionalita: selectedMonths,
             };
@@ -2032,6 +2041,7 @@ function populateAlimentiTable(alimenti) {
                 grassi: parseFloat(document.querySelector(`input[name='grassi_${alimentoId}']`).value),
                 fibre: parseFloat(document.querySelector(`input[name='fibre_${alimentoId}']`).value),
                 vegan: document.querySelector(`input[name='vegan_${alimentoId}']`).checked,
+                surgelato: document.querySelector(`input[name='surgelato_${alimentoId}']`).checked,
                 gruppo: document.querySelector(`select[name='gruppo_${alimentoId}']`).value
             };
             saveAlimento(alimentoData);

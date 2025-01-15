@@ -10,14 +10,15 @@
                                 data-bs-target="#addFoodModal">Alimento +
                         </button>
                     </th>
-                    <th style="width:8%; text-align: center;" onclick="sortTable('alimenti-table', 1)">Kcal</th>
-                    <th style="width:8%; text-align: center;" onclick="sortTable('alimenti-table', 2)">Carbs</th>
-                    <th style="width:8%; text-align: center;" onclick="sortTable('alimenti-table', 3)">Prot</th>
-                    <th style="width:8%; text-align: center;" onclick="sortTable('alimenti-table', 4)">Fat</th>
-                    <th style="width:8%; text-align: center;" onclick="sortTable('alimenti-table', 5)">Fibre</th>
+                    <th style="width:7%; text-align: center;" onclick="sortTable('alimenti-table', 1)">Kcal</th>
+                    <th style="width:7%; text-align: center;" onclick="sortTable('alimenti-table', 2)">Carbs</th>
+                    <th style="width:7%; text-align: center;" onclick="sortTable('alimenti-table', 3)">Prot</th>
+                    <th style="width:7%; text-align: center;" onclick="sortTable('alimenti-table', 4)">Fat</th>
+                    <th style="width:7%; text-align: center;" onclick="sortTable('alimenti-table', 5)">Fibre</th>
                     <th style="width:10%; text-align: center;" onclick="sortTable('alimenti-table', 6)">Gruppo</th>
                     <th style="width:5%; text-align: center;" onclick="sortTable('alimenti-table', 7)">Vegan</th>
-                    <th style="width:17%; text-align: center;" onclick="sortTable('alimenti-table', 8)">Stagionalità</th>
+                    <th style="width:5%; text-align: center;" onclick="sortTable('alimenti-table', 8)">Surgelato</th>
+                    <th style="width:17%; text-align: center;" onclick="sortTable('alimenti-table', 9)">Stagionalità</th>
                     <th style="width:5%; text-align: center;">Azioni</th>
                 </tr>
                 <tr>
@@ -55,6 +56,11 @@
                         </select>
                     </th>
                     <th><select id="filter-vegan" class="form-select form-select-sm" onchange="filterAlimentiTable()">
+                        <option value="all"></option>
+                        <option value="true">T</option>
+                        <option value="false">F</option>
+                    </select></th>
+                    <th><select id="filter-surgelato" class="form-select form-select-sm" onchange="filterAlimentiTable()">
                         <option value="all"></option>
                         <option value="true">T</option>
                         <option value="false">F</option>

@@ -116,7 +116,12 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
                     'qta', vir.qta
                 )
             ).label("ingredienti"),
-            func.bool_and(extract('month', data) == func.any(va.stagionalita)).label("stagionalita"),
+            func.bool_and(
+                or_(
+                    va.surgelato == True,  # Se surgelato è True, considera la condizione come True
+                    extract('month', data) == func.any(va.stagionalita)  # Altrimenti controlla la stagionalità
+                )
+            ).label("stagionalita")
         )
         .select_from(vr)
         .outerjoin(
@@ -167,7 +172,7 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
 
         info = []
         if row.is_vegan:
-            info.append("🌱")  # Emoji per vegano
+            info.append("🌱")
         if row.is_carne_rossa:
             info.append("🥩")  # Emoji per carne rossa
         if row.contains_fish:
