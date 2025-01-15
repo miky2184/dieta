@@ -431,6 +431,19 @@ function filterAlimentiTable() {
     const veganFilter = document.getElementById('filter-vegan').value;
     const gruppoFilter = document.getElementById('filter-gruppo').value;
 
+    // Recupera i mesi selezionati per il filtro stagionalità
+    const monthButtons = document.querySelectorAll('.month-filter-btn');
+    const includeMonths = [];
+    const excludeMonths = [];
+    monthButtons.forEach(button => {
+        const month = parseInt(button.getAttribute('data-month'));
+        if (button.classList.contains('btn-primary')) {
+            includeMonths.push(month);
+        } else if (button.classList.contains('btn-danger')) {
+            excludeMonths.push(month);
+        }
+    });
+
     const table = document.getElementById('alimenti-table').querySelector('tbody');
     const rows = table.getElementsByTagName('tr');
 
@@ -446,6 +459,11 @@ function filterAlimentiTable() {
         const gruppoCell = cells[6].querySelector('select').value;
         const veganCell = cells[7].querySelector('input').checked.toString();
 
+        // Ottieni i mesi di stagionalità dell'alimento
+        const stagionalitaCell = Array.from(
+            cells[8].querySelectorAll('.btn-primary')
+        ).map(button => parseInt(button.getAttribute('data-month')));
+
         const calorieMatch = calorieCell >= calorieMin && calorieCell <= calorieMax;
         const carboMatch = carboCell >= carboMin && carboCell <= carboMax;
         const proteineMatch = proteineCell >= proteineMin && proteineCell <= proteineMax;
@@ -455,6 +473,11 @@ function filterAlimentiTable() {
         const veganMatch = (veganFilter === 'all') || (veganFilter === veganCell);
         const gruppoMatch = (gruppoFilter === 'all') || (gruppoFilter === gruppoCell);
 
+         // Controllo stagionalità
+        const includeMatch = includeMonths.every(month => stagionalitaCell.includes(month));
+        const excludeMatch = excludeMonths.every(month => !stagionalitaCell.includes(month));
+
+
         if (
             nomeCell.includes(nomeFilter) &&
             calorieMatch &&
@@ -463,7 +486,9 @@ function filterAlimentiTable() {
             grassiMatch &&
             fibreMatch &&
             veganMatch &&
-            gruppoMatch
+            gruppoMatch &&
+            includeMatch &&
+            excludeMatch
         ) {
             rows[i].style.display = '';
         } else {
@@ -1779,6 +1804,12 @@ function cleanFiltersAlimenti() {
     document.getElementById('filter-vegan').value = 'all';
     document.getElementById('filter-gruppo').value = 'all';
 
+    // Resetta i filtri dei pulsanti di stagionalità
+    document.querySelectorAll('.month-filter-btn').forEach(button => {
+        button.classList.remove('btn-primary', 'btn-danger');
+        button.classList.add('btn-outline-secondary');
+    });
+
     // Chiama la funzione che filtra la tabella per aggiornare i risultati
     filterAlimentiTable();
 }
@@ -2077,8 +2108,29 @@ function showConfirmDeleteAlimentoModal(alimentoId, alimentoNome) {
         .catch(error => console.error('Errore nel recupero delle ricette:', error));
 }
 
-
 document.addEventListener('DOMContentLoaded', function() {
+
+    // Gestisci i click sui filtri
+    document.querySelectorAll('.month-filter-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            if (button.classList.contains('btn-outline-secondary')) {
+                // Primo click: selezione del mese
+                button.classList.remove('btn-outline-secondary');
+                button.classList.add('btn-primary');
+                filterAlimentiTable();
+            } else if (button.classList.contains('btn-primary')) {
+                // Secondo click: esclusione del mese
+                button.classList.remove('btn-primary');
+                button.classList.add('btn-danger');
+                filterAlimentiTable();
+            } else if (button.classList.contains('btn-danger')) {
+                // Terzo click: reset
+                button.classList.remove('btn-danger');
+                button.classList.add('btn-outline-secondary');
+                filterAlimentiTable();
+            }
+        });
+    });
 
     document.getElementById('override_macros_btn').addEventListener('click', function () {
         // Rendi i campi modificabili
