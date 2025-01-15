@@ -179,9 +179,9 @@ def salva_dati():
         meta_giornaliero = int(request.form['meta_giornaliero'])
         calorie_giornaliere = int(request.form['calorie_giornaliere'])
         settimane_dieta = request.form['settimane_dieta']
-        carboidrati = int(request.form['carboidrati'])
-        proteine = int(request.form['proteine'])
-        grassi = int(request.form['grassi'])
+        carboidrati = float(request.form['carboidrati'])
+        proteine = float(request.form['proteine'])
+        grassi = float(request.form['grassi'])
         dieta = request.form['dieta']
 
         salva_utente_dieta(user_id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
