@@ -286,3 +286,17 @@ td div:last-child {
     color: #6c757d; /* Colore testo inattivo */
     border: 1px solid #6c757d;
 }
+
+.month-filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem; /* Spazio tra i pulsanti */
+}
+
+.month-filter-btn {
+    width: 3rem; /* Larghezza pulsante */
+    text-align: center;
+    padding: 0.4rem 0.2rem;
+    border-radius: 0.25rem; /* Bordo arrotondato */
+    font-size: 0.9rem; /* Dimensione del testo */
+}
