@@ -42,7 +42,7 @@ pasti_config = [
     {'pasto': 'spuntino_mattina', 'tipo': 'spuntino', 'ripetibile': True, 'min_ricette': 1},
     {'pasto': 'spuntino_pomeriggio', 'tipo': 'spuntino', 'ripetibile': True, 'min_ricette': 1},
     {'pasto': 'spuntino_sera', 'tipo': 'spuntino', 'ripetibile': True, 'min_ricette': 1},
-    {'pasto': 'pranzo', 'tipo': 'principale', 'ripetibile': False, 'min_ricette': 2},
+    {'pasto': 'pranzo', 'tipo': 'principale', 'ripetibile': False, 'min_ricette': 1},
     {'pasto': 'cena', 'tipo': 'principale', 'ripetibile': False, 'min_ricette': 1},
     {'pasto': 'pranzo', 'tipo': 'contorno', 'ripetibile': True, 'min_ricette': 1},
     {'pasto': 'cena', 'tipo': 'contorno', 'ripetibile': True, 'min_ricette': 1},
