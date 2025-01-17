@@ -89,7 +89,6 @@ def handle_ricette():
                 data_stagionalita=data_stagionalita
             )
 
-            # Escludi le ricette già presenti nel menu
             if menu_corrente['menu']:
                 if meal_time in ('pranzo', 'cena'):
                     ricette_presenti_ids = menu_corrente['menu']['all_food']
@@ -97,7 +96,9 @@ def handle_ricette():
                     ricette_presenti_ids = [
                         r['id'] for r in menu_corrente['menu']['day'][day]['pasto'][meal_time]['ricette']
                     ]
-                ricette_list = [ricetta for ricetta in ricette_list if ricetta['id'] not in ricette_presenti_ids]
+
+                # Ordina le ricette: prima quelle non presenti nel menu, poi quelle già presenti
+                ricette_list.sort(key=lambda ricetta: ricetta['id'] in ricette_presenti_ids)
         else:
             # Recupera le ricette dal servizio
             ricette_list = get_ricette_service(

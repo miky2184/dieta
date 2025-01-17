@@ -309,8 +309,7 @@ from sqlalchemy.exc import SQLAlchemyError
 @login_required
 def generate_pdf():
     """
-    Questa funzione genera un PDF contenente il menu settimanale e la lista della spesa.
-    La richiesta contiene l'immagine del menu in formato base64 e l'ID della settimana selezionata.
+    Genera un PDF migliorato che utilizza tutto lo spazio disponibile per il menu e la lista della spesa.
     """
     user_id = current_user.user_id
     try:
@@ -318,27 +317,28 @@ def generate_pdf():
         img_data = data['image']
         week_id = data['week_id']
 
-        # Decodifica l'immagine base64 inviata dal client
+        # Recupera il menu selezionato e la lista della spesa
+        menu_selezionato = get_menu_service(user_id, menu_id=week_id)
+        shopping_list = stampa_lista_della_spesa(user_id, menu_selezionato['menu'])
+
+        # Decodifica l'immagine base64
         img_data = img_data.split(',')[1]
         img = Image.open(BytesIO(base64.b64decode(img_data)))
 
-        # Recupera il menu selezionato dal database
-        menu_selezionato = get_menu_service(user_id, menu_id=week_id)
-
-        # Imposta il PDF in orientamento orizzontale su un foglio A4
+        # Imposta il PDF in orientamento orizzontale su foglio A4
         pdf_file = BytesIO()
         c = canvas.Canvas(pdf_file, pagesize=landscape(A4))
         width, height = landscape(A4)
 
-        # Aggiungi margini al PDF
-        margin_x = inch * 0.5
-        margin_y = inch * 0.5
+        # Riduci i margini al minimo
+        margin_x = inch * 0.3
+        margin_y = inch * 0.3
 
-        # Calcola le dimensioni dell'immagine per riempire il foglio rispettando i margini
+        # Calcola le dimensioni dell'immagine per riempire il foglio
         img_width, img_height = img.size
         aspect = img_width / img_height
 
-        # Calcola le dimensioni finali dell'immagine
+        # Calcola la dimensione massima possibile
         img_display_width = width - 2 * margin_x
         img_display_height = img_display_width / aspect
 
@@ -347,29 +347,62 @@ def generate_pdf():
             img_display_height = height - 2 * margin_y
             img_display_width = img_display_height * aspect
 
+        # Centra l'immagine sul foglio
+        x_offset = (width - img_display_width) / 2
+        y_offset = (height - img_display_height) / 2
+
         # Inserisci l'immagine nel PDF
-        c.drawImage(ImageReader(img), margin_x, height - img_display_height - margin_y,
+        c.drawImage(ImageReader(img), x_offset, y_offset,
                     width=img_display_width, height=img_display_height)
 
         # Aggiungi una nuova pagina per la lista della spesa
         c.showPage()
 
-        # Aggiungi la lista della spesa
-        y = height - margin_y  # Posiziona la lista sotto l'immagine
-        shopping_list = stampa_lista_della_spesa(user_id, menu_selezionato['menu'])
-        c.setFont("Helvetica", 12)
-        c.drawString(margin_x, y, "Lista della Spesa:")
-        y -= 20
+        # Organizza la lista della spesa in colonne
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(margin_x, height - margin_y, "Lista della Spesa:")
+        c.setFont("Helvetica", 10)
+
+        # Configura colonne
+        column_width = (width - 2 * margin_x) / 3  # 3 colonne
+        column_height = height - 2 * margin_y
+        line_height = 14
+        max_lines_per_column = int(column_height // line_height)
+
+        x_start = margin_x
+        y_start = height - margin_y - 20
+        line_count = 0
+        column = 0
+
         for item in shopping_list:
-            c.drawString(margin_x + 20, y, f"[ ] {item['alimento']} - {item['qta_totale']}g")
-            y -= 15
-            if y < margin_y:
+            if line_count >= max_lines_per_column:
+                column += 1
+                line_count = 0
+                x_start = margin_x + column * column_width
+                y_start = height - margin_y - 20
+
+            if column > 2:  # Aggiungi una nuova pagina se superi 3 colonne
                 c.showPage()
-                y = height - margin_y
+                column = 0
+                line_count = 0
+                x_start = margin_x
+                y_start = height - margin_y - 20
+
+            # Disegna la checkbox
+            checkbox_size = 10
+            checkbox_y_offset = -checkbox_size / 4  # Offset per centrare verticalmente il testo
+            c.rect(x_start, y_start - line_count * line_height - checkbox_size / 2,
+                   checkbox_size, checkbox_size, stroke=1, fill=0)
+
+            # Aggiungi il testo accanto alla checkbox
+            c.drawString(x_start + checkbox_size + 5,
+                         y_start - line_count * line_height + checkbox_y_offset,
+                         f"{item['alimento']} - {item['qta_totale']}g")
+            line_count += 1
 
         c.save()
 
-        # Ritorna il PDF generato come risposta
+        # Ritorna il PDF generato
         pdf_file.seek(0)
         return send_file(pdf_file, as_attachment=True, download_name='menu_settimanale.pdf', mimetype='application/pdf')
     except SQLAlchemyError as db_err:
