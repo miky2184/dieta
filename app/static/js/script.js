@@ -1333,7 +1333,7 @@ function renderMenuEditor(data) {
             addMealBtn.innerHTML = `<i class="fa fa-plus" aria-hidden="true"></i> Ricetta`; // Aggiungi l'icona e il testo
             addMealBtn.classList.add('btn', 'btn-success', 'btn-sm');
             addMealBtn.onclick = function() {
-                aggiungiRicettaAlPasto(true, 'no', false, 'principale', meal, day);
+                aggiungiRicettaAlPasto(true, 'no', false, 'principale', meal, day, true);
             };
             buttonGroup.appendChild(addMealBtn);
 
@@ -1343,7 +1343,7 @@ function renderMenuEditor(data) {
                 addContornoBtn.innerHTML = `<i class="fa fa-plus" aria-hidden="true"></i> Contorno`; // Aggiungi l'icona e il testo
                 addContornoBtn.classList.add('btn', 'btn-success', 'btn-sm');
                 addContornoBtn.onclick = function() {
-                    aggiungiRicettaAlPasto(true, 'no', true, 'contorno', meal);
+                    aggiungiRicettaAlPasto(true, 'no', true, 'contorno', meal, day, false);
                 };
                 buttonGroup.appendChild(addContornoBtn);
             }
@@ -1354,7 +1354,7 @@ function renderMenuEditor(data) {
                 addComplementoBtn.innerHTML = `<i class="fa fa-plus" aria-hidden="true"></i> Complemento`; // Aggiungi l'icona e il testo
                 addComplementoBtn.classList.add('btn', 'btn-success', 'btn-sm');
                 addComplementoBtn.onclick = function() {
-                    aggiungiRicettaAlPasto(true, 'yes', false, 'complemento', meal);
+                    aggiungiRicettaAlPasto(true, 'yes', false, 'complemento', meal, day, false);
                 };
                 buttonGroup.appendChild(addComplementoBtn);
             }
@@ -1448,12 +1448,12 @@ function removeMeal(day, meal, mealId) {
         .catch(error => console.error('Error:', error));
 }
 
-function aggiungiRicettaAlPasto(stagionalita, complemento, contorno, meal_type, meal, day) {
+function aggiungiRicettaAlPasto(stagionalita, complemento, contorno, meal_type, meal, day, available) {
     currentDay = day;
     currentMeal = meal;
 
     // Fetch delle ricette disponibili per quel pasto
-    fetch(`/ricette?stagionalita=${stagionalita}&complemento=${complemento}&contorno=${contorno}&attive=true&meal_time=${meal}&meal_type=${meal_type}&day=${day}&week_id=${selectedWeekId}`)
+    fetch(`/ricette?stagionalita=${stagionalita}&complemento=${complemento}&contorno=${contorno}&attive=true&meal_time=${meal}&meal_type=${meal_type}&day=${day}&week_id=${selectedWeekId}&available=${available}`)
         .then(response => response.json())
         .then(data => {
             if (data.status == 'success'){

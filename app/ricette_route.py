@@ -57,6 +57,7 @@ def handle_ricette():
     meal_type = request.args.get('meal_type')
     day = request.args.get('day') if request.args.get('day') != 'undefined' else None  # Per menu specifico
     week_id = request.args.get('week_id')  # Per menu specifico
+    available = request.args.get('available', 'false').lower() == 'true'
 
     # Mappatura dei tipi di pasto (opzionale)
     meal_type_mapping = {
@@ -75,7 +76,7 @@ def handle_ricette():
     try:
 
         # Logica aggiuntiva per le ricette disponibili (se day e week_id sono specificati)
-        if day and week_id:
+        if available:
             menu_corrente = get_menu_service(user_id, menu_id=week_id)
 
             # Recupera la data di fine stagionalità dal menu corrente
