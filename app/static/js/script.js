@@ -1448,6 +1448,37 @@ function removeMeal(day, meal, mealId) {
         .catch(error => console.error('Error:', error));
 }
 
+function openAddMealModal(selectedDay) {
+    if (!selectedDay || selectedDay === 'all') {
+        alert("Seleziona un giorno specifico per aggiungere una ricetta.");
+        return;
+    }
+
+    populatePopupRemainingMacros(selectedDay);
+
+    const addMealModal = new bootstrap.Modal(document.getElementById('addMealModal'));
+    addMealModal.show();
+}
+
+function populatePopupRemainingMacros(day) {
+    const remainingTable = document.getElementById('remainingTable'); // La tabella nella pagina principale
+    if (!remainingTable) return;
+
+    // Cerca la riga corrispondente al giorno selezionato
+    const rows = remainingTable.getElementsByTagName('tr');
+    for (let i = 1; i < rows.length; i++) {  // Salta l'intestazione
+        let cells = rows[i].getElementsByTagName('td');
+        if (cells[0].textContent.toLowerCase() === day.toLowerCase()) {
+            document.getElementById('popup-day').textContent = cells[0].textContent;
+            document.getElementById('popup-kcal').textContent = cells[1].textContent;
+            document.getElementById('popup-carbs').textContent = cells[2].textContent;
+            document.getElementById('popup-protein').textContent = cells[3].textContent;
+            document.getElementById('popup-fat').textContent = cells[4].textContent;
+            break;
+        }
+    }
+}
+
 function aggiungiRicettaAlPasto(stagionalita, complemento, contorno, meal_type, meal, day, available) {
     currentDay = day;
     currentMeal = meal;
@@ -1457,26 +1488,25 @@ function aggiungiRicettaAlPasto(stagionalita, complemento, contorno, meal_type, 
         .then(response => response.json())
         .then(data => {
             if (data.status == 'success'){
-            const mealSelectionBody = document.getElementById('mealSelectionBody');
-            mealSelectionBody.innerHTML = ''; // Pulisce la tabella
+                const mealSelectionBody = document.getElementById('mealSelectionBody');
+                mealSelectionBody.innerHTML = ''; // Pulisce la tabella
 
-            data.ricette.forEach(ricetta => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${ricetta.nome_ricetta}</td>
-                    <td>${ricetta.kcal}</td>
-                    <td>${ricetta.carboidrati}</td>
-                    <td>${ricetta.proteine}</td>
-                    <td>${ricetta.grassi}</td>
-                    <td>${ricetta.fibre}</td>
-                    <td><input type="checkbox" value="${ricetta.id}" data-kcal="${ricetta.kcal}" class="meal-checkbox"></td>
-                `;
-                mealSelectionBody.appendChild(row);
-            });
+                data.ricette.forEach(ricetta => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${ricetta.nome_ricetta}</td>
+                        <td>${ricetta.kcal}</td>
+                        <td>${ricetta.carboidrati}</td>
+                        <td>${ricetta.proteine}</td>
+                        <td>${ricetta.grassi}</td>
+                        <td>${ricetta.fibre}</td>
+                        <td><input type="checkbox" value="${ricetta.id}" data-kcal="${ricetta.kcal}" class="meal-checkbox"></td>
+                    `;
+                    mealSelectionBody.appendChild(row);
+                });
 
-            // Mostra il modal
-            const addMealModal = new bootstrap.Modal(document.getElementById('addMealModal'));
-            addMealModal.show();
+                // Mostra il modal
+                openAddMealModal(day)
             }
         });
 }
