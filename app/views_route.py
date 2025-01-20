@@ -17,8 +17,7 @@ from app.models.Utente import Utente
 from app.ricette_route import invalidate_cache
 from app.services.common_services import get_settimane_salvate_service
 from app.services.menu_services import save_weight, stampa_lista_della_spesa, elimina_ingredienti, salva_utente_dieta, \
-    get_peso_hist, recupera_ricette_per_alimento, recupera_ingredienti_ricetta, get_totale_gruppi_service, \
-    aggiorna_limiti_gruppi
+    get_peso_hist, recupera_ricette_per_alimento, aggiorna_limiti_gruppi, calcola_quantita
 from app.services.modifica_pasti_services import get_menu_service
 from app.services.modifica_pasti_services import update_menu_corrente_service
 from app.services.util_services import calcola_macronutrienti_rimanenti_service
@@ -264,8 +263,8 @@ def aggiorna_quantita_ingrediente():
                 aggiorna_limiti_gruppi(ricetta, menu_corrente['menu']['consumi'], old_qta, old_qta, True)
                 aggiorna_limiti_gruppi(ricetta, menu_corrente['menu']['consumi'], old_qta, quantity, False)
 
-                ricetta['ricetta'] = recupera_ingredienti_ricetta(ricetta, old_qta, quantity)
-                ricetta['ingredienti'] = get_totale_gruppi_service(ricetta, old_qta, quantity)
+                ricetta['ricetta'] = calcola_quantita(ricetta, 'ricetta', 'nome', old_qta, quantity)
+                ricetta['ingredienti'] = calcola_quantita(ricetta, 'ingredienti', 'id_gruppo', old_qta, quantity)
 
                 # Ricalcola i macronutrienti giornalieri e settimanali
                 for macro in ['kcal', 'carboidrati', 'proteine', 'grassi']:

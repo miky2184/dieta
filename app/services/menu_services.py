@@ -309,8 +309,8 @@ def aggiorna_settimana(settimana, giorno_settimana, pasto, ricetta, percentuale)
     # Aggiungi la ricetta al menu del pasto
     mt['ids'].append(ricetta['id'])
     mt['ricette'].append({
-        'ricetta': recupera_ingredienti_ricetta(ricetta, old_qta, percentuale),
-        'ingredienti': get_totale_gruppi_service(ricetta, old_qta, percentuale),
+        'ricetta': calcola_quantita(ricetta, 'ricetta', 'nome', old_qta, percentuale),
+        'ingredienti': calcola_quantita(ricetta, 'ingredienti', 'id_gruppo', old_qta, percentuale),
         'qta': percentuale,
         'id': ricetta['id'],
         'nome_ricetta': ricetta['nome_ricetta'],
@@ -440,34 +440,35 @@ def aggiorna_limiti_gruppi(ricetta, consumi, old_perc: float, perc: float = 1.0,
             qta_ingrediente = ingrediente['qta']
 
             if id_gruppo in consumi:
-                consumi[id_gruppo] = round(consumi[id_gruppo] + (moltiplicatore * qta_ingrediente / old_perc * perc), 1)
+                if old_perc != 0:
+                    consumi[id_gruppo] = round(
+                        consumi[id_gruppo] + (moltiplicatore * qta_ingrediente / old_perc * perc), 1)
+                else:
+                    consumi[id_gruppo] = round(consumi[id_gruppo] + (moltiplicatore * qta_ingrediente * perc), 1)
 
     except Exception as e:
         raise RuntimeError(f"Errore durante l'aggiornamento dei limiti dei gruppi: {str(e)}")
 
 
-def recupera_ingredienti_ricetta(ricetta, old_perc, percentuale:float = 1.0) -> list[dict]:
-    if 'ricetta' not in ricetta:
-        raise ValueError("Il dizionario della ricetta non contiene la chiave 'ricetta'.")
+def calcola_quantita(ricetta, chiave_ingredienti, chiave_nome, old_perc, percentuale: float = 1.0) -> list[dict]:
+    """
+    Funzione generica per calcolare la quantità degli ingredienti o gruppi.
 
-    risultati = []
+    :param ricetta: Dizionario contenente gli ingredienti.
+    :param chiave_ingredienti: Chiave per accedere agli ingredienti ('ricetta' o 'ingredienti').
+    :param chiave_nome: Chiave per il nome dell'ingrediente ('nome' o 'id_gruppo').
+    :param old_perc: Percentuale di riferimento precedente.
+    :param percentuale: Percentuale da applicare (default 1.0).
+    :return: Lista di dizionari con nome/id_gruppo e quantità calcolata.
+    """
+    if chiave_ingredienti not in ricetta:
+        raise ValueError(f"Il dizionario della ricetta non contiene la chiave '{chiave_ingredienti}'.")
 
-    for ingrediente in ricetta['ricetta']:
-        risultati.append({'nome': ingrediente['nome'], 'qta': (ingrediente['qta'] / old_perc) * percentuale})
-
-    return risultati
-
-
-def get_totale_gruppi_service(ricetta, old_perc, percentuale:float = 1.0) -> list[dict]:
-    if 'ingredienti' not in ricetta:
-        raise ValueError("Il dizionario della ricetta non contiene la chiave 'ingredienti'.")
-
-    risultati = []
-
-    for ingrediente in ricetta['ingredienti']:
-        risultati.append({'id_gruppo': ingrediente['id_gruppo'], 'qta': (ingrediente['qta'] / old_perc) * percentuale})
-
-    return risultati
+    return [
+        {chiave_nome: ingrediente[chiave_nome],
+         'qta': (ingrediente['qta'] / old_perc) * percentuale if old_perc != 0 else ingrediente['qta'] * percentuale}
+        for ingrediente in ricetta[chiave_ingredienti]
+    ]
 
 
 def controlla_limiti_macronutrienti(ricetta, day, weekly, controllo_macro_settimanale, perc: float = 1.0) -> bool:
@@ -900,8 +901,8 @@ def aggiungi_ricetta_al_menu(menu, day, meal, meal_id, user_id):
         'carboidrati': ricetta['carboidrati'],
         'grassi': ricetta['grassi'],
         'proteine': ricetta['proteine'],
-        'ricetta': recupera_ingredienti_ricetta(ricetta, ricetta['qta']),
-        'ingredienti': get_totale_gruppi_service(ricetta, ricetta['qta']),
+        'ricetta': calcola_quantita(ricetta, 'ricetta', 'nome', ricetta['qta']),
+        'ingredienti': calcola_quantita(ricetta, 'ingredienti', 'id_gruppo', ricetta['qta']),
         'info': ricetta['info']
     })
     aggiorna_macronutrienti(menu, day, ricetta)

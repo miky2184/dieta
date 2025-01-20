@@ -1483,6 +1483,29 @@ function aggiungiRicettaAlPasto(stagionalita, complemento, contorno, meal_type, 
     currentDay = day;
     currentMeal = meal;
 
+
+    const remainingTable = document.getElementById('remainingTable'); // La tabella nella pagina principale
+    if (!remainingTable) return;
+
+    let remainingKcal = 0;
+    let remainingCarbs =  0;
+    let remainingProteins = 0;
+    let remainingFats = 0;
+
+    // Cerca la riga corrispondente al giorno selezionato
+    const rows = remainingTable.getElementsByTagName('tr');
+    for (let i = 1; i < rows.length; i++) {  // Salta l'intestazione
+        let cells = rows[i].getElementsByTagName('td');
+        if (cells[0].textContent.toLowerCase() === day.toLowerCase()) {
+            // Recupera i valori dei macronutrienti rimanenti per il giorno selezionato
+            remainingKcal = parseFloat(cells[1].textContent);
+            remainingCarbs =  parseFloat(cells[2].textContent);
+            remainingProteins = parseFloat(cells[3].textContent);
+            remainingFats = parseFloat(cells[4].textContent);
+            break;
+        }
+    }
+
     // Fetch delle ricette disponibili per quel pasto
     fetch(`/ricette?stagionalita=${stagionalita}&complemento=${complemento}&contorno=${contorno}&attive=true&meal_time=${meal}&meal_type=${meal_type}&day=${day}&week_id=${selectedWeekId}&available=${available}`)
         .then(response => response.json())
@@ -1491,7 +1514,20 @@ function aggiungiRicettaAlPasto(stagionalita, complemento, contorno, meal_type, 
                 const mealSelectionBody = document.getElementById('mealSelectionBody');
                 mealSelectionBody.innerHTML = ''; // Pulisce la tabella
 
-                data.ricette.forEach(ricetta => {
+                // Filtra le ricette che rispettano le kcal e almeno 2 su 3 macronutrienti
+                const filteredRicette = data.ricette.filter(ricetta => {
+                    const kcalOk = ricetta.kcal <= remainingKcal;
+
+                    let validMacroCount = 0;
+                    if (ricetta.carboidrati <= remainingCarbs) validMacroCount++;
+                    if (ricetta.proteine <= remainingProteins) validMacroCount++;
+                    if (ricetta.grassi <= remainingFats) validMacroCount++;
+
+                    return kcalOk && validMacroCount >= 2;
+                });
+
+                // Popola la tabella solo con le ricette filtrate
+                filteredRicette.forEach(ricetta => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${ricetta.nome_ricetta}</td>
@@ -1504,6 +1540,12 @@ function aggiungiRicettaAlPasto(stagionalita, complemento, contorno, meal_type, 
                     `;
                     mealSelectionBody.appendChild(row);
                 });
+
+                if (filteredRicette.length === 0) {
+                    const noDataRow = document.createElement('tr');
+                    noDataRow.innerHTML = `<td colspan="7" class="text-center text-danger">Nessuna ricetta disponibile entro le kcal rimanenti.</td>`;
+                    mealSelectionBody.appendChild(noDataRow);
+                }
 
                 // Mostra il modal
                 openAddMealModal(day)
