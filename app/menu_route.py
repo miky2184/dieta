@@ -59,7 +59,7 @@ def delete_menu(week_id):
             return jsonify({'status': 'error', 'message': 'Menu non trovato.'}), 404
 
         # Controlla se la data corrente è maggiore della data di inizio del menu
-        if date.today() > menu.data_inizio:
+        if date.today() >= menu.data_inizio:
             return jsonify({
                 'status': 'error',
                 'message': 'Il menu non può essere eliminato perché la data corrente è maggiore della data di inizio.'
