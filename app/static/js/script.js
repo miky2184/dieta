@@ -1333,7 +1333,7 @@ function renderMenuEditor(data) {
             addMealBtn.innerHTML = `<i class="fa fa-plus" aria-hidden="true"></i> Ricetta`; // Aggiungi l'icona e il testo
             addMealBtn.classList.add('btn', 'btn-success', 'btn-sm');
             addMealBtn.onclick = function() {
-                addNewMeal(day, meal);
+                aggiungiRicettaAlPasto(true, 'no', false, 'principale', meal, day);
             };
             buttonGroup.appendChild(addMealBtn);
 
@@ -1343,7 +1343,7 @@ function renderMenuEditor(data) {
                 addContornoBtn.innerHTML = `<i class="fa fa-plus" aria-hidden="true"></i> Contorno`; // Aggiungi l'icona e il testo
                 addContornoBtn.classList.add('btn', 'btn-success', 'btn-sm');
                 addContornoBtn.onclick = function() {
-                    addNewContorno(day, meal);
+                    aggiungiRicettaAlPasto(true, 'no', true, 'contorno', meal);
                 };
                 buttonGroup.appendChild(addContornoBtn);
             }
@@ -1354,7 +1354,7 @@ function renderMenuEditor(data) {
                 addComplementoBtn.innerHTML = `<i class="fa fa-plus" aria-hidden="true"></i> Complemento`; // Aggiungi l'icona e il testo
                 addComplementoBtn.classList.add('btn', 'btn-success', 'btn-sm');
                 addComplementoBtn.onclick = function() {
-                    addNewComplemento(day, meal);
+                    aggiungiRicettaAlPasto(true, 'yes', false, 'complemento', meal);
                 };
                 buttonGroup.appendChild(addComplementoBtn);
             }
@@ -1448,15 +1448,15 @@ function removeMeal(day, meal, mealId) {
         .catch(error => console.error('Error:', error));
 }
 
-
-function addNewMeal(day, meal) {
+function aggiungiRicettaAlPasto(stagionalita, complemento, contorno, meal_type, meal, day) {
     currentDay = day;
     currentMeal = meal;
 
     // Fetch delle ricette disponibili per quel pasto
-    fetch(`/ricette?meal_time=${meal}&meal_type=principale&day=${day}&week_id=${selectedWeekId}`)
+    fetch(`/ricette?stagionalita=${stagionalita}&complemento=${complemento}&contorno=${contorno}&attive=true&meal_time=${meal}&meal_type=${meal_type}&day=${day}&week_id=${selectedWeekId}`)
         .then(response => response.json())
         .then(data => {
+            if (data.status == 'success'){
             const mealSelectionBody = document.getElementById('mealSelectionBody');
             mealSelectionBody.innerHTML = ''; // Pulisce la tabella
 
@@ -1469,7 +1469,7 @@ function addNewMeal(day, meal) {
                     <td>${ricetta.proteine}</td>
                     <td>${ricetta.grassi}</td>
                     <td>${ricetta.fibre}</td>
-                    <td><input type="checkbox" value="${ricetta.id}" class="meal-checkbox"></td>
+                    <td><input type="checkbox" value="${ricetta.id}" data-kcal="${ricetta.kcal}" class="meal-checkbox"></td>
                 `;
                 mealSelectionBody.appendChild(row);
             });
@@ -1477,71 +1477,6 @@ function addNewMeal(day, meal) {
             // Mostra il modal
             const addMealModal = new bootstrap.Modal(document.getElementById('addMealModal'));
             addMealModal.show();
-        });
-}
-
-function addNewComplemento(day, meal) {
-    currentDay = day;
-    currentMeal = meal;
-
-    // Fetch delle ricette disponibili per quel pasto
-    fetch(`/ricette?stagionalita=true&complemento=yes&contorno=false&attive=true&meal_time=${meal}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.status == 'success'){
-                const mealSelectionBody = document.getElementById('mealSelectionBody');
-                mealSelectionBody.innerHTML = ''; // Pulisce la tabella
-
-                data.ricette.forEach(ricetta => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${ricetta.nome_ricetta}</td>
-                        <td>${ricetta.kcal}</td>
-                        <td>${ricetta.carboidrati}</td>
-                        <td>${ricetta.proteine}</td>
-                        <td>${ricetta.grassi}</td>
-                        <td>${ricetta.fibre}</td>
-                        <td><input type="checkbox" value="${ricetta.id}" class="meal-checkbox"></td>
-                    `;
-                    mealSelectionBody.appendChild(row);
-                });
-
-                // Mostra il modal
-                const addMealModal = new bootstrap.Modal(document.getElementById('addMealModal'));
-                addMealModal.show();
-            }
-        });
-}
-
-function addNewContorno(day, meal) {
-    currentDay = day;
-    currentMeal = meal;
-
-    // Fetch delle ricette disponibili per quel pasto
-    fetch(`/ricette?stagionalita=true&complemento=no&contorno=true&attive=true&meal_time=${meal}&meal_type=contorno`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.status == 'success'){
-                const mealSelectionBody = document.getElementById('mealSelectionBody');
-                mealSelectionBody.innerHTML = ''; // Pulisce la tabella
-
-                data.ricette.forEach(ricetta => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${ricetta.nome_ricetta}</td>
-                        <td>${ricetta.kcal}</td>
-                        <td>${ricetta.carboidrati}</td>
-                        <td>${ricetta.proteine}</td>
-                        <td>${ricetta.grassi}</td>
-                        <td>${ricetta.fibre}</td>
-                        <td><input type="checkbox" value="${ricetta.id}" class="meal-checkbox"></td>
-                    `;
-                    mealSelectionBody.appendChild(row);
-                });
-
-                // Mostra il modal
-                const addMealModal = new bootstrap.Modal(document.getElementById('addMealModal'));
-                addMealModal.show();
             }
         });
 }
@@ -2059,11 +1994,6 @@ function populateAlimentiTable(alimenti) {
     filterAlimentiTable();
 }
 
-// Aggiungi l'evento di cambio a tutte le select con la classe 'week-select'
-//document.querySelectorAll('.week-select').forEach(select => {
-//    select.addEventListener('change', updateSelectedWeek);
-//});
-
 function updateSelectedWeek() {
     var weekId = this.value;
 
@@ -2344,22 +2274,31 @@ document.getElementById('addFoodForm').addEventListener('submit', function(event
     });
 
 
-    if (document.getElementById('confirmAddMeal')){
-    document.getElementById('confirmAddMeal').addEventListener('click', function() {
-        const selectedMeals = [];
-        document.querySelectorAll('.meal-checkbox:checked').forEach(checkbox => {
-            selectedMeals.push(checkbox.value);
+    if (document.getElementById('confirmAddMeal')) {
+        document.getElementById('confirmAddMeal').addEventListener('click', function () {
+            let selectedMeals = [];
+
+            document.querySelectorAll('.meal-checkbox:checked').forEach(checkbox => {
+                const mealId = checkbox.value;
+                const kcal = parseFloat(checkbox.getAttribute('data-kcal')) || 0; // Leggi le kcal dall'attributo data-kcal
+                selectedMeals.push({ id: mealId, kcal: kcal });
+            });
+
+            if (selectedMeals.length > 0) {
+                // Ordina i pasti selezionati in base alle kcal (dal più basso al più alto)
+                selectedMeals.sort((a, b) => b.kcal - a.kcal);
+
+                // Estrai solo gli ID ordinati
+                const orderedMealIds = selectedMeals.map(meal => meal.id);
+
+                // Aggiungi le ricette ordinate al menu
+                addMealsToMenu(currentDay, currentMeal, orderedMealIds);
+            }
+
+            // Chiudi il modal
+            const addMealModal = bootstrap.Modal.getInstance(document.getElementById('addMealModal'));
+            addMealModal.hide();
         });
-
-        if (selectedMeals.length > 0) {
-            // Aggiungi le ricette selezionate al menu
-            addMealsToMenu(currentDay, currentMeal, selectedMeals);
-        }
-
-        // Chiudi il modal
-        const addMealModal = bootstrap.Modal.getInstance(document.getElementById('addMealModal'));
-        addMealModal.hide();
-    });
     }
 
     // Assicurati che gli event listeners siano aggiunti dopo il caricamento dei dati nel modal

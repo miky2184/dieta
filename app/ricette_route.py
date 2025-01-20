@@ -55,7 +55,7 @@ def handle_ricette():
     attive = request.args.get('attive', 'false').lower() == 'true'
     meal_time = request.args.get('meal_time')
     meal_type = request.args.get('meal_type')
-    day = request.args.get('day')  # Per menu specifico
+    day = request.args.get('day') if request.args.get('day') != 'undefined' else None  # Per menu specifico
     week_id = request.args.get('week_id')  # Per menu specifico
 
     # Mappatura dei tipi di pasto (opzionale)
@@ -65,7 +65,8 @@ def handle_ricette():
         'pranzo': ['principale', 'contorno'],
         'spuntino_pomeriggio': ['spuntino'],
         'cena': ['principale', 'contorno'],
-        'spuntino_sera': ['spuntino']
+        'spuntino_sera': ['spuntino'],
+        'complemento': []
     }
 
     generic_meal_types = meal_type_mapping.get(meal_time, [])
