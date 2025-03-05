@@ -22,7 +22,7 @@ def generate_menu():
     try:
         genera_menu_utente(user_id)
 
-        current_app.cache.delete(f'dashboard_{user_id}')
+        #current_app.cache.delete(f'dashboard_{user_id}')
         return {'status': 'success', 'progress': 100}
     except ValueError as val_err:
         return jsonify({'status': 'error', 'message': str(val_err), 'trace': traceback.format_exc()}), 400
@@ -69,8 +69,8 @@ def delete_menu(week_id):
         delete_week_menu(week_id, user_id)
 
         # Svuota la cache correlata
-        current_app.cache.delete(f'dashboard_{user_id}')
-        current_app.cache.delete(f'menu_settimana_{week_id}_{current_user}')
+        #current_app.cache.delete(f'dashboard_{user_id}')
+        #current_app.cache.delete(f'menu_settimana_{week_id}_{current_user}')
         return jsonify({'status': 'success', 'message': 'Menu eliminato con successo!'}), 200
 
     except SQLAlchemyError as db_err:
@@ -80,7 +80,7 @@ def delete_menu(week_id):
 
 
 @menu.route('/menu_settimana/<int:settimana_id>', methods=['GET'])
-@current_app.cache.cached(timeout=300, key_prefix=lambda: f"menu_settimana_{request.view_args['settimana_id']}_{current_user.user_id}")
+#@current_app.cache.cached(timeout=300, key_prefix=lambda: f"menu_settimana_{request.view_args['settimana_id']}_{current_user.user_id}")
 @login_required
 def menu_settimana(settimana_id):
     """

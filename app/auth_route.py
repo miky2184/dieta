@@ -89,14 +89,14 @@ def register():
     # Logga automaticamente l'utente appena registrato
     login_user(new_user_auth, remember=True)
 
-    current_app.cache.delete(f'get_data_utente_{user_id}')
+    #current_app.cache.delete(f'get_data_utente_{user_id}')
     return redirect(url_for('views.dashboard'))
 
 @auth.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
     logout_user()
-    current_app.cache.clear()
+    #current_app.cache.clear()
     return redirect(url_for('auth.login'))
 
 

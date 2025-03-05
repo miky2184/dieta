@@ -1,7 +1,7 @@
 # app/__init__.py
 from dotenv import load_dotenv
 from flask import Flask
-from flask_caching import Cache
+#from flask_caching import Cache
 from flask_login import LoginManager
 
 from app.models import db
@@ -17,8 +17,8 @@ def create_app():
     app.config.from_object('config.Config')
 
     # Configura il cache
-    cache = Cache(app)
-    app.cache = cache
+#    cache = Cache(app)
+#    app.cache = cache
 
     # Inizializza il database con l'app
     db.init_app(app)
@@ -33,7 +33,7 @@ def create_app():
         return UtenteAuth.query.get(int(user_id))
 
     with app.app_context():
-        cache.clear()
+        #cache.clear()
         from .auth_route import auth as auth_blueprint
         from .views_route import views
         from .admin_route import admin

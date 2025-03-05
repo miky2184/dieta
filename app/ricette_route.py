@@ -144,7 +144,7 @@ def create_ricetta():
         complemento = 'complemento' in request.form
 
         salva_nuova_ricetta(name.upper(), breakfast, snack, main, side, second_breakfast, complemento, user_id)
-        current_app.cache.delete(invalidate_cache(user_id))
+        #current_app.cache.delete(invalidate_cache(user_id))
 
         return jsonify({"status": "success"}), 200
     except SQLAlchemyError as db_err:
@@ -174,7 +174,7 @@ def update_ricetta(ricetta_id):
 
         update_ricetta_service(nome, colazione, colazione_sec, spuntino, principale, contorno, complemento, ricetta_id, user_id)
 
-        current_app.cache.delete(invalidate_cache(user_id))
+        #current_app.cache.delete(invalidate_cache(user_id))
         return jsonify({'status': 'success', 'message': 'Ricetta salvata con successo!'}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
@@ -193,7 +193,7 @@ def toggle_ricetta(ricetta_id):
     user_id = current_user.user_id
     try:
         attiva_disattiva_ricetta_service(ricetta_id, user_id)
-        current_app.cache.delete(invalidate_cache(user_id))
+        #current_app.cache.delete(invalidate_cache(user_id))
         return jsonify({'status': 'success', 'message': 'Ricetta modificata con successo!'}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
@@ -204,7 +204,7 @@ def toggle_ricetta(ricetta_id):
 
 
 @ricette.route('/ingredienti_ricetta/<int:recipe_id>', methods=['GET'])
-@current_app.cache.cached(timeout=300, key_prefix=lambda: f"ricette_{request.view_args['recipe_id']}_{current_user.user_id}")
+#@current_app.cache.cached(timeout=300, key_prefix=lambda: f"ricette_{request.view_args['recipe_id']}_{current_user.user_id}")
 @login_required
 def get_ricetta(recipe_id):
     """
@@ -236,8 +236,8 @@ def aggiorna_ingredienti_ricetta():
         quantity = data['quantity']
 
         salva_ingredienti_service(recipe_id, ingredient_id, quantity, user_id)
-        current_app.cache.delete(invalidate_cache(user_id))
-        current_app.cache.delete(f'ricette_{recipe_id}_{user_id}')
+        #current_app.cache.delete(invalidate_cache(user_id))
+        #current_app.cache.delete(f'ricette_{recipe_id}_{user_id}')
         return jsonify({'status': 'success', 'message': 'Quantità aggiornata correttamente.'}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
@@ -256,7 +256,7 @@ def delete_ricetta(ricette_id):
     user_id = current_user.user_id
     try:
         delete_ricetta_service(ricette_id, user_id)
-        current_app.cache.delete(invalidate_cache(user_id))
+        #current_app.cache.delete(invalidate_cache(user_id))
         return jsonify({'status': 'success', 'message': 'Ricetta eliminata con successo!'}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500

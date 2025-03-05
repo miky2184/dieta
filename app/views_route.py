@@ -14,7 +14,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.models import db
 from app.models.Utente import Utente
-from app.ricette_route import invalidate_cache
+#from app.ricette_route import invalidate_cache
 from app.services.common_services import get_settimane_salvate_service
 from app.services.menu_services import save_weight, stampa_lista_della_spesa, elimina_ingredienti, salva_utente_dieta, \
     get_peso_hist, recupera_ricette_per_alimento, aggiorna_limiti_gruppi, calcola_quantita
@@ -26,7 +26,7 @@ views = Blueprint('views', __name__)
 
 
 @views.route('/dashboard', methods=['GET'])
-@current_app.cache.cached(timeout=300, key_prefix=lambda: f"dashboard_{current_user.user_id}")
+#@current_app.cache.cached(timeout=300, key_prefix=lambda: f"dashboard_{current_user.user_id}")
 @login_required
 def dashboard():
     """
@@ -115,8 +115,8 @@ def delete_ingredienti():
         user_id = current_user.user_id
 
         elimina_ingredienti(ingredient_id, recipe_id, user_id)
-        current_app.cache.delete(invalidate_cache(user_id))
-        current_app.cache.delete(f'ricette_{recipe_id}_{user_id}')
+        #current_app.cache.delete(invalidate_cache(user_id))
+        #current_app.cache.delete(f'ricette_{recipe_id}_{user_id}')
         return jsonify({'status': 'success', 'message': 'Ingrediente eliminato correttamente.'}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err), 'trace': traceback.format_exc()}), 500
@@ -144,7 +144,7 @@ def submit_weight():
         peso = get_peso_hist(user_id)
 
         # Esempio di svuotamento della cache di una funzione specifica
-        current_app.cache.delete(f'get_peso_data_{user_id}')
+        #current_app.cache.delete(f'get_peso_data_{user_id}')
 
         return jsonify({'status': 'success', 'peso': peso}), 200
     except SQLAlchemyError as db_err:
@@ -187,8 +187,8 @@ def salva_dati():
                            meta_basale, meta_giornaliero, calorie_giornaliere, settimane_dieta, carboidrati,
                            proteine, grassi, dieta)
 
-        current_app.cache.delete(f'get_data_utente_{user_id}')
-        current_app.cache.delete(f'get_peso_data_{user_id}')
+        #current_app.cache.delete(f'get_data_utente_{user_id}')
+        #current_app.cache.delete(f'get_peso_data_{user_id}')
         return redirect(url_for('views.dashboard'))
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
@@ -199,7 +199,7 @@ def salva_dati():
 
 
 @views.route('/get_peso_data', methods=['GET'])
-@current_app.cache.cached(timeout=300, key_prefix=lambda: f"get_peso_data_{current_user.user_id}")
+#@current_app.cache.cached(timeout=300, key_prefix=lambda: f"get_peso_data_{current_user.user_id}")
 @login_required
 def get_peso_data():
     """
@@ -218,7 +218,7 @@ def get_peso_data():
 
 
 @views.route('/get_data_utente', methods=['GET'])
-@current_app.cache.cached(timeout=300, key_prefix=lambda: f"get_data_utente_{current_user.user_id}")
+#@current_app.cache.cached(timeout=300, key_prefix=lambda: f"get_data_utente_{current_user.user_id}")
 @login_required
 def get_data_utente():
     """
@@ -278,8 +278,8 @@ def aggiorna_quantita_ingrediente():
 
         # Ricalcola i macronutrienti rimanenti
         remaining_macronutrienti = calcola_macronutrienti_rimanenti_service(menu_corrente['menu'])
-        current_app.cache.delete(f'dashboard_{user_id}')
-        current_app.cache.delete(f'menu_settimana_{week_id}_{current_user}')
+        #current_app.cache.delete(f'dashboard_{user_id}')
+        #current_app.cache.delete(f'menu_settimana_{week_id}_{current_user}')
 
         return jsonify({
             'status': 'success',
@@ -419,7 +419,7 @@ def complete_tutorial():
     try:
         current_user.tutorial_completed = True
         db.session.commit()
-        current_app.cache.delete(f'dashboard_{user_id}')
+        #current_app.cache.delete(f'dashboard_{user_id}')
         return jsonify({'status': 'success'}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500

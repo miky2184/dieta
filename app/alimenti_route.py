@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_required, current_user
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.ricette_route import invalidate_cache
+#from app.ricette_route import invalidate_cache
 from app.services.alimenti_services import create_alimento_service, get_alimenti_service, update_alimento_service, \
     delete_alimento_service
 
@@ -10,7 +10,7 @@ alimenti = Blueprint('alimenti', __name__)
 
 
 @alimenti.route('/alimenti', methods=['GET'])
-@current_app.cache.cached(timeout=300, key_prefix=lambda: f"alimenti_{current_user.user_id}")
+#@current_app.cache.cached(timeout=300, key_prefix=lambda: f"alimenti_{current_user.user_id}")
 @login_required
 def get_alimenti():
     user_id = current_user.user_id
@@ -44,9 +44,9 @@ def create_alimento():
 
         create_alimento_service(name, carboidrati, proteine, grassi, fibre, vegan, surgelato, gruppo, user_id)
 
-        current_app.cache.delete(f'dashboard_{user_id}')
-        current_app.cache.delete(f'alimenti_{user_id}')
-        current_app.cache.delete(invalidate_cache(user_id))
+        #current_app.cache.delete(f'dashboard_{user_id}')
+        #current_app.cache.delete(f'alimenti_{user_id}')
+        #current_app.cache.delete(invalidate_cache(user_id))
 
         return jsonify({'status': 'success'}), 200
     except SQLAlchemyError as db_err:
@@ -77,8 +77,8 @@ def update_alimento(alimento_id):
         stagionalita = data.get('stagionalita')
 
         update_alimento_service(alimento_id, nome, carboidrati, proteine, grassi, fibre, vegan, surgelato, gruppo, stagionalita, user_id)
-        current_app.cache.delete(f'alimenti_{user_id}')
-        current_app.cache.delete(invalidate_cache(user_id))
+        #current_app.cache.delete(f'alimenti_{user_id}')
+        #current_app.cache.delete(invalidate_cache(user_id))
         return jsonify({'status': 'success', 'message': 'Alimento salvato con successo!'}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
@@ -97,7 +97,7 @@ def delete_alimento(alimento_id):
     user_id = current_user.user_id
     try:
         delete_alimento_service(alimento_id, user_id)
-        current_app.cache.delete(f'alimenti_{user_id}')
+        #current_app.cache.delete(f'alimenti_{user_id}')
         return jsonify({'status': 'success', 'message': 'Alimento eliminato con successo!'}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500

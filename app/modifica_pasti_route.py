@@ -29,8 +29,8 @@ def copy_week():
 
         # Copia il menu dalla settimana di origine alla settimana di destinazione
         update_menu_corrente_service(menu_from['menu'], week_to, user_id)
-        current_app.cache.delete(f'dashboard_{user_id}')
-        current_app.cache.delete(f'menu_settimana_{week_to}_{current_user}')
+        #current_app.cache.delete(f'dashboard_{user_id}')
+        #current_app.cache.delete(f'menu_settimana_{week_to}_{current_user}')
         return jsonify({'status': 'success'}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
@@ -65,8 +65,8 @@ def inverti_pasti_giorni(week_id):
 
         # Ricalcola i macronutrienti rimanenti
         remaining_macronutrienti = calcola_macronutrienti_rimanenti_service(settimana['menu'])
-        current_app.cache.delete(f'dashboard_{user_id}')
-        current_app.cache.delete(f'menu_settimana_{week_id}_{current_user}')
+        #current_app.cache.delete(f'dashboard_{user_id}')
+        #current_app.cache.delete(f'menu_settimana_{week_id}_{current_user}')
 
         return jsonify({
             'status': 'success',
@@ -107,8 +107,8 @@ def inverti_pasti(week_id):
 
         # Ricalcola i macronutrienti rimanenti
         remaining_macronutrienti = calcola_macronutrienti_rimanenti_service(settimana['menu'])
-        current_app.cache.delete(f'dashboard_{user_id}')
-        current_app.cache.delete(f'menu_settimana_{week_id}_{current_user}')
+        #current_app.cache.delete(f'dashboard_{user_id}')
+        #current_app.cache.delete(f'menu_settimana_{week_id}_{current_user}')
         return jsonify({
             'status': 'success',
             'menu': settimana['menu'],
@@ -152,8 +152,8 @@ def cancella_pasto(week_id):
 
         # Ricalcola i macronutrienti rimanenti
         remaining_macronutrienti = calcola_macronutrienti_rimanenti_service(settimana['menu'])
-        current_app.cache.delete(f'dashboard_{user_id}')
-        current_app.cache.delete(f'menu_settimana_{week_id}_{current_user}')
+        #current_app.cache.delete(f'dashboard_{user_id}')
+        #current_app.cache.delete(f'menu_settimana_{week_id}_{current_user}')
         return jsonify({
             'status': 'success',
             'menu': settimana['menu'],
@@ -194,8 +194,8 @@ def aggiungi_ricetta_menu(week_id):
 
         # Salva il menu aggiornato nel database
         update_menu_corrente_service(menu_corrente['menu'], week_id, user_id)
-        current_app.cache.delete(f'dashboard_{user_id}')
-        current_app.cache.delete(f'menu_settimana_{week_id}_{current_user}')
+        #current_app.cache.delete(f'dashboard_{user_id}')
+        #current_app.cache.delete(f'menu_settimana_{week_id}_{current_user}')
         return jsonify({
             'status': 'success',
             'menu': menu_corrente['menu'],  # Restituisce il menu aggiornato
@@ -234,8 +234,8 @@ def rimuovi_ricetta(week_id):
 
         # Ricalcola i macronutrienti rimanenti
         remaining_macronutrienti = calcola_macronutrienti_rimanenti_service(menu_corrente['menu'])
-        current_app.cache.delete(f'dashboard_{user_id}')
-        current_app.cache.delete(f'menu_settimana_{week_id}_{current_user}')
+        #current_app.cache.delete(f'dashboard_{user_id}')
+        #current_app.cache.delete(f'menu_settimana_{week_id}_{current_user}')
         return jsonify({
             'status': 'success',
             'menu': menu_corrente['menu'],

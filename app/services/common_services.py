@@ -17,9 +17,10 @@ def get_settimane_salvate_service(user_id, show_old_week: bool = False):
     settimane = query.filter(MenuSettimanale.user_id == user_id).all()
 
     return [
-        {'id': week.id,
-         'name': f"Settimana {index + 1} dal {week.data_inizio.strftime('%Y-%m-%d')} al {week.data_fine.strftime('%Y-%m-%d')}",
-         'attiva': week.data_inizio <= oggi <= week.data_fine
+        {
+            'id': week.id,
+            'name': f"Settimana {index + 1} dal {week.data_inizio.strftime('%Y-%m-%d')} al {week.data_fine.strftime('%Y-%m-%d')}",
+            'attiva': week.data_inizio <= oggi <= week.data_fine
          }
         for index, week in enumerate(settimane)
     ]
