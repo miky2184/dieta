@@ -1004,6 +1004,8 @@ def completa_menu_service(week_id: int, user_id: int):
                 if ricetta:
                     aggiungi_ricetta_al_menu(menu.menu, giorno, pasto, ricetta['id'], user_id)
 
+    db.session.commit()
+
 
 def trova_ricetta_compatibile_service(user_id: int, macro_rimanenti):
     ricette = get_ricette_service(user_id)
