@@ -1771,6 +1771,33 @@ function startMenuGeneration() {
         });
 }
 
+function completeMenu() {
+    const weekId = selectedWeekId;
+
+    // Effettua una richiesta AJAX per avviare il completamento del menu
+    fetch(`/complete_menu/${weekId}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                updateProgress(100); // Imposta il progresso al 100%
+                setTimeout(() => {
+                    $('#generateMenuModal').modal('hide'); // Chiudi il modal
+                    location.reload(); // Ricarica la pagina per visualizzare il nuovo menu
+                }, 1000);
+            } else if (data.status === 'error') {
+                setTimeout(() => {
+                    $('#errorModal').modal('show');
+                    $('#generateMenuModal').modal('hide'); // Chiudi il modal
+                }, 4000);
+            }
+        })
+        .catch(error => {
+            console.error('Errore durante la generazione del menu:', error);
+        });
+}
+
 function updateProgress(progress) {
     const progressBar = document.getElementById("menuGenerationProgress");
     progressBar.style.width = `${progress}%`;
@@ -2335,9 +2362,16 @@ document.getElementById('addFoodForm').addEventListener('submit', function(event
 
     if (document.getElementById("generateMenuBtn")){
         document.getElementById("generateMenuBtn").addEventListener("click", function() {
-        // Avvia la generazione del menu al click del bottone
-        startMenuGeneration();
-    });
+            // Avvia la generazione del menu al click del bottone
+            startMenuGeneration();
+        });
+    }
+
+    if (document.getElementById("completeMenuBtn")){
+        document.getElementById("completeMenuBtn").addEventListener("click", function() {
+            // Avvia il completamento del menu al click del bottone
+            completeMenu();
+        });
     }
 
     var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));

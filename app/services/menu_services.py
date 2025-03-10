@@ -21,7 +21,7 @@ from app.models.VRicetta import VRicetta
 from app.services.db_services import get_sequence_value
 from app.services.modifica_pasti_services import get_menu_service
 from app.services.ricette_services import get_ricette_service
-from app.services.util_services import printer, print_query
+from app.services.util_services import printer, print_query, calcola_macronutrienti_rimanenti_service
 
 MAX_RETRY = int(os.getenv('MAX_RETRY'))
 
@@ -48,7 +48,7 @@ pasti_config = [
     {'pasto': 'cena', 'tipo': 'contorno', 'ripetibile': True, 'min_ricette': 1},
 ]
 
-def genera_menu_utente(user_id) -> None:
+def genera_menu_utente_service(user_id) -> None:
     """
     Genera il menu settimanale per l'utente. Include la settimana corrente, successiva
     e una nuova settimana successiva all'ultima presente, se necessario.
@@ -940,7 +940,7 @@ def aggiorna_macronutrienti(menu, day, ricetta, rimuovi=False):
         menu['weekly'][macro] += moltiplicatore * ricetta[macro] * ricetta['qta']
 
 
-def delete_week_menu(week_id, user_id):
+def delete_week_menu_service(week_id, user_id):
     MenuSettimanale.query.filter_by(id=week_id, user_id=user_id).delete()
     db.session.commit()
 
@@ -971,3 +971,64 @@ def recupera_ricette_per_alimento(alimento_id, user_id):
 
     ricette_data = [{'nome_ricetta': r.nome_ricetta} for r in ricette]
     return ricette_data
+
+def completa_menu_service(week_id: int, user_id: int):
+    menu = MenuSettimanale.query.filter_by(id=week_id, user_id=user_id).all()
+
+    if not menu:
+        raise ValueError(f"Nessun menu trovato per la week_id {week_id}")
+
+    macronutrienti_rimanenti = calcola_macronutrienti_rimanenti_service(menu)
+
+    giorni = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica']
+    pasti = ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena', 'spuntino_sera']
+
+    for giorno in giorni:
+        for pasto in pasti:
+            pasto_data = menu.menu['day'][giorno]['pasto'][pasto]
+            # **1️⃣ Controllo se il pasto è vuoto**
+
+            if not pasto_data['ricette']:
+                # **2️⃣ Cerca una ricetta compatibile**
+                ricetta = trova_ricetta_compatibile_service(user_id, macronutrienti_rimanenti[giorno][pasto])
+
+                if ricetta:
+                    aggiungi_ricetta_al_menu(menu.menu, giorno, pasto, ricetta['id'], user_id)
+
+
+    for giorno in giorni:
+        for pasto in pasti:
+            if macronutrienti_rimanenti[giorno][pasto]['kcal'] > 0:
+                ricetta = trova_ricetta_compatibile_service(user_id, macronutrienti_rimanenti[giorno][pasto])
+
+                if ricetta:
+                    aggiungi_ricetta_al_menu(menu.menu, giorno, pasto, ricetta['id'], user_id)
+
+
+def trova_ricetta_compatibile_service(user_id: int, macro_rimanenti):
+    ricette = get_ricette_service(user_id)
+
+    # Filtro per kcal e 2 su 3 macronutrienti compatibili
+    percentuali = [1.0, 1.3, 1.2, 1.1, 0.9, 0.8, 0.5]
+    for ricetta in ricette:
+        for perc in percentuali:
+            kcal_ok = ricetta['kcal'] * perc <= macro_rimanenti['kcal']
+            macro_ok = sum([
+                ricetta['carboidrati'] * perc <= macro_rimanenti['carboidrati'],
+                ricetta['proteine'] * perc <= macro_rimanenti['proteine'],
+                ricetta['grassi'] * perc <= macro_rimanenti['grassi']
+            ]) >= 2
+
+            if kcal_ok and macro_ok:
+                return {
+                    'id': ricetta['id'],
+                    'nome_ricetta': ricetta['nome_ricetta'],
+                    'qta': perc,
+                    'kcal': ricetta['kcal'] * perc,
+                    'carboidrati': ricetta['carboidrati'] * perc,
+                    'proteine': ricetta['proteine'] * perc,
+                    'grassi': ricetta['grassi'] * perc,
+                    'fibre': ricetta.get('fibre', 0) * perc
+                }
+
+    return None
