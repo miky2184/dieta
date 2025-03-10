@@ -978,7 +978,7 @@ def completa_menu_service(week_id: int, user_id: int):
     if not menu:
         raise ValueError(f"Nessun menu trovato per la week_id {week_id}")
 
-    macronutrienti_rimanenti = calcola_macronutrienti_rimanenti_service(menu)
+    macronutrienti_rimanenti = calcola_macronutrienti_rimanenti_service(menu.menu)
 
     giorni = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica']
     pasti = ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena', 'spuntino_sera']
