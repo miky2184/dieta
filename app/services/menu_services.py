@@ -998,7 +998,7 @@ def completa_menu_service(week_id: int, user_id: int):
 
     for giorno in giorni:
         for pasto in pasti:
-            if macronutrienti_rimanenti[giorno][pasto]['kcal'] > 0:
+            if macronutrienti_rimanenti[giorno]['kcal'] > 0:
                 ricetta = trova_ricetta_compatibile_service(user_id, macronutrienti_rimanenti[giorno])
 
                 if ricetta:
