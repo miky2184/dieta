@@ -973,7 +973,7 @@ def recupera_ricette_per_alimento(alimento_id, user_id):
     return ricette_data
 
 def completa_menu_service(week_id: int, user_id: int):
-    menu = MenuSettimanale.query.filter_by(id=week_id, user_id=user_id).all()
+    menu = MenuSettimanale.query.filter_by(id=week_id, user_id=user_id).one()
 
     if not menu:
         raise ValueError(f"Nessun menu trovato per la week_id {week_id}")
