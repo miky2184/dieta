@@ -990,7 +990,7 @@ def completa_menu_service(week_id: int, user_id: int):
 
             if not pasto_data['ricette']:
                 # **2️⃣ Cerca una ricetta compatibile**
-                ricetta = trova_ricetta_compatibile_service(user_id, macronutrienti_rimanenti[giorno][pasto])
+                ricetta = trova_ricetta_compatibile_service(user_id, macronutrienti_rimanenti[giorno])
 
                 if ricetta:
                     aggiungi_ricetta_al_menu(menu.menu, giorno, pasto, ricetta['id'], user_id)
@@ -999,7 +999,7 @@ def completa_menu_service(week_id: int, user_id: int):
     for giorno in giorni:
         for pasto in pasti:
             if macronutrienti_rimanenti[giorno][pasto]['kcal'] > 0:
-                ricetta = trova_ricetta_compatibile_service(user_id, macronutrienti_rimanenti[giorno][pasto])
+                ricetta = trova_ricetta_compatibile_service(user_id, macronutrienti_rimanenti[giorno])
 
                 if ricetta:
                     aggiungi_ricetta_al_menu(menu.menu, giorno, pasto, ricetta['id'], user_id)
