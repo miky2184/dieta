@@ -19,7 +19,7 @@ from app.models.VAlimento import VAlimento
 from app.models.VIngredientiRicetta import VIngredientiRicetta
 from app.models.VRicetta import VRicetta
 from app.services.db_services import get_sequence_value
-from app.services.modifica_pasti_services import get_menu_service
+from app.services.modifica_pasti_services import get_menu_service, update_menu_corrente_service
 from app.services.ricette_services import get_ricette_service
 from app.services.util_services import printer, print_query, calcola_macronutrienti_rimanenti_service
 
@@ -1004,7 +1004,7 @@ def completa_menu_service(week_id: int, user_id: int):
                 if ricetta:
                     aggiungi_ricetta_al_menu(menu.menu, giorno, pasto, ricetta['id'], user_id)
 
-    db.session.commit()
+    update_menu_corrente_service(menu.menu, week_id, user_id)
 
 
 def trova_ricetta_compatibile_service(user_id: int, macro_rimanenti):
