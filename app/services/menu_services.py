@@ -978,33 +978,36 @@ def completa_menu_service(week_id: int, user_id: int):
     if not menu:
         raise ValueError(f"Nessun menu trovato per la week_id {week_id}")
 
-    macronutrienti_rimanenti = calcola_macronutrienti_rimanenti_service(menu.menu)
+    menu_da_completare = menu.menu
+
+    macronutrienti_rimanenti = calcola_macronutrienti_rimanenti_service(menu_da_completare)
 
     giorni = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica']
     pasti = ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena', 'spuntino_sera']
 
     for giorno in giorni:
         for pasto in pasti:
-            pasto_data = menu.menu['day'][giorno]['pasto'][pasto]
-            # **1️⃣ Controllo se il pasto è vuoto**
+            pasto_data = menu_da_completare['day'][giorno]['pasto'][pasto]
 
+            # **1️⃣ Controllo se il pasto è vuoto**
             if not pasto_data['ricette']:
+
                 # **2️⃣ Cerca una ricetta compatibile**
                 ricetta = trova_ricetta_compatibile_service(user_id, macronutrienti_rimanenti[giorno])
 
                 if ricetta:
-                    aggiungi_ricetta_al_menu(menu.menu, giorno, pasto, ricetta['id'], user_id)
-
+                    aggiungi_ricetta_al_menu(menu_da_completare, giorno, pasto, ricetta['id'], user_id)
 
     for giorno in giorni:
         for pasto in pasti:
             if macronutrienti_rimanenti[giorno]['kcal'] > 0:
+                # **2️⃣ Cerca una ricetta compatibile**
                 ricetta = trova_ricetta_compatibile_service(user_id, macronutrienti_rimanenti[giorno])
 
                 if ricetta:
-                    aggiungi_ricetta_al_menu(menu.menu, giorno, pasto, ricetta['id'], user_id)
+                    aggiungi_ricetta_al_menu(menu_da_completare, giorno, pasto, ricetta['id'], user_id)
 
-    update_menu_corrente_service(menu.menu, week_id, user_id)
+    update_menu_corrente_service(menu_da_completare, week_id, user_id)
 
 
 def trova_ricetta_compatibile_service(user_id: int, macro_rimanenti):
