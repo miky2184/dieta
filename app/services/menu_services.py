@@ -1008,7 +1008,7 @@ def completa_menu_service(week_id: int, user_id: int):
 
 
 def trova_ricetta_compatibile_service(user_id: int, macro_rimanenti):
-    ricette = get_ricette_service(user_id)
+    ricette = get_ricette_service(user_id, stagionalita=True, attive=True, complemento='no')
 
     # Filtro per kcal e 2 su 3 macronutrienti compatibili
     percentuali = [1.0, 1.3, 1.2, 1.1, 0.9, 0.8, 0.5]
