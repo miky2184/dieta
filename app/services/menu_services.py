@@ -71,7 +71,7 @@ def genera_menu_utente_service(user_id) -> None:
 
     ultima_settimana = query.first()
 
-    print_query(query)
+    #print_query(query)
 
     periodi = []
     oggi = datetime.now().date()
@@ -121,7 +121,7 @@ def genera_e_salva_menu(user_id, period, macronutrienti: Utente) -> None:
 
 def verifica_e_seleziona(settimana, giorno, pasto, tipo, ripetibile, min_ricette, controllo_macro, ricette, user_id) -> None:
     """
-    Verifica se un pasto specifico ha il numero minimo di ricette richiesto e, se necessario, ne aggiunge altre.
+    Verifica se un pasto specifico ha il numero minimo di ricette richiesto.
 
     Args:
         settimana (dict): La struttura del menu settimanale.
@@ -983,29 +983,23 @@ def completa_menu_service(week_id: int, user_id: int):
     macronutrienti_rimanenti = calcola_macronutrienti_rimanenti_service(menu_da_completare)
 
     giorni = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica']
-    pasti = ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena', 'spuntino_sera']
+
+    ricette = get_ricette_service(user_id, stagionalita=True, attive=True, complemento='no')
 
     for giorno in giorni:
-        for pasto in pasti:
+        for pasto in pasti_config:
             pasto_data = menu_da_completare['day'][giorno]['pasto'][pasto]
 
             # **1️⃣ Controllo se il pasto è vuoto**
             if not pasto_data['ricette']:
-
                 # **2️⃣ Cerca una ricetta compatibile**
-                ricetta = trova_ricetta_compatibile_service(user_id, macronutrienti_rimanenti[giorno])
-
-                if ricetta:
-                    aggiungi_ricetta_al_menu(menu_da_completare, giorno, pasto, ricetta['id'], user_id)
+                verifica_e_seleziona(menu_da_completare, giorno, pasto['pasto'], pasto['tipo'], pasto['ripetibile'], pasto['min_ricette'], True, ricette, user_id)
 
     for giorno in giorni:
-        for pasto in pasti:
+        for pasto in pasti_config:
             if macronutrienti_rimanenti[giorno]['kcal'] > 0:
                 # **2️⃣ Cerca una ricetta compatibile**
-                ricetta = trova_ricetta_compatibile_service(user_id, macronutrienti_rimanenti[giorno])
-
-                if ricetta:
-                    aggiungi_ricetta_al_menu(menu_da_completare, giorno, pasto, ricetta['id'], user_id)
+                verifica_e_seleziona(menu_da_completare, giorno, pasto['pasto'], pasto['tipo'], pasto['ripetibile'], pasto['min_ricette'], True, ricette, user_id)
 
     update_menu_corrente_service(menu_da_completare, week_id, user_id)
 
@@ -1018,13 +1012,13 @@ def trova_ricetta_compatibile_service(user_id: int, macro_rimanenti):
     for ricetta in ricette:
         for perc in percentuali:
             kcal_ok = ricetta['kcal'] * perc <= macro_rimanenti['kcal']
-            macro_ok = sum([
-                ricetta['carboidrati'] * perc <= macro_rimanenti['carboidrati'],
-                ricetta['proteine'] * perc <= macro_rimanenti['proteine'],
-                ricetta['grassi'] * perc <= macro_rimanenti['grassi']
-            ]) >= 2
+            #macro_ok = sum([
+            #    ricetta['carboidrati'] * perc <= macro_rimanenti['carboidrati'],
+            #    ricetta['proteine'] * perc <= macro_rimanenti['proteine'],
+            #    ricetta['grassi'] * perc <= macro_rimanenti['grassi']
+            #]) >= 2
 
-            if kcal_ok and macro_ok:
+            if kcal_ok:# and macro_ok:
                 return {
                     'id': ricetta['id'],
                     'nome_ricetta': ricetta['nome_ricetta'],

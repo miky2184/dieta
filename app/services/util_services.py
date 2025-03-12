@@ -57,8 +57,9 @@ def is_valid_email(email):
         return False
 
 
-def print_query(in_query, level="DEBUG"):
-    printer(str(in_query.statement.compile(compile_kwargs={"literal_binds": True})), level)
+def print_query(in_query):
+    if os.getenv('LOG_LEVEL', 'DEBUG'):
+        printer(str(in_query.statement.compile(compile_kwargs={"literal_binds": True})), 'DEBUG')
 
 
 def calcola_macronutrienti_rimanenti_service(menu: json):
