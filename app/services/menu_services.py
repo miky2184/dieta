@@ -988,7 +988,7 @@ def completa_menu_service(week_id: int, user_id: int):
 
     for giorno in giorni:
         for pasto in pasti_config:
-            pasto_data = menu_da_completare['day'][giorno]['pasto'][pasto]
+            pasto_data = menu_da_completare['day'][giorno]['pasto'][pasto['pasto']]
 
             # **1️⃣ Controllo se il pasto è vuoto**
             if not pasto_data['ricette']:
