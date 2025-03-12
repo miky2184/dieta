@@ -38,15 +38,15 @@ LIMITI_CONSUMO = {
 }
 
 pasti_config = [
-    {'pasto': 'colazione', 'tipo': 'colazione', 'ripetibile': True, 'min_ricette': 1},
-    {'pasto': 'colazione', 'tipo': 'colazione_sec', 'ripetibile': True, 'min_ricette': 1},
-    {'pasto': 'spuntino_mattina', 'tipo': 'spuntino', 'ripetibile': True, 'min_ricette': 1},
-    {'pasto': 'spuntino_pomeriggio', 'tipo': 'spuntino', 'ripetibile': True, 'min_ricette': 1},
-    {'pasto': 'spuntino_sera', 'tipo': 'spuntino', 'ripetibile': True, 'min_ricette': 1},
-    {'pasto': 'pranzo', 'tipo': 'principale', 'ripetibile': False, 'min_ricette': 1},
-    {'pasto': 'cena', 'tipo': 'principale', 'ripetibile': False, 'min_ricette': 1},
-    {'pasto': 'pranzo', 'tipo': 'contorno', 'ripetibile': True, 'min_ricette': 1},
-    {'pasto': 'cena', 'tipo': 'contorno', 'ripetibile': True, 'min_ricette': 1},
+    {'pasto': 'pranzo', 'tipo': 'principale', 'ripetibile': False, 'min_ricette': 1, 'max_percentuale': 1},
+    {'pasto': 'cena', 'tipo': 'principale', 'ripetibile': False, 'min_ricette': 1, 'max_percentuale': 1},
+    {'pasto': 'colazione', 'tipo': 'colazione', 'ripetibile': True, 'min_ricette': 1, 'max_percentuale': 1},
+    {'pasto': 'colazione', 'tipo': 'colazione_sec', 'ripetibile': True, 'min_ricette': 1, 'max_percentuale': 1},
+    {'pasto': 'spuntino_mattina', 'tipo': 'spuntino', 'ripetibile': True, 'min_ricette': 1, 'max_percentuale': 1.5},
+    {'pasto': 'spuntino_pomeriggio', 'tipo': 'spuntino', 'ripetibile': True, 'min_ricette': 1, 'max_percentuale': 1.5},
+    {'pasto': 'spuntino_sera', 'tipo': 'spuntino', 'ripetibile': True, 'min_ricette': 1, 'max_percentuale': 1.5},
+    {'pasto': 'pranzo', 'tipo': 'contorno', 'ripetibile': True, 'min_ricette': 1, 'max_percentuale': 1.5},
+    {'pasto': 'cena', 'tipo': 'contorno', 'ripetibile': True, 'min_ricette': 1, 'max_percentuale': 1.5},
 ]
 
 def genera_menu_utente_service(user_id) -> None:
@@ -120,7 +120,7 @@ def genera_e_salva_menu(user_id, period, macronutrienti: Utente) -> None:
         salva_menu_service(settimana, user_id, period=period)
 
 
-def verifica_e_seleziona(settimana, giorno, pasto, tipo, ripetibile, min_ricette, controllo_macro, ricette, user_id) -> None:
+def verifica_e_seleziona(settimana, giorno, pasto, tipo, ripetibile, min_ricette, controllo_macro, ricette, max_percentuale) -> None:
     """
     Verifica se un pasto specifico ha il numero minimo di ricette richiesto.
 
@@ -141,7 +141,7 @@ def verifica_e_seleziona(settimana, giorno, pasto, tipo, ripetibile, min_ricette
     p = settimana['day'][giorno]['pasto']
     if numero_ricette(p, pasto, tipo, ricette) < min_ricette:
         for _ in range(min_ricette - numero_ricette(p, pasto, tipo, ricette)):
-            scegli_pietanza(settimana, giorno, pasto, tipo, ripetibile, controllo_macro, ricette, user_id)
+            scegli_pietanza(settimana, giorno, pasto, tipo, ripetibile, controllo_macro, ricette, max_percentuale)
 
 
 def genera_menu(settimana, controllo_macro_settimanale, ricette, user_id) -> None:
@@ -160,11 +160,11 @@ def genera_menu(settimana, controllo_macro_settimanale, ricette, user_id) -> Non
 
     for giorno in settimana['day']:
         for config in pasti_config:
-            verifica_e_seleziona(settimana, giorno, config['pasto'], config['tipo'], config['ripetibile'], config['min_ricette'], controllo_macro_settimanale, ricette, user_id)
+            verifica_e_seleziona(settimana, giorno, config['pasto'], config['tipo'], config['ripetibile'], config['min_ricette'], controllo_macro_settimanale, ricette, config['max_percentuale'])
 
 
 def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, ripetibile: bool,
-                    controllo_macro_settimanale: bool, ricette, user_id, ids_specifici=None, skip_check=False) -> bool:
+                    controllo_macro_settimanale: bool, ricette, max_percentuale, ids_specifici=None, skip_check=False) -> bool:
     """
     Seleziona una pietanza dalla lista di ricette pre-caricate in memoria e la aggiunge al pasto corrispondente.
 
@@ -197,10 +197,10 @@ def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, rip
     ]
 
     # Chiama select_food per selezionare la pietanza
-    return select_food(ricette_modificate, settimana, giorno_settimana, pasto, ripetibile, controllo_macro_settimanale, skip_check, user_id, ids_specifici)
+    return select_food(ricette_modificate, settimana, giorno_settimana, pasto, ripetibile, controllo_macro_settimanale, skip_check, max_percentuale, ids_specifici)
 
 
-def select_food(ricette, settimana, giorno_settimana, pasto, ripetibile, controllo_macro_settimanale, skip_check, user_id, ids_specifici=None) -> bool:
+def select_food(ricette, settimana, giorno_settimana, pasto, ripetibile, controllo_macro_settimanale, skip_check, max_percentuale, ids_specifici=None) -> bool:
     """
     Seleziona una ricetta ottimale in base ai criteri nutrizionali, ai limiti settimanali e alle preferenze dell'utente.
 
@@ -233,7 +233,7 @@ def select_food(ricette, settimana, giorno_settimana, pasto, ripetibile, control
     random.shuffle(ricette_filtrate)
 
     for ricetta in ricette_filtrate:
-        percentuale_effettiva = calcola_percentuale_effettiva(ricetta, settimana['day'][giorno_settimana])
+        percentuale_effettiva = calcola_percentuale_effettiva(ricetta, settimana['day'][giorno_settimana], max_percentuale)
         if percentuale_effettiva >= 0.5:
             if skip_check or controlla_limiti_macronutrienti(ricetta, settimana['day'][giorno_settimana], settimana['weekly'], controllo_macro_settimanale, percentuale_effettiva):
                 if check_limiti_consumo_ricetta(ricetta, settimana['consumi'], percentuale_effettiva):
@@ -244,7 +244,7 @@ def select_food(ricette, settimana, giorno_settimana, pasto, ripetibile, control
     return found
 
 
-def calcola_percentuale_effettiva(ricetta, day) -> float:
+def calcola_percentuale_effettiva(ricetta, day, max_percentuale) -> float:
     """
     Calcola la percentuale massima utilizzabile di una ricetta,
     rispettando i limiti giornalieri dei macronutrienti e delle calorie.
@@ -258,18 +258,21 @@ def calcola_percentuale_effettiva(ricetta, day) -> float:
     """
     try:
         # Calcola le percentuali possibili per ciascun macronutriente
-        percentuali_possibili = [
-            day[macro] / ricetta[macro]
-            for macro in ['kcal', 'carboidrati', 'proteine', 'grassi']
-            if ricetta.get(macro, 0) > 0
-        ]
+        if all(day.get(macro, 0) >= ricetta.get(macro, 0) > 0 for macro in
+               ['kcal', 'carboidrati', 'proteine', 'grassi']):
+            percentuali_possibili = [
+                day[macro] / ricetta[macro]
+                for macro in ['kcal', 'carboidrati', 'proteine', 'grassi']
+            ]
+        else:
+            percentuali_possibili = []
 
         # Se nessuna percentuale è calcolabile, restituisci 0
         if not percentuali_possibili:
             return 0
 
         # Restituisci la percentuale effettiva limitata al range [0.5, 1.0]
-        return round(max(0.5, min(1.0, min(percentuali_possibili))),1)
+        return round(max(0.5, min(max_percentuale, min(percentuali_possibili))),1)
 
     except KeyError as e:
         raise ValueError(f"Chiave mancante nei dati: {e}")
@@ -950,13 +953,13 @@ def completa_menu_service(week_id: int, user_id: int):
             # **1️⃣ Controllo se il pasto è vuoto**
             if not pasto_data['ricette']:
                 # **2️⃣ Cerca una ricetta compatibile**
-                verifica_e_seleziona(menu_da_completare, giorno, pasto['pasto'], pasto['tipo'], pasto['ripetibile'], pasto['min_ricette'], True, ricette, user_id)
+                verifica_e_seleziona(menu_da_completare, giorno, pasto['pasto'], pasto['tipo'], pasto['ripetibile'], pasto['min_ricette'], True, ricette, pasto['max_percentuale'])
 
     for giorno in giorni:
         for pasto in pasti_config:
             if macronutrienti_rimanenti[giorno]['kcal'] > 0:
                 # **2️⃣ Cerca una ricetta compatibile**
-                verifica_e_seleziona(menu_da_completare, giorno, pasto['pasto'], pasto['tipo'], pasto['ripetibile'], pasto['min_ricette'], True, ricette, user_id)
+                verifica_e_seleziona(menu_da_completare, giorno, pasto['pasto'], pasto['tipo'], pasto['ripetibile'], pasto['min_ricette'], True, ricette, pasto['max_percentuale'])
     update_menu_corrente_service(menu_da_completare, week_id, user_id)
 
 
