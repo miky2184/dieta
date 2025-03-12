@@ -43,8 +43,6 @@ def printer(text, level="DEBUG", include_timestamp=False, output=sys.stdout):
         else:
             text = f"{level.upper()}: {text}"
 
-        print(text, file=output)
-
 
 def is_valid_email(email):
     # Definizione dell'espressione regolare per validare l'email

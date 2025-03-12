@@ -186,7 +186,7 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
         if row.contains_uova:
             info.append("🥚")
         if row.contains_legumi:
-            info.append("🫛")
+            info.append("🫘")
         if row.contains_cereali:
             info.append("🌾")
         if row.contains_pane:

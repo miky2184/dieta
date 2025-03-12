@@ -16,10 +16,8 @@ from app.models import db
 from app.models.Utente import Utente
 #from app.ricette_route import invalidate_cache
 from app.services.common_services import get_settimane_salvate_service
-from app.services.menu_services import save_weight, stampa_lista_della_spesa, elimina_ingredienti, salva_utente_dieta, \
-    get_peso_hist, recupera_ricette_per_alimento, aggiorna_limiti_gruppi, calcola_quantita
+from app.services.menu_services import save_weight, stampa_lista_della_spesa, elimina_ingredienti, salva_utente_dieta, get_peso_hist, recupera_ricette_per_alimento, aggiorna_limiti_gruppi, calcola_quantita, update_menu_corrente_service
 from app.services.modifica_pasti_services import get_menu_service
-from app.services.modifica_pasti_services import update_menu_corrente_service
 from app.services.util_services import calcola_macronutrienti_rimanenti_service
 
 views = Blueprint('views', __name__)

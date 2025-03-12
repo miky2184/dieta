@@ -12,11 +12,11 @@ class MenuSettimanale(db.Model):
         {'schema': 'dieta'}
     )
 
-    id = db.Column(db.Integer, nullable=False)
-    data_inizio = db.Column(db.Date, nullable=False, primary_key=True)
-    data_fine = db.Column(db.Date, nullable=False, primary_key=True)
+    id = db.Column(db.Integer, nullable=False, primary_key=True)
+    data_inizio = db.Column(db.Date, nullable=False)
+    data_fine = db.Column(db.Date, nullable=False)
     menu = db.Column(JSON, nullable=False)
-    user_id = db.Column(db.BigInteger, ForeignKey('dieta.utente.id', ondelete='CASCADE'), primary_key=True)
+    user_id = db.Column(db.BigInteger, ForeignKey('dieta.utente.id', ondelete='CASCADE'), nullable=False)
 
 
     @classmethod
@@ -35,3 +35,16 @@ class MenuSettimanale(db.Model):
             cls.id == menu_id,
             cls.user_id == user_id
         ).first()
+
+    @classmethod
+    def get_by_id(cls, menu_id):
+        """
+        Recupera un record di MenuSettimanale dal database usando il suo ID.
+
+        Args:
+            menu_id (int): ID del Menu.
+
+        Returns:
+            MenuSettimanale: Istanza del modello MenuSettimanale se trovata, altrimenti None.
+        """
+        return cls.query.filter(cls.id == menu_id).first()

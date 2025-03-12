@@ -1,3 +1,5 @@
+import json
+
 from sqlalchemy import and_
 
 from app.models import db
@@ -43,10 +45,3 @@ def get_menu_service(user_id: int, period: dict = None, menu_id: int = None):
         return {'menu': result.menu, 'data_fine': result.data_fine}
 
     return None  # Nessun risultato trovato
-
-
-def update_menu_corrente_service(menu, week_id, user_id):
-    menu_update = MenuSettimanale.get_by_id_and_user(week_id, user_id)
-    if menu_update:
-        menu_update.menu = menu
-        db.session.commit()

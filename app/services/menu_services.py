@@ -6,6 +6,7 @@ from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta
 from decimal import Decimal
+import json
 
 from sqlalchemy import and_, func, asc, desc
 from sqlalchemy.orm import aliased
@@ -19,9 +20,9 @@ from app.models.VAlimento import VAlimento
 from app.models.VIngredientiRicetta import VIngredientiRicetta
 from app.models.VRicetta import VRicetta
 from app.services.db_services import get_sequence_value
-from app.services.modifica_pasti_services import get_menu_service, update_menu_corrente_service
+from app.services.modifica_pasti_services import get_menu_service
 from app.services.ricette_services import get_ricette_service
-from app.services.util_services import printer, print_query, calcola_macronutrienti_rimanenti_service
+from app.services.util_services import printer, calcola_macronutrienti_rimanenti_service
 
 MAX_RETRY = int(os.getenv('MAX_RETRY'))
 
@@ -114,9 +115,9 @@ def genera_e_salva_menu(user_id, period, macronutrienti: Utente) -> None:
         genera_menu(settimana, False, ricette_menu, user_id)
 
         # Ordina la settimana per kcal rimanenti
-        settimana_ordinata = ordina_settimana_per_kcal(settimana)
-        genera_menu(settimana_ordinata, True, ricette_menu, user_id)
-        salva_menu(settimana_ordinata, user_id, period=period)
+        #settimana_ordinata = ordina_settimana_per_kcal(settimana)
+        genera_menu(settimana, True, ricette_menu, user_id)
+        salva_menu_service(settimana, user_id, period=period)
 
 
 def verifica_e_seleziona(settimana, giorno, pasto, tipo, ripetibile, min_ricette, controllo_macro, ricette, user_id) -> None:
@@ -645,51 +646,6 @@ def stampa_lista_della_spesa(user_id: int, menu: dict) -> list[dict]:
     return lista_della_spesa
 
 
-def salva_menu(menu, user_id, period: dict = None) -> None:
-    """
-       Salva un nuovo menu settimanale per un utente nel database.
-
-       Args:
-           menu (dict): La struttura del menu settimanale da salvare.
-           user_id (int): ID dell'utente per il quale salvare il menu.
-           period (dict, opzionale): Un dizionario contenente le date di inizio e fine del periodo del menu.
-                                      Se non fornito, il periodo viene calcolato automaticamente in base all'ultimo menu salvato.
-
-       Returns:
-           None
-       """
-
-    if period and ('data_inizio' not in period or 'data_fine' not in period):
-        raise ValueError("Il dizionario 'period' deve contenere le chiavi 'data_inizio' e 'data_fine'.")
-
-    if not period:
-        last_menu = MenuSettimanale.query.filter_by(user_id=user_id).order_by(desc(MenuSettimanale.data_fine)).first()
-        if last_menu:
-            period = {
-                'data_inizio': last_menu.data_inizio + timedelta(days=7),
-                'data_fine': last_menu.data_fine + timedelta(days=7)
-            }
-        else:
-            today = datetime.now().date()
-            period = {
-                'data_inizio': today,
-                'data_fine': today + timedelta(days=6)
-            }
-
-
-    # Inserisce un nuovo menu per la prossima settimana
-    new_menu_settimanale = MenuSettimanale(
-        id=get_sequence_value('dieta.seq_menu_settimanale'),
-        data_inizio=period['data_inizio'],
-        data_fine=period['data_fine'],
-        menu=menu,
-        user_id=user_id
-    )
-
-    db.session.add(new_menu_settimanale)
-    db.session.commit()
-
-
 def save_weight(data, user_id):
 
     utente = Utente.get_by_id(user_id)
@@ -707,12 +663,6 @@ def save_weight(data, user_id):
 
         peso_ideale_successivo = RegistroPeso.query.order_by(asc(RegistroPeso.data_rilevazione)).filter(
             RegistroPeso.data_rilevazione >= data['date'], RegistroPeso.user_id == user_id).first()
-
-        print(registro_peso.peso_ideale)
-
-        print(peso_ideale_successivo.peso_ideale)
-
-        print((registro_peso.data_rilevazione - datetime.strptime(data['date'], '%Y-%m-%d').date()).days)
 
         peso_ideale_calcolato = registro_peso.peso_ideale - (((registro_peso.peso_ideale - peso_ideale_successivo.peso_ideale) / 7) * (registro_peso.data_rilevazione - datetime.strptime(data['date'], '%Y-%m-%d').date()).days )
 
@@ -1000,34 +950,68 @@ def completa_menu_service(week_id: int, user_id: int):
             if macronutrienti_rimanenti[giorno]['kcal'] > 0:
                 # **2️⃣ Cerca una ricetta compatibile**
                 verifica_e_seleziona(menu_da_completare, giorno, pasto['pasto'], pasto['tipo'], pasto['ripetibile'], pasto['min_ricette'], True, ricette, user_id)
-
     update_menu_corrente_service(menu_da_completare, week_id, user_id)
 
 
-def trova_ricetta_compatibile_service(user_id: int, macro_rimanenti):
-    ricette = get_ricette_service(user_id, stagionalita=True, attive=True, complemento='no')
+def update_menu_corrente_service(menu_da_salvare, week_id, user_id):
 
-    # Filtro per kcal e 2 su 3 macronutrienti compatibili
-    percentuali = [1.0, 1.3, 1.2, 1.1, 0.9, 0.8, 0.5]
-    for ricetta in ricette:
-        for perc in percentuali:
-            kcal_ok = ricetta['kcal'] * perc <= macro_rimanenti['kcal']
-            #macro_ok = sum([
-            #    ricetta['carboidrati'] * perc <= macro_rimanenti['carboidrati'],
-            #    ricetta['proteine'] * perc <= macro_rimanenti['proteine'],
-            #    ricetta['grassi'] * perc <= macro_rimanenti['grassi']
-            #]) >= 2
+    menu_da_aggiornare = MenuSettimanale.get_by_id(week_id)
 
-            if kcal_ok:# and macro_ok:
-                return {
-                    'id': ricetta['id'],
-                    'nome_ricetta': ricetta['nome_ricetta'],
-                    'qta': perc,
-                    'kcal': ricetta['kcal'] * perc,
-                    'carboidrati': ricetta['carboidrati'] * perc,
-                    'proteine': ricetta['proteine'] * perc,
-                    'grassi': ricetta['grassi'] * perc,
-                    'fibre': ricetta.get('fibre', 0) * perc
-                }
+    if not menu_da_aggiornare:
+        raise ValueError(f"Menu con ID {week_id} non trovato per l'utente {user_id}")
 
-    return None
+    if isinstance(menu_da_salvare, str):
+        try:
+            menu = json.loads(menu_da_salvare)  # Se è una stringa JSON, convertirla in un dizionario
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Errore nella conversione JSON: {e}")
+
+    menu_da_aggiornare.menu = None
+    db.session.flush()  # Forza un aggiornamento nel contesto di sessione
+    menu_da_aggiornare.menu = menu_da_salvare
+    db.session.commit()
+
+
+def salva_menu_service(menu, user_id, period: dict = None) -> None:
+    """
+       Salva un nuovo menu settimanale per un utente nel database.
+
+       Args:
+           menu (dict): La struttura del menu settimanale da salvare.
+           user_id (int): ID dell'utente per il quale salvare il menu.
+           period (dict, opzionale): Un dizionario contenente le date di inizio e fine del periodo del menu.
+                                      Se non fornito, il periodo viene calcolato automaticamente in base all'ultimo menu salvato.
+
+       Returns:
+           None
+       """
+
+    if period and ('data_inizio' not in period or 'data_fine' not in period):
+        raise ValueError("Il dizionario 'period' deve contenere le chiavi 'data_inizio' e 'data_fine'.")
+
+    if not period:
+        last_menu = MenuSettimanale.query.filter_by(user_id=user_id).order_by(desc(MenuSettimanale.data_fine)).first()
+        if last_menu:
+            period = {
+                'data_inizio': last_menu.data_inizio + timedelta(days=7),
+                'data_fine': last_menu.data_fine + timedelta(days=7)
+            }
+        else:
+            today = datetime.now().date()
+            period = {
+                'data_inizio': today,
+                'data_fine': today + timedelta(days=6)
+            }
+
+
+    # Inserisce un nuovo menu per la prossima settimana
+    new_menu_settimanale = MenuSettimanale(
+        id=get_sequence_value('dieta.seq_menu_settimanale'),
+        data_inizio=period['data_inizio'],
+        data_fine=period['data_fine'],
+        menu=menu,
+        user_id=user_id
+    )
+
+    db.session.add(new_menu_settimanale)
+    db.session.commit()
