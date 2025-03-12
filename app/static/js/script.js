@@ -753,7 +753,7 @@ function populateDietaForm(data) {
     document.querySelector('[name="sesso"]').value = data.sesso || '';
     document.querySelector('[name="eta"]').value = Math.round(data.eta) || '';
     document.querySelector('[name="altezza"]').value = Math.round(data.altezza) || '';
-    document.querySelector('[name="peso"]').value = Math.round(data.peso) || '';
+    document.querySelector('[name="peso"]').value = parseFloat(data.peso) || '';
     document.getElementById('tdee').value = data.tdee || '';
     document.getElementById('deficit_calorico').value = data.deficit_calorico || '';
     document.getElementById('bmi').value = Math.round(data.bmi * 100) / 100 || '';
@@ -766,6 +766,7 @@ function populateDietaForm(data) {
     document.getElementById('proteine_input').value = Math.round(data.proteine) || '';
     document.getElementById('grassi_input').value = Math.round(data.grassi) || '';
     document.getElementById('dieta').value = data.dieta || '';
+    document.getElementById('attivita_fisica').value = data.attivita_fisica || '';
 }
 
 function calcolaPesoIdeale(data) {
@@ -866,39 +867,46 @@ function calculateResults() {
         altezza: formData.get('altezza'),
         tdee: formData.get('tdee'),
         deficit: formData.get('deficit_calorico'),
-        dieta: formData.get('dieta')
+        dieta: formData.get('dieta'),
+        attivita_fisica: formData.get('attivita_fisica')
     };
 
     // Esegui i calcoli basati sui dati inseriti
     let bmi = (data.peso / Math.pow(data.altezza / 100, 2)).toFixed(1); // esempio di calcolo del BMI, con un'altezza fissa
 
-    idealWeight = calcolaPesoIdeale(data)
+    //idealWeight = calcolaPesoIdeale(data)
+
+    idealWeight = (21.5 * (data.altezza/100 * data.altezza/100)).toFixed(0)
 
     let harrisBenedict;
-    let mifflinStJeor;
+    //let mifflinStJeor;
 
     if (data.sesso === 'M') {
-        harrisBenedict = 66 + (13.7 * data.peso) + (5 * data.altezza) - (6.8 * data.eta);
-        mifflinStJeor = (9.99 * data.peso) + (6.25 * data.altezza) - (4.92 * data.eta) + 5;
+        harrisBenedict = 66.5 + (13.75 * idealWeight) + (5.003 * data.altezza) - (6.775 * data.eta);
+        //mifflinStJeor = (9.99 * data.peso) + (6.25 * data.altezza) - (4.92 * data.eta) + 5;
     } else if (data.sesso === 'F') {
-        harrisBenedict = 665 + (9.6 * data.peso) + (1.8 * data.altezza) - (4.7 * data.eta);
-        mifflinStJeor = (9.99 * data.peso) + (6.25 * data.altezza) - (4.92 * data.eta) - 161;
+        harrisBenedict = 655.1 + (9.563 * idealWeight) + (1.85 * data.altezza) - (4.676 * data.eta);
+        //mifflinStJeor = (9.99 * data.peso) + (6.25 * data.altezza) - (4.92 * data.eta) - 161;
     }
 
-    let metaBasaleValue = ((harrisBenedict + mifflinStJeor) / 2).toFixed(0);
+    //let metaBasaleValue = ((harrisBenedict + mifflinStJeor) / 2).toFixed(0);
+    let metaBasaleValue = harrisBenedict.toFixed(0);
 
     let metaDailyValue = (metaBasaleValue * data.tdee).toFixed(0);
 
-    let calorieGiornaliereValue = (Math.round(((metaDailyValue - (metaDailyValue * data.deficit / 100))) / 50 ) * 50).toFixed(0);
+    let calorieGiornaliereValue = metaDailyValue;
+
+    if (data.deficit > 0){
+        calorieGiornaliereValue = (Math.round(((metaDailyValue - (metaDailyValue * data.deficit / 100))) / 50 ) * 50).toFixed(0);
+    }
 
     var settimaneDietaValue = 0;
     var settimaneNecessarie = 0;
-    if (data.deficit > 0 ){
-        settimaneNecessarie = (((data.peso - idealWeight) * 7000) / ((metaDailyValue - calorieGiornaliereValue) * 7)).toFixed(0);
-    }
 
-    // Esempio di utilizzo:
-    settimaneDietaValue = settimaneNecessarie + ' (' +  addWeeksToDate(settimaneNecessarie) + ')';
+    if (data.deficit > 0){
+        settimaneNecessarie = (((data.peso - idealWeight) * 7000) / ((metaDailyValue - calorieGiornaliereValue) * 7)).toFixed(0);
+        settimaneDietaValue = settimaneNecessarie + ' (' +  addWeeksToDate(settimaneNecessarie) + ')';
+    }
 
     let carbsRatio, proteinRatio, fatRatio;
 
@@ -940,9 +948,13 @@ function calculateResults() {
             break;
     }
 
-    var carboidratiValue = (calorieGiornaliereValue * carbsRatio / 4).toFixed(0);
-    var proteineValue = (calorieGiornaliereValue * proteinRatio / 4).toFixed(0);;
-    var grassiValue = (calorieGiornaliereValue * fatRatio / 9).toFixed(0);;
+    //var carboidratiValue = (calorieGiornaliereValue * carbsRatio / 4).toFixed(0);
+    //var proteineValue = (calorieGiornaliereValue * proteinRatio / 4).toFixed(0);
+    //var grassiValue = (calorieGiornaliereValue * fatRatio / 9).toFixed(0);
+
+    var proteineValue = (idealWeight * data.attivita_fisica).toFixed(0);
+    var grassiValue = (idealWeight * 1).toFixed(0);
+    var carboidratiValue = ((calorieGiornaliereValue - ((proteineValue * 4) + (grassiValue * 9))) / 4).toFixed(0);
 
     if (isNaN(bmi)) {
         bmi = 0; // Imposta un valore di default o gestisci l'errore come necessario
@@ -2171,7 +2183,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    document.getElementById('override_macros_btn').addEventListener('click', function () {
+    /* document.getElementById('override_macros_btn').addEventListener('click', function () {
         // Rendi i campi modificabili
         const carbsInput = document.getElementById('carboidrati_input');
         const proteinInput = document.getElementById('proteine_input');
@@ -2193,7 +2205,7 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.remove('btn-danger');
             this.classList.add('btn-secondary');
         }
-    });
+    }); */
 
     // Invoca il fetch durante il caricamento della pagina
     fetchGroupsAndPopulate();

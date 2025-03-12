@@ -755,7 +755,7 @@ def elimina_ingredienti(ingredient_id: int, recipe_id: int, user_id: int):
 
 def salva_utente_dieta(utente_id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
                        meta_basale, meta_giornaliero, calorie_giornaliere, settimane_dieta, carboidrati,
-                       proteine, grassi, dieta):
+                       proteine, grassi, dieta, attivita_fisica):
 
     utente = Utente.get_by_id(utente_id)
 
@@ -777,6 +777,7 @@ def salva_utente_dieta(utente_id, nome, cognome, sesso, eta, altezza, peso, tdee
     utente.proteine = proteine
     utente.grassi = grassi
     utente.dieta = dieta
+    utente.attivita_fisica = attivita_fisica
 
     db.session.add(utente)
 
@@ -791,26 +792,33 @@ def salva_utente_dieta(utente_id, nome, cognome, sesso, eta, altezza, peso, tdee
 
     # calcolo la data di fine dieta
     match = re.match(r"^(.*?)\s*\(", settimane_dieta)
-    oggi = datetime.now()
+    oggi = datetime.now().date()
     giorni_indietro = (oggi.weekday() - 0) % 7
     lunedi_corrente = oggi - timedelta(days=giorni_indietro)
-    settimane = int(match.group(1))
-    data_fine_dieta = lunedi_corrente + (timedelta(days=7*int(match.group(1))))
+
+    settimane = 0
+    if match:
+        settimane = int(match.group(1))
+
+    data_fine_dieta = lunedi_corrente + (timedelta(days=7*settimane))
 
     # calcolo la differenza di peso per ogni settimana
     peso_iniziale = utente.peso  # o il peso registrato più recentemente
     perdita_peso_totale = peso_iniziale - peso_ideale
-    perdita_peso_settimanale = perdita_peso_totale / settimane
+
+    perdita_peso_settimanale = perdita_peso_totale
+    if settimane > 0:
+        perdita_peso_settimanale = perdita_peso_totale / settimane
 
     for settimana in range(0, settimane):
         data_intermedia = lunedi_corrente + timedelta(days=7 * settimana)
         peso_ideale_intermedio = peso_iniziale - perdita_peso_settimanale * settimana
-        registro_intermedio = RegistroPeso.query.filter_by(user_id=utente_id, data_rilevazione=data_intermedia.date()).first()
+        registro_intermedio = RegistroPeso.query.filter_by(user_id=utente_id, data_rilevazione=data_intermedia).first()
         if not registro_intermedio:
             # Inserisci il punto intermedio nel database
             registro_intermedio = RegistroPeso(
                 user_id=utente_id,
-                data_rilevazione=data_intermedia.date(),
+                data_rilevazione=data_intermedia,
                 peso=peso_iniziale if settimana == 0 else None,
                 peso_ideale=round(peso_ideale_intermedio, 1)
             )
@@ -822,7 +830,6 @@ def salva_utente_dieta(utente_id, nome, cognome, sesso, eta, altezza, peso, tdee
 
     # cerco se esiste già un record con la data di fine dieta
     new_peso = RegistroPeso.query.filter_by(user_id=utente_id, data_rilevazione=data_fine_dieta).first()
-
     # se c'è aggiorno solo il peso ideale
     if new_peso:
         new_peso.peso_ideale = peso_ideale

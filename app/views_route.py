@@ -180,19 +180,23 @@ def salva_dati():
         proteine = float(request.form['proteine'])
         grassi = float(request.form['grassi'])
         dieta = request.form['dieta']
+        attivita_fisica = request.form['attivita_fisica']
 
         salva_utente_dieta(user_id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
                            meta_basale, meta_giornaliero, calorie_giornaliere, settimane_dieta, carboidrati,
-                           proteine, grassi, dieta)
+                           proteine, grassi, dieta, attivita_fisica)
 
         #current_app.cache.delete(f'get_data_utente_{user_id}')
         #current_app.cache.delete(f'get_peso_data_{user_id}')
         return redirect(url_for('views.dashboard'))
     except SQLAlchemyError as db_err:
+        print({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)})
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
     except KeyError as key_err:
+        print({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'})
         return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
+        print({'status': 'error', 'message': 'Errore di database.', 'details': str(e)})
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 

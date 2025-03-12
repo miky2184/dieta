@@ -18,7 +18,7 @@ class Utente(db.Model):
     eta = db.Column(db.Integer, nullable=False)
     altezza = db.Column(db.Numeric(5, 2), nullable=False)
     peso = db.Column(db.Numeric(5, 2), nullable=False)
-    tdee = db.Column(db.Numeric(4, 3), nullable=True)
+    tdee = db.Column(db.Numeric(4, 2), nullable=True)
     deficit_calorico = db.Column(db.Numeric(5, 2), nullable=True)
     bmi = db.Column(db.Numeric(5, 2), nullable=True)
     peso_ideale = db.Column(db.Numeric(5, 2), nullable=True)
@@ -31,6 +31,7 @@ class Utente(db.Model):
     grassi = db.Column(db.Integer, nullable=True)
     email = db.Column(db.String, nullable=False)
     dieta = db.Column(db.String, nullable=True)
+    attivita_fisica = db.Column(db.Numeric(4, 2), nullable=True)
 
     menu_settimanale = db.relationship('MenuSettimanale', backref='utente', cascade='all, delete-orphan')
     registro_peso = db.relationship('RegistroPeso', backref='utente', cascade='all, delete-orphan')
