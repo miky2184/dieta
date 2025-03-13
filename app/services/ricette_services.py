@@ -94,7 +94,7 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
             func.bool_or(va.id_gruppo == 4).label("is_carne_rossa"),
             func.bool_or(va.id_gruppo == 2).label("contains_fish"),
             func.bool_and(va.id_gruppo == 6).label("is_frutta"),
-            func.bool_and(va.id_gruppo == 7).label("is_verdura"),
+            func.bool_or(va.id_gruppo == 7).label("is_verdura"),
             func.bool_or(va.id_gruppo == 3).label("is_carne_bianca"),
             func.bool_or(va.id_gruppo == 1).label("contains_uova"),
             func.bool_or(va.id_gruppo == 5).label("contains_legumi"),
