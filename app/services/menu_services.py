@@ -38,15 +38,17 @@ LIMITI_CONSUMO = {
 }
 
 pasti_config = [
-    {'pasto': 'pranzo', 'tipo': 'principale', 'ripetibile': False, 'min_ricette': 1, 'max_percentuale': 1},
-    {'pasto': 'cena', 'tipo': 'principale', 'ripetibile': False, 'min_ricette': 1, 'max_percentuale': 1},
-    {'pasto': 'colazione', 'tipo': 'colazione', 'ripetibile': True, 'min_ricette': 1, 'max_percentuale': 1},
-    {'pasto': 'colazione', 'tipo': 'colazione_sec', 'ripetibile': True, 'min_ricette': 1, 'max_percentuale': 1},
-    {'pasto': 'spuntino_mattina', 'tipo': 'spuntino', 'ripetibile': True, 'min_ricette': 1, 'max_percentuale': 1.5},
-    {'pasto': 'spuntino_pomeriggio', 'tipo': 'spuntino', 'ripetibile': True, 'min_ricette': 1, 'max_percentuale': 1.5},
-    {'pasto': 'spuntino_sera', 'tipo': 'spuntino', 'ripetibile': True, 'min_ricette': 1, 'max_percentuale': 1.5},
-    {'pasto': 'pranzo', 'tipo': 'contorno', 'ripetibile': True, 'min_ricette': 1, 'max_percentuale': 1.5},
-    {'pasto': 'cena', 'tipo': 'contorno', 'ripetibile': True, 'min_ricette': 1, 'max_percentuale': 1.5},
+    {'pasto': 'pranzo', 'tipo': 'principale', 'complemento': False,'ripetibile': False, 'min_ricette': 1, 'max_percentuale': 1},
+    {'pasto': 'cena', 'tipo': 'principale', 'complemento': False,'ripetibile': False, 'min_ricette': 1, 'max_percentuale': 1},
+    {'pasto': 'colazione', 'tipo': 'colazione', 'complemento': False,'ripetibile': True, 'min_ricette': 1, 'max_percentuale': 1},
+    {'pasto': 'colazione', 'tipo': 'colazione_sec', 'complemento': False,'ripetibile': True, 'min_ricette': 1, 'max_percentuale': 1},
+    {'pasto': 'pranzo', 'tipo': 'contorno', 'complemento': False,'ripetibile': True, 'min_ricette': 1, 'max_percentuale': 1.5},
+    {'pasto': 'cena', 'tipo': 'contorno', 'complemento': False, 'ripetibile': True, 'min_ricette': 1, 'max_percentuale': 1.5},
+    {'pasto': 'spuntino_mattina', 'tipo': 'spuntino', 'complemento': False, 'ripetibile': True, 'min_ricette': 1, 'max_percentuale': 1.5},
+    {'pasto': 'spuntino_pomeriggio', 'tipo': 'spuntino', 'complemento': False, 'ripetibile': True, 'min_ricette': 1, 'max_percentuale': 1.5},
+    {'pasto': 'spuntino_sera', 'tipo': 'spuntino', 'complemento': False, 'ripetibile': True, 'min_ricette': 1, 'max_percentuale': 1},
+    {'pasto': 'pranzo', 'tipo': 'contorno', 'complemento': True, 'ripetibile': True, 'min_ricette': 2, 'max_percentuale': 3},
+    {'pasto': 'cena', 'tipo': 'contorno', 'complemento': True, 'ripetibile': True, 'min_ricette': 2, 'max_percentuale': 3},
 ]
 
 def genera_menu_utente_service(user_id) -> None:
@@ -109,7 +111,7 @@ def genera_e_salva_menu(user_id, period, macronutrienti: Utente) -> None:
     Returns:
         None
     """
-    ricette_menu = get_ricette_service(user_id, complemento='no', stagionalita=True, data_stagionalita=period["data_fine"])
+    ricette_menu = get_ricette_service(user_id, stagionalita=True, data_stagionalita=period["data_fine"])
     if not get_menu_service(user_id, period=period):
         settimana = deepcopy(get_settimana(macronutrienti))
         genera_menu(settimana, False, ricette_menu, user_id)
@@ -120,7 +122,7 @@ def genera_e_salva_menu(user_id, period, macronutrienti: Utente) -> None:
         salva_menu_service(settimana, user_id, period=period)
 
 
-def verifica_e_seleziona(settimana, giorno, pasto, tipo, ripetibile, min_ricette, controllo_macro, ricette, max_percentuale) -> None:
+def verifica_e_seleziona(settimana, giorno, pasto, tipo, ripetibile, min_ricette, controllo_macro, ricette, max_percentuale, pane: bool = False) -> None:
     """
     Verifica se un pasto specifico ha il numero minimo di ricette richiesto.
 
@@ -141,7 +143,7 @@ def verifica_e_seleziona(settimana, giorno, pasto, tipo, ripetibile, min_ricette
     p = settimana['day'][giorno]['pasto']
     if numero_ricette(p, pasto, tipo, ricette) < min_ricette:
         for _ in range(min_ricette - numero_ricette(p, pasto, tipo, ricette)):
-            scegli_pietanza(settimana, giorno, pasto, tipo, ripetibile, controllo_macro, ricette, max_percentuale)
+            scegli_pietanza(settimana, giorno, pasto, tipo, ripetibile, controllo_macro, ricette, max_percentuale, pane)
 
 
 def genera_menu(settimana, controllo_macro_settimanale, ricette, user_id) -> None:
@@ -160,11 +162,11 @@ def genera_menu(settimana, controllo_macro_settimanale, ricette, user_id) -> Non
 
     for giorno in settimana['day']:
         for config in pasti_config:
-            verifica_e_seleziona(settimana, giorno, config['pasto'], config['tipo'], config['ripetibile'], config['min_ricette'], controllo_macro_settimanale, ricette, config['max_percentuale'])
+            verifica_e_seleziona(settimana, giorno, config['pasto'], config['tipo'], config['ripetibile'], config['min_ricette'], controllo_macro_settimanale, ricette, config['max_percentuale'], config['complemento'])
 
 
 def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, ripetibile: bool,
-                    controllo_macro_settimanale: bool, ricette, max_percentuale, ids_specifici=None, skip_check=False) -> bool:
+                    controllo_macro_settimanale: bool, ricette, max_percentuale, pane: bool = False, ids_specifici=None, skip_check=False) -> bool:
     """
     Seleziona una pietanza dalla lista di ricette pre-caricate in memoria e la aggiunge al pasto corrispondente.
 
@@ -192,15 +194,15 @@ def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, rip
     # Prepara le ricette modificate
     ricette_modificate = [
         {k: r[k] for k in ['id', 'nome_ricetta', 'kcal', 'carboidrati', 'proteine', 'grassi',
-                           'colazione', 'spuntino', 'principale', 'contorno', 'ricetta', 'ingredienti', 'info', 'qta']}
+                           'colazione', 'spuntino', 'principale', 'contorno', 'ricetta', 'ingredienti', 'info', 'qta', 'complemento']}
         for r in ricette_filtrate
     ]
 
     # Chiama select_food per selezionare la pietanza
-    return select_food(ricette_modificate, settimana, giorno_settimana, pasto, ripetibile, controllo_macro_settimanale, skip_check, max_percentuale, ids_specifici)
+    return select_food(ricette_modificate, settimana, giorno_settimana, pasto, ripetibile, controllo_macro_settimanale, skip_check, max_percentuale, pane, ids_specifici)
 
 
-def select_food(ricette, settimana, giorno_settimana, pasto, ripetibile, controllo_macro_settimanale, skip_check, max_percentuale, ids_specifici=None) -> bool:
+def select_food(ricette, settimana, giorno_settimana, pasto, ripetibile, controllo_macro_settimanale, skip_check, max_percentuale, pane: bool = False, ids_specifici=None) -> bool:
     """
     Seleziona una ricetta ottimale in base ai criteri nutrizionali, ai limiti settimanali e alle preferenze dell'utente.
 
@@ -221,7 +223,7 @@ def select_food(ricette, settimana, giorno_settimana, pasto, ripetibile, control
 
     found = False
     # Determina gli ID disponibili
-    ids_disponibili = determina_ids_disponibili(ricette, settimana, giorno_settimana, pasto, ripetibile, ids_specifici)
+    ids_disponibili = determina_ids_disponibili(ricette, settimana, giorno_settimana, pasto, ripetibile, pane, ids_specifici)
 
     # Filtra le ricette in base agli ID disponibili e ai criteri nutrizionali
     ricette_filtrate = [ricetta for ricetta in ricette if ricetta['id'] in ids_disponibili]
@@ -333,7 +335,7 @@ def aggiorna_settimana(settimana, giorno_settimana, pasto, ricetta, percentuale)
     aggiorna_limiti_gruppi(ricetta, settimana['consumi'], old_qta, percentuale)
 
 
-def determina_ids_disponibili(ricette, settimana, giorno_settimana, pasto, ripetibile, ids_specifici) -> list:
+def determina_ids_disponibili(ricette, settimana, giorno_settimana, pasto, ripetibile, pane, ids_specifici) -> list:
     """
     Determina gli ID delle ricette disponibili in base ai criteri forniti.
 
@@ -353,31 +355,36 @@ def determina_ids_disponibili(ricette, settimana, giorno_settimana, pasto, ripet
         ValueError: Se la lista `ricette` è vuota o non valida.
     """
     try:
-        if not ricette:
-            raise ValueError("La lista delle ricette è vuota o non valida.")
+        if not pane:
+            if not ricette:
+                raise ValueError("La lista delle ricette è vuota o non valida.")
 
-        # Controlla che le chiavi esistano
-        if giorno_settimana not in settimana['day']:
-            raise KeyError(f"Giorno '{giorno_settimana}' non trovato in 'settimana'.")
-        if pasto not in settimana['day'][giorno_settimana]['pasto']:
-            raise KeyError(f"Pasto '{pasto}' non trovato nel giorno '{giorno_settimana}'.")
+            # Controlla che le chiavi esistano
+            if giorno_settimana not in settimana['day']:
+                raise KeyError(f"Giorno '{giorno_settimana}' non trovato in 'settimana'.")
+            if pasto not in settimana['day'][giorno_settimana]['pasto']:
+                raise KeyError(f"Pasto '{pasto}' non trovato nel giorno '{giorno_settimana}'.")
 
-        if ids_specifici:
+            if ids_specifici:
+                return [
+                    r['id'] for r in ricette
+                    if r['id'] in ids_specifici and r['id'] not in settimana['all_food'] and not r['complemento']
+                ]
+            if ripetibile:
+                return [
+                    r['id'] for r in ricette
+                    if r['id'] not in settimana['day'][giorno_settimana]['pasto'][pasto]['ids'] and not r['complemento']
+                ]
             return [
                 r['id'] for r in ricette
-                if r['id'] in ids_specifici and r['id'] not in settimana['all_food']
+                if r['id'] not in settimana['all_food'] and not r['complemento']
             ]
-        if ripetibile:
+        else:
             return [
-                r['id'] for r in ricette
-                if r['id'] not in settimana['day'][giorno_settimana]['pasto'][pasto]['ids']
+                r['id'] for r in ricette if r['contorno'] and r['complemento']
             ]
-        return [
-            r['id'] for r in ricette
-            if r['id'] not in settimana['all_food']
-        ]
     except KeyError as e:
-        raise KeyError(f"Errore nella struttura 'settimana': {e}")
+        raise KeyError(f"Errore nella struttura: {e}")
     except Exception as e:
         raise RuntimeError(f"Errore durante la determinazione degli ID disponibili: {str(e)}")
 
@@ -944,7 +951,7 @@ def completa_menu_service(week_id: int, user_id: int):
 
     giorni = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica']
 
-    ricette = get_ricette_service(user_id, stagionalita=True, attive=True, complemento='no')
+    ricette = get_ricette_service(user_id, stagionalita=True, attive=True)
 
     for giorno in giorni:
         for pasto in pasti_config:
@@ -953,13 +960,13 @@ def completa_menu_service(week_id: int, user_id: int):
             # **1️⃣ Controllo se il pasto è vuoto**
             if not pasto_data['ricette']:
                 # **2️⃣ Cerca una ricetta compatibile**
-                verifica_e_seleziona(menu_da_completare, giorno, pasto['pasto'], pasto['tipo'], pasto['ripetibile'], pasto['min_ricette'], True, ricette, pasto['max_percentuale'])
+                verifica_e_seleziona(menu_da_completare, giorno, pasto['pasto'], pasto['tipo'], pasto['ripetibile'], pasto['min_ricette'], True, ricette, pasto['max_percentuale'], pasto['complemento'])
 
     for giorno in giorni:
         for pasto in pasti_config:
             if macronutrienti_rimanenti[giorno]['kcal'] > 0:
                 # **2️⃣ Cerca una ricetta compatibile**
-                verifica_e_seleziona(menu_da_completare, giorno, pasto['pasto'], pasto['tipo'], pasto['ripetibile'], pasto['min_ricette'], True, ricette, pasto['max_percentuale'])
+                verifica_e_seleziona(menu_da_completare, giorno, pasto['pasto'], pasto['tipo'], pasto['ripetibile'], pasto['min_ricette'], True, ricette, pasto['max_percentuale'], pasto['complemento'])
     update_menu_corrente_service(menu_da_completare, week_id, user_id)
 
 
