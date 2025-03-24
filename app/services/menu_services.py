@@ -28,7 +28,6 @@ MAX_RETRY = int(os.getenv('MAX_RETRY'))
 
 LIMITI_CONSUMO = {
     '1': 240,   # Uova (2-4 a settimana)
-    '2': 0,     # Pesce (2-3 porzioni settimanali)
     '3': 400,   # Carne Bianca (1-2 porzioni settimanali)
     '4': 150,   # Carne Rossa (1 porzione settimanale)
     '5': 700,   # Legumi (2-4 porzioni settimanali)
