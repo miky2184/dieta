@@ -866,7 +866,7 @@ function calculateResults() {
         peso: formData.get('peso'),
         altezza: formData.get('altezza'),
         tdee: formData.get('tdee'),
-        deficit: formData.get('deficit_calorico'),
+        deficit: Number(formData.get('deficit_calorico')),
         dieta: formData.get('dieta'),
         attivita_fisica: formData.get('attivita_fisica')
     };
