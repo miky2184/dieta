@@ -876,36 +876,72 @@ function calculateResults() {
 
     //idealWeight = calcolaPesoIdeale(data)
 
-    idealWeight = (21.5 * (data.altezza/100 * data.altezza/100)).toFixed(0)
+    idealWeight = (21.7 * (data.altezza/100 * data.altezza/100)).toFixed(0)
 
-    let harrisBenedict;
-    //let mifflinStJeor;
+    //calcolo del BME
+    let bmrValue;
+
+    let actualBMI;
+
+    actualBMI = data.peso / (data.altezza/100 * data.altezza/100);
 
     if (data.sesso === 'M') {
-        harrisBenedict = 66.5 + (13.75 * idealWeight) + (5.003 * data.altezza) - (6.775 * data.eta);
-        //mifflinStJeor = (9.99 * data.peso) + (6.25 * data.altezza) - (4.92 * data.eta) + 5;
+        // Formula di Harris Benedict
+        bmrValue = 66.5 + (13.75 * idealWeight) + (5.003 * data.altezza) - (6.775 * data.eta);
+        if (actualBMI >= 30){
+            // Formula di Mifflin-St Jeor in caso di obesita
+            bmrValue = (10 * idealWeight) + (6.25 * data.altezza) - (5 * data.eta) + 5;
+        }
     } else if (data.sesso === 'F') {
-        harrisBenedict = 655.1 + (9.563 * idealWeight) + (1.85 * data.altezza) - (4.676 * data.eta);
-        //mifflinStJeor = (9.99 * data.peso) + (6.25 * data.altezza) - (4.92 * data.eta) - 161;
+        // Formula di Harris Benedict
+        bmrValue = 655.1 + (9.563 * idealWeight) + (1.85 * data.altezza) - (4.676 * data.eta);
+        if (actualBMI >= 30){
+            // Formula di Mifflin-St Jeor in caso di obesita
+            bmrValue = (10 * idealWeight) + (6.25 * data.altezza) - (5 * data.eta) - 161;
+        }
     }
 
-    //let metaBasaleValue = ((harrisBenedict + mifflinStJeor) / 2).toFixed(0);
-    let metaBasaleValue = harrisBenedict.toFixed(0);
+    let metaBasaleValue = bmrValue.toFixed(0);
 
     let metaDailyValue = (metaBasaleValue * data.tdee).toFixed(0);
 
     let calorieGiornaliereValue = metaDailyValue;
 
-    if (data.deficit > 0){
-        calorieGiornaliereValue = (Math.round(((metaDailyValue - (metaDailyValue * data.deficit / 100))) / 50 ) * 50).toFixed(0);
+    if (data.deficit > 0) {
+        let deficitCalorico = 0;
+
+        switch (data.sesso) {
+            case 'F':
+                if (data.deficit === 1) {
+                    deficitCalorico = 250; // Deficit moderato per donne
+                } else if (data.deficit === 2) {
+                    deficitCalorico = 350; // Deficit aggressivo per donne
+                }
+                break;
+
+            case 'M':
+                if (data.deficit === 1) {
+                    deficitCalorico = 350; // Deficit moderato per uomini
+                } else if (data.deficit === 2) {
+                    deficitCalorico = 500; // Deficit aggressivo per uomini
+                }
+                break;
+
+            default:
+                deficitCalorico = 0; // Nessun deficit
+                break;
+        }
+
+    // Calcolo delle calorie giornaliere applicando la sottrazione diretta
+        calorieGiornaliereValue = (Math.round((metaDailyValue - deficitCalorico) / 50) * 50).toFixed(0);
     }
 
-    var settimaneDietaValue = 0;
-    var settimaneNecessarie = 0;
+    let settimaneDietaValue = 0;
+    let settimaneNecessarie = 0;
 
-    if (data.deficit > 0){
+    if (data.deficit > 0) {
         settimaneNecessarie = (((data.peso - idealWeight) * 7000) / ((metaDailyValue - calorieGiornaliereValue) * 7)).toFixed(0);
-        settimaneDietaValue = settimaneNecessarie + ' (' +  addWeeksToDate(settimaneNecessarie) + ')';
+        settimaneDietaValue = settimaneNecessarie + ' (' + addWeeksToDate(settimaneNecessarie) + ')';
     }
 
     let carbsRatio, proteinRatio, fatRatio;

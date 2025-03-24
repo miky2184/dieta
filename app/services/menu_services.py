@@ -33,7 +33,7 @@ LIMITI_CONSUMO = {
     '4': 150,   # Carne Rossa (1 porzione settimanale)
     '5': 700,   # Legumi (2-4 porzioni settimanali)
     '8': 700,   # Cereali (100-120 g al giorno)
-    '12': 190,  # Frutta secca (20-30 g al giorno)
+    '12': 60,   # Frutta secca (10 g al giorno)
     '15': 140   # Olio o grassi da condimento (20-30 g al giorno)
 }
 
