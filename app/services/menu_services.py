@@ -27,14 +27,14 @@ from app.services.util_services import printer, calcola_macronutrienti_rimanenti
 MAX_RETRY = int(os.getenv('MAX_RETRY'))
 
 LIMITI_CONSUMO = {
-    '1':  150,   # Uova
+    '1':  240,   # Uova
     '3':  600,   # Carne Bianca
     '4':  300,   # Carne Rossa
     '5':  450,   # Legumi
     '8':  600,   # Cereali
     '9':  420,   # Pane
     '12': 160,   # Frutta secca
-    '14': 400,   # Patate
+    '14': 600,   # Patate
     '15': 140    # Olio o grassi da condimento
 }
 
