@@ -28,12 +28,12 @@ MAX_RETRY = int(os.getenv('MAX_RETRY'))
 
 LIMITI_CONSUMO = {
     '1':  150,   # Uova
-    '3':  200,   # Carne Bianca
-    '4':  100,   # Carne Rossa
+    '3':  600,   # Carne Bianca
+    '4':  300,   # Carne Rossa
     '5':  450,   # Legumi
     '8':  600,   # Cereali
     '9':  420,   # Pane
-    '12':  60,   # Frutta secca
+    '12': 160,   # Frutta secca
     '14': 400,   # Patate
     '15': 140    # Olio o grassi da condimento
 }
@@ -274,7 +274,7 @@ def calcola_percentuale_effettiva(ricetta, day, max_percentuale) -> float:
         if not percentuali_possibili:
             return 0
 
-        # Restituisci la percentuale effettiva limitata al range [0.5, 1.0]
+        # Restituisci la percentuale effettiva limitata al range [0.5, max_percentuale]
         return round(max(0.5, min(max_percentuale, min(percentuali_possibili))),1)
 
     except KeyError as e:
