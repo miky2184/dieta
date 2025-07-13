@@ -1,0 +1,14 @@
+[Unit]
+Description=WebApp Flask per la gestione dei menu
+After=network.target
+
+[Service]
+User=miky2184
+Group=miky2184
+WorkingDirectory=/home/miky2184/Documents/Workspace/dieta
+ExecStart=/home/miky2184/Documents/Workspace/dieta/venv/bin/python3 run.py
+Environment="PATH=/home/miky2184/Documents/Workspace/dieta/venv/bin"
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

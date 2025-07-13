@@ -1,0 +1,106 @@
+/* PWA Styles semplificati */
+.install-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+    z-index: 1000;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.install-btn:hover {
+    background: #1976D2;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(33, 150, 243, 0.4);
+}
+
+.install-btn:active {
+    transform: translateY(0);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    /* Touch-friendly buttons */
+    .btn {
+        min-height: 44px;
+        touch-action: manipulation;
+        border-radius: 8px;
+    }
+
+    .btn:active {
+        transform: scale(0.98);
+    }
+
+    .form-control {
+        min-height: 44px;
+        border-radius: 8px;
+    }
+
+    .card {
+        margin-bottom: 1rem;
+        border-radius: 12px;
+    }
+
+    /* Install button mobile */
+    .install-btn {
+        bottom: 15px;
+        right: 15px;
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+}
+
+/* Stili per modalità fullscreen (app installata) */
+@media (display-mode: standalone) {
+    body {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .navbar {
+        padding-top: calc(0.5rem + env(safe-area-inset-top));
+    }
+
+    /* Nascondi il pulsante install quando in modalità standalone */
+    .install-btn {
+        display: none !important;
+    }
+}
+
+/* Smooth transitions */
+.card, .btn {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Typography mobile-friendly */
+@media (max-width: 576px) {
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.3rem; }
+    h3 { font-size: 1.1rem; }
+
+    .btn {
+        font-size: 16px; /* Previene zoom su iOS */
+    }
+
+    .form-control {
+        font-size: 16px; /* Previene zoom su iOS */
+    }
+}
