@@ -18,4 +18,4 @@ def before_request():
             return redirect(request.url.replace("http://", "https://", 1), code=301)
 
 if __name__ == '__main__':
-    app.run(debug=True, host=os.getenv('WEBAPP_HOST'), port=os.getenv('WEBAPP_PORT'))
+    app.run(debug=False, host=os.getenv('WEBAPP_HOST'), port=os.getenv('WEBAPP_PORT'))
