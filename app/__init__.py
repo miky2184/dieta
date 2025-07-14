@@ -32,17 +32,6 @@ def create_app():
     def load_user(user_id):
         return UtenteAuth.query.get(int(user_id))
 
-    # ===== ROUTE PWA =====
-    @app.route('/manifest.json')
-    def manifest():
-        return send_from_directory('static', 'manifest.json', mimetype='application/manifest+json')
-
-    @app.route('/sw.js')
-    def service_worker():
-        return send_from_directory('static', 'sw.js', mimetype='application/javascript')
-
-    # ===== FINE ROUTE PWA =====
-
     with app.app_context():
         cache.clear()
         from .auth_route import auth as auth_blueprint
