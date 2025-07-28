@@ -777,7 +777,7 @@ def get_progresso_completo(user_id, data_inizio=None, data_fine=None):
             'data': peso_reale.data_rilevazione,
             'peso_reale': float(peso_reale.peso) if peso_reale.peso else None,
             'vita': float(peso_reale.vita) if peso_reale.vita else None,
-            'fianchi': float(peso_rerale.fianchi) if peso_reale.fianchi else None
+            'fianchi': float(peso_reale.fianchi) if peso_reale.fianchi else None
         })
 
     # Aggiungi i pesi ideali
