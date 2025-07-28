@@ -795,7 +795,7 @@ def get_progresso_completo(user_id, data_inizio=None, data_fine=None):
     return lista_risultato
 
 
-def get_peso_hist_completo(user_id):
+def get_peso_hist(user_id):
     """
     Recupera la cronologia completa combinando dati reali e pesi ideali.
     Restituisce un array di oggetti con tutte le informazioni per data.
