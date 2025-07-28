@@ -420,7 +420,6 @@ def generate_pdf():
 @views.route('/complete_tutorial', methods=['POST'])
 @login_required
 def complete_tutorial():
-    user_id = current_user.user_id
     try:
         current_user.tutorial_completed = True
         db.session.commit()

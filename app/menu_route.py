@@ -53,13 +53,13 @@ def delete_menu(week_id):
     user_id = current_user.user_id
     try:
         # Recupera il menu dal database
-        menu = MenuSettimanale.query.filter_by(id=week_id, user_id=user_id).first()
+        menu_da_cancellare = MenuSettimanale.query.filter_by(id=week_id, user_id=user_id).first()
 
-        if not menu:
+        if not menu_da_cancellare:
             return jsonify({'status': 'error', 'message': 'Menu non trovato.'}), 404
 
         # Controlla se la data corrente è maggiore della data di inizio del menu
-        if date.today() >= menu.data_inizio:
+        if date.today() >= menu_da_cancellare.data_inizio:
             return jsonify({
                 'status': 'error',
                 'message': 'Il menu non può essere eliminato perché la data corrente è maggiore della data di inizio.'

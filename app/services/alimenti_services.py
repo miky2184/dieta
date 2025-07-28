@@ -5,7 +5,6 @@ from app.models.IngredientiRicetta import IngredientiRicetta
 from app.models.IngredientiRicettaBase import IngredientiRicettaBase
 from app.models.VAlimento import VAlimento
 from app.services.db_services import get_sequence_value
-from app.services.util_services import print_query
 
 
 def create_alimento_service(name, carboidrati, proteine, grassi, fibre, vegan, surgelato, gruppo, user_id):
@@ -34,8 +33,6 @@ def get_alimenti_service(user_id):
     query = db.session.query(VAlimento).filter(filtro).order_by(VAlimento.nome)
 
     results = query.all()
-
-    print_query(query)
 
     alimenti = [{
         'id': r.id,

@@ -11,7 +11,6 @@ from app.models.VAlimento import VAlimento
 from app.models.VIngredientiRicetta import VIngredientiRicetta
 from app.models.VRicetta import VRicetta
 from app.services.db_services import get_sequence_value
-from app.services.util_services import print_query
 
 
 def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=False, complemento:str='all', contorno=False, data_stagionalita=None, percentuale:float = 1.0) -> list[dict]:
@@ -237,8 +236,6 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
             'info': ''.join(info)
         })
 
-    # Visualizza la query SQL generata
-    print_query(query)
     return ricette
 
 
@@ -346,8 +343,6 @@ def get_ingredienti_ricetta_service(recipe_id, user_id):
     )
 
     results = query.all()
-
-    print_query(query)
 
     r = []
     for res in results:

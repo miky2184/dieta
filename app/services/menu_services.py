@@ -10,6 +10,7 @@ import json
 
 from sqlalchemy import and_, func, asc, desc
 from sqlalchemy.orm import aliased
+from sqlalchemy.exc import SQLAlchemyError, DatabaseError
 
 from app.models import db
 from app.models.IngredientiRicetta import IngredientiRicetta
@@ -23,8 +24,12 @@ from app.models.VRicetta import VRicetta
 from app.services.db_services import get_sequence_value
 from app.services.modifica_pasti_services import get_menu_service
 from app.services.ricette_services import get_ricette_service
-from app.services.util_services import printer, calcola_macronutrienti_rimanenti_service
+from app.services.util_services import calcola_macronutrienti_rimanenti_service
 from datetime import date
+from enum import Enum
+
+import logging
+logger = logging.getLogger(__name__)
 
 MAX_RETRY = int(os.getenv('MAX_RETRY'))
 
@@ -54,7 +59,7 @@ pasti_config = [
     {'pasto': 'cena', 'tipo': 'contorno', 'complemento': True, 'ripetibile': True, 'min_ricette': 2, 'max_percentuale': 3},
 ]
 
-def genera_menu_utente_service(user_id) -> None:
+def genera_menu_utente_service(user_id: int) -> None:
     """
     Genera il menu settimanale per l'utente. Include la settimana corrente, successiva
     e una nuova settimana successiva all'ultima presente, se necessario.
@@ -65,9 +70,20 @@ def genera_menu_utente_service(user_id) -> None:
     Returns:
         None
     """
-    macronutrienti = Utente.get_by_id(user_id)
-    if not macronutrienti.calorie_giornaliere:
-        raise ValueError('Macronutrienti non definiti!')
+
+    if not user_id or user_id <= 0:
+        raise ValueError("user_id deve essere un intero positivo")
+
+    try:
+        macronutrienti = Utente.get_by_id(user_id)
+
+        if not macronutrienti:
+            raise ValueError(f"Utente {user_id} non trovato")
+
+        if not macronutrienti.calorie_giornaliere:
+            raise ValueError('Macronutrienti non definiti!')
+    except SQLAlchemyError as e:
+        raise DatabaseError(f"Errore database nel recupero utente: {e}")
 
     # Trova l'ultima settimana presente nel database
     query = (db.session.query(MenuSettimanale)
@@ -77,29 +93,81 @@ def genera_menu_utente_service(user_id) -> None:
 
     ultima_settimana = query.first()
 
-    #print_query(query)
-
-    periodi = []
-    oggi = datetime.now().date()
-    giorni_indietro = (oggi.weekday() - 0) % 7
-    lunedi_corrente = oggi - timedelta(days=giorni_indietro)
-    domenica_corrente = lunedi_corrente + timedelta(days=6)
-
-    if ultima_settimana:
-        nuova_settimana_inizio = ultima_settimana.data_fine + timedelta(days=1)
-        nuova_settimana_fine = nuova_settimana_inizio + timedelta(days=6)
-        periodi.append({"data_inizio": nuova_settimana_inizio, "data_fine": nuova_settimana_fine})
-    else:
-        lunedi_prossimo = lunedi_corrente + timedelta(days=7)
-        domenica_prossima = lunedi_prossimo + timedelta(days=6)
-        periodi.extend([
-            {"data_inizio": lunedi_corrente, "data_fine": domenica_corrente},
-            {"data_inizio": lunedi_prossimo, "data_fine": domenica_prossima}
-        ])
+    # Recupera periodi da generare
+    periodi_da_generare = _calcola_periodi_mancanti(user_id)
 
     # Genera menu per i periodi definiti
-    for period in periodi:
+    for period in periodi_da_generare:
         genera_e_salva_menu(user_id, period, macronutrienti)
+
+
+def _calcola_periodi_mancanti(user_id: int) -> list[dict]:
+    """
+    Calcola i periodi per cui è necessario generare il menu.
+
+    Args:
+        user_id: ID dell'utente
+
+    Returns:
+        list[dict]: Lista di dizionari con 'data_inizio' e 'data_fine' per ogni periodo
+    """
+    try:
+        # Trova l'ultima settimana presente nel database
+        ultima_settimana = (
+            db.session.query(MenuSettimanale)
+            .filter(
+                MenuSettimanale.user_id == user_id,
+                func.current_date() <= MenuSettimanale.data_fine
+            )
+            .order_by(desc(MenuSettimanale.data_fine))
+            .first()
+        )
+
+        periodi = []
+        oggi = datetime.now().date()
+
+        # Calcola lunedì della settimana corrente
+        giorni_indietro = (oggi.weekday() - 0) % 7  # 0 = lunedì
+        lunedi_corrente = oggi - timedelta(days=giorni_indietro)
+        domenica_corrente = lunedi_corrente + timedelta(days=6)
+
+        if ultima_settimana:
+            # Esiste già un menu, genera solo la settimana successiva
+            nuova_settimana_inizio = ultima_settimana.data_fine + timedelta(days=1)
+            nuova_settimana_fine = nuova_settimana_inizio + timedelta(days=6)
+
+            periodi.append({
+                "data_inizio": nuova_settimana_inizio,
+                "data_fine": nuova_settimana_fine
+            })
+
+            logger.info(f"Trovata ultima settimana fino al {ultima_settimana.data_fine}, "
+                        f"generando settimana {nuova_settimana_inizio} - {nuova_settimana_fine}")
+        else:
+            # Nessun menu esistente, genera settimana corrente e prossima
+            lunedi_prossimo = lunedi_corrente + timedelta(days=7)
+            domenica_prossima = lunedi_prossimo + timedelta(days=6)
+
+            periodi.extend([
+                {
+                    "data_inizio": lunedi_corrente,
+                    "data_fine": domenica_corrente
+                },
+                {
+                    "data_inizio": lunedi_prossimo,
+                    "data_fine": domenica_prossima
+                }
+            ])
+
+            logger.info(f"Nessun menu esistente, generando settimane: "
+                        f"{lunedi_corrente}-{domenica_corrente} e "
+                        f"{lunedi_prossimo}-{domenica_prossima}")
+
+        return periodi
+
+    except Exception as e:
+        logger.error(f"Errore nel calcolo periodi mancanti per utente {user_id}: {str(e)}")
+        raise
 
 
 def genera_e_salva_menu(user_id, period, macronutrienti: Utente) -> None:
@@ -117,11 +185,11 @@ def genera_e_salva_menu(user_id, period, macronutrienti: Utente) -> None:
     ricette_menu = get_ricette_service(user_id, stagionalita=True, data_stagionalita=period["data_fine"])
     if not get_menu_service(user_id, period=period):
         settimana = deepcopy(get_settimana(macronutrienti))
-        genera_menu(settimana, False, ricette_menu, user_id)
+        genera_menu(settimana, False, ricette_menu)
 
         # Ordina la settimana per kcal rimanenti
         #settimana_ordinata = ordina_settimana_per_kcal(settimana)
-        genera_menu(settimana, True, ricette_menu, user_id)
+        genera_menu(settimana, True, ricette_menu)
         salva_menu_service(settimana, user_id, period=period)
 
 
@@ -138,7 +206,8 @@ def verifica_e_seleziona(settimana, giorno, pasto, tipo, ripetibile, min_ricette
         min_ricette (int): Numero minimo di ricette richiesto per il pasto.
         controllo_macro (bool): Indica se controllare i macronutrienti durante la selezione.
         ricette (list): Lista delle ricette disponibili.
-        user_id (int): ID dell'utente.
+        max_percentuale
+        pane
 
     Returns:
         None
@@ -149,7 +218,7 @@ def verifica_e_seleziona(settimana, giorno, pasto, tipo, ripetibile, min_ricette
             scegli_pietanza(settimana, giorno, pasto, tipo, ripetibile, controllo_macro, ricette, max_percentuale, pane)
 
 
-def genera_menu(settimana, controllo_macro_settimanale, ricette, user_id) -> None:
+def genera_menu(settimana: dict, controllo_macro_settimanale: bool, ricette: list) -> None:
     """
     Genera un menu settimanale distribuendo ricette su pasti giornalieri.
 
@@ -157,7 +226,6 @@ def genera_menu(settimana, controllo_macro_settimanale, ricette, user_id) -> Non
         settimana (dict): La struttura del menu settimanale.
         controllo_macro_settimanale (bool): Indica se controllare i macronutrienti settimanali.
         ricette (list): Lista delle ricette disponibili.
-        user_id (int): ID dell'utente.
 
     Returns:
         None
@@ -168,8 +236,8 @@ def genera_menu(settimana, controllo_macro_settimanale, ricette, user_id) -> Non
             verifica_e_seleziona(settimana, giorno, config['pasto'], config['tipo'], config['ripetibile'], config['min_ricette'], controllo_macro_settimanale, ricette, config['max_percentuale'], config['complemento'])
 
 
-def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, ripetibile: bool,
-                    controllo_macro_settimanale: bool, ricette, max_percentuale, pane: bool = False, ids_specifici=None, skip_check=False) -> bool:
+def scegli_pietanza(settimana: dict, giorno_settimana: str, pasto: str, tipo: str, ripetibile: bool,
+                    controllo_macro_settimanale: bool, ricette: list, max_percentuale, pane: bool = False, ids_specifici=None, skip_check=False) -> bool:
     """
     Seleziona una pietanza dalla lista di ricette pre-caricate in memoria e la aggiunge al pasto corrispondente.
 
@@ -181,7 +249,8 @@ def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, rip
         ripetibile (bool): Indica se la pietanza può essere ripetuta nei pasti.
         controllo_macro_settimanale (bool): Indica se controllare i macronutrienti settimanali durante la selezione.
         ricette (list): Lista delle ricette disponibili. Ogni ricetta è un dizionario con informazioni nutrizionali.
-        user_id (int): ID dell'utente per il quale il menu viene generato.
+        max_percentuale (float):
+        pane (bool):
         ids_specifici (list, opzionale): Lista di ID di ricette specifiche da considerare. Default è None.
         skip_check (bool, opzionale): Se True, ignora i controlli nutrizionali e di limiti durante la selezione. Default è False.
 
@@ -190,9 +259,6 @@ def scegli_pietanza(settimana, giorno_settimana: str, pasto: str, tipo: str, rip
     """
 
     ricette_filtrate = [r for r in ricette if r[tipo] and r['attiva']]
-
-    if not ricette_filtrate:
-        printer(f"Nessuna ricetta trovata per {giorno_settimana}, pasto: {pasto}, tipo: {tipo}", "WARNING")
 
     # Prepara le ricette modificate
     ricette_modificate = [
@@ -217,7 +283,8 @@ def select_food(ricette, settimana, giorno_settimana, pasto, ripetibile, control
         ripetibile (bool): Indica se la stessa ricetta può essere ripetuta durante i pasti.
         controllo_macro_settimanale (bool): Indica se controllare i macronutrienti settimanali durante la selezione.
         skip_check (bool): Se True, salta i controlli nutrizionali e di limiti.
-        user_id (int): ID dell'utente per il quale il menu viene generato.
+        max_percentuale (float):
+        pane (bool)
         ids_specifici (list, opzionale): Lista di ID di ricette specifiche da considerare. Default è None.
 
     Returns:
@@ -232,7 +299,6 @@ def select_food(ricette, settimana, giorno_settimana, pasto, ripetibile, control
     ricette_filtrate = [ricetta for ricetta in ricette if ricetta['id'] in ids_disponibili]
 
     if not ricette_filtrate:
-        printer(f"Nessuna ricetta valida trovata per giorno: {giorno_settimana}, pasto: {pasto}")
         return found
 
     random.shuffle(ricette_filtrate)
@@ -248,42 +314,72 @@ def select_food(ricette, settimana, giorno_settimana, pasto, ripetibile, control
 
     return found
 
+class MacroType(Enum):
+    KCAL = "kcal"
+    CARBOIDRATI = "carboidrati"
+    PROTEINE = "proteine"
+    GRASSI = "grassi"
 
-def calcola_percentuale_effettiva(ricetta, day, max_percentuale) -> float:
+
+def calcola_percentuale_effettiva(ricetta: dict, day: dict, max_percentuale: float, min_percentuale: float = 0.5) -> float:
     """
     Calcola la percentuale massima utilizzabile di una ricetta,
     rispettando i limiti giornalieri dei macronutrienti e delle calorie.
 
     Args:
+        max_percentuale:
         ricetta (dict): Dizionario contenente valori di macronutrienti e calorie della ricetta.
         day (dict): Dizionario contenente valori rimanenti di macronutrienti e calorie per il giorno.
 
     Returns:
         float: Percentuale massima utilizzabile, compresa tra 0.5 e 1.0. Restituisce 0 se non calcolabile.
     """
+    if not _valida_input_percentuale(ricetta, day, max_percentuale, min_percentuale):
+        return 0.0
+
     try:
-        # Calcola le percentuali possibili per ciascun macronutriente
-        if all(day.get(macro, 0) >= ricetta.get(macro, 0) > 0 for macro in
-               ['kcal', 'carboidrati', 'proteine', 'grassi']):
-            percentuali_possibili = [
-                day[macro] / ricetta[macro]
-                for macro in ['kcal', 'carboidrati', 'proteine', 'grassi']
-            ]
-        else:
-            percentuali_possibili = []
 
-        # Se nessuna percentuale è calcolabile, restituisci 0
+        percentuali_possibili = []
+
+        for macro_type in MacroType:
+            macro = macro_type.value
+            ricetta_val = ricetta.get(macro, 0)
+            day_val = day.get(macro, 0)
+
+            if 0 < ricetta_val <= day_val:
+                percentuali_possibili.append(day_val / ricetta_val)
+            elif ricetta_val > 0:
+                # Non abbastanza nutrienti disponibili
+                return 0.0
+
         if not percentuali_possibili:
-            return 0
+            return 0.0
 
-        # Restituisci la percentuale effettiva limitata al range [0.5, max_percentuale]
-        return round(max(0.5, min(max_percentuale, min(percentuali_possibili))),1)
+        percentuale_ottimale = min(percentuali_possibili)
+
+        # Applica limiti con arrotondamento preciso
+        return round(
+            max(min_percentuale, min(max_percentuale, percentuale_ottimale)),
+            2
+        )
 
     except KeyError as e:
         raise ValueError(f"Chiave mancante nei dati: {e}")
     except Exception as e:
         raise RuntimeError(f"Errore durante il calcolo della percentuale: {str(e)}")
 
+
+def _valida_input_percentuale(ricetta: dict, day: dict, max_perc: float, min_perc: float) -> bool:
+    """Validazione robusta degli input."""
+    required_keys = {macro.value for macro in MacroType}
+
+    return (
+            all(key in ricetta for key in required_keys) and
+            all(key in day for key in required_keys) and
+            0 < min_perc <= max_perc <= 5.0 and  # Limiti ragionevoli
+            all(isinstance(ricetta[key], (int, float)) and ricetta[key] >= 0 for key in required_keys) and
+            all(isinstance(day[key], (int, float)) and day[key] >= 0 for key in required_keys)
+    )
 
 def aggiorna_settimana(settimana, giorno_settimana, pasto, ricetta, percentuale) -> None:
     """
@@ -296,7 +392,6 @@ def aggiorna_settimana(settimana, giorno_settimana, pasto, ricetta, percentuale)
             pasto (str): Nome del pasto (es. "colazione").
             ricetta (dict): Informazioni sulla ricetta selezionata.
             percentuale (float): Percentuale di utilizzo della ricetta.
-            user_id (int): ID dell'utente.
 
         Returns:
             None
@@ -348,6 +443,7 @@ def determina_ids_disponibili(ricette, settimana, giorno_settimana, pasto, ripet
         giorno_settimana (str): Giorno della settimana (es. "lunedi").
         pasto (str): Nome del pasto (es. "colazione").
         ripetibile (bool): Se True, consente di ripetere ricette nello stesso pasto.
+        pane (bool):
         ids_specifici (list o None): Lista opzionale di ID ricette da considerare.
 
     Returns:
@@ -432,7 +528,7 @@ def aggiorna_limiti_gruppi(ricetta, consumi, old_perc: float, perc: float = 1.0,
     Args:
         ricetta (dict): Ricetta contenente una lista di ingredienti con quantità totali e ID di gruppo.
         consumi (dict): Dizionario dei consumi rimanenti per ciascun gruppo alimentare.
-        user_id: utente abilitato alla funzione
+        old_perc (float):
         perc (float): percentuale da utilizzare nei calcoli per i limiti di gruppo
         rimuovi (bool, opzionale): Indica se aggiungere (`True`) o sottrarre (`False`) le quantità.
 
@@ -1015,55 +1111,6 @@ def salva_utente_dieta(utente_id, nome, cognome, sesso, eta, altezza, peso, tdee
     db.session.commit()
 
 
-# 3. FUNZIONE HELPER PER OTTENERE PESO IDEALE PER UNA DATA
-def get_peso_ideale_per_data(user_id, data):
-    """
-    Ottiene il peso ideale per un utente in una data specifica
-    """
-    peso_ideale = PesoIdeale.query.filter_by(
-        user_id=user_id,
-        data=data
-    ).first()
-
-    return peso_ideale.peso_ideale if peso_ideale else None
-
-
-# 4. FUNZIONE HELPER PER OTTENERE TUTTI I PESI IDEALI DI UN UTENTE
-def get_pesi_ideali_utente(user_id):
-    """
-    Ottiene tutti i pesi ideali programmati per un utente
-    """
-    return PesoIdeale.query.filter_by(user_id=user_id).order_by(PesoIdeale.data).all()
-
-
-# 5. ESEMPIO DI QUERY PER COMBINARE DATI REALI E IDEALI
-def get_progresso_peso_completo(user_id):
-    """
-    Combina dati reali e pesi ideali per mostrare il progresso
-    """
-    from sqlalchemy import or_
-
-    # Query per ottenere sia i pesi reali che quelli ideali
-    pesi_reali = db.session.query(
-        RegistroPeso.data_rilevazione.label('data'),
-        RegistroPeso.peso.label('peso_reale'),
-        db.literal(None).label('peso_ideale')
-    ).filter(
-        RegistroPeso.user_id == user_id,
-        RegistroPeso.peso.isnot(None)
-    )
-
-    pesi_ideali = db.session.query(
-        PesoIdeale.data.label('data'),
-        db.literal(None).label('peso_reale'),
-        PesoIdeale.peso_ideale.label('peso_ideale')
-    ).filter(PesoIdeale.user_id == user_id)
-
-    # Unisci le query
-    tutti_pesi = pesi_reali.union(pesi_ideali).order_by('data').all()
-
-    return tutti_pesi
-
 
 def aggiungi_ricetta_al_menu(menu, day, meal, meal_id, user_id):
     ricetta = get_ricette_service(user_id, ids=meal_id)[0]
@@ -1086,7 +1133,7 @@ def aggiungi_ricetta_al_menu(menu, day, meal, meal_id, user_id):
     aggiorna_limiti_gruppi(ricetta, menu['consumi'], ricetta['qta'], ricetta['qta'])
 
 
-def rimuovi_pasto_dal_menu(menu, day, meal, meal_id, user_id):
+def rimuovi_pasto_dal_menu(menu, day, meal, meal_id):
     # Trova la ricetta da rimuovere
     ricetta_da_rimuovere = None
     for ricetta in menu['day'][day]['pasto'][meal]['ricette']:
@@ -1101,7 +1148,7 @@ def rimuovi_pasto_dal_menu(menu, day, meal, meal_id, user_id):
         aggiorna_limiti_gruppi(ricetta_da_rimuovere, menu['consumi'], ricetta_da_rimuovere['qta'], ricetta_da_rimuovere['qta'],True)
 
 
-def cancella_tutti_pasti_menu(settimana, day, meal_type, user_id):
+def cancella_tutti_pasti_menu(settimana, day, meal_type):
     for ricetta in settimana['day'][day]['pasto'][meal_type]['ricette']:
         settimana['all_food'].remove(ricetta['id'])
         aggiorna_macronutrienti(settimana, day, ricetta, True)
@@ -1189,7 +1236,7 @@ def update_menu_corrente_service(menu_da_salvare, week_id, user_id):
 
     if isinstance(menu_da_salvare, str):
         try:
-            menu = json.loads(menu_da_salvare)  # Se è una stringa JSON, convertirla in un dizionario
+            json.loads(menu_da_salvare)  # Se è una stringa JSON, convertirla in un dizionario
         except json.JSONDecodeError as e:
             raise ValueError(f"Errore nella conversione JSON: {e}")
 

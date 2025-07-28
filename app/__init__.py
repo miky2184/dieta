@@ -4,9 +4,13 @@ from flask import Flask, send_from_directory, render_template
 from flask_caching import Cache
 from flask_login import LoginManager
 
+import config
 from app.models import db
 from app.models.Utente import Utente
 from app.models.UtenteAuth import UtenteAuth
+
+from app.config import logging_config
+from config import Config
 
 
 def create_app():
@@ -19,6 +23,8 @@ def create_app():
     # Configura il cache
     cache = Cache(app)
     app.cache = cache
+
+    logging_config.setup_logging(log_level=config.Config.LOG_LEVEL)
 
     # Inizializza il database con l'app
     db.init_app(app)

@@ -1,12 +1,12 @@
 from copy import deepcopy
 
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify #, current_app
 from flask_login import login_required, current_user
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.services.menu_services import aggiungi_ricetta_al_menu, rimuovi_pasto_dal_menu, cancella_tutti_pasti_menu, update_menu_corrente_service
 from app.services.modifica_pasti_services import get_menu_service
-from app.services.ricette_services import get_ricette_service
+#from app.services.ricette_services import get_ricette_service
 from app.services.util_services import calcola_macronutrienti_rimanenti_service
 
 pasti = Blueprint('pasti', __name__)
@@ -144,7 +144,7 @@ def cancella_pasto(week_id):
         }
 
         for meal in meal_mapping.get(meal_type, []):
-            cancella_tutti_pasti_menu(settimana['menu'], day, meal, user_id)
+            cancella_tutti_pasti_menu(settimana['menu'], day, meal)
 
         # Salva le modifiche nel database
         update_menu_corrente_service(settimana['menu'], week_id, user_id)
@@ -226,7 +226,7 @@ def rimuovi_ricetta(week_id):
         menu_corrente = get_menu_service(user_id, menu_id=week_id)
 
         # Rimuove il pasto dal menu
-        rimuovi_pasto_dal_menu(menu_corrente['menu'], day, meal, meal_id, user_id)
+        rimuovi_pasto_dal_menu(menu_corrente['menu'], day, meal, meal_id)
 
         # Salva il menu aggiornato nel database
         update_menu_corrente_service(menu_corrente['menu'], week_id, user_id)
