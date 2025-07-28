@@ -4,7 +4,6 @@ from flask import Flask, send_from_directory, render_template
 from flask_caching import Cache
 from flask_login import LoginManager
 
-import config
 from app.models import db
 from app.models.Utente import Utente
 from app.models.UtenteAuth import UtenteAuth
