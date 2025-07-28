@@ -16,7 +16,7 @@ from app.models import db
 from app.models.Utente import Utente
 #from app.ricette_route import invalidate_cache
 from app.services.common_services import get_settimane_salvate_service
-from app.services.menu_services import save_weight, stampa_lista_della_spesa, elimina_ingredienti, salva_utente_dieta, get_peso_hist, recupera_ricette_per_alimento, aggiorna_limiti_gruppi, calcola_quantita, update_menu_corrente_service
+from app.services.menu_services import save_weight, stampa_lista_della_spesa, elimina_ingredienti, salva_utente_dieta, get_peso_hist, get_peso_ideale_per_data_interpolato, recupera_ricette_per_alimento, aggiorna_limiti_gruppi, calcola_quantita, update_menu_corrente_service
 from app.services.modifica_pasti_services import get_menu_service
 from app.services.util_services import calcola_macronutrienti_rimanenti_service
 
@@ -134,17 +134,26 @@ def submit_weight():
     try:
         data = request.json
         # Salva i dati del peso nel database
-        salvato = save_weight(data, user_id)
+        success = save_weight(data, user_id)
 
-        if not salvato:
-            return jsonify({'status': 'error', 'message': 'Prima di salvare i parametri, compila il tab Dieta con i tuoi Dati.'}), 404
+        if success:
+            # Calcola il peso ideale per questa data per mostrarlo nella risposta
+            peso_ideale = get_peso_ideale_per_data_interpolato(
+                current_user.user_id,
+                datetime.strptime(data['date'], '%Y-%m-%d').date()
+            )
 
-        peso = get_peso_hist(user_id)
+            return jsonify({
+                'status': 'success',
+                'message': 'Dati salvati con successo',
+                'peso_ideale_calcolato': peso_ideale
+            })
+
+        else:
+            return jsonify({'status': 'error', 'message': 'Prima di salvare i parametri, compila il tab Dieta con i tuoi Dati.'}), 400
 
         # Esempio di svuotamento della cache di una funzione specifica
         #current_app.cache.delete(f'get_peso_data_{user_id}')
-
-        return jsonify({'status': 'success', 'peso': peso}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err), 'trace': traceback.format_exc()}), 500
     except KeyError as key_err:

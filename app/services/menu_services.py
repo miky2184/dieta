@@ -14,6 +14,7 @@ from sqlalchemy.orm import aliased
 from app.models import db
 from app.models.IngredientiRicetta import IngredientiRicetta
 from app.models.MenuSettimanale import MenuSettimanale
+from app.models.PesoIdeale import PesoIdeale
 from app.models.RegistroPeso import RegistroPeso
 from app.models.Utente import Utente
 from app.models.VAlimento import VAlimento
@@ -658,38 +659,140 @@ def stampa_lista_della_spesa(user_id: int, menu: dict) -> list[dict]:
 
 
 def save_weight(data, user_id):
-
+    """
+    Salva i dati di peso, vita e fianchi per un utente.
+    La logica del peso ideale è ora gestita dalla tabella separata PesoIdeale.
+    """
     utente = Utente.get_by_id(user_id)
 
+    # Verifica se l'utente ha un peso ideale configurato
     if utente.peso_ideale is None:
         return False
 
-    registro_peso = RegistroPeso.query.order_by(desc(RegistroPeso.data_rilevazione)).filter(RegistroPeso.data_rilevazione <= data['date'], RegistroPeso.user_id==user_id).first()
+    # Converti la data string in oggetto date se necessario
+    if isinstance(data['date'], str):
+        data_rilevazione = datetime.strptime(data['date'], '%Y-%m-%d').date()
+    else:
+        data_rilevazione = data['date']
 
-    if registro_peso and registro_peso.data_rilevazione == datetime.now().date():
+    # Cerca se esiste già un record per questa data
+    registro_peso = RegistroPeso.query.filter_by(
+        user_id=user_id,
+        data_rilevazione=data_rilevazione
+    ).first()
+
+    if registro_peso:
+        # Aggiorna il record esistente
         registro_peso.peso = data['weight'] or None
         registro_peso.vita = data['vita'] or None
         registro_peso.fianchi = data['fianchi'] or None
     else:
-
-        peso_ideale_successivo = RegistroPeso.query.order_by(asc(RegistroPeso.data_rilevazione)).filter(
-            RegistroPeso.data_rilevazione >= data['date'], RegistroPeso.user_id == user_id).first()
-
-        peso_ideale_calcolato = registro_peso.peso_ideale - (((registro_peso.peso_ideale - peso_ideale_successivo.peso_ideale) / 7) * (registro_peso.data_rilevazione - datetime.strptime(data['date'], '%Y-%m-%d').date()).days )
-
+        # Crea un nuovo record
         registro_peso = RegistroPeso(
-            data_rilevazione=data['date'],
+            data_rilevazione=data_rilevazione,
             peso=data['weight'] or None,
             vita=data['vita'] or None,
             fianchi=data['fianchi'] or None,
-            peso_ideale=round(peso_ideale_calcolato, 1),
             user_id=user_id
         )
+        db.session.add(registro_peso)
 
-    db.session.add(registro_peso)
     db.session.commit()
-
     return True
+
+
+def get_peso_ideale_per_data_interpolato(user_id, data_target):
+    """
+    Calcola il peso ideale per una data specifica, interpolando tra i valori esistenti
+    se la data non ha un peso ideale specifico.
+    """
+    # Cerca un peso ideale esatto per la data
+    peso_ideale_esatto = PesoIdeale.query.filter_by(
+        user_id=user_id,
+        data=data_target
+    ).first()
+
+    if peso_ideale_esatto:
+        return float(peso_ideale_esatto.peso_ideale)
+
+    # Se non c'è un peso ideale esatto, interpola tra i valori più vicini
+    peso_precedente = PesoIdeale.query.filter(
+        PesoIdeale.user_id == user_id,
+        PesoIdeale.data <= data_target
+    ).order_by(desc(PesoIdeale.data)).first()
+
+    peso_successivo = PesoIdeale.query.filter(
+        PesoIdeale.user_id == user_id,
+        PesoIdeale.data >= data_target
+    ).order_by(asc(PesoIdeale.data)).first()
+
+    if not peso_precedente or not peso_successivo:
+        # Se non ci sono abbastanza punti per interpolare, usa il peso ideale dell'utente
+        utente = Utente.get_by_id(user_id)
+        return float(utente.peso_ideale) if utente.peso_ideale else None
+
+    if peso_precedente.data == peso_successivo.data:
+        return float(peso_precedente.peso_ideale)
+
+    # Interpolazione lineare
+    giorni_totali = (peso_successivo.data - peso_precedente.data).days
+    giorni_trascorsi = (data_target - peso_precedente.data).days
+
+    differenza_peso = float(peso_successivo.peso_ideale - peso_precedente.peso_ideale)
+    peso_giornaliero = differenza_peso / giorni_totali
+
+    peso_ideale_calcolato = float(peso_precedente.peso_ideale) + (peso_giornaliero * giorni_trascorsi)
+
+    return round(peso_ideale_calcolato, 1)
+
+
+def get_progresso_completo(user_id, data_inizio=None, data_fine=None):
+    """
+    Ottiene il progresso completo di un utente combinando pesi reali e ideali
+    """
+    query_pesi_reali = RegistroPeso.query.filter(RegistroPeso.user_id == user_id)
+    query_pesi_ideali = PesoIdeale.query.filter(PesoIdeale.user_id == user_id)
+
+    if data_inizio:
+        query_pesi_reali = query_pesi_reali.filter(RegistroPeso.data_rilevazione >= data_inizio)
+        query_pesi_ideali = query_pesi_ideali.filter(PesoIdeale.data >= data_inizio)
+
+    if data_fine:
+        query_pesi_reali = query_pesi_reali.filter(RegistroPeso.data_rilevazione <= data_fine)
+        query_pesi_ideali = query_pesi_ideali.filter(PesoIdeale.data <= data_fine)
+
+    pesi_reali = query_pesi_reali.order_by(RegistroPeso.data_rilevazione).all()
+    pesi_ideali = query_pesi_ideali.order_by(PesoIdeale.data).all()
+
+    # Combina i dati in un dizionario per data
+    risultato = {}
+
+    # Aggiungi i pesi reali
+    for peso_reale in pesi_reali:
+        data_str = peso_reale.data_rilevazione.strftime('%Y-%m-%d')
+        if data_str not in risultato:
+            risultato[data_str] = {}
+
+        risultato[data_str].update({
+            'data': peso_reale.data_rilevazione,
+            'peso_reale': float(peso_reale.peso) if peso_reale.peso else None,
+            'vita': float(peso_reale.vita) if peso_reale.vita else None,
+            'fianchi': float(peso_rerale.fianchi) if peso_reale.fianchi else None
+        })
+
+    # Aggiungi i pesi ideali
+    for peso_ideale in pesi_ideali:
+        data_str = peso_ideale.data.strftime('%Y-%m-%d')
+        if data_str not in risultato:
+            risultato[data_str] = {'data': peso_ideale.data}
+
+        risultato[data_str]['peso_ideale'] = float(peso_ideale.peso_ideale)
+
+    # Converti in lista ordinata per data
+    lista_risultato = list(risultato.values())
+    lista_risultato.sort(key=lambda x: x['data'])
+
+    return lista_risultato
 
 
 def get_peso_hist(user_id):
@@ -767,9 +870,9 @@ def elimina_ingredienti(ingredient_id: int, recipe_id: int, user_id: int):
 def salva_utente_dieta(utente_id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
                        meta_basale, meta_giornaliero, calorie_giornaliere, settimane_dieta, carboidrati,
                        proteine, grassi, dieta, attivita_fisica):
-
     utente = Utente.get_by_id(utente_id)
 
+    # Aggiorna i dati dell'utente
     utente.nome = nome
     utente.cognome = cognome
     utente.sesso = sesso
@@ -792,16 +895,10 @@ def salva_utente_dieta(utente_id, nome, cognome, sesso, eta, altezza, peso, tdee
 
     db.session.add(utente)
 
-    # cancello tutti i record che hanno il peso ideale valorizzato e peso/vita/fianchi null
-    db.session.query(RegistroPeso).filter(
-        RegistroPeso.user_id == utente_id,
-        RegistroPeso.peso_ideale.isnot(None),
-        RegistroPeso.peso.is_(None),
-        RegistroPeso.vita.is_(None),
-        RegistroPeso.fianchi.is_(None),
-    ).delete()
+    # Cancella tutti i record di peso ideale esistenti per questo utente
+    db.session.query(PesoIdeale).filter(PesoIdeale.user_id == utente_id).delete()
 
-    # calcolo la data di fine dieta
+    # Calcola la data di fine dieta
     match = re.match(r"^(.*?)\s*\(", settimane_dieta)
     oggi = datetime.now().date()
     giorni_indietro = (oggi.weekday() - 0) % 7
@@ -811,49 +908,110 @@ def salva_utente_dieta(utente_id, nome, cognome, sesso, eta, altezza, peso, tdee
     if match:
         settimane = int(match.group(1))
 
-    data_fine_dieta = lunedi_corrente + (timedelta(days=7*settimane))
+    data_fine_dieta = lunedi_corrente + (timedelta(days=7 * settimane))
 
-    # calcolo la differenza di peso per ogni settimana
-    peso_iniziale = utente.peso  # o il peso registrato più recentemente
+    # Calcola la perdita di peso settimanale
+    peso_iniziale = utente.peso
     perdita_peso_totale = peso_iniziale - peso_ideale
 
     perdita_peso_settimanale = perdita_peso_totale
     if settimane > 0:
         perdita_peso_settimanale = perdita_peso_totale / settimane
 
-    for settimana in range(0, settimane):
-        data_intermedia = lunedi_corrente + timedelta(days=7 * settimana)
-        peso_ideale_intermedio = peso_iniziale - perdita_peso_settimanale * settimana
-        registro_intermedio = RegistroPeso.query.filter_by(user_id=utente_id, data_rilevazione=data_intermedia).first()
-        if not registro_intermedio:
-            # Inserisci il punto intermedio nel database
-            registro_intermedio = RegistroPeso(
-                user_id=utente_id,
-                data_rilevazione=data_intermedia,
-                peso=peso_iniziale if settimana == 0 else None,
-                peso_ideale=round(peso_ideale_intermedio, 1)
-            )
-            db.session.add(registro_intermedio)
+    # Crea i record di peso ideale per ogni settimana
+    for settimana in range(0, settimane + 1):  # +1 per includere la settimana finale
+        if settimana == settimane:
+            # Settimana finale - usa la data di fine dieta
+            data_settimana = data_fine_dieta
+            peso_ideale_settimana = peso_ideale
         else:
-            registro_intermedio.peso = peso_iniziale if settimana == 0 else None
-            registro_intermedio.peso_ideale = round(peso_ideale_intermedio, 1)
+            # Settimane intermedie
+            data_settimana = lunedi_corrente + timedelta(days=7 * settimana)
+            peso_ideale_settimana = peso_iniziale - perdita_peso_settimanale * settimana
 
-
-    # cerco se esiste già un record con la data di fine dieta
-    new_peso = RegistroPeso.query.filter_by(user_id=utente_id, data_rilevazione=data_fine_dieta).first()
-    # se c'è aggiorno solo il peso ideale
-    if new_peso:
-        new_peso.peso_ideale = peso_ideale
-    else:
-        # altrimenti creo la riga
-        new_peso = RegistroPeso(
+        # Crea o aggiorna il record PesoIdeale
+        peso_ideale_record = PesoIdeale.query.filter_by(
             user_id=utente_id,
-            data_rilevazione=data_fine_dieta,
-            peso_ideale=peso_ideale
+            data=data_settimana
+        ).first()
+
+        if not peso_ideale_record:
+            peso_ideale_record = PesoIdeale(
+                user_id=utente_id,
+                data=data_settimana,
+                peso_ideale=round(peso_ideale_settimana, 1)
+            )
+            db.session.add(peso_ideale_record)
+        else:
+            peso_ideale_record.peso_ideale = round(peso_ideale_settimana, 1)
+
+    # Gestione del registro peso per la settimana corrente (peso iniziale)
+    registro_corrente = RegistroPeso.query.filter_by(
+        user_id=utente_id,
+        data_rilevazione=lunedi_corrente
+    ).first()
+
+    if not registro_corrente:
+        registro_corrente = RegistroPeso(
+            user_id=utente_id,
+            data_rilevazione=lunedi_corrente,
+            peso=peso_iniziale
         )
-        db.session.add(new_peso)
+        db.session.add(registro_corrente)
+    else:
+        registro_corrente.peso = peso_iniziale
 
     db.session.commit()
+
+
+# 3. FUNZIONE HELPER PER OTTENERE PESO IDEALE PER UNA DATA
+def get_peso_ideale_per_data(user_id, data):
+    """
+    Ottiene il peso ideale per un utente in una data specifica
+    """
+    peso_ideale = PesoIdeale.query.filter_by(
+        user_id=user_id,
+        data=data
+    ).first()
+
+    return peso_ideale.peso_ideale if peso_ideale else None
+
+
+# 4. FUNZIONE HELPER PER OTTENERE TUTTI I PESI IDEALI DI UN UTENTE
+def get_pesi_ideali_utente(user_id):
+    """
+    Ottiene tutti i pesi ideali programmati per un utente
+    """
+    return PesoIdeale.query.filter_by(user_id=user_id).order_by(PesoIdeale.data).all()
+
+
+# 5. ESEMPIO DI QUERY PER COMBINARE DATI REALI E IDEALI
+def get_progresso_peso_completo(user_id):
+    """
+    Combina dati reali e pesi ideali per mostrare il progresso
+    """
+    from sqlalchemy import or_
+
+    # Query per ottenere sia i pesi reali che quelli ideali
+    pesi_reali = db.session.query(
+        RegistroPeso.data_rilevazione.label('data'),
+        RegistroPeso.peso.label('peso_reale'),
+        db.literal(None).label('peso_ideale')
+    ).filter(
+        RegistroPeso.user_id == user_id,
+        RegistroPeso.peso.isnot(None)
+    )
+
+    pesi_ideali = db.session.query(
+        PesoIdeale.data.label('data'),
+        db.literal(None).label('peso_reale'),
+        PesoIdeale.peso_ideale.label('peso_ideale')
+    ).filter(PesoIdeale.user_id == user_id)
+
+    # Unisci le query
+    tutti_pesi = pesi_reali.union(pesi_ideali).order_by('data').all()
+
+    return tutti_pesi
 
 
 def aggiungi_ricetta_al_menu(menu, day, meal, meal_id, user_id):
