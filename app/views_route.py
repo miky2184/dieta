@@ -214,18 +214,20 @@ def salva_dati():
 @login_required
 def get_peso_data():
     """
-    Questa funzione recupera la cronologia del peso dell'utente dal database.
+    Questa funzione recupera la cronologia completa del peso dell'utente,
+    combinando dati reali (RegistroPeso) e pesi ideali (PesoIdeale).
     """
     user_id = current_user.user_id
     try:
-        peso = get_peso_hist(user_id)
-        return jsonify({'status': 'success', 'peso': peso}), 200
+        peso_data = get_peso_hist(user_id)
+        return jsonify({'status': 'success', 'peso': peso_data}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
     except KeyError as key_err:
         return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
 
 
 @views.route('/get_data_utente', methods=['GET'])

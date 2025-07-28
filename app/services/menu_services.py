@@ -795,10 +795,55 @@ def get_progresso_completo(user_id, data_inizio=None, data_fine=None):
     return lista_risultato
 
 
-def get_peso_hist(user_id):
-    results = RegistroPeso.query.filter_by(user_id=user_id).order_by(asc(RegistroPeso.data_rilevazione)).all()
-    peso = [record.to_dict() for record in results]
-    return peso
+def get_peso_hist_completo(user_id):
+    """
+    Recupera la cronologia completa combinando dati reali e pesi ideali.
+    Restituisce un array di oggetti con tutte le informazioni per data.
+    """
+    # Query per i dati reali
+    pesi_reali = RegistroPeso.query.filter_by(user_id=user_id).order_by(asc(RegistroPeso.data_rilevazione)).all()
+
+    # Query per i pesi ideali
+    pesi_ideali = PesoIdeale.query.filter_by(user_id=user_id).order_by(asc(PesoIdeale.data)).all()
+
+    # Dizionario per combinare i dati per data
+    dati_combinati = {}
+
+    # Aggiungi i dati reali
+    for peso_reale in pesi_reali:
+        data_str = peso_reale.data_rilevazione.strftime('%Y-%m-%d')
+        dati_combinati[data_str] = {
+            'data_rilevazione': data_str,
+            'peso': float(peso_reale.peso) if peso_reale.peso else None,
+            'vita': float(peso_reale.vita) if peso_reale.vita else None,
+            'fianchi': float(peso_reale.fianchi) if peso_reale.fianchi else None,
+            'peso_ideale': None,  # Sarà popolato dopo
+            'user_id': peso_reale.user_id
+        }
+
+    # Aggiungi i pesi ideali
+    for peso_ideale in pesi_ideali:
+        data_str = peso_ideale.data.strftime('%Y-%m-%d')
+
+        if data_str in dati_combinati:
+            # Aggiorna il record esistente
+            dati_combinati[data_str]['peso_ideale'] = float(peso_ideale.peso_ideale)
+        else:
+            # Crea nuovo record solo per peso ideale
+            dati_combinati[data_str] = {
+                'data_rilevazione': data_str,
+                'peso': None,
+                'vita': None,
+                'fianchi': None,
+                'peso_ideale': float(peso_ideale.peso_ideale),
+                'user_id': peso_ideale.user_id
+            }
+
+    # Converti in lista e ordina per data
+    risultato = list(dati_combinati.values())
+    risultato.sort(key=lambda x: x['data_rilevazione'])
+
+    return risultato
 
 
 def get_settimana(macronutrienti: Utente):
