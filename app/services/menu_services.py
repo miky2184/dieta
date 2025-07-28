@@ -24,6 +24,7 @@ from app.services.db_services import get_sequence_value
 from app.services.modifica_pasti_services import get_menu_service
 from app.services.ricette_services import get_ricette_service
 from app.services.util_services import printer, calcola_macronutrienti_rimanenti_service
+from datetime import date
 
 MAX_RETRY = int(os.getenv('MAX_RETRY'))
 
@@ -941,7 +942,12 @@ def salva_utente_dieta(utente_id, nome, cognome, sesso, eta, altezza, peso, tdee
     db.session.add(utente)
 
     # Cancella tutti i record di peso ideale esistenti per questo utente
-    db.session.query(PesoIdeale).filter(PesoIdeale.user_id == utente_id).delete()
+    # db.session.query(PesoIdeale).filter(PesoIdeale.user_id == utente_id).delete()
+
+    db.session.query(PesoIdeale).filter(
+        PesoIdeale.user_id == utente_id,
+        PesoIdeale.data > date.today()
+    ).delete()
 
     # Calcola la data di fine dieta
     match = re.match(r"^(.*?)\s*\(", settimane_dieta)
