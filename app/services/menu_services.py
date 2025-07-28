@@ -28,9 +28,6 @@ from app.services.util_services import calcola_macronutrienti_rimanenti_service
 from datetime import date
 from enum import Enum
 
-import logging
-logger = logging.getLogger(__name__)
-
 MAX_RETRY = int(os.getenv('MAX_RETRY'))
 
 LIMITI_CONSUMO = {
@@ -141,8 +138,6 @@ def _calcola_periodi_mancanti(user_id: int) -> list[dict]:
                 "data_fine": nuova_settimana_fine
             })
 
-            logger.info(f"Trovata ultima settimana fino al {ultima_settimana.data_fine}, "
-                        f"generando settimana {nuova_settimana_inizio} - {nuova_settimana_fine}")
         else:
             # Nessun menu esistente, genera settimana corrente e prossima
             lunedi_prossimo = lunedi_corrente + timedelta(days=7)
@@ -159,14 +154,9 @@ def _calcola_periodi_mancanti(user_id: int) -> list[dict]:
                 }
             ])
 
-            logger.info(f"Nessun menu esistente, generando settimane: "
-                        f"{lunedi_corrente}-{domenica_corrente} e "
-                        f"{lunedi_prossimo}-{domenica_prossima}")
-
         return periodi
 
     except Exception as e:
-        logger.error(f"Errore nel calcolo periodi mancanti per utente {user_id}: {str(e)}")
         raise
 
 

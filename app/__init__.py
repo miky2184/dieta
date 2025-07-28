@@ -9,8 +9,6 @@ from app.models import db
 from app.models.Utente import Utente
 from app.models.UtenteAuth import UtenteAuth
 
-from app.config import logging_config
-
 
 def create_app():
     # Carica le variabili d'ambiente dal file .env
@@ -22,8 +20,6 @@ def create_app():
     # Configura il cache
     cache = Cache(app)
     app.cache = cache
-
-    logging_config.setup_logging()
 
     # Inizializza il database con l'app
     db.init_app(app)
