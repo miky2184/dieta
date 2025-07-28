@@ -138,16 +138,8 @@ def submit_weight():
 
         if success:
             # Calcola il peso ideale per questa data per mostrarlo nella risposta
-            peso_ideale = get_peso_ideale_per_data_interpolato(
-                current_user.user_id,
-                datetime.strptime(data['date'], '%Y-%m-%d').date()
-            )
-
-            return jsonify({
-                'status': 'success',
-                'message': 'Dati salvati con successo',
-                'peso_ideale_calcolato': peso_ideale
-            })
+            peso_data = get_peso_hist(user_id)
+            return jsonify({'status': 'success', 'peso': peso_data}), 200
 
         else:
             return jsonify({'status': 'error', 'message': 'Prima di salvare i parametri, compila il tab Dieta con i tuoi Dati.'}), 400
