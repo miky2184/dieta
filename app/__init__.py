@@ -10,7 +10,6 @@ from app.models.Utente import Utente
 from app.models.UtenteAuth import UtenteAuth
 
 from app.config import logging_config
-from config import Config
 
 
 def create_app():
@@ -24,7 +23,7 @@ def create_app():
     cache = Cache(app)
     app.cache = cache
 
-    logging_config.setup_logging(log_level=config.Config.LOG_LEVEL)
+    logging_config.setup_logging()
 
     # Inizializza il database con l'app
     db.init_app(app)
