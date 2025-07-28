@@ -323,7 +323,7 @@ def calcola_percentuale_effettiva(ricetta: dict, day: dict, max_percentuale: flo
     Returns:
         float: Percentuale massima utilizzabile, compresa tra 0.5 e 1.0. Restituisce 0 se non calcolabile.
     """
-    if not _valida_input_percentuale(ricetta, day, max_percentuale, min_percentuale):
+    if not valida_input_percentuale(ricetta, day, max_percentuale, min_percentuale):
         return 0.0
 
     try:
@@ -358,17 +358,42 @@ def calcola_percentuale_effettiva(ricetta: dict, day: dict, max_percentuale: flo
         raise RuntimeError(f"Errore durante il calcolo della percentuale: {str(e)}")
 
 
-def _valida_input_percentuale(ricetta: dict, day: dict, max_perc: float, min_perc: float) -> bool:
-    """Validazione robusta degli input."""
+def valida_input_percentuale(ricetta: dict, day: dict, max_perc: float, min_perc: float) -> bool:
+    """Validazione con soglia del 5% rispetto ai valori del giorno."""
     required_keys = {macro.value for macro in MacroType}
 
-    return (
+    def is_valid_value(value):
+        return isinstance(value, (int, float)) and value >= 0
+
+    # Validazione base
+    base_validation = (
             all(key in ricetta for key in required_keys) and
             all(key in day for key in required_keys) and
-            0 < min_perc <= max_perc <= 5.0 and  # Limiti ragionevoli
-            all(isinstance(ricetta[key], (int, float)) and ricetta[key] >= 0 for key in required_keys) and
-            all(isinstance(day[key], (int, float)) and day[key] >= 0 for key in required_keys)
+            0 < min_perc <= max_perc <= 5.0 and
+            all(is_valid_value(day[key]) for key in required_keys)
     )
+
+    if not base_validation:
+        return False
+
+    # Validazione ricetta: almeno 2 su 3 validi
+    valid_count = 0
+    for key in required_keys:
+        ricetta_val = ricetta[key]
+        day_val = day[key]
+
+        if is_valid_value(ricetta_val):
+            valid_count += 1
+        else:
+            # Il valore non valido deve essere entro il 5% del valore del giorno
+            if isinstance(ricetta_val, (int, float)) and day_val > 0:
+                percentuale_scostamento = abs(ricetta_val - day_val) / day_val * 100
+                if percentuale_scostamento > 5.0:
+                    return False
+            else:
+                return False
+
+    return valid_count >= 2
 
 def aggiorna_settimana(settimana, giorno_settimana, pasto, ricetta, percentuale) -> None:
     """
