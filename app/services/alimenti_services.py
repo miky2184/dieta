@@ -4,7 +4,7 @@ from app.models.AlimentoBase import AlimentoBase
 from app.models.IngredientiRicetta import IngredientiRicetta
 from app.models.IngredientiRicettaBase import IngredientiRicettaBase
 from app.models.VAlimento import VAlimento
-from app.services.db_services import get_sequence_value
+from app.services.common_services import get_sequence_value
 
 
 def create_alimento_service(name, carboidrati, proteine, grassi, fibre, vegan, surgelato, gruppo, user_id):

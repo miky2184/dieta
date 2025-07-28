@@ -18,7 +18,7 @@ from app.models.Utente import Utente
 from app.services.common_services import get_settimane_salvate_service
 from app.services.menu_services import save_weight, stampa_lista_della_spesa, elimina_ingredienti, salva_utente_dieta, get_peso_hist, get_peso_ideale_per_data_interpolato, recupera_ricette_per_alimento, aggiorna_limiti_gruppi, calcola_quantita, update_menu_corrente_service
 from app.services.modifica_pasti_services import get_menu_service
-from app.services.util_services import calcola_macronutrienti_rimanenti_service
+from app.services.common_services import calcola_macronutrienti_rimanenti_service
 
 views = Blueprint('views', __name__)
 
@@ -82,7 +82,7 @@ def dashboard():
         menu_corrente = menu_corrente['menu']
 
     # Recupera le settimane salvate per la selezione.
-    settimane_salvate = get_settimane_salvate_service(user_id, show_old_week=False)
+    settimane_salvate = get_settimane_salvate_service(user_id)
 
     # Calcola i macronutrienti rimanenti per ogni giorno del menu.
     remaining_macronutrienti = calcola_macronutrienti_rimanenti_service(menu_corrente)

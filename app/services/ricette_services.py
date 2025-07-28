@@ -10,7 +10,7 @@ from app.models.RicettaBase import RicettaBase
 from app.models.VAlimento import VAlimento
 from app.models.VIngredientiRicetta import VIngredientiRicetta
 from app.models.VRicetta import VRicetta
-from app.services.db_services import get_sequence_value
+from app.services.common_services import get_sequence_value
 
 
 def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=False, complemento:str='all', contorno=False, data_stagionalita=None, percentuale:float = 1.0) -> list[dict]:

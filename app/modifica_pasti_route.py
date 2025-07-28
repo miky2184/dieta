@@ -7,7 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.services.menu_services import aggiungi_ricetta_al_menu, rimuovi_pasto_dal_menu, cancella_tutti_pasti_menu, update_menu_corrente_service
 from app.services.modifica_pasti_services import get_menu_service
 #from app.services.ricette_services import get_ricette_service
-from app.services.util_services import calcola_macronutrienti_rimanenti_service
+from app.services.common_services import calcola_macronutrienti_rimanenti_service
 
 pasti = Blueprint('pasti', __name__)
 

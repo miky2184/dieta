@@ -21,10 +21,9 @@ from app.models.Utente import Utente
 from app.models.VAlimento import VAlimento
 from app.models.VIngredientiRicetta import VIngredientiRicetta
 from app.models.VRicetta import VRicetta
-from app.services.db_services import get_sequence_value
 from app.services.modifica_pasti_services import get_menu_service
 from app.services.ricette_services import get_ricette_service
-from app.services.util_services import calcola_macronutrienti_rimanenti_service
+from app.services.common_services import calcola_macronutrienti_rimanenti_service, get_sequence_value
 from datetime import date
 from enum import Enum
 

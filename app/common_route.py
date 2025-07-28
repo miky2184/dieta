@@ -15,7 +15,7 @@ common = Blueprint('common', __name__)
 def get_weeks():
     user_id = current_user.user_id
     try:
-        weeks_list = get_settimane_salvate_service(user_id, show_old_week=True)
+        weeks_list = get_settimane_salvate_service(user_id)
         return jsonify({'status': 'success', 'weeks': weeks_list}), 200
     except SQLAlchemyError as db_err:
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err), 'trace': traceback.format_exc()}), 500

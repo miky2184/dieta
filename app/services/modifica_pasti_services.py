@@ -1,5 +1,3 @@
-import json
-
 from sqlalchemy import and_
 
 from app.models import db

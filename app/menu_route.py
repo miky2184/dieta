@@ -7,7 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.models.GruppoAlimentare import GruppoAlimentare
 from app.services.menu_services import delete_week_menu_service, genera_menu_utente_service, completa_menu_service
 from app.services.modifica_pasti_services import get_menu_service
-from app.services.util_services import calcola_macronutrienti_rimanenti_service
+from app.services.common_services import calcola_macronutrienti_rimanenti_service
 from app.models.MenuSettimanale import MenuSettimanale
 
 menu = Blueprint('menu', __name__)
