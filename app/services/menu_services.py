@@ -7,7 +7,8 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 from decimal import Decimal
 import json
-
+from typing import List, Dict, Any, Optional
+from dataclasses import dataclass
 from sqlalchemy import and_, func, asc, desc
 from sqlalchemy.orm import aliased
 from sqlalchemy.exc import SQLAlchemyError, DatabaseError
@@ -80,14 +81,6 @@ def genera_menu_utente_service(user_id: int) -> None:
             raise ValueError('Macronutrienti non definiti!')
     except SQLAlchemyError as e:
         raise DatabaseError(f"Errore database nel recupero utente: {e}")
-
-    # Trova l'ultima settimana presente nel database
-    query = (db.session.query(MenuSettimanale)
-             .filter(MenuSettimanale.user_id==user_id,
-                     func.current_date() <= MenuSettimanale.data_fine)
-             .order_by(desc(MenuSettimanale.data_fine)))
-
-    ultima_settimana = query.first()
 
     # Recupera periodi da generare
     periodi_da_generare = _calcola_periodi_mancanti(user_id)
@@ -1210,35 +1203,60 @@ def recupera_ricette_per_alimento(alimento_id, user_id):
     ricette_data = [{'nome_ricetta': r.nome_ricetta} for r in ricette]
     return ricette_data
 
+def _get_menu_validated(week_id: int, user_id: int) -> Any:
+    """Recupera e valida il menu esistente"""
+    try:
+        menu = MenuSettimanale.query.filter_by(id=week_id, user_id=user_id).one()
+        if not menu or not menu.menu:
+            raise ValueError(f"Menu non trovato o vuoto per week_id {week_id}")
+        return menu
+    except Exception as e:
+        raise ValueError(f"Errore nel recupero del menu {week_id}: {str(e)}") from e
+
 def completa_menu_service(week_id: int, user_id: int):
-    menu = MenuSettimanale.query.filter_by(id=week_id, user_id=user_id).one()
+    """
+    Completa automaticamente un menu settimanale aggiungendo ricette ai pasti vuoti
+    e ottimizzando i macronutrienti rimanenti.
 
-    if not menu:
-        raise ValueError(f"Nessun menu trovato per la week_id {week_id}")
+    Args:
+        week_id: ID della settimana del menu
+        user_id: ID dell'utente
 
-    menu_da_completare = menu.menu
+    Raises:
+        ValueError: Se il menu non viene trovato
+        RuntimeError: Se si verificano errori durante il completamento
+    """
+    try:
+        # 1. Validazione e recupero dati
+        menu = _get_menu_validated(week_id, user_id)
+        menu_da_completare = menu.menu
+        ricette = get_ricette_service(user_id, stagionalita=True, attive=True)
 
-    macronutrienti_rimanenti = calcola_macronutrienti_rimanenti_service(menu_da_completare)
+        if not ricette:
+            raise RuntimeError("Nessuna ricetta disponibile per completare il menu")
 
-    giorni = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica']
+        macronutrienti_rimanenti = calcola_macronutrienti_rimanenti_service(menu_da_completare)
 
-    ricette = get_ricette_service(user_id, stagionalita=True, attive=True)
+        giorni = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica']
 
-    for giorno in giorni:
-        for pasto in pasti_config:
-            pasto_data = menu_da_completare['day'][giorno]['pasto'][pasto['pasto']]
+        for giorno in giorni:
+            for pasto in pasti_config:
+                pasto_data = menu_da_completare['day'][giorno]['pasto'][pasto['pasto']]
 
-            # **1️⃣ Controllo se il pasto è vuoto**
-            if not pasto_data['ricette']:
-                # **2️⃣ Cerca una ricetta compatibile**
-                verifica_e_seleziona(menu_da_completare, giorno, pasto['pasto'], pasto['tipo'], pasto['ripetibile'], pasto['min_ricette'], True, ricette, pasto['max_percentuale'], pasto['complemento'])
+                # **1️⃣ Controllo se il pasto è vuoto**
+                if not pasto_data['ricette']:
+                    # **2️⃣ Cerca una ricetta compatibile**
+                    verifica_e_seleziona(menu_da_completare, giorno, pasto['pasto'], pasto['tipo'], pasto['ripetibile'], pasto['min_ricette'], True, ricette, pasto['max_percentuale'], pasto['complemento'])
 
-    for giorno in giorni:
-        for pasto in pasti_config:
-            if macronutrienti_rimanenti[giorno]['kcal'] > 0:
-                # **2️⃣ Cerca una ricetta compatibile**
-                verifica_e_seleziona(menu_da_completare, giorno, pasto['pasto'], pasto['tipo'], pasto['ripetibile'], pasto['min_ricette'], True, ricette, pasto['max_percentuale'], pasto['complemento'])
-    update_menu_corrente_service(menu_da_completare, week_id, user_id)
+        for giorno in giorni:
+            for pasto in pasti_config:
+                if macronutrienti_rimanenti[giorno]['kcal'] > 0:
+                    # **2️⃣ Cerca una ricetta compatibile**
+                    verifica_e_seleziona(menu_da_completare, giorno, pasto['pasto'], pasto['tipo'], pasto['ripetibile'], pasto['min_ricette'], True, ricette, pasto['max_percentuale'], pasto['complemento'])
+        update_menu_corrente_service(menu_da_completare, week_id, user_id)
+
+    except Exception as e:
+        raise RuntimeError(f"Errore durante il completamento del menu: {str(e)}") from e
 
 
 def update_menu_corrente_service(menu_da_salvare, week_id, user_id):
