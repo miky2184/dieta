@@ -1704,51 +1704,61 @@ function updateWeightChart(weights) {
                 pointBackgroundColor: 'rgba(153, 102, 255, 0.5)',
                 pointHoverRadius: 5,
                 spanGaps: true // Collega i punti ignorando i null
-            },{
+            },
+            {
                 label: 'Peso',
                 data: weights.map(item => item.peso),
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                borderColor: 'rgba(255, 99, 132, 1)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)', // Rosso chiaro
+                borderColor: 'rgba(255, 99, 132, 1)', // Rosso intenso
                 borderWidth: 1,
                 pointRadius: 5,
                 pointBackgroundColor: 'rgba(255, 99, 132, 1)',
                 pointHoverRadius: 7
-            },{
+                spanGaps: true
+            },
+            {
                 label: 'Vita',
                 data: weights.map(item => item.vita),
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)', // Blu chiaro
+                borderColor: 'rgba(54, 162, 235, 1)', // Blu intenso
                 borderWidth: 1,
                 pointRadius: 5,
                 pointBackgroundColor: 'rgba(54, 162, 235, 1)',
                 pointHoverRadius: 7
-            },{
+                spanGaps: true
+            },
+            {
                 label: 'Fianchi',
                 data: weights.map(item => item.fianchi),
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)', // Verde acqua chiaro
+                borderColor: 'rgba(75, 192, 192, 1)', // Verde acqua intenso
                 borderWidth: 1,
                 pointRadius: 5,
                 pointBackgroundColor: 'rgba(75, 192, 192, 1)',
                 pointHoverRadius: 7
-            },{
+                spanGaps: true
+            },
+            {
                 label: 'Vo2',
                 data: weights.map(item => item.vo2),
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(255, 159, 64, 0.2)', // Arancione chiaro
+                borderColor: 'rgba(255, 159, 64, 1)', // Arancione intenso
                 borderWidth: 1,
                 pointRadius: 5,
-                pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                pointBackgroundColor: 'rgba(255, 159, 64, 1)',
                 pointHoverRadius: 7
-            },{
+                spanGaps: true
+            },
+            {
                 label: '% Massa Grassa',
                 data: weights.map(item => item.perc_massa_grassa),
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(153, 102, 255, 0.2)', // Viola chiaro (diverso dal Peso Ideale per distinguere)
+                borderColor: 'rgba(153, 102, 255, 1)', // Viola intenso
                 borderWidth: 1,
                 pointRadius: 5,
-                pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                pointBackgroundColor: 'rgba(153, 102, 255, 1)',
                 pointHoverRadius: 7
+                spanGaps: true
             }]
         },
         options: {
