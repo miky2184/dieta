@@ -1731,6 +1731,24 @@ function updateWeightChart(weights) {
                 pointRadius: 5,
                 pointBackgroundColor: 'rgba(75, 192, 192, 1)',
                 pointHoverRadius: 7
+            },{
+                label: 'Vo2',
+                data: weights.map(item => item.vo2),
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1,
+                pointRadius: 5,
+                pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                pointHoverRadius: 7
+            },{
+                label: '% Massa Grassa',
+                data: weights.map(item => item.perc_massa_grassa),
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1,
+                pointRadius: 5,
+                pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                pointHoverRadius: 7
             }]
         },
         options: {

@@ -14,6 +14,8 @@ class RegistroPeso(db.Model):
     peso = db.Column(db.Numeric)
     vita = db.Column(db.Numeric)
     fianchi = db.Column(db.Numeric)
+    perc_massa_grassa = db.Column(db.Numeric)
+    vo2 = db.Column(db.Numeric)
     #peso_ideale = db.Column(db.Numeric)
     user_id = db.Column(db.BigInteger, ForeignKey('dieta.utente.id', ondelete='CASCADE'), primary_key=True)
 

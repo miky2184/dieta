@@ -922,6 +922,8 @@ def get_peso_hist(user_id):
             'vita': float(peso_reale.vita) if peso_reale.vita else None,
             'fianchi': float(peso_reale.fianchi) if peso_reale.fianchi else None,
             'peso_ideale': None,  # Sarà popolato dopo
+            'vo2': float(peso_reale.vo2) if peso_reale.vo2 else None,
+            'perc_massa_grassa': float(peso_reale.perc_massa_grassa) if peso_reale.perc_massa_grassa else None,
             'user_id': peso_reale.user_id
         }
 
