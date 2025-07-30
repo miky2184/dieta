@@ -1713,7 +1713,7 @@ function updateWeightChart(weights) {
                 borderWidth: 1,
                 pointRadius: 5,
                 pointBackgroundColor: 'rgba(255, 99, 132, 1)',
-                pointHoverRadius: 7
+                pointHoverRadius: 7,
                 spanGaps: true
             },
             {
@@ -1724,7 +1724,7 @@ function updateWeightChart(weights) {
                 borderWidth: 1,
                 pointRadius: 5,
                 pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-                pointHoverRadius: 7
+                pointHoverRadius: 7,
                 spanGaps: true
             },
             {
@@ -1735,7 +1735,7 @@ function updateWeightChart(weights) {
                 borderWidth: 1,
                 pointRadius: 5,
                 pointBackgroundColor: 'rgba(75, 192, 192, 1)',
-                pointHoverRadius: 7
+                pointHoverRadius: 7,
                 spanGaps: true
             },
             {
@@ -1746,7 +1746,7 @@ function updateWeightChart(weights) {
                 borderWidth: 1,
                 pointRadius: 5,
                 pointBackgroundColor: 'rgba(255, 159, 64, 1)',
-                pointHoverRadius: 7
+                pointHoverRadius: 7,
                 spanGaps: true
             },
             {
@@ -1757,7 +1757,7 @@ function updateWeightChart(weights) {
                 borderWidth: 1,
                 pointRadius: 5,
                 pointBackgroundColor: 'rgba(153, 102, 255, 1)',
-                pointHoverRadius: 7
+                pointHoverRadius: 7,
                 spanGaps: true
             }]
         },
