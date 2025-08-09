@@ -338,23 +338,37 @@ function deleteRicetta(ricettaId) {
 }
 
 function filterTable() {
-  // Se la tabella non c’è (es. tab non montata), esci silenziosamente
   const ricetteTable = document.getElementById('ricette-table');
   if (!ricetteTable) return;
   const tbody = ricetteTable.querySelector('tbody');
   if (!tbody) return;
 
-  // helper robusti
+  // --- Helpers robusti ---
   const getEl = (id) => document.getElementById(id) || null;
-  const getText = (id) => (getEl(id)?.value ?? '').toString();
-  const getLower = (id) => getText(id).toLowerCase();
-  const getNumRange = (idMin, idMax) => {
+  const getLower = (id) => (getEl(id)?.value ?? '').toString().toLowerCase();
+
+  // Normalizza numeri: rimuove separatori migliaia ".", converte virgola decimale in punto
+  const toNum = (val) => {
+    if (val == null) return null;
+    const s = String(val).trim();
+    if (s === '') return null;
+    const normalized = s.replace(/\./g, '').replace(',', '.'); // "1.234,56" -> "1234.56"
+    const n = Number(normalized);
+    return Number.isFinite(n) ? n : null;
+  };
+
+  // Legge min/max da due input; fallback -Inf/Inf; se min>max li scambia
+  const getRange = (idMin, idMax) => {
     const rawMin = getEl(idMin)?.value;
     const rawMax = getEl(idMax)?.value;
-    const min = rawMin === '' || rawMin == null ? -Infinity : parseFloat(rawMin);
-    const max = rawMax === '' || rawMax == null ?  Infinity : parseFloat(rawMax);
-    return [isNaN(min) ? -Infinity : min, isNaN(max) ? Infinity : max];
+    let min = toNum(rawMin);
+    let max = toNum(rawMax);
+    if (min == null) min = -Infinity;
+    if (max == null) max =  Infinity;
+    if (min > max) [min, max] = [max, min]; // auto-fix range invertiti
+    return [min, max];
   };
+
   const getSel = (id, def='all') => getEl(id)?.value ?? def;
   const getMultiSel = (id) => {
     const sel = getEl(id);
@@ -363,13 +377,14 @@ function filterTable() {
 
   const nomeFilter = getLower('filter-nome');
 
-  const [calorieMin,  calorieMax]  = getNumRange('filter-ricette-calorie-min',  'filter-ricette-calorie-max');
-  const [carboMin,    carboMax]    = getNumRange('filter-ricette-carbo-min',    'filter-ricette-carbo-max');
-  const [proteineMin, proteineMax] = getNumRange('filter-ricette-proteine-min', 'filter-ricette-proteine-max');
-  const [grassiMin,   grassiMax]   = getNumRange('filter-ricette-grassi-min',   'filter-ricette-grassi-max');
-  const [fibreMin,    fibreMax]    = getNumRange('filter-ricette-fibre-min',    'filter-ricette-fibre-max');
-  const [zuccheroMin, zuccheroMax] = getNumRange('filter-ricette-zucchero-min', 'filter-ricette-zucchero-max');
-  const [saleMin,     saleMax]     = getNumRange('filter-ricette-sale-min',     'filter-ricette-sale-max');
+  // --- Ranges numerici (ora robusti) ---
+  const [calorieMin,  calorieMax]  = getRange('filter-ricette-calorie-min',  'filter-ricette-calorie-max');
+  const [carboMin,    carboMax]    = getRange('filter-ricette-carbo-min',    'filter-ricette-carbo-max');
+  const [proteineMin, proteineMax] = getRange('filter-ricette-proteine-min', 'filter-ricette-proteine-max');
+  const [grassiMin,   grassiMax]   = getRange('filter-ricette-grassi-min',   'filter-ricette-grassi-max');
+  const [fibreMin,    fibreMax]    = getRange('filter-ricette-fibre-min',    'filter-ricette-fibre-max');
+  const [zuccheroMin, zuccheroMax] = getRange('filter-ricette-zucchero-min', 'filter-ricette-zucchero-max');
+  const [saleMin,     saleMax]     = getRange('filter-ricette-sale-min',     'filter-ricette-sale-max');
 
   const colazioneFilter    = getSel('filter-colazione');
   const colazioneSecFilter = getSel('filter-colazione-sec');
@@ -387,14 +402,14 @@ function filterTable() {
     const cells = rows[i].getElementsByTagName('td');
 
     const nomeCell       = (cells[0]?.textContent || '').toLowerCase();
-    const calorieCell    = parseFloat(cells[1]?.textContent) || 0;
-    const carboCell      = parseFloat(cells[2]?.textContent) || 0;
-    const proteineCell   = parseFloat(cells[3]?.textContent) || 0;
-    const grassiCell     = parseFloat(cells[4]?.textContent) || 0;
-    const fibreCell      = parseFloat(cells[5]?.textContent) || 0;
-    const zuccheroCell   = parseFloat(cells[6]?.textContent) || 0;
-    const saleCell       = parseFloat(cells[7]?.textContent) || 0;
-    const infoCell       = cells[8]?.textContent || ''; // emoji
+    const calorieCell    = toNum(cells[1]?.textContent) ?? 0;
+    const carboCell      = toNum(cells[2]?.textContent) ?? 0;
+    const proteineCell   = toNum(cells[3]?.textContent) ?? 0;
+    const grassiCell     = toNum(cells[4]?.textContent) ?? 0;
+    const fibreCell      = toNum(cells[5]?.textContent) ?? 0;
+    const zuccheroCell   = toNum(cells[6]?.textContent) ?? 0;
+    const saleCell       = toNum(cells[7]?.textContent) ?? 0;
+    const infoCell       = cells[8]?.textContent || '';
 
     const colazioneCell    = cells[9]?.querySelector('input')?.checked?.toString() ?? 'false';
     const colazioneSecCell = cells[10]?.querySelector('input')?.checked?.toString() ?? 'false';
