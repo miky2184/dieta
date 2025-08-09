@@ -1984,15 +1984,13 @@ function deleteMenu() {
 }
 
 function recupera_tutte_le_ricette()  {
-            fetch('/ricette?stagionalita=false&complemento=all&contorno=false&attive=false')
-                .then(response => response.json())
-                .then(data => {
-                    if (data) {
-                        populateRicetteTable(data.ricette);
-                    }
-                })
-                .catch(error => console.error('Errore nel caricamento dei dati:', error));
-        }
+       fetch('/ricette?stagionalita=false&complemento=all&contorno=false&attive=false')
+            .then(response => response.json())
+            .then(data => {
+                 populateRicetteTable(data.ricette);
+            })
+            .catch(error => console.error('Errore nel caricamento dei dati:', error));
+}
 
 
 function fetchAlimentiData() {
