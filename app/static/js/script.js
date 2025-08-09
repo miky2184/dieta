@@ -331,20 +331,20 @@ function deleteRicetta(ricettaId) {
 function filterTable() {
     const nomeFilter = document.getElementById('filter-nome').value.toLowerCase();
 
-    const calorieMin = parseFloat(document.getElementById('filter-ricette-calorie-min').value) || -Infinity;
-    const calorieMax = parseFloat(document.getElementById('filter-ricette-calorie-max').value) || Infinity;
-    const carboMin = parseFloat(document.getElementById('filter-ricette-carbo-min').value) || -Infinity;
-    const carboMax = parseFloat(document.getElementById('filter-ricette-carbo-max').value) || Infinity;
-    const proteineMin = parseFloat(document.getElementById('filter-ricette-proteine-min').value) || -Infinity;
-    const proteineMax = parseFloat(document.getElementById('filter-ricette-proteine-max').value) || Infinity;
-    const grassiMin = parseFloat(document.getElementById('filter-ricette-grassi-min').value) || -Infinity;
-    const grassiMax = parseFloat(document.getElementById('filter-ricette-grassi-max').value) || Infinity;
-    const fibreMin = parseFloat(document.getElementById('filter-ricette-fibre-min').value) || -Infinity;
-    const fibreMax = parseFloat(document.getElementById('filter-ricette-fibre-max').value) || Infinity;
-    const zuccheroMin = parseFloat(document.getElementById('filter-ricette-zucchero-min').value) || -Infinity;
-    const zuccheroMax = parseFloat(document.getElementById('filter-ricette-zucchero-max').value) || Infinity;
-    const saleMin = parseFloat(document.getElementById('filter-ricette-sale-min').value) || -Infinity;
-    const saleMax = parseFloat(document.getElementById('filter-ricette-sale-max').value) || Infinity;
+    const calorieMin = parseFloat(document.getElementById('filter-calorie-min').value) || -Infinity;
+    const calorieMax = parseFloat(document.getElementById('filter-calorie-max').value) || Infinity;
+    const carboMin = parseFloat(document.getElementById('filter-carbo-min').value) || -Infinity;
+    const carboMax = parseFloat(document.getElementById('filter-carbo-max').value) || Infinity;
+    const proteineMin = parseFloat(document.getElementById('filter-proteine-min').value) || -Infinity;
+    const proteineMax = parseFloat(document.getElementById('filter-proteine-max').value) || Infinity;
+    const grassiMin = parseFloat(document.getElementById('filter-grassi-min').value) || -Infinity;
+    const grassiMax = parseFloat(document.getElementById('filter-grassi-max').value) || Infinity;
+    const fibreMin = parseFloat(document.getElementById('filter-fibre-min').value) || -Infinity;
+    const fibreMax = parseFloat(document.getElementById('filter-fibre-max').value) || Infinity;
+    const zuccheroMin = parseFloat(document.getElementById('filter-zucchero-min').value) || -Infinity;
+    const zuccheroMax = parseFloat(document.getElementById('filter-zucchero-max').value) || Infinity;
+    const saleMin = parseFloat(document.getElementById('filter-sale-min').value) || -Infinity;
+    const saleMax = parseFloat(document.getElementById('filter-sale-max').value) || Infinity;
 
     const colazioneFilter = document.getElementById('filter-colazione').value;
     const colazioneSecFilter = document.getElementById('filter-colazione-sec').value;
