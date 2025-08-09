@@ -331,8 +331,8 @@ function deleteRicetta(ricettaId) {
 function filterTable() {
     const nomeFilter = document.getElementById('filter-nome').value.toLowerCase();
 
-    const calorieMin = parseFloat(document.getElementById('filter-calorie-min').value) || -Infinity;
-    const calorieMax = parseFloat(document.getElementById('filter-calorie-max').value) || Infinity;
+    const calorieMin = parseFloat(document.getElementById('filter-ricette-calorie-min').value) || -Infinity;
+    const calorieMax = parseFloat(document.getElementById('filter-ricette-calorie-max').value) || Infinity;
     const carboMin = parseFloat(document.getElementById('filter-carbo-min').value) || -Infinity;
     const carboMax = parseFloat(document.getElementById('filter-carbo-max').value) || Infinity;
     const proteineMin = parseFloat(document.getElementById('filter-proteine-min').value) || -Infinity;
@@ -1909,8 +1909,8 @@ function updateProgress(progress) {
 function cleanFilters() {
     // Resetta i valori dei filtri
     document.getElementById('filter-nome').value = '';
-    document.getElementById('filter-calorie-min').value = '';
-    document.getElementById('filter-calorie-max').value = '';
+    document.getElementById('filter-ricette-calorie-min').value = '';
+    document.getElementById('filter-ricette-calorie-max').value = '';
     document.getElementById('filter-carbo-min').value = '';
     document.getElementById('filter-carbo-max').value = '';
     document.getElementById('filter-proteine-min').value = '';
