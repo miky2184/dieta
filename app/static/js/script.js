@@ -333,18 +333,18 @@ function filterTable() {
 
     const calorieMin = parseFloat(document.getElementById('filter-ricette-calorie-min').value) || -Infinity;
     const calorieMax = parseFloat(document.getElementById('filter-ricette-calorie-max').value) || Infinity;
-    const carboMin = parseFloat(document.getElementById('filter-carbo-min').value) || -Infinity;
-    const carboMax = parseFloat(document.getElementById('filter-carbo-max').value) || Infinity;
-    const proteineMin = parseFloat(document.getElementById('filter-proteine-min').value) || -Infinity;
-    const proteineMax = parseFloat(document.getElementById('filter-proteine-max').value) || Infinity;
-    const grassiMin = parseFloat(document.getElementById('filter-grassi-min').value) || -Infinity;
-    const grassiMax = parseFloat(document.getElementById('filter-grassi-max').value) || Infinity;
-    const fibreMin = parseFloat(document.getElementById('filter-fibre-min').value) || -Infinity;
-    const fibreMax = parseFloat(document.getElementById('filter-fibre-max').value) || Infinity;
-    const zuccheroMin = parseFloat(document.getElementById('filter-zucchero-min').value) || -Infinity;
-    const zuccheroMax = parseFloat(document.getElementById('filter-zucchero-max').value) || Infinity;
-    const saleMin = parseFloat(document.getElementById('filter-sale-min').value) || -Infinity;
-    const saleMax = parseFloat(document.getElementById('filter-sale-max').value) || Infinity;
+    const carboMin = parseFloat(document.getElementById('filter-ricette-carbo-min').value) || -Infinity;
+    const carboMax = parseFloat(document.getElementById('filter-ricette-carbo-max').value) || Infinity;
+    const proteineMin = parseFloat(document.getElementById('filter-ricette-proteine-min').value) || -Infinity;
+    const proteineMax = parseFloat(document.getElementById('filter-ricette-proteine-max').value) || Infinity;
+    const grassiMin = parseFloat(document.getElementById('filter-ricette-grassi-min').value) || -Infinity;
+    const grassiMax = parseFloat(document.getElementById('filter-ricette-grassi-max').value) || Infinity;
+    const fibreMin = parseFloat(document.getElementById('filter-ricette-fibre-min').value) || -Infinity;
+    const fibreMax = parseFloat(document.getElementById('filter-ricette-fibre-max').value) || Infinity;
+    const zuccheroMin = parseFloat(document.getElementById('filter-ricette-zucchero-min').value) || -Infinity;
+    const zuccheroMax = parseFloat(document.getElementById('filter-ricette-zucchero-max').value) || Infinity;
+    const saleMin = parseFloat(document.getElementById('filter-ricette-sale-min').value) || -Infinity;
+    const saleMax = parseFloat(document.getElementById('filter-ricette-sale-max').value) || Infinity;
 
     const colazioneFilter = document.getElementById('filter-colazione').value;
     const colazioneSecFilter = document.getElementById('filter-colazione-sec').value;
@@ -1911,12 +1911,20 @@ function cleanFilters() {
     document.getElementById('filter-nome').value = '';
     document.getElementById('filter-ricette-calorie-min').value = '';
     document.getElementById('filter-ricette-calorie-max').value = '';
-    document.getElementById('filter-carbo-min').value = '';
-    document.getElementById('filter-carbo-max').value = '';
-    document.getElementById('filter-proteine-min').value = '';
-    document.getElementById('filter-proteine-max').value = '';
-    document.getElementById('filter-grassi-min').value = '';
-    document.getElementById('filter-grassi-max').value = '';
+    document.getElementById('filter-ricette-carbo-min').value = '';
+    document.getElementById('filter-ricette-carbo-max').value = '';
+    document.getElementById('filter-ricette-proteine-min').value = '';
+    document.getElementById('filter-ricette-proteine-max').value = '';
+    document.getElementById('filter-ricette-grassi-min').value = '';
+    document.getElementById('filter-ricette-grassi-max').value = '';
+
+    document.getElementById('filter-ricette-fibre-min').value = '';
+    document.getElementById('filter-ricette-fibre-max').value = '';
+    document.getElementById('filter-ricette-zucchero-min').value = '';
+    document.getElementById('filter-ricette-zucchero-max').value = '';
+    document.getElementById('filter-ricette-sale-min').value = '';
+    document.getElementById('filter-ricette-sale-max').value = '';
+
     document.getElementById('filter-colazione').value = 'all';
     document.getElementById('filter-complemento-ricette').value = 'all';
     document.getElementById('filter-colazione-sec').value = 'all';
