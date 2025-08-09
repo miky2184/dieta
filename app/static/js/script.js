@@ -338,98 +338,99 @@ function deleteRicetta(ricettaId) {
 }
 
 function filterTable() {
-    const nomeFilter = document.getElementById('filter-nome').value.toLowerCase();
-    const calorieMin = parseFloat(document.getElementById('filter-ricette-calorie-min').value) || -Infinity;
-    const calorieMax = parseFloat(document.getElementById('filter-ricette-calorie-max').value) || Infinity;
-    const carboMin = parseFloat(document.getElementById('filter-ricette-carbo-min').value) || -Infinity;
-    const carboMax = parseFloat(document.getElementById('filter-ricette-carbo-max').value) || Infinity;
-    const proteineMin = parseFloat(document.getElementById('filter-ricette-proteine-min').value) || -Infinity;
-    const proteineMax = parseFloat(document.getElementById('filter-ricette-proteine-max').value) || Infinity;
-    const grassiMin = parseFloat(document.getElementById('filter-ricette-grassi-min').value) || -Infinity;
-    const grassiMax = parseFloat(document.getElementById('filter-ricette-grassi-max').value) || Infinity;
-    const fibreMin = parseFloat(document.getElementById('filter-ricette-fibre-min').value) || -Infinity;
-    const fibreMax = parseFloat(document.getElementById('filter-ricette-fibre-max').value) || Infinity;
-    const zuccheroMin = parseFloat(document.getElementById('filter-ricette-zucchero-min').value) || -Infinity;
-    const zuccheroMax = parseFloat(document.getElementById('filter-ricette-zucchero-max').value) || Infinity;
-    const saleMin = parseFloat(document.getElementById('filter-ricette-sale-min').value) || -Infinity;
-    const saleMax = parseFloat(document.getElementById('filter-ricette-sale-max').value) || Infinity;
+  // Se la tabella non c’è (es. tab non montata), esci silenziosamente
+  const ricetteTable = document.getElementById('ricette-table');
+  if (!ricetteTable) return;
+  const tbody = ricetteTable.querySelector('tbody');
+  if (!tbody) return;
 
-    const colazioneFilter = document.getElementById('filter-colazione').value;
-    const colazioneSecFilter = document.getElementById('filter-colazione-sec').value;
-    const spuntinoFilter = document.getElementById('filter-spuntino').value;
-    const principaleFilter = document.getElementById('filter-principale').value;
-    const contornoFilter = document.getElementById('filter-contorno').value;
-    const complementoFilter = document.getElementById('filter-complemento-ricette').value;
-    const attivaFilter = document.getElementById('filter-attiva').value;
+  // helper robusti
+  const getEl = (id) => document.getElementById(id) || null;
+  const getText = (id) => (getEl(id)?.value ?? '').toString();
+  const getLower = (id) => getText(id).toLowerCase();
+  const getNumRange = (idMin, idMax) => {
+    const rawMin = getEl(idMin)?.value;
+    const rawMax = getEl(idMax)?.value;
+    const min = rawMin === '' || rawMin == null ? -Infinity : parseFloat(rawMin);
+    const max = rawMax === '' || rawMax == null ?  Infinity : parseFloat(rawMax);
+    return [isNaN(min) ? -Infinity : min, isNaN(max) ? Infinity : max];
+  };
+  const getSel = (id, def='all') => getEl(id)?.value ?? def;
+  const getMultiSel = (id) => {
+    const sel = getEl(id);
+    return sel ? Array.from(sel.selectedOptions).map(o => o.value) : ['all'];
+  };
 
-    const infoFilterOptions = Array.from(document.getElementById('filter-info').selectedOptions).map(option => option.value);
+  const nomeFilter = getLower('filter-nome');
 
-    const table = document.getElementById('ricette-table').querySelector('tbody');
-    const rows = table.getElementsByTagName('tr');
+  const [calorieMin,  calorieMax]  = getNumRange('filter-ricette-calorie-min',  'filter-ricette-calorie-max');
+  const [carboMin,    carboMax]    = getNumRange('filter-ricette-carbo-min',    'filter-ricette-carbo-max');
+  const [proteineMin, proteineMax] = getNumRange('filter-ricette-proteine-min', 'filter-ricette-proteine-max');
+  const [grassiMin,   grassiMax]   = getNumRange('filter-ricette-grassi-min',   'filter-ricette-grassi-max');
+  const [fibreMin,    fibreMax]    = getNumRange('filter-ricette-fibre-min',    'filter-ricette-fibre-max');
+  const [zuccheroMin, zuccheroMax] = getNumRange('filter-ricette-zucchero-min', 'filter-ricette-zucchero-max');
+  const [saleMin,     saleMax]     = getNumRange('filter-ricette-sale-min',     'filter-ricette-sale-max');
 
-    // Se "Tutti" è selezionato, ignora i filtri "Info"
-    const infoFilterActive = !infoFilterOptions.includes("all");
+  const colazioneFilter    = getSel('filter-colazione');
+  const colazioneSecFilter = getSel('filter-colazione-sec');
+  const spuntinoFilter     = getSel('filter-spuntino');
+  const principaleFilter   = getSel('filter-principale');
+  const contornoFilter     = getSel('filter-contorno');
+  const complementoFilter  = getSel('filter-complemento-ricette');
+  const attivaFilter       = getSel('filter-attiva');
 
-    for (let i = 0; i < rows.length; i++) {
-        const cells = rows[i].getElementsByTagName('td');
-        const nomeCell = cells[0].textContent.toLowerCase();
+  const infoFilterOptions = getMultiSel('filter-info');
+  const infoFilterActive = !infoFilterOptions.includes('all');
 
-        const calorieCell = parseFloat(cells[1].textContent) || 0;
-        const carboCell = parseFloat(cells[2].textContent) || 0;
-        const proteineCell = parseFloat(cells[3].textContent) || 0;
-        const grassiCell = parseFloat(cells[4].textContent) || 0;
-        const fibreCell = parseFloat(cells[5].textContent) || 0;
-        const zuccheroCell = parseFloat(cells[6].textContent) || 0;
-        const saleCell = parseFloat(cells[7].textContent) || 0;
-        const infoCell = cells[8].textContent; // Colonna "Info"
-        const colazioneCell = cells[9].querySelector('input').checked.toString();
-        const colazioneSecCell = cells[10].querySelector('input').checked.toString();
-        const spuntinoCell = cells[11].querySelector('input').checked.toString();
-        const principaleCell = cells[12].querySelector('input').checked.toString();
-        const contornoCell = cells[13].querySelector('input').checked.toString();
-        const complementoCell = cells[14].querySelector('input').checked.toString();
-        const attivaCell = cells[15].querySelector('input').checked.toString();
+  const rows = tbody.getElementsByTagName('tr');
+  for (let i = 0; i < rows.length; i++) {
+    const cells = rows[i].getElementsByTagName('td');
 
-        const colazioneMatch = (colazioneFilter === 'all') || (colazioneFilter === colazioneCell);
-        const colazioneSecMatch = (colazioneSecFilter === 'all') || (colazioneSecFilter === colazioneSecCell);
-        const spuntinoMatch = (spuntinoFilter === 'all') || (spuntinoFilter === spuntinoCell);
-        const principaleMatch = (principaleFilter === 'all') || (principaleFilter === principaleCell);
-        const contornoMatch = (contornoFilter === 'all') || (contornoFilter === contornoCell);
-        const complementoMatch = (complementoFilter === 'all') || (complementoFilter === complementoCell);
-        const attivaMatch = (attivaFilter === 'all') || (attivaFilter === attivaCell);
+    const nomeCell       = (cells[0]?.textContent || '').toLowerCase();
+    const calorieCell    = parseFloat(cells[1]?.textContent) || 0;
+    const carboCell      = parseFloat(cells[2]?.textContent) || 0;
+    const proteineCell   = parseFloat(cells[3]?.textContent) || 0;
+    const grassiCell     = parseFloat(cells[4]?.textContent) || 0;
+    const fibreCell      = parseFloat(cells[5]?.textContent) || 0;
+    const zuccheroCell   = parseFloat(cells[6]?.textContent) || 0;
+    const saleCell       = parseFloat(cells[7]?.textContent) || 0;
+    const infoCell       = cells[8]?.textContent || ''; // emoji
 
-        const calorieMatch = calorieCell >= calorieMin && calorieCell <= calorieMax;
-        const carboMatch = carboCell >= carboMin && carboCell <= carboMax;
-        const proteineMatch = proteineCell >= proteineMin && proteineCell <= proteineMax;
-        const grassiMatch = grassiCell >= grassiMin && grassiCell <= grassiMax;
-        const fibreMatch = fibreCell >= fibreMin && fibreCell <= fibreMax;
-        const zuccheroMatch = zuccheroCell >= zuccheroMin && zuccheroCell <= zuccheroMax;
-        const saleMatch = saleCell >= saleMin && saleCell <= saleMax;
+    const colazioneCell    = cells[9]?.querySelector('input')?.checked?.toString() ?? 'false';
+    const colazioneSecCell = cells[10]?.querySelector('input')?.checked?.toString() ?? 'false';
+    const spuntinoCell     = cells[11]?.querySelector('input')?.checked?.toString() ?? 'false';
+    const principaleCell   = cells[12]?.querySelector('input')?.checked?.toString() ?? 'false';
+    const contornoCell     = cells[13]?.querySelector('input')?.checked?.toString() ?? 'false';
+    const complementoCell  = cells[14]?.querySelector('input')?.checked?.toString() ?? 'false';
+    const attivaCell       = cells[15]?.querySelector('input')?.checked?.toString() ?? 'false';
 
-        // Se il filtro "Info" è attivo, verifica la corrispondenza
-        const infoMatch = !infoFilterActive || infoFilterOptions.some(option => infoCell.includes(option));
+    const colazioneMatch    = (colazioneFilter    === 'all') || (colazioneFilter    === colazioneCell);
+    const colazioneSecMatch = (colazioneSecFilter === 'all') || (colazioneSecFilter === colazioneSecCell);
+    const spuntinoMatch     = (spuntinoFilter     === 'all') || (spuntinoFilter     === spuntinoCell);
+    const principaleMatch   = (principaleFilter   === 'all') || (principaleFilter   === principaleCell);
+    const contornoMatch     = (contornoFilter     === 'all') || (contornoFilter     === contornoCell);
+    const complementoMatch  = (complementoFilter  === 'all') || (complementoFilter  === complementoCell);
+    const attivaMatch       = (attivaFilter       === 'all') || (attivaFilter       === attivaCell);
 
-        if (nomeCell.includes(nomeFilter) &&
-            calorieMatch &&
-            carboMatch &&
-            proteineMatch &&
-            grassiMatch &&
-            fibreMatch &&
-            zuccheroMatch &&
-            saleMatch &&
-            colazioneMatch &&
-            colazioneSecMatch &&
-            spuntinoMatch &&
-            principaleMatch &&
-            contornoMatch &&
-            complementoMatch &&
-            attivaMatch &&
-            infoMatch) {
-            rows[i].style.display = '';
-        } else {
-            rows[i].style.display = 'none';
-        }
-    }
+    const calorieMatch  = calorieCell  >= calorieMin  && calorieCell  <= calorieMax;
+    const carboMatch    = carboCell    >= carboMin    && carboCell    <= carboMax;
+    const proteineMatch = proteineCell >= proteineMin && proteineCell <= proteineMax;
+    const grassiMatch   = grassiCell   >= grassiMin   && grassiCell   <= grassiMax;
+    const fibreMatch    = fibreCell    >= fibreMin    && fibreCell    <= fibreMax;
+    const zuccheroMatch = zuccheroCell >= zuccheroMin && zuccheroCell <= zuccheroMax;
+    const saleMatch     = saleCell     >= saleMin     && saleCell     <= saleMax;
+
+    const infoMatch = !infoFilterActive || infoFilterOptions.some(opt => infoCell.includes(opt));
+
+    rows[i].style.display = (
+      nomeCell.includes(nomeFilter) &&
+      calorieMatch && carboMatch && proteineMatch && grassiMatch &&
+      fibreMatch && zuccheroMatch && saleMatch &&
+      colazioneMatch && colazioneSecMatch && spuntinoMatch &&
+      principaleMatch && contornoMatch && complementoMatch && attivaMatch &&
+      infoMatch
+    ) ? '' : 'none';
+  }
 }
 
 // Funzione per filtrare la tabella degli alimenti
