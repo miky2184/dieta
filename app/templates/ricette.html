@@ -18,14 +18,16 @@
                     <th style="text-align: center;" onclick="sortTable('ricette-table', 3)">Prot</th>
                     <th style="text-align: center;" onclick="sortTable('ricette-table', 4)">Fat</th>
                     <th style="text-align: center;" onclick="sortTable('ricette-table', 5)">Fibre</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 6)">Zucchero</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 7)">Sale</th>
                     <th style="text-align: center;">Info</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 7)">Colazione</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 8)">Merenda</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 9)">Spuntino</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 10)">Principale</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 11)">Contorno</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 12)">Complemento</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 13)">Attiva</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 9)">Colazione</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 10)">Merenda</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 11)">Spuntino</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 12)">Principale</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 13)">Contorno</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 14)">Complemento</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 15)">Attiva</th>
                     <th style="text-align: center;">Azioni</th>
                 </tr>
                 <tr>
@@ -59,6 +61,18 @@
                                class="form-control form-control-sm" placeholder="Min"
                                oninput="filterTable()">
                         <input type="number" id="filter-fibre-max"
+                               class="form-control form-control-sm" placeholder="Max"
+                               oninput="filterTable()"></th>
+                    <th><input type="number" id="filter-zucchero-min"
+                               class="form-control form-control-sm" placeholder="Min"
+                               oninput="filterTable()">
+                        <input type="number" id="filter-zucchero-max"
+                               class="form-control form-control-sm" placeholder="Max"
+                               oninput="filterTable()"></th>
+                    <th><input type="number" id="filter-sale-min"
+                               class="form-control form-control-sm" placeholder="Min"
+                               oninput="filterTable()">
+                        <input type="number" id="filter-sale-max"
                                class="form-control form-control-sm" placeholder="Max"
                                oninput="filterTable()"></th>
                     <th>
