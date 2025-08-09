@@ -1,4 +1,4 @@
-<!-- app/templates/ricette.html -->
+<!- app/templates/ricette.html ->
 <div id="Ricette" class="tabcontent">
     <div class="card">
         <div class="card-body">
@@ -6,12 +6,10 @@
                 <thead>
                 <tr>
                     <th style="width:30% !important; text-align: center;" onclick="sortTable('ricette-table', 0)">
-                        <div><button class="btn btn-secondary btn-sm" data-bs-toggle="modal"
-                                data-bs-target="#addRecipeModal">
-                            Ricetta +
-                        </button>
-                        <label hidden>nuova ricetta</label>
-</div>
+                        <div>
+                            <button class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#addRecipeModal">Ricetta +</button>
+                            <label hidden>Nuova Ricetta</label>
+                        </div>
                     </th>
                     <th style="text-align: center;" onclick="sortTable('ricette-table', 1)">Kcal</th>
                     <th style="text-align: center;" onclick="sortTable('ricette-table', 2)">Carbs</th>
@@ -39,40 +37,40 @@
                         <input type="number" id="filter-ricette-calorie-max"
                                class="form-control form-control-sm" placeholder="Max"
                                oninput="filterTable()"></th>
-                    <th><input type="number" id="filter-carbo-min"
+                    <th><input type="number" id="filter-ricette-carbo-min"
                                class="form-control form-control-sm" placeholder="Min"
                                oninput="filterTable()">
-                        <input type="number" id="filter-carbo-max"
+                        <input type="number" id="filter-ricette-carbo-max"
                                class="form-control form-control-sm" placeholder="Max"
                                oninput="filterTable()"></th>
-                    <th><input type="number" id="filter-proteine-min"
+                    <th><input type="number" id="filter-ricette-proteine-min"
                                class="form-control form-control-sm" placeholder="Min"
                                oninput="filterTable()">
-                        <input type="number" id="filter-proteine-max"
+                        <input type="number" id="filter-ricette-proteine-max"
                                class="form-control form-control-sm" placeholder="Max"
                                oninput="filterTable()"></th>
-                    <th><input type="number" id="filter-grassi-min"
+                    <th><input type="number" id="filter-ricette-grassi-min"
                                class="form-control form-control-sm" placeholder="Min"
                                oninput="filterTable()">
-                        <input type="number" id="filter-grassi-max"
+                        <input type="number" id="filter-ricette-grassi-max"
                                class="form-control form-control-sm" placeholder="Max"
                                oninput="filterTable()"></th>
-                    <th><input type="number" id="filter-fibre-min"
+                    <th><input type="number" id="filter-ricette-fibre-min"
                                class="form-control form-control-sm" placeholder="Min"
                                oninput="filterTable()">
-                        <input type="number" id="filter-fibre-max"
+                        <input type="number" id="filter-ricette-fibre-max"
                                class="form-control form-control-sm" placeholder="Max"
                                oninput="filterTable()"></th>
-                    <th><input type="number" id="filter-zucchero-min"
+                    <th><input type="number" id="filter-ricette-zucchero-min"
                                class="form-control form-control-sm" placeholder="Min"
                                oninput="filterTable()">
-                        <input type="number" id="filter-zucchero-max"
+                        <input type="number" id="filter-ricette-zucchero-max"
                                class="form-control form-control-sm" placeholder="Max"
                                oninput="filterTable()"></th>
-                    <th><input type="number" id="filter-sale-min"
+                    <th><input type="number" id="filter-ricette-sale-min"
                                class="form-control form-control-sm" placeholder="Min"
                                oninput="filterTable()">
-                        <input type="number" id="filter-sale-max"
+                        <input type="number" id="filter-ricette-sale-max"
                                class="form-control form-control-sm" placeholder="Max"
                                oninput="filterTable()"></th>
                     <th>

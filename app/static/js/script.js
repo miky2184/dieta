@@ -5,6 +5,15 @@ let selectedWeekId = null;
 let gruppi = []; // Variabile globale per memorizzare i gruppi
 var myChart;
 
+// in alto
+function debounce(fn, wait=200) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, args), wait);
+  };
+}
+
 function openTab(evt, tabName) {
     const tabcontent = document.querySelectorAll(".tabcontent");
     tabcontent.forEach(tab => tab.style.display = "none");
@@ -330,7 +339,6 @@ function deleteRicetta(ricettaId) {
 
 function filterTable() {
     const nomeFilter = document.getElementById('filter-nome').value.toLowerCase();
-
     const calorieMin = parseFloat(document.getElementById('filter-ricette-calorie-min').value) || -Infinity;
     const calorieMax = parseFloat(document.getElementById('filter-ricette-calorie-max').value) || Infinity;
     const carboMin = parseFloat(document.getElementById('filter-ricette-carbo-min').value) || -Infinity;
