@@ -341,6 +341,10 @@ function filterTable() {
     const grassiMax = parseFloat(document.getElementById('filter-grassi-max').value) || Infinity;
     const fibreMin = parseFloat(document.getElementById('filter-fibre-min').value) || -Infinity;
     const fibreMax = parseFloat(document.getElementById('filter-fibre-max').value) || Infinity;
+    const zuccheroMin = parseFloat(document.getElementById('filter-zucchero-min').value) || -Infinity;
+    const zuccheroMax = parseFloat(document.getElementById('filter-zucchero-max').value) || Infinity;
+    const saleMin = parseFloat(document.getElementById('filter-sale-min').value) || -Infinity;
+    const saleMax = parseFloat(document.getElementById('filter-sale-max').value) || Infinity;
 
     const colazioneFilter = document.getElementById('filter-colazione').value;
     const colazioneSecFilter = document.getElementById('filter-colazione-sec').value;
@@ -367,14 +371,16 @@ function filterTable() {
         const proteineCell = parseFloat(cells[3].textContent) || 0;
         const grassiCell = parseFloat(cells[4].textContent) || 0;
         const fibreCell = parseFloat(cells[5].textContent) || 0;
-        const infoCell = cells[6].textContent; // Colonna "Info"
-        const colazioneCell = cells[7].querySelector('input').checked.toString();
-        const colazioneSecCell = cells[8].querySelector('input').checked.toString();
-        const spuntinoCell = cells[9].querySelector('input').checked.toString();
-        const principaleCell = cells[10].querySelector('input').checked.toString();
-        const contornoCell = cells[11].querySelector('input').checked.toString();
-        const complementoCell = cells[12].querySelector('input').checked.toString();
-        const attivaCell = cells[13].querySelector('input').checked.toString();
+        const zuccheroCell = parseFloat(cells[6].textContent) || 0;
+        const saleCell = parseFloat(cells[7].textContent) || 0;
+        const infoCell = cells[8].textContent; // Colonna "Info"
+        const colazioneCell = cells[9].querySelector('input').checked.toString();
+        const colazioneSecCell = cells[10].querySelector('input').checked.toString();
+        const spuntinoCell = cells[11].querySelector('input').checked.toString();
+        const principaleCell = cells[12].querySelector('input').checked.toString();
+        const contornoCell = cells[13].querySelector('input').checked.toString();
+        const complementoCell = cells[14].querySelector('input').checked.toString();
+        const attivaCell = cells[15].querySelector('input').checked.toString();
 
         const colazioneMatch = (colazioneFilter === 'all') || (colazioneFilter === colazioneCell);
         const colazioneSecMatch = (colazioneSecFilter === 'all') || (colazioneSecFilter === colazioneSecCell);
@@ -389,6 +395,8 @@ function filterTable() {
         const proteineMatch = proteineCell >= proteineMin && proteineCell <= proteineMax;
         const grassiMatch = grassiCell >= grassiMin && grassiCell <= grassiMax;
         const fibreMatch = fibreCell >= fibreMin && fibreCell <= fibreMax;
+        const zuccheroMatch = zuccheroCell >= zuccheroMin && zuccheroCell <= zuccheroMax;
+        const saleMatch = saleCell >= saleMin && saleCell <= saleMax;
 
         // Se il filtro "Info" è attivo, verifica la corrispondenza
         const infoMatch = !infoFilterActive || infoFilterOptions.some(option => infoCell.includes(option));
@@ -399,6 +407,8 @@ function filterTable() {
             proteineMatch &&
             grassiMatch &&
             fibreMatch &&
+            zuccheroMatch &&
+            saleMatch &&
             colazioneMatch &&
             colazioneSecMatch &&
             spuntinoMatch &&
@@ -428,6 +438,12 @@ function filterAlimentiTable() {
     const grassiMax = parseFloat(document.getElementById('filter-grassi-max').value) || Infinity;
     const fibreMin = parseFloat(document.getElementById('filter-fibre-min').value) || -Infinity;
     const fibreMax = parseFloat(document.getElementById('filter-fibre-max').value) || Infinity;
+
+    const zuccheroMin = parseFloat(document.getElementById('filter-zucchero-min').value) || -Infinity;
+    const zuccheroMax = parseFloat(document.getElementById('filter-zucchero-max').value) || Infinity;
+    const saleMin = parseFloat(document.getElementById('filter-sale-min').value) || -Infinity;
+    const saleMax = parseFloat(document.getElementById('filter-sale-max').value) || Infinity;
+
     const veganFilter = document.getElementById('filter-vegan').value;
     const surgelatoFilter = document.getElementById('filter-surgelato').value;
     const gruppoFilter = document.getElementById('filter-gruppo').value;
@@ -457,9 +473,11 @@ function filterAlimentiTable() {
         const proteineCell = parseFloat(cells[3].textContent) || 0;
         const grassiCell = parseFloat(cells[4].textContent) || 0;
         const fibreCell = parseFloat(cells[5].textContent) || 0;
-        const gruppoCell = cells[6].querySelector('select').value;
-        const veganCell = cells[7].querySelector('input').checked.toString();
-        const surgelatoCell = cells[8].querySelector('input').checked.toString();
+        const zuccheroCell = parseFloat(cells[6].textContent) || 0;
+        const saleCell = parseFloat(cells[7].textContent) || 0;
+        const gruppoCell = cells[8].querySelector('select').value;
+        const veganCell = cells[9].querySelector('input').checked.toString();
+        const surgelatoCell = cells[10].querySelector('input').checked.toString();
 
         // Ottieni i mesi di stagionalità dell'alimento
         const stagionalitaCell = Array.from(
@@ -471,6 +489,8 @@ function filterAlimentiTable() {
         const proteineMatch = proteineCell >= proteineMin && proteineCell <= proteineMax;
         const grassiMatch = grassiCell >= grassiMin && grassiCell <= grassiMax;
         const fibreMatch = fibreCell >= fibreMin && fibreCell <= fibreMax;
+        const zuccheroMatch = zuccheroCell >= zuccheroMin && zuccheroCell <= zuccheroMax;
+        const saleMatch = saleCell >= saleMin && saleCell <= saleMax;
 
         const veganMatch = (veganFilter === 'all') || (veganFilter === veganCell);
         const surgelatoMatch = (surgelatoFilter === 'all') || (surgelatoFilter === surgelatoCell);
@@ -488,6 +508,8 @@ function filterAlimentiTable() {
             proteineMatch &&
             grassiMatch &&
             fibreMatch &&
+            zuccheroMatch &&
+            saleMatch &&
             veganMatch &&
             surgelatoMatch &&
             gruppoMatch &&
@@ -633,6 +655,8 @@ function populateRicetteTable(ricette) {
             <td style="text-align: center;">${ricetta.proteine}</td>
             <td style="text-align: center;">${ricetta.grassi}</td>
             <td style="text-align: center;">${ricetta.fibre}</td>
+            <td style="text-align: center;">${ricetta.zucchero}</td>
+            <td style="text-align: center;">${ricetta.sale}</td>
             <td style="text-align: center;">${infoEmoji}</td>
             <td style="text-align: center;">
                 <div>
@@ -1584,6 +1608,8 @@ function aggiungiRicettaAlPasto(stagionalita, complemento, contorno, meal_type, 
                         <td>${ricetta.proteine}</td>
                         <td>${ricetta.grassi}</td>
                         <td>${ricetta.fibre}</td>
+                        <td>${ricetta.zucchero}</td>
+                        <td>${ricetta.sale}</td>
                         <td><input type="checkbox" value="${ricetta.id}" data-kcal="${ricetta.kcal}" class="meal-checkbox"></td>
                     `;
                     mealSelectionBody.appendChild(row);
@@ -2049,12 +2075,26 @@ function populateAlimentiTable(alimenti) {
                     <label hidden class="form-control form-control-sm">${alimento.grassi}</label>
                 </div>
             </td>
-                        <td>
+            <td>
                 <div>
                     <input type="number" class="form-control  form-control-sm  input-hidden-border"  min="0.1" step="0.1" data-alimento-id="${alimento.id}" name="fibre_${alimento.id}" value="${alimento.fibre}">
                     <label hidden class="form-control form-control-sm">${alimento.fibre}</label>
                 </div>
             </td>
+
+            <td>
+                <div>
+                    <input type="number" class="form-control  form-control-sm  input-hidden-border"  min="0.1" step="0.1" data-alimento-id="${alimento.id}" name="zucchero_${alimento.id}" value="${alimento.zucchero}">
+                    <label hidden class="form-control form-control-sm">${alimento.zucchero}</label>
+                </div>
+            </td>
+            <td>
+                <div>
+                    <input type="number" class="form-control  form-control-sm  input-hidden-border"  min="0.1" step="0.1" data-alimento-id="${alimento.id}" name="sale_${alimento.id}" value="${alimento.sale}">
+                    <label hidden class="form-control form-control-sm">${alimento.sale}</label>
+                </div>
+            </td>
+
             <td>
                 <select class="form-select form-select-sm" name="gruppo_${alimento.id}" data-alimento-id="${alimento.id}">
                     <option value="null" ${!alimento.gruppo ? 'selected' : ''}>N/A</option>
@@ -2128,6 +2168,8 @@ function populateAlimentiTable(alimenti) {
                 proteine: parseFloat(document.querySelector(`input[name='proteine_${alimentoId}']`).value),
                 grassi: parseFloat(document.querySelector(`input[name='grassi_${alimentoId}']`).value),
                 fibre: parseFloat(document.querySelector(`input[name='fibre_${alimentoId}']`).value),
+                zucchero: parseFloat(document.querySelector(`input[name='zucchero_${alimentoId}']`).value),
+                sale: parseFloat(document.querySelector(`input[name='sale_${alimentoId}']`).value),
                 vegan: document.querySelector(`input[name='vegan_${alimentoId}']`).checked,
                 surgelato: document.querySelector(`input[name='surgelato_${alimentoId}']`).checked,
                 gruppo: document.querySelector(`select[name='gruppo_${alimentoId}']`).value,
@@ -2150,6 +2192,8 @@ function populateAlimentiTable(alimenti) {
                 proteine: parseFloat(document.querySelector(`input[name='proteine_${alimentoId}']`).value),
                 grassi: parseFloat(document.querySelector(`input[name='grassi_${alimentoId}']`).value),
                 fibre: parseFloat(document.querySelector(`input[name='fibre_${alimentoId}']`).value),
+                zucchero: parseFloat(document.querySelector(`input[name='zucchero_${alimentoId}']`).value),
+                sale: parseFloat(document.querySelector(`input[name='sale_${alimentoId}']`).value),
                 vegan: document.querySelector(`input[name='vegan_${alimentoId}']`).checked,
                 surgelato: document.querySelector(`input[name='surgelato_${alimentoId}']`).checked,
                 gruppo: document.querySelector(`select[name='gruppo_${alimentoId}']`).value

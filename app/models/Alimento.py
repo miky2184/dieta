@@ -16,6 +16,8 @@ class Alimento(db.Model):
     proteine_override = db.Column(db.Numeric)
     grassi_override = db.Column(db.Numeric)
     fibre_override = db.Column(db.Numeric, default=0)
+    zucchero_override = db.Column(db.Numeric, default=0)
+    sale_override = db.Column(db.Numeric, default=0)
     stagionalita_override = db.Column(ARRAY(db.BigInteger), default=lambda: [1, 2, 3,4,5,6,7,8,9,10,11,12])
     surgelato_override = db.Column(db.Boolean, default=False)
     vegan_override = db.Column(db.Boolean, default=False)

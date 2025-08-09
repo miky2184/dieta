@@ -82,6 +82,14 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
                 func.sum((va.fibre / 100) * vir.qta),
                 2
             ).label('fibre'),
+            func.round(
+                func.sum((va.zucchero / 100) * vir.qta),
+                2
+            ).label('zucchero'),
+            func.round(
+                func.sum((va.sale / 100) * vir.qta),
+                2
+            ).label('sale'),
             vr.colazione,
             vr.spuntino,
             vr.principale,
@@ -233,7 +241,9 @@ def get_ricette_service(user_id, ids=None, stagionalita:bool=False, attive:bool=
             'ricetta': row.ricetta,
             'ingredienti': row.ingredienti,
             'qta': percentuale,
-            'info': ''.join(info)
+            'info': ''.join(info),
+            'zucchero': float(row.zucchero or 0),
+            'sale': float(row.sale or 0)
         })
 
     return ricette

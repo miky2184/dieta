@@ -15,6 +15,8 @@ class VAlimento(db.Model):
     proteine = db.Column(db.Numeric)
     grassi = db.Column(db.Numeric)
     fibre = db.Column(db.Numeric)
+    zucchero = db.Column(db.Numeric)
+    sale = db.Column(db.Numeric)
     stagionalita = db.Column(ARRAY(db.BigInteger))
     vegan = db.Column(db.Boolean)
     surgelato = db.Column(db.Boolean, default=False)

@@ -7,7 +7,7 @@ from app.models.VAlimento import VAlimento
 from app.services.common_services import get_sequence_value
 
 
-def create_alimento_service(name, carboidrati, proteine, grassi, fibre, vegan, surgelato, gruppo, user_id):
+def create_alimento_service(name, carboidrati, proteine, grassi, fibre, zucchero, sale, vegan, surgelato, gruppo, user_id):
     seq_id = get_sequence_value('dieta.seq_id_alimento')
 
     alimento = Alimento(
@@ -17,6 +17,8 @@ def create_alimento_service(name, carboidrati, proteine, grassi, fibre, vegan, s
         proteine_override=proteine,
         grassi_override=grassi,
         fibre_override=fibre,
+        zucchero_override=zucchero,
+        sale_override=sale,
         vegan_override=vegan,
         surgelato_override=surgelato,
         id_gruppo_override=gruppo,
@@ -41,6 +43,8 @@ def get_alimenti_service(user_id):
         'proteine': r.proteine,
         'grassi': r.grassi,
         'fibre': r.fibre,
+        'zucchero': r.zucchero,
+        'sale': r.sale,
         'kcal': r.kcal,
         'vegan': r.vegan,
         'surgelato': r.surgelato,
@@ -50,7 +54,7 @@ def get_alimenti_service(user_id):
     return alimenti
 
 
-def update_alimento_service(alimento_id, nome, carboidrati, proteine, grassi, fibre, vegan, surgelato, id_gruppo, stagionalita, user_id):
+def update_alimento_service(alimento_id, nome, carboidrati, proteine, grassi, fibre, zucchero, sale, vegan, surgelato, id_gruppo, stagionalita, user_id):
     alimento_base = AlimentoBase.get_by_id(alimento_id)
     if alimento_base:
         alimento_id = alimento_base.id
@@ -64,6 +68,8 @@ def update_alimento_service(alimento_id, nome, carboidrati, proteine, grassi, fi
             proteine_override=proteine,
             grassi_override=grassi,
             fibre_override=fibre,
+            zucchero_override=zucchero,
+            sale_override=sale,
             vegan_override=vegan,
             surgelato_override=surgelato,
             stagionalita_override=stagionalita if stagionalita is not None else alimento_base.stagionalita,
@@ -77,6 +83,8 @@ def update_alimento_service(alimento_id, nome, carboidrati, proteine, grassi, fi
         alimento.proteine_override = proteine
         alimento.grassi_override = grassi
         alimento.fibre_override = fibre
+        alimento.zucchero_override = zucchero
+        alimento.sale_override = sale
         alimento.vegan_override = vegan
         alimento.surgelato_override = surgelato
         alimento.stagionalita_override = stagionalita if stagionalita is not None else alimento.stagionalita_override
@@ -99,6 +107,8 @@ def delete_alimento_service(alimento_id, user_id):
             proteine_override=alimento_base.proteine,
             grassi_override=alimento_base.grassi,
             fibre_override=alimento_base.fibre,
+            zucchero_override=alimento_base.zucchero,
+            sale_override=alimento_base.sale,
             vegan_override=alimento_base.vegan,
             surgelato_override=alimento_base.surgelato,
             stagionalita_override=alimento_base.stagionalita,

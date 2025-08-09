@@ -25,6 +25,8 @@ class AlimentoBase(db.Model):
             END
             """, persisted=True))
     fibre = db.Column(db.Numeric, default=0)
+    zucchero = db.Column(db.Numeric, default=0)
+    sale = db.Column(db.Numeric, default=0)
     kcal = db.Column(db.Numeric,
                               Computed("((carboidrati * 4) + (proteine * 4) + (grassi * 9) + (fibre * 2))",
                                        persisted=True))
