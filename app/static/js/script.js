@@ -351,8 +351,8 @@ function filterTable() {
   const toNum = (val) => {
     if (val == null) return null;
     const s = String(val).trim();
-    if (s === '') return null;
-    const normalized = s.replace(/\./g, '').replace(',', '.'); // "1.234,56" -> "1234.56"
+    if (!s) return null;
+    const normalized = s.replace(/\./g, '').replace(',', '.');
     const n = Number(normalized);
     return Number.isFinite(n) ? n : null;
   };
@@ -402,13 +402,17 @@ function filterTable() {
     const cells = rows[i].getElementsByTagName('td');
 
     const nomeCell       = (cells[0]?.textContent || '').toLowerCase();
-    const calorieCell    = toNum(cells[1]?.textContent) ?? 0;
-    const carboCell      = toNum(cells[2]?.textContent) ?? 0;
-    const proteineCell   = toNum(cells[3]?.textContent) ?? 0;
-    const grassiCell     = toNum(cells[4]?.textContent) ?? 0;
-    const fibreCell      = toNum(cells[5]?.textContent) ?? 0;
-    const zuccheroCell   = toNum(cells[6]?.textContent) ?? 0;
-    const saleCell       = toNum(cells[7]?.textContent) ?? 0;
+
+    const r = rows[i]; // la <tr> corrente
+
+    const calorieCell  = toNum(r.dataset.kcal)     ?? 0;
+    const carboCell    = toNum(r.dataset.carbo)    ?? 0;
+    const proteineCell = toNum(r.dataset.proteine) ?? 0;
+    const grassiCell   = toNum(r.dataset.grassi)   ?? 0;
+    const fibreCell    = toNum(r.dataset.fibre)    ?? 0;
+    const zuccheroCell = toNum(r.dataset.zucchero) ?? 0;
+    const saleCell     = toNum(r.dataset.sale)     ?? 0;
+
     const infoCell       = cells[8]?.textContent || '';
 
     const colazioneCell    = cells[9]?.querySelector('input')?.checked?.toString() ?? 'false';
@@ -649,6 +653,15 @@ function populateRicetteTable(ricette) {
 
     ricette.forEach(ricetta => {
         const row = document.createElement('tr');
+
+        // dati numerici in chiaro, indipendenti dalla struttura della tabella
+        row.dataset.kcal       = ricetta.kcal ?? '';
+        row.dataset.carbo      = ricetta.carboidrati ?? '';
+        row.dataset.proteine   = ricetta.proteine ?? '';
+        row.dataset.grassi     = ricetta.grassi ?? '';
+        row.dataset.fibre      = ricetta.fibre ?? '';
+        row.dataset.zucchero   = ricetta.zucchero ?? '';
+        row.dataset.sale       = ricetta.sale ?? '';
 
         // Determina le emoji per le caratteristiche della ricetta
         let infoEmoji = '';
