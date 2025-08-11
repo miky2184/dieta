@@ -406,7 +406,7 @@ function filterTable() {
 
     // CORREZIONE: Usa i nomi corretti dei dataset come impostati in populateRicetteTable
     const calorieCell  = toNum(r.dataset.kcal)     ?? 0;
-    const carboCell    = toNum(r.dataset.carbo)    ?? 0;  // Era questo il problema principale
+    const carboCell    = toNum(r.dataset.carboidrati)    ?? 0;  // Era questo il problema principale
     const proteineCell = toNum(r.dataset.proteine) ?? 0;
     const grassiCell   = toNum(r.dataset.grassi)   ?? 0;
     const fibreCell    = toNum(r.dataset.fibre)    ?? 0;
@@ -655,13 +655,13 @@ function populateRicetteTable(ricette) {
         const row = document.createElement('tr');
 
         // dati numerici in chiaro, indipendenti dalla struttura della tabella
-        row.dataset.kcal       = ricetta.kcal ?? '';
-        row.dataset.carbo      = ricetta.carboidrati ?? '';
-        row.dataset.proteine   = ricetta.proteine ?? '';
-        row.dataset.grassi     = ricetta.grassi ?? '';
-        row.dataset.fibre      = ricetta.fibre ?? '';
-        row.dataset.zucchero   = ricetta.zucchero ?? '';
-        row.dataset.sale       = ricetta.sale ?? '';
+        row.dataset.kcal         = ricetta.kcal ?? 0;
+        row.dataset.carboidrati  = ricetta.carboidrati ?? 0;
+        row.dataset.proteine     = ricetta.proteine ?? 0;
+        row.dataset.grassi       = ricetta.grassi ?? 0;
+        row.dataset.fibre        = ricetta.fibre ?? 0;
+        row.dataset.zucchero     = ricetta.zucchero ?? 0;
+        row.dataset.sale         = ricetta.sale ?? 0;
 
         // Determina le emoji per le caratteristiche della ricetta
         let infoEmoji = '';
