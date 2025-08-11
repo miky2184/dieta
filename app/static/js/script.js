@@ -338,16 +338,16 @@ function deleteRicetta(ricettaId) {
 }
 
 function filterTable() {
-  const ricetteTable = document.getElementById('ricette-table');
+   const ricetteTable = document.getElementById('ricette-table');
   if (!ricetteTable) return;
   const tbody = ricetteTable.querySelector('tbody');
   if (!tbody) return;
 
-  // --- Helpers robusti ---
-  const getEl = (id) => document.getElementById(id) || null;
+  // Cerca PRIMA dentro la tabella, poi (fallback) nel document
+  const getEl = (id) => ricetteTable.querySelector(`#${id}`) || document.getElementById(id);
   const getLower = (id) => (getEl(id)?.value ?? '').toString().toLowerCase();
 
-  // Normalizza numeri: rimuove separatori migliaia ".", converte virgola decimale in punto
+  // Normalizza numeri: "1.234,56" -> 1234.56
   const toNum = (val) => {
     if (val == null) return null;
     const s = String(val).trim();
@@ -357,7 +357,7 @@ function filterTable() {
     return Number.isFinite(n) ? n : null;
   };
 
-  // Legge min/max da due input; fallback -Inf/Inf; se min>max li scambia
+  // Usa SEMPRE getEl(...) scoped alla tabella
   const getRange = (idMin, idMax) => {
     const rawMin = getEl(idMin)?.value;
     const rawMax = getEl(idMax)?.value;
@@ -365,7 +365,7 @@ function filterTable() {
     let max = toNum(rawMax);
     if (min == null) min = -Infinity;
     if (max == null) max =  Infinity;
-    if (min > max) [min, max] = [max, min]; // auto-fix range invertiti
+    if (min > max) [min, max] = [max, min];
     return [min, max];
   };
 
@@ -406,7 +406,7 @@ function filterTable() {
 
     // CORREZIONE: Usa i nomi corretti dei dataset come impostati in populateRicetteTable
     const calorieCell  = toNum(r.dataset.kcal)     ?? 0;
-    const carboCell    = toNum(r.dataset.carboidrati)    ?? 0;  // Era questo il problema principale
+    const carboCell    = toNum(r.dataset.carboidrati)    ?? 0;
     const proteineCell = toNum(r.dataset.proteine) ?? 0;
     const grassiCell   = toNum(r.dataset.grassi)   ?? 0;
     const fibreCell    = toNum(r.dataset.fibre)    ?? 0;
