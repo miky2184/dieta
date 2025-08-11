@@ -400,24 +400,21 @@ function filterTable() {
   const rows = tbody.getElementsByTagName('tr');
   for (let i = 0; i < rows.length; i++) {
     const cells = rows[i].getElementsByTagName('td');
-
-    if (cells.length === 0) continue; // Salta righe vuote
+    const r = rows[i]; // la <tr> corrente
 
     const nomeCell = (cells[0]?.textContent || '').toLowerCase();
 
-    // CORREZIONE: Leggi i valori numerici dalle celle invece che dai dataset
-    // Assumendo che le celle siano nell'ordine: Nome, Kcal, Carbs, Prot, Fat, Fibre, Zucchero, Sale, Info, ...
-    const calorieCell  = toNum(cells[1]?.textContent) ?? 0;
-    const carboCell    = toNum(cells[2]?.textContent) ?? 0;
-    const proteineCell = toNum(cells[3]?.textContent) ?? 0;
-    const grassiCell   = toNum(cells[4]?.textContent) ?? 0;
-    const fibreCell    = toNum(cells[5]?.textContent) ?? 0;
-    const zuccheroCell = toNum(cells[6]?.textContent) ?? 0;
-    const saleCell     = toNum(cells[7]?.textContent) ?? 0;
+    // CORREZIONE: Usa i nomi corretti dei dataset come impostati in populateRicetteTable
+    const calorieCell  = toNum(r.dataset.kcal)     ?? 0;
+    const carboCell    = toNum(r.dataset.carbo)    ?? 0;  // Era questo il problema principale
+    const proteineCell = toNum(r.dataset.proteine) ?? 0;
+    const grassiCell   = toNum(r.dataset.grassi)   ?? 0;
+    const fibreCell    = toNum(r.dataset.fibre)    ?? 0;
+    const zuccheroCell = toNum(r.dataset.zucchero) ?? 0;
+    const saleCell     = toNum(r.dataset.sale)     ?? 0;
 
-    const infoCell = cells[8]?.textContent || '';
+    const infoCell       = cells[8]?.textContent || '';
 
-    // I checkbox sono nelle colonne successive
     const colazioneCell    = cells[9]?.querySelector('input')?.checked?.toString() ?? 'false';
     const colazioneSecCell = cells[10]?.querySelector('input')?.checked?.toString() ?? 'false';
     const spuntinoCell     = cells[11]?.querySelector('input')?.checked?.toString() ?? 'false';
