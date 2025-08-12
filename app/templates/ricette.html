@@ -6,10 +6,9 @@
                 <thead>
                 <tr>
                     <th style="width:30% !important; text-align: center;" onclick="sortTable('ricette-table', 0)">
-                        <div>
-                            <button class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#addRecipeModal">Ricetta +</button>
-                            <label hidden>Nuova Ricetta</label>
-                        </div>
+                            <button class="btn btn-secondary btn-sm" data-bs-toggle="modal"
+                                    data-bs-target="#addRecipeModal">Ricetta +
+                            </button>
                     </th>
                     <th style="text-align: center;" onclick="sortTable('ricette-table', 1)">Kcal</th>
                     <th style="text-align: center;" onclick="sortTable('ricette-table', 2)">Carbs</th>
@@ -18,37 +17,40 @@
                     <th style="text-align: center;" onclick="sortTable('ricette-table', 5)">Fibre</th>
                     <th style="text-align: center;" onclick="sortTable('ricette-table', 6)">Zucchero</th>
                     <th style="text-align: center;" onclick="sortTable('ricette-table', 7)">Sale</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 8)">Colazione</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 9)">Merenda</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 10)">Spuntino</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 11)">Principale</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 12)">Contorno</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 13)">Complemento</th>
+                    <th style="text-align: center;" onclick="sortTable('ricette-table', 14)">Attiva</th>
                     <th style="text-align: center;">Info</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 9)">Colazione</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 10)">Merenda</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 11)">Spuntino</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 12)">Principale</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 13)">Contorno</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 14)">Complemento</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 15)">Attiva</th>
                     <th style="text-align: center;">Azioni</th>
                 </tr>
                 <tr>
                     <th><input type="text" id="filter-nome" class="form-control form-control-sm"
                                placeholder="Filtra per nome" onkeyup="filterTable()"></th>
                     <th><input type="number" id="filter-ricette-calorie-min"
-                               class="form-control form-control-sm" placeholder="Min"
-                               oninput="filterTable()">
+                               class="form-control form-control-sm"
+                               placeholder="Min" oninput="filterTable()">
                         <input type="number" id="filter-ricette-calorie-max"
                                class="form-control form-control-sm" placeholder="Max"
-                               oninput="filterTable()"></th>
+                               oninput="filterTable()">
+                    </th>
                     <th><input type="number" id="filter-ricette-carbo-min"
                                class="form-control form-control-sm" placeholder="Min"
                                oninput="filterTable()">
                         <input type="number" id="filter-ricette-carbo-max"
                                class="form-control form-control-sm" placeholder="Max"
-                               oninput="filterTable()"></th>
+                               oninput="filterTable()">
+                    </th>
                     <th><input type="number" id="filter-ricette-proteine-min"
                                class="form-control form-control-sm" placeholder="Min"
                                oninput="filterTable()">
                         <input type="number" id="filter-ricette-proteine-max"
                                class="form-control form-control-sm" placeholder="Max"
-                               oninput="filterTable()"></th>
+                               oninput="filterTable()">
+                    </th>
                     <th><input type="number" id="filter-ricette-grassi-min"
                                class="form-control form-control-sm" placeholder="Min"
                                oninput="filterTable()">
@@ -60,13 +62,15 @@
                                oninput="filterTable()">
                         <input type="number" id="filter-ricette-fibre-max"
                                class="form-control form-control-sm" placeholder="Max"
-                               oninput="filterTable()"></th>
+                               oninput="filterTable()">
+                    </th>
                     <th><input type="number" id="filter-ricette-zucchero-min"
                                class="form-control form-control-sm" placeholder="Min"
                                oninput="filterTable()">
                         <input type="number" id="filter-ricette-zucchero-max"
                                class="form-control form-control-sm" placeholder="Max"
-                               oninput="filterTable()"></th>
+                               oninput="filterTable()">
+                    </th>
                     <th><input type="number" id="filter-ricette-sale-min"
                                class="form-control form-control-sm" placeholder="Min"
                                oninput="filterTable()">

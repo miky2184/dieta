@@ -687,7 +687,12 @@ function populateRicetteTable(ricette) {
                     <label hidden class="form-control form-control-sm">${ricetta.nome_ricetta}</label>
                 </div>
             </td>
-            <td style="text-align: center;">${ricetta.kcal}</td>
+            <td style="text-align: center;">
+                 <div>
+                    <input type="number" class="form-control form-control-sm input-hidden-border"  min="0.1" step="0.1" data-ricetta-id="${ricetta.id}" name="kcal_{ricetta.id}" value="${ricetta.kcal}">
+                    <label hidden class="form-control form-control-sm">${ricetta.kcal}</label>
+                </div>
+            </td>
             <td style="text-align: center;">${ricetta.carboidrati}</td>
             <td style="text-align: center;">${ricetta.proteine}</td>
             <td style="text-align: center;">${ricetta.grassi}</td>
