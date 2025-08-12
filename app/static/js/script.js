@@ -1954,33 +1954,33 @@ function updateProgress(progress) {
 }
 
 function cleanFilters() {
-  const setVal = (id, v='') => {
-    const el = document.getElementById(id);
-    if (el) el.value = v;   // esegue solo se l'elemento esiste
-  };
+    // Resetta i valori dei filtri
+    document.getElementById('filter-nome').value = '';
+    document.getElementById('filter-ricette-calorie-min').value = '';
+    document.getElementById('filter-ricette-calorie-max').value = '';
+    document.getElementById('filter-ricette-carbo-min').value = '';
+    document.getElementById('filter-ricette-carbo-max').value = '';
+    document.getElementById('filter-ricette-proteine-min').value = '';
+    document.getElementById('filter-ricette-proteine-max').value = '';
+    document.getElementById('filter-ricette-grassi-min').value = '';
+    document.getElementById('filter-ricette-grassi-max').value = '';
+    document.getElementById('filter-ricette-fibre-min').value = '';
+    document.getElementById('filter-ricette-fibre-max').value = '';
+    document.getElementById('filter-ricette-zucchero-min').value = '';
+    document.getElementById('filter-ricette-zucchero-max').value = '';
+    document.getElementById('filter-ricette-sale-min').value = '';
+    document.getElementById('filter-ricette-sale-max').value = '';
+    document.getElementById('filter-colazione').value = 'all';
+    document.getElementById('filter-complemento-ricette').value = 'all';
+    document.getElementById('filter-colazione-sec').value = 'all';
+    document.getElementById('filter-spuntino').value = 'all';
+    document.getElementById('filter-principale').value = 'all';
+    document.getElementById('filter-contorno').value = 'all';
+    document.getElementById('filter-attiva').value = 'all';
+    document.getElementById('filter-info').value = 'all';
 
-  // Testo
-  setVal('filter-nome', '');
-
-  // Numerici (min/max) – tutti con prefisso "filter-ricette-"
-  const keys = ['calorie','carbo','proteine','grassi','fibre','zucchero','sale'];
-  keys.forEach(k => {
-    setVal(`filter-ricette-${k}-min`, '');
-    setVal(`filter-ricette-${k}-max`, '');
-  });
-
-  // Select booleane
-  ['filter-colazione','filter-colazione-sec','filter-spuntino','filter-principale','filter-contorno','filter-complemento-ricette','filter-attiva']
-    .forEach(id => setVal(id, 'all'));
-
-  // Multi-select "Info": seleziona solo "all"
-  const infoSel = document.getElementById('filter-info');
-  if (infoSel) {
-    [...infoSel.options].forEach(o => o.selected = (o.value === 'all'));
-  }
-
-  // Re-apply filtro in modo sicuro (la tua filterTable ora è tollerante)
-  if (typeof filterTable === 'function') filterTable();
+    // Chiama la funzione che filtra la tabella per aggiornare i risultati
+    filterTable();
 }
 
 function cleanFiltersAlimenti() {
