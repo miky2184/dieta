@@ -338,118 +338,100 @@ function deleteRicetta(ricettaId) {
 }
 
 function filterTable() {
-   const ricetteTable = document.getElementById('ricette-table');
-  if (!ricetteTable) return;
-  const tbody = ricetteTable.querySelector('tbody');
-  if (!tbody) return;
+    const nomeFilter = document.getElementById('filter-nome').value.toLowerCase();
 
-  // Cerca PRIMA dentro la tabella, poi (fallback) nel document
-  const getEl = (id) => ricetteTable.querySelector(`#${id}`) || document.getElementById(id);
-  const getLower = (id) => (getEl(id)?.value ?? '').toString().toLowerCase();
+    const calorieMin = parseFloat(document.getElementById('filter-ricette-calorie-min').value) || -Infinity;
+    const calorieMax = parseFloat(document.getElementById('filter-ricette-calorie-max').value) || Infinity;
+    const carboMin = parseFloat(document.getElementById('filter-ricette-carbo-min').value) || -Infinity;
+    const carboMax = parseFloat(document.getElementById('filter-ricette-carbo-max').value) || Infinity;
+    const proteineMin = parseFloat(document.getElementById('filter-ricette-proteine-min').value) || -Infinity;
+    const proteineMax = parseFloat(document.getElementById('filter-ricette-proteine-max').value) || Infinity;
+    const grassiMin = parseFloat(document.getElementById('filter-ricette-grassi-min').value) || -Infinity;
+    const grassiMax = parseFloat(document.getElementById('filter-ricette-grassi-max').value) || Infinity;
+    const fibreMin = parseFloat(document.getElementById('filter-ricette-fibre-min').value) || -Infinity;
+    const fibreMax = parseFloat(document.getElementById('filter-ricette-fibre-max').value) || Infinity;
 
-  // Normalizza numeri: "1.234,56" -> 1234.56
-  const toNum = (val) => {
-    if (val == null) return null;
-    const s = String(val).trim();
-    if (!s) return null;
-    const normalized = s.replace(/\./g, '').replace(',', '.');
-    const n = Number(normalized);
-    return Number.isFinite(n) ? n : null;
-  };
+    const zuccheroMin = parseFloat(document.getElementById('filter-ricette-zucchero-min').value) || -Infinity;
+    const zuccheroMax = parseFloat(document.getElementById('filter-ricette-zucchero-max').value) || Infinity;
+    const saleMin = parseFloat(document.getElementById('filter-ricette-sale-min').value) || -Infinity;
+    const saleMax = parseFloat(document.getElementById('filter-ricette-sale-max').value) || Infinity;
 
-  // Usa SEMPRE getEl(...) scoped alla tabella
-  const getRange = (idMin, idMax) => {
-    const rawMin = getEl(idMin)?.value;
-    const rawMax = getEl(idMax)?.value;
-    let min = toNum(rawMin);
-    let max = toNum(rawMax);
-    if (min == null) min = -Infinity;
-    if (max == null) max =  Infinity;
-    if (min > max) [min, max] = [max, min];
-    return [min, max];
-  };
+    const colazioneFilter = document.getElementById('filter-colazione').value;
+    const colazioneSecFilter = document.getElementById('filter-colazione-sec').value;
+    const spuntinoFilter = document.getElementById('filter-spuntino').value;
+    const principaleFilter = document.getElementById('filter-principale').value;
+    const contornoFilter = document.getElementById('filter-contorno').value;
+    const complementoFilter = document.getElementById('filter-complemento-ricette').value;
+    const attivaFilter = document.getElementById('filter-attiva').value;
 
-  const getSel = (id, def='all') => getEl(id)?.value ?? def;
-  const getMultiSel = (id) => {
-    const sel = getEl(id);
-    return sel ? Array.from(sel.selectedOptions).map(o => o.value) : ['all'];
-  };
+    const infoFilterOptions = Array.from(document.getElementById('filter-info').selectedOptions).map(option => option.value);
 
-  const nomeFilter = getLower('filter-nome');
+    const table = document.getElementById('ricette-table').querySelector('tbody');
+    const rows = table.getElementsByTagName('tr');
 
-  // --- Ranges numerici (ora robusti) ---
-  const [calorieMin,  calorieMax]  = getRange('filter-ricette-calorie-min',  'filter-ricette-calorie-max');
-  const [carboMin,    carboMax]    = getRange('filter-ricette-carbo-min',    'filter-ricette-carbo-max');
-  const [proteineMin, proteineMax] = getRange('filter-ricette-proteine-min', 'filter-ricette-proteine-max');
-  const [grassiMin,   grassiMax]   = getRange('filter-ricette-grassi-min',   'filter-ricette-grassi-max');
-  const [fibreMin,    fibreMax]    = getRange('filter-ricette-fibre-min',    'filter-ricette-fibre-max');
-  const [zuccheroMin, zuccheroMax] = getRange('filter-ricette-zucchero-min', 'filter-ricette-zucchero-max');
-  const [saleMin,     saleMax]     = getRange('filter-ricette-sale-min',     'filter-ricette-sale-max');
+    // Se "Tutti" è selezionato, ignora i filtri "Info"
+    const infoFilterActive = !infoFilterOptions.includes("all");
 
-  const colazioneFilter    = getSel('filter-colazione');
-  const colazioneSecFilter = getSel('filter-colazione-sec');
-  const spuntinoFilter     = getSel('filter-spuntino');
-  const principaleFilter   = getSel('filter-principale');
-  const contornoFilter     = getSel('filter-contorno');
-  const complementoFilter  = getSel('filter-complemento-ricette');
-  const attivaFilter       = getSel('filter-attiva');
+    for (let i = 0; i < rows.length; i++) {
+        const cells = rows[i].getElementsByTagName('td');
+        const nomeCell = cells[0].textContent.toLowerCase();
 
-  const infoFilterOptions = getMultiSel('filter-info');
-  const infoFilterActive = !infoFilterOptions.includes('all');
+        const calorieCell = parseFloat(cells[1].textContent) || 0;
+        const carboCell = parseFloat(cells[2].textContent) || 0;
+        const proteineCell = parseFloat(cells[3].textContent) || 0;
+        const grassiCell = parseFloat(cells[4].textContent) || 0;
+        const fibreCell = parseFloat(cells[5].textContent) || 0;
+        const zuccheroCell = parseFloat(cells[6].textContent) || 0;
+        const saleCell = parseFloat(cells[7].textContent) || 0;
+        const colazioneCell = cells[8].querySelector('input').checked.toString();
+        const colazioneSecCell = cells[9].querySelector('input').checked.toString();
+        const spuntinoCell = cells[10].querySelector('input').checked.toString();
+        const principaleCell = cells[11].querySelector('input').checked.toString();
+        const contornoCell = cells[12].querySelector('input').checked.toString();
+        const complementoCell = cells[13].querySelector('input').checked.toString();
+        const attivaCell = cells[14].querySelector('input').checked.toString();
+        const infoCell = cells[15].textContent; // Colonna "Info"
 
-  const rows = tbody.getElementsByTagName('tr');
-  for (let i = 0; i < rows.length; i++) {
-    const cells = rows[i].getElementsByTagName('td');
-    const r = rows[i]; // la <tr> corrente
+        const colazioneMatch = (colazioneFilter === 'all') || (colazioneFilter === colazioneCell);
+        const colazioneSecMatch = (colazioneSecFilter === 'all') || (colazioneSecFilter === colazioneSecCell);
+        const spuntinoMatch = (spuntinoFilter === 'all') || (spuntinoFilter === spuntinoCell);
+        const principaleMatch = (principaleFilter === 'all') || (principaleFilter === principaleCell);
+        const contornoMatch = (contornoFilter === 'all') || (contornoFilter === contornoCell);
+        const complementoMatch = (complementoFilter === 'all') || (complementoFilter === complementoCell);
+        const attivaMatch = (attivaFilter === 'all') || (attivaFilter === attivaCell);
 
-    const nomeCell = (cells[0]?.textContent || '').toLowerCase();
+        const calorieMatch = calorieCell >= calorieMin && calorieCell <= calorieMax;
+        const carboMatch = carboCell >= carboMin && carboCell <= carboMax;
+        const proteineMatch = proteineCell >= proteineMin && proteineCell <= proteineMax;
+        const grassiMatch = grassiCell >= grassiMin && grassiCell <= grassiMax;
+        const fibreMatch = fibreCell >= fibreMin && fibreCell <= fibreMax;
+        const zuccheroMatch = zuccheroCell >= zuccheroMin && zuccheroCell <= zuccheroMax;
+        const saleMatch = saleCell >= saleMin && saleCell <= saleMax;
 
-    // CORREZIONE: Usa i nomi corretti dei dataset come impostati in populateRicetteTable
-    const calorieCell  = toNum(r.dataset.kcal)     ?? 0;
-    const carboCell    = toNum(r.dataset.carboidrati)    ?? 0;
-    const proteineCell = toNum(r.dataset.proteine) ?? 0;
-    const grassiCell   = toNum(r.dataset.grassi)   ?? 0;
-    const fibreCell    = toNum(r.dataset.fibre)    ?? 0;
-    const zuccheroCell = toNum(r.dataset.zucchero) ?? 0;
-    const saleCell     = toNum(r.dataset.sale)     ?? 0;
+        // Se il filtro "Info" è attivo, verifica la corrispondenza
+        const infoMatch = !infoFilterActive || infoFilterOptions.some(option => infoCell.includes(option));
 
-    const infoCell       = cells[8]?.textContent || '';
-
-    const colazioneCell    = cells[9]?.querySelector('input')?.checked?.toString() ?? 'false';
-    const colazioneSecCell = cells[10]?.querySelector('input')?.checked?.toString() ?? 'false';
-    const spuntinoCell     = cells[11]?.querySelector('input')?.checked?.toString() ?? 'false';
-    const principaleCell   = cells[12]?.querySelector('input')?.checked?.toString() ?? 'false';
-    const contornoCell     = cells[13]?.querySelector('input')?.checked?.toString() ?? 'false';
-    const complementoCell  = cells[14]?.querySelector('input')?.checked?.toString() ?? 'false';
-    const attivaCell       = cells[15]?.querySelector('input')?.checked?.toString() ?? 'false';
-
-    const colazioneMatch    = (colazioneFilter    === 'all') || (colazioneFilter    === colazioneCell);
-    const colazioneSecMatch = (colazioneSecFilter === 'all') || (colazioneSecFilter === colazioneSecCell);
-    const spuntinoMatch     = (spuntinoFilter     === 'all') || (spuntinoFilter     === spuntinoCell);
-    const principaleMatch   = (principaleFilter   === 'all') || (principaleFilter   === principaleCell);
-    const contornoMatch     = (contornoFilter     === 'all') || (contornoFilter     === contornoCell);
-    const complementoMatch  = (complementoFilter  === 'all') || (complementoFilter  === complementoCell);
-    const attivaMatch       = (attivaFilter       === 'all') || (attivaFilter       === attivaCell);
-
-    const calorieMatch  = calorieCell  >= calorieMin  && calorieCell  <= calorieMax;
-    const carboMatch    = carboCell    >= carboMin    && carboCell    <= carboMax;
-    const proteineMatch = proteineCell >= proteineMin && proteineCell <= proteineMax;
-    const grassiMatch   = grassiCell   >= grassiMin   && grassiCell   <= grassiMax;
-    const fibreMatch    = fibreCell    >= fibreMin    && fibreCell    <= fibreMax;
-    const zuccheroMatch = zuccheroCell >= zuccheroMin && zuccheroCell <= zuccheroMax;
-    const saleMatch     = saleCell     >= saleMin     && saleCell     <= saleMax;
-
-    const infoMatch = !infoFilterActive || infoFilterOptions.some(opt => infoCell.includes(opt));
-
-    rows[i].style.display = (
-      nomeCell.includes(nomeFilter) &&
-      calorieMatch && carboMatch && proteineMatch && grassiMatch &&
-      fibreMatch && zuccheroMatch && saleMatch &&
-      colazioneMatch && colazioneSecMatch && spuntinoMatch &&
-      principaleMatch && contornoMatch && complementoMatch && attivaMatch &&
-      infoMatch
-    ) ? '' : 'none';
-  }
+        if (nomeCell.includes(nomeFilter) &&
+            calorieMatch &&
+            carboMatch &&
+            proteineMatch &&
+            grassiMatch &&
+            fibreMatch &&
+            zuccheroMatch &&
+            saleMatch &&
+            colazioneMatch &&
+            colazioneSecMatch &&
+            spuntinoMatch &&
+            principaleMatch &&
+            contornoMatch &&
+            complementoMatch &&
+            attivaMatch &&
+            infoMatch) {
+            rows[i].style.display = '';
+        } else {
+            rows[i].style.display = 'none';
+        }
+    }
 }
 
 // Funzione per filtrare la tabella degli alimenti
@@ -653,15 +635,6 @@ function populateRicetteTable(ricette) {
 
     ricette.forEach(ricetta => {
         const row = document.createElement('tr');
-
-        // dati numerici in chiaro, indipendenti dalla struttura della tabella
-        row.dataset.kcal         = ricetta.kcal ?? 0;
-        row.dataset.carboidrati  = ricetta.carboidrati ?? 0;
-        row.dataset.proteine     = ricetta.proteine ?? 0;
-        row.dataset.grassi       = ricetta.grassi ?? 0;
-        row.dataset.fibre        = ricetta.fibre ?? 0;
-        row.dataset.zucchero     = ricetta.zucchero ?? 0;
-        row.dataset.sale         = ricetta.sale ?? 0;
 
         // Determina le emoji per le caratteristiche della ricetta
         let infoEmoji = '';
