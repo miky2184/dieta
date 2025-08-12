@@ -1994,6 +1994,12 @@ function cleanFiltersAlimenti() {
     document.getElementById('filter-proteine-max').value = '';
     document.getElementById('filter-grassi-min').value = '';
     document.getElementById('filter-grassi-max').value = '';
+    document.getElementById('filter-fibre-min').value = '';
+    document.getElementById('filter-fibre-max').value = '';
+    document.getElementById('filter-zucchero-min').value = '';
+    document.getElementById('filter-zucchero-max').value = '';
+    document.getElementById('filter-sale-min').value = '';
+    document.getElementById('filter-sale-max').value = '';
     document.getElementById('filter-vegan').value = 'all';
     document.getElementById('filter-surgelato').value = 'all';
     document.getElementById('filter-gruppo').value = 'all';
@@ -2319,11 +2325,6 @@ function showConfirmDeleteAlimentoModal(alimentoId, alimentoNome) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-
-  document.getElementById('cleanFiltersBtn')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    cleanFilters();
-  });
 
     // Gestisci i click sui filtri
     document.querySelectorAll('.month-filter-btn').forEach(button => {
