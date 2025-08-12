@@ -672,7 +672,6 @@ function populateRicetteTable(ricette) {
             <td style="text-align: center;">${ricetta.fibre}</td>
             <td style="text-align: center;">${ricetta.zucchero}</td>
             <td style="text-align: center;">${ricetta.sale}</td>
-            <td style="text-align: center;">${infoEmoji}</td>
             <td style="text-align: center;">
                 <div>
                     <input type="checkbox" name="colazione_${ricetta.id}" ${ricetta.colazione ? 'checked' : ''}>
@@ -715,6 +714,7 @@ function populateRicetteTable(ricette) {
                     <input type="checkbox" class="attiva-checkbox" name="attiva_${ricetta.id}" data-ricetta-id="${ricetta.id}" ${ricetta.attiva ? 'checked' : ''} disabled>
                 </div>
             </td>
+            <td style="text-align: center;">${infoEmoji}</td>
             <td style="text-align: center;">
                 <div class="btn-group" role="group">
                     <button class="btn btn-primary btn-sm update-ricetta-btn" data-ricetta-id="${ricetta.id}" data-ricetta-nome="${ricetta.nome_ricetta}" data-ricetta-colazione="${ricetta.colazione}" data-ricetta-colazione_sec="${ricetta.colazione_sec}" data-ricetta-spuntino="${ricetta.spuntino}" data-ricetta-principale="${ricetta.principale}" data-ricetta-contorno="${ricetta.contorno}" data-ricetta-complemento="${ricetta.complemento}" data-ricetta-attiva="${ricetta.attiva}" data-bs-toggle="tooltip" title="Salva"><i class="fas fa-save"></i></button>
