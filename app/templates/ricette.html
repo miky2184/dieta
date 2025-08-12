@@ -78,27 +78,6 @@
                                class="form-control form-control-sm" placeholder="Max"
                                oninput="filterTable()"></th>
                     <th>
-                        <div id="filter-info-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;">
-                            <select id="filter-info" class="form-select form-select-sm" multiple onchange="filterTable()">
-                                <option selected value="all">Tutti</option>
-                                <option value="🌱">🌱</option>
-                                <option value="🥚">🥚</option>
-                                <option value="🐟">🐟</option>
-                                <option value="🍗">🍗</option>
-                                <option value="🥩">🥩</option>
-                                <option value="🫘">🫘</option>
-                                <option value="🍎">🍎</option>
-                                <option value="🥕">🥕</option>
-                                <option value="🌾">🌾</option>
-                                <option value="🍞">🍞</option>
-                                <option value="🧀">🧀</option>
-                                <option value="🥜">🥜</option>
-                                <option value="🥔">🥔</option>
-                                <option value="🧈">🧈</option>
-                            </select>
-                        </div>
-                    </th>
-                    <th>
                         <select id="filter-colazione" class="form-select form-select-sm" onchange="filterTable()">
                             <option value="all"></option>
                             <option value="true">T</option>
@@ -139,7 +118,29 @@
                             <option value="all"></option>
                             <option value="true">T</option>
                             <option value="false">F</option>
-                        </select></th>
+                        </select>
+                    </th>
+                    <th>
+                        <div id="filter-info-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;">
+                            <select id="filter-info" class="form-select form-select-sm" multiple onchange="filterTable()">
+                                <option selected value="all">Tutti</option>
+                                <option value="🌱">🌱</option>
+                                <option value="🥚">🥚</option>
+                                <option value="🐟">🐟</option>
+                                <option value="🍗">🍗</option>
+                                <option value="🥩">🥩</option>
+                                <option value="🫘">🫘</option>
+                                <option value="🍎">🍎</option>
+                                <option value="🥕">🥕</option>
+                                <option value="🌾">🌾</option>
+                                <option value="🍞">🍞</option>
+                                <option value="🧀">🧀</option>
+                                <option value="🥜">🥜</option>
+                                <option value="🥔">🥔</option>
+                                <option value="🧈">🧈</option>
+                            </select>
+                        </div>
+                    </th>
                     <th  style="text-align: center;">
                         <button id="cleanFiltersBtn" class="btn btn-sm btn-secondary">Pulisci Filtri
                         </button>
