@@ -666,12 +666,44 @@ function populateRicetteTable(ricette) {
                     <label hidden class="form-control form-control-sm">${ricetta.kcal}</label>
                 </div>
             </td>
-            <td style="text-align: center;">${ricetta.carboidrati}</td>
-            <td style="text-align: center;">${ricetta.proteine}</td>
-            <td style="text-align: center;">${ricetta.grassi}</td>
-            <td style="text-align: center;">${ricetta.fibre}</td>
-            <td style="text-align: center;">${ricetta.zucchero}</td>
-            <td style="text-align: center;">${ricetta.sale}</td>
+
+            <td style="text-align: center;">
+                <div>
+                    <input type="number" class="form-control form-control-sm input-hidden-border"  min="0.1" step="0.1" data-ricetta-id="${ricetta.id}" name="carboidrati_{ricetta.id}" value="${ricetta.carboidrati}">
+                    <label hidden class="form-control form-control-sm">${ricetta.carboidrati}</label>
+                </div>
+            </td>
+            <td style="text-align: center;">
+                <div>
+                    <input type="number" class="form-control form-control-sm input-hidden-border"  min="0.1" step="0.1" data-ricetta-id="${ricetta.id}" name="proteine_{ricetta.id}" value="${ricetta.proteine}">
+                    <label hidden class="form-control form-control-sm">${ricetta.proteine}</label>
+                </div>
+            </td>
+            <td style="text-align: center;">
+                <div>
+                    <input type="number" class="form-control form-control-sm input-hidden-border"  min="0.1" step="0.1" data-ricetta-id="${ricetta.id}" name="grassi_{ricetta.id}" value="${ricetta.grassi}">
+                    <label hidden class="form-control form-control-sm">${ricetta.grassi}</label>
+                </div>
+            </td>
+            <td style="text-align: center;">
+                <div>
+                    <input type="number" class="form-control form-control-sm input-hidden-border"  min="0.1" step="0.1" data-ricetta-id="${ricetta.id}" name="fibre_{ricetta.id}" value="${ricetta.fibre}">
+                    <label hidden class="form-control form-control-sm">${ricetta.fibre}</label>
+                </div>
+            </td>
+            <td style="text-align: center;">
+                <div>
+                    <input type="number" class="form-control form-control-sm input-hidden-border"  min="0.1" step="0.1" data-ricetta-id="${ricetta.id}" name="zucchero_{ricetta.id}" value="${ricetta.zucchero}">
+                    <label hidden class="form-control form-control-sm">${ricetta.zucchero}</label>
+                </div>
+            </td>
+            <td style="text-align: center;">
+                <div>
+                    <input type="number" class="form-control form-control-sm input-hidden-border"  min="0.1" step="0.1" data-ricetta-id="${ricetta.id}" name="sale_{ricetta.id}" value="${ricetta.sale}">
+                    <label hidden class="form-control form-control-sm">${ricetta.sale}</label>
+                </div>
+            </td>
+
             <td style="text-align: center;">
                 <div>
                     <input type="checkbox" name="colazione_${ricetta.id}" ${ricetta.colazione ? 'checked' : ''}>
