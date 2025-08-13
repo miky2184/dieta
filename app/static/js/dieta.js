@@ -677,7 +677,7 @@ function recalcAll() {
     document.getElementById('meta_giornaliero_hidden').value = Math.round(tdee);
 
     // 4. Calorie target in base al goal e alla variazione
-    const calorieTarget = calcCaloriesTarget({ tdee, goal, variationPct });
+    const calorieTarget = NutritionCalculator.calcCaloriesTarget({ tdee, goal, variationPct });
     document.getElementById('calorie_giornaliere').textContent = calorieTarget;
     document.getElementById('calorie_giornaliere_hidden').value = calorieTarget;
 
