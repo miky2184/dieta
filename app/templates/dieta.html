@@ -137,66 +137,69 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6">
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text" data-bs-toggle="tooltip"
-                                     data-bs-title="Seleziona il livello di attività fisica e lavorativa">
-                                    <i class="fas fa-running me-2"></i>Stile di vita
-                                </span>
-                                <select class="form-control" id="tdee" name="tdee" required>
-                                    <option selected disabled>Scegli...</option>
-                                    <option value="sedentary">Sedentaria</option>
-                                    <option value="light">Leggera</option>
-                                    <option value="moderate">Moderata</option>
-                                    <option value="high">Alta</option>
-                                    <option value="athlete">Atleta</option>
-                                </select>
-                            </div>
-
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text" data-bs-toggle="tooltip"
-                                     data-bs-title="Scegli la percentuale di riduzione delle calorie">
-                                    <i class="fas fa-chart-pie me-2"></i>Riduzione Calorie
-                                </span>
-                                <select class="form-control" id="deficit_calorico" name="deficit_calorico" required>
-                                    <option selected disabled>Scegli...</option>
-                                    <option value="0.00">Nessuno</option>
-                                    <option value="1.00">Moderato</option>
-                                    <option value="2.00">Aggressivo</option>
-                                </select>
-                            </div>
-
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text">
-                                    <i class="fas fa-clipboard-list me-2"></i>Tipo Dieta
-                                </span>
-                                <select class="form-control" id="dieta" name="dieta">
-                                    <option value="fat_loss" selected>Dimagrimento</option>
-                                    <option value="maintenance" selected>Mantenimento</option>
-                                    <option value="muscle_gain" selected>Massa</option>
-                                    <option value="performance" selected>Performance</option>
-                                </select>
-                            </div>
+                      <div class="col-md-6">
+                        <!-- Stile di vita -->
+                        <div class="input-group input-group-sm">
+                          <span class="input-group-text" data-bs-toggle="tooltip"
+                                data-bs-title="Seleziona il livello di attività fisica e lavorativa">
+                            <i class="fas fa-running me-2"></i>Stile di vita
+                          </span>
+                          <select class="form-control" id="tdee" name="tdee" required>
+                            <option selected disabled>Scegli...</option>
+                            <option value="sedentary">Sedentaria</option>
+                            <option value="light">Leggera</option>
+                            <option value="moderate">Moderata</option>
+                            <option value="high">Alta</option>
+                            <option value="athlete">Atleta</option>
+                          </select>
                         </div>
 
-                        <div class="col-md-6">
-                            <!-- Peso Obiettivo Slider -->
-                            <div class="slider-container">
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-bullseye"></i> Peso Obiettivo
-                                </label>
-                                <input type="range" class="form-range" id="peso_target_slider" step="0.5">
-                                <div class="slider-labels">
-                                    <span id="pesoMin">--</span>
-                                    <span class="fw-bold text-primary" id="pesoObiettivoValue">--</span>
-                                    <span id="pesoMax">--</span>
-                                </div>
-                                <div class="text-center mt-2">
-                                    <small id="pesoDifferenza" class="text-muted">--</small>
-                                </div>
-                                <input type="hidden" name="peso_target" id="peso_target_hidden">
-                            </div>
+                        <!-- Tipo dieta -->
+                        <div class="input-group input-group-sm mt-2">
+                          <span class="input-group-text">
+                            <i class="fas fa-clipboard-list me-2"></i>Tipo Dieta
+                          </span>
+                          <select class="form-control" id="dieta" name="dieta" required>
+                            <option value="fat_loss" selected>Dimagrimento</option>
+                            <option value="maintenance">Mantenimento</option>
+                            <option value="muscle_gain">Massa</option>
+                            <option value="performance">Performance</option>
+                          </select>
                         </div>
+
+                        <!-- Variazione Calorie (dinamica: deficit/surplus/nessuno) -->
+                        <div class="input-group input-group-sm mt-2">
+                          <span class="input-group-text" data-bs-toggle="tooltip"
+                                data-bs-title="Deficit per dimagrire, surplus per massa. In mantenimento/performance non si applica.">
+                            <i class="fas fa-chart-pie me-2"></i>Variazione Calorie
+                          </span>
+                          <select class="form-control" id="deficit_calorico" name="deficit_calorico" required>
+                            <!-- Opzioni predefinite per DIMAGRIMENTO (verranno sostituite dinamicamente) -->
+                            <option value="0">Nessuno</option>
+                            <option value="-0.10">Moderato (-10%)</option>
+                            <option value="-0.20">Aggressivo (-20%)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div class="col-md-6">
+                        <!-- Peso Obiettivo Slider (come già hai) -->
+                        <div class="slider-container">
+                          <label class="form-label fw-bold">
+                            <i class="fas fa-bullseye"></i> Peso Obiettivo
+                          </label>
+                          <input type="range" class="form-range" id="peso_target_slider" step="0.5">
+                          <div class="slider-labels">
+                            <span id="pesoMin">--</span>
+                            <span class="fw-bold text-primary" id="pesoObiettivoValue">--</span>
+                            <span id="pesoMax">--</span>
+                          </div>
+                          <div class="text-center mt-2">
+                            <small id="pesoDifferenza" class="text-muted">--</small>
+                          </div>
+                          <input type="hidden" name="peso_target" id="peso_target_hidden">
+                        </div>
+                      </div>
                     </div>
 
                     <!-- Sezione Risultati -->
@@ -295,5 +298,58 @@ document.addEventListener('DOMContentLoaded', function() {
         window.formManager = new FormManager();
     }
 });
+
+(function() {
+  const dietaSel = document.getElementById('dieta');
+  const varCalSel = document.getElementById('deficit_calorico');
+
+  const sets = {
+    fat_loss: [
+      { value: "0", label: "Nessuno" },
+      { value: "-0.10", label: "Moderato (-10%)" },
+      { value: "-0.20", label: "Aggressivo (-20%)" }
+    ],
+    muscle_gain: [
+      { value: "0", label: "Nessuno" },
+      { value: "0.05", label: "Leggero (+5%)" },
+      { value: "0.10", label: "Moderato (+10%)" }
+    ],
+    none: [
+      { value: "0", label: "Nessuno" }
+    ]
+  };
+
+  function setOptions(select, options, disabled=false) {
+    select.innerHTML = '';
+    options.forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o.value;
+      opt.textContent = o.label;
+      select.appendChild(opt);
+    });
+    select.disabled = disabled;
+    // se è disabilitato, forzo "Nessuno"
+    if (disabled) select.value = "0";
+  }
+
+  function refreshVarCalorie() {
+    const goal = dietaSel.value;
+    if (goal === 'fat_loss') {
+      setOptions(varCalSel, sets.fat_loss, false);
+    } else if (goal === 'muscle_gain') {
+      setOptions(varCalSel, sets.muscle_gain, false);
+    } else {
+      setOptions(varCalSel, sets.none, true);
+    }
+    // notifica il FormManager (se calcola live)
+    if (window.formManager && typeof window.formManager.recalc === 'function') {
+      window.formManager.recalc();
+    }
+  }
+
+  dietaSel.addEventListener('change', refreshVarCalorie);
+  // init
+  refreshVarCalorie();
+})();
 </script>
 {% endblock %}
