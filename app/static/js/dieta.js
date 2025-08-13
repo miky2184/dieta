@@ -118,6 +118,7 @@ class NutritionCalculator {
         } else {
             return Math.round((10 * peso) + (6.25 * altezza) - (5 * eta) - 161);
         }
+
     }
 
     static calculateDeficit(deficit, sesso) {
@@ -128,12 +129,88 @@ class NutritionCalculator {
         return deficitMap[sesso]?.[deficit] || 0;
     }
 
-    static calculateMacros(calories, idealWeight, activityLevel) {
-        const proteine = Math.round(idealWeight * activityLevel);
-        const grassi = Math.round(idealWeight * 1);
-        const carboidrati = Math.round((calories - ((proteine * 4) + (grassi * 9))) / 4);
+    static function calculateMacros({
+      calories,          // kcal totali (TDEE o target)
+      weightKg,          // peso o "ideal weight" in kg
+      goal = 'fat_loss', // 'fat_loss' | 'maintenance' | 'muscle_gain' | 'performance'
+      activity = 'moderate' // 'sedentary'|'light'|'moderate'|'high'|'athlete'
+    }) {
+      // preset g/kg (valori centrali + minimi)
+      const presets = {
+        fat_loss:      { p: { mid: 2.0, min: 1.6 }, f: { mid: 0.8, min: 0.6 } },
+        maintenance:   { p: { mid: 1.6, min: 1.2 }, f: { mid: 0.9, min: 0.7 } },
+        muscle_gain:   { p: { mid: 1.8, min: 1.6 }, f: { mid: 1.0, min: 0.8 } },
+        performance:   { p: { mid: 1.7, min: 1.5 }, f: { mid: 0.8, min: 0.6 } },
+      };
 
-        return { proteine, grassi, carboidrati };
+      // floor carbo (g/kg) per supportare l’allenamento
+      const carbFloorPerActivity = {
+        sedentary: 2.0,   // minimo per benessere
+        light:     3.0,
+        moderate:  4.0,
+        high:      5.0,
+        athlete:   6.0,
+      };
+
+      if (!presets[goal]) throw new Error(`Goal non valido: ${goal}`);
+      if (!carbFloorPerActivity[activity]) throw new Error(`Attività non valida: ${activity}`);
+      if (calories <= 0 || weightKg <= 0) throw new Error('calories e weightKg devono essere > 0');
+
+      const P = presets[goal].p;
+      const F = presets[goal].f;
+
+      // Step 1: calcolo iniziale
+      let proteine = Math.round(P.mid * weightKg);
+      let grassi   = Math.round(F.mid * weightKg);
+      let carboidrati = Math.round((calories - (proteine * 4 + grassi * 9)) / 4);
+
+      const carbFloor = Math.round(carbFloorPerActivity[activity] * weightKg);
+      const meta = { adjustedForCarbFloor: false, caloriesTooLow: false, notes: [] };
+
+      // Step 2: se i carbo sono sotto il floor, prova a ridurre i grassi fino al minimo
+      if (carboidrati < carbFloor) {
+        meta.adjustedForCarbFloor = true;
+
+        const grassiMin = Math.round(F.min * weightKg);
+        if (grassi > grassiMin) {
+          const kcalNeeded = (carbFloor - carboidrati) * 4;          // kcal da liberare per arrivare al floor carbo
+          const fatGramsToCut = Math.ceil(kcalNeeded / 9);            // riduci grassi per liberare kcal
+          const newFat = Math.max(grassiMin, grassi - fatGramsToCut);
+          if (newFat !== grassi) {
+            grassi = newFat;
+            carboidrati = Math.round((calories - (proteine * 4 + grassi * 9)) / 4);
+          }
+        }
+
+        // Step 3: se ancora sotto, riduci le proteine fino al minimo
+        if (carboidrati < carbFloor) {
+          const proteineMin = Math.round(P.min * weightKg);
+          if (proteine > proteineMin) {
+            const kcalNeeded = (carbFloor - carboidrati) * 4;
+            const proteinGramsToCut = Math.ceil(kcalNeeded / 4);
+            const newProtein = Math.max(proteineMin, proteine - proteinGramsToCut);
+            if (newProtein !== proteine) {
+              proteine = newProtein;
+              carboidrati = Math.round((calories - (proteine * 4 + grassi * 9)) / 4);
+            }
+          }
+        }
+
+        // Step 4: se ancora non basta, segna che le calorie sono troppo basse per l’attività
+        if (carboidrati < carbFloor) {
+          meta.caloriesTooLow = true;
+          meta.notes.push('Le kcal target sono troppo basse per raggiungere il minimo carbo consigliato per questo livello di attività.');
+          // Non rendiamo i carbo negativi
+          carboidrati = Math.max(0, carboidrati);
+        }
+      }
+
+      // Garanzie finali: niente negativi
+      proteine = Math.max(0, proteine);
+      grassi   = Math.max(0, grassi);
+      carboidrati = Math.max(0, carboidrati);
+
+      return { proteine, grassi, carboidrati, meta };
     }
 }
 
@@ -394,7 +471,8 @@ class FormManager {
         const macros = NutritionCalculator.calculateMacros(
             targetCalories,
             idealWeight,
-            data.attivita_fisica
+            data.attivita_fisica,
+            data.dieta
         );
 
         return {
