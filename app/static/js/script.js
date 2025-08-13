@@ -1624,6 +1624,7 @@ function aggiungiRicettaAlPasto(stagionalita, complemento, contorno, meal_type, 
             remainingCarbs =  parseFloat(cells[2].textContent);
             remainingProteins = parseFloat(cells[3].textContent);
             remainingFats = parseFloat(cells[4].textContent);
+            remainingSalt = parseFloat(cells[5].textContent);
             break;
         }
     }
