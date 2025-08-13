@@ -205,7 +205,7 @@ function aggiornaTabellaMenu(menu) {
     tbody.innerHTML = ''; // Pulisci la tabella
 
     const days = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
-    const macroNutrients = ['kcal', 'carboidrati', 'proteine', 'grassi'];
+    const macroNutrients = ['kcal', 'carboidrati', 'proteine', 'grassi', 'sale'];
 
     // Itera su ogni pasto e giorno
     ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena', 'spuntino_sera'].forEach(pasto => {

@@ -46,12 +46,14 @@ def calcola_macronutrienti_rimanenti_service(menu: json):
             remaining_carboidrati = round(dati_giorno['carboidrati'],2)
             remaining_proteine = round(dati_giorno['proteine'],2)
             remaining_grassi = round(dati_giorno['grassi'],2)
+            remaining_sale = round(dati_giorno['sale'],2)
 
             remaining_macronutrienti[giorno] = {
                 'kcal': remaining_kcal,
                 'carboidrati': remaining_carboidrati,
                 'proteine': remaining_proteine,
-                'grassi': remaining_grassi
+                'grassi': remaining_grassi,
+                'sale': remaining_sale
             }
     return remaining_macronutrienti
 

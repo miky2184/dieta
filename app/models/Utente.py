@@ -29,6 +29,7 @@ class Utente(db.Model):
     carboidrati = db.Column(db.Integer, nullable=True)
     proteine = db.Column(db.Integer, nullable=True)
     grassi = db.Column(db.Integer, nullable=True)
+    sale = db.Column(db.Integert, nullable=True)
     email = db.Column(db.String, nullable=False)
     dieta = db.Column(db.String, nullable=True)
     attivita_fisica = db.Column(db.Numeric(4, 2), nullable=True)

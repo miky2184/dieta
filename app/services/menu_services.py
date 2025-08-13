@@ -244,7 +244,7 @@ def scegli_pietanza(settimana: dict, giorno_settimana: str, pasto: str, tipo: st
 
     # Prepara le ricette modificate
     ricette_modificate = [
-        {k: r[k] for k in ['id', 'nome_ricetta', 'kcal', 'carboidrati', 'proteine', 'grassi',
+        {k: r[k] for k in ['id', 'nome_ricetta', 'kcal', 'carboidrati', 'proteine', 'grassi', 'sale',
                            'colazione', 'spuntino', 'principale', 'contorno', 'ricetta', 'ingredienti', 'info', 'qta', 'complemento']}
         for r in ricette_filtrate
     ]
@@ -301,6 +301,7 @@ class MacroType(Enum):
     CARBOIDRATI = "carboidrati"
     PROTEINE = "proteine"
     GRASSI = "grassi"
+    SALE = "sale"
 
 
 def calcola_percentuale_effettiva(ricetta: dict, day: dict, max_percentuale: float, min_percentuale: float = 0.5) -> float:
@@ -429,11 +430,13 @@ def aggiorna_settimana(settimana, giorno_settimana, pasto, ricetta, percentuale)
         'carboidrati': ricetta['carboidrati'],
         'proteine': ricetta['proteine'],
         'grassi': ricetta['grassi'],
+        'sale': ricetta['sale'],
+        'fibre': ricetta['fibre'],
         'info': ricetta['info']
     })
 
     # Aggiorna i macronutrienti giornalieri e settimanali
-    for macro in ['kcal', 'carboidrati', 'proteine', 'grassi']:
+    for macro in ['kcal', 'carboidrati', 'proteine', 'grassi', 'sale']:
         day[macro] -= round(ricetta[macro] * percentuale, 2)
         weekly[macro] -= round(ricetta[macro] * percentuale, 2)
 
@@ -605,10 +608,11 @@ def controlla_limiti_macronutrienti(ricetta, day, weekly, controllo_macro_settim
     try:
         def sufficienti_macronutrienti(limiti) -> bool:
             return (
-                limiti['kcal'] - (ricetta['kcal'] * perc) > 0 and
-                limiti['carboidrati'] - (ricetta['carboidrati'] * perc) > 0 and
-                limiti['proteine'] - (ricetta['proteine'] * perc) > 0 and
-                limiti['grassi'] - (ricetta['grassi'] * perc) > 0
+                limiti['kcal'] - (ricetta['kcal'] * perc) >= 0 and
+                limiti['carboidrati'] - (ricetta['carboidrati'] * perc) >= 0 and
+                limiti['proteine'] - (ricetta['proteine'] * perc) >= 0 and
+                limiti['grassi'] - (ricetta['grassi'] * perc) >= 0 and
+                limiti['sale'] - (ricetta['sale'] * perc) >= 0
             )
 
         return sufficienti_macronutrienti(day) or (
@@ -968,6 +972,7 @@ def get_settimana(macronutrienti: Utente):
         'proteine': float(macronutrienti.proteine),
         'grassi': float(macronutrienti.grassi),
         'kcal': float(macronutrienti.calorie_giornaliere),
+        'sale': float(macronutrienti.sale),
         'pasto': deepcopy(pasto)
     }
 
@@ -975,7 +980,8 @@ def get_settimana(macronutrienti: Utente):
         'carboidrati': float(macronutrienti.carboidrati) * 7,
         'proteine': float(macronutrienti.proteine) * 7,
         'grassi': float(macronutrienti.grassi) * 7,
-        'kcal': float(macronutrienti.calorie_giornaliere) * 7
+        'kcal': float(macronutrienti.calorie_giornaliere) * 7,
+        'sale': float(macronutrienti.sale) * 7
     }
 
     consumi_settimanali = deepcopy(LIMITI_CONSUMO) # Inizializza i consumi settimanali
@@ -1134,6 +1140,8 @@ def aggiungi_ricetta_al_menu(menu, day, meal, meal_id, user_id):
         'carboidrati': ricetta['carboidrati'],
         'grassi': ricetta['grassi'],
         'proteine': ricetta['proteine'],
+        'sale': ricetta['sale'],
+        'fibre': ricetta['fibre'],
         'ricetta': calcola_quantita(ricetta, 'ricetta', 'nome', ricetta['qta']),
         'ingredienti': calcola_quantita(ricetta, 'ingredienti', 'id_gruppo', ricetta['qta']),
         'info': ricetta['info']
@@ -1168,7 +1176,7 @@ def cancella_tutti_pasti_menu(settimana, day, meal_type):
 
 def aggiorna_macronutrienti(menu, day, ricetta, rimuovi=False):
     moltiplicatore = 1 if rimuovi else -1
-    for macro in ['kcal', 'carboidrati', 'proteine', 'grassi']:
+    for macro in ['kcal', 'carboidrati', 'proteine', 'grassi', 'sale']:
         menu['day'][day][macro] += moltiplicatore * ricetta[macro] * ricetta['qta']
         menu['weekly'][macro] += moltiplicatore * ricetta[macro] * ricetta['qta']
 
