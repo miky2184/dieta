@@ -1,50 +1,16 @@
-// ============= CONFIGURAZIONE E UTILITÀ =============
+// ============= CONFIGURAZIONE =============
 const CONFIG = {
+    CACHE_DURATION: 5 * 60 * 1000, // 5 minuti
     DEBOUNCE_DELAY: 300,
-    ANIMATION_DURATION: 300,
-    CACHE_DURATION: 5000,
     VALIDATION_RULES: {
-        eta: { min: 10, max: 120 },
+        eta: { min: 10, max: 100 },
         altezza: { min: 100, max: 250 },
         peso: { min: 30, max: 300 }
     }
 };
 
-// Cache manager semplificato
-class CacheManager {
-    constructor(duration = CONFIG.CACHE_DURATION) {
-        this.cache = new Map();
-        this.duration = duration;
-    }
-
-    set(key, value) {
-        this.cache.set(key, {
-            value,
-            timestamp: Date.now()
-        });
-    }
-
-    get(key) {
-        const item = this.cache.get(key);
-        if (!item) return null;
-
-        if (Date.now() - item.timestamp > this.duration) {
-            this.cache.delete(key);
-            return null;
-        }
-
-        return item.value;
-    }
-
-    clear() {
-        this.cache.clear();
-    }
-}
-
-const cache = new CacheManager();
-
-// ============= FUNZIONI DI UTILITÀ =============
-function debounce(func, wait = CONFIG.DEBOUNCE_DELAY) {
+// ============= UTILITY FUNCTIONS =============
+function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
         const later = () => {
@@ -56,32 +22,18 @@ function debounce(func, wait = CONFIG.DEBOUNCE_DELAY) {
     };
 }
 
-// Versioni sicure delle funzioni di progress
-function showProgress() {
-    const indicator = document.getElementById('progressIndicator');
-    if (indicator) {
-        indicator.classList.add('active');
-    }
-}
-
-function hideProgress() {
-    const indicator = document.getElementById('progressIndicator');
-    if (indicator) {
-        setTimeout(() => {
-            indicator.classList.remove('active');
-        }, CONFIG.ANIMATION_DURATION);
-    }
-}
-
-// Funzione helper per elementi sicuri
 function safeGetElement(id) {
-    return document.getElementById(id);
+    const element = document.getElementById(id);
+    if (!element) {
+        console.warn(`Elemento con ID '${id}' non trovato`);
+    }
+    return element;
 }
 
-function safeSetValue(id, value, isText = false) {
+function safeSetValue(id, value, asText = false) {
     const element = safeGetElement(id);
     if (element) {
-        if (isText) {
+        if (asText) {
             element.textContent = value;
         } else {
             element.value = value;
@@ -89,7 +41,37 @@ function safeSetValue(id, value, isText = false) {
     }
 }
 
-// ============= CALCOLI OTTIMIZZATI =============
+function showProgress() {
+    const progress = document.querySelector('.progress-indicator');
+    if (progress) progress.classList.add('active');
+}
+
+function hideProgress() {
+    const progress = document.querySelector('.progress-indicator');
+    if (progress) progress.classList.remove('active');
+}
+
+// ============= CACHE SYSTEM =============
+const cache = {
+    data: new Map(),
+    set(key, value) {
+        this.data.set(key, {
+            value,
+            timestamp: Date.now()
+        });
+    },
+    get(key) {
+        const item = this.data.get(key);
+        if (!item) return null;
+        if (Date.now() - item.timestamp > CONFIG.CACHE_DURATION) {
+            this.data.delete(key);
+            return null;
+        }
+        return item.value;
+    }
+};
+
+// ============= NUTRITION CALCULATOR =============
 class NutritionCalculator {
     static calculateBMI(peso, altezza) {
         if (!peso || !altezza) return 0;
@@ -118,84 +100,69 @@ class NutritionCalculator {
         } else {
             return Math.round((10 * peso) + (6.25 * altezza) - (5 * eta) - 161);
         }
-
     }
 
-    static calculateDeficit(deficit, sesso) {
-        const deficitMap = {
-            'F': { 0: 0, 1: 250, 2: 350 },
-            'M': { 0: 0, 1: 350, 2: 500 }
+    static getTDEEMultiplier(activity) {
+        const multipliers = {
+            'sedentary': 1.2,
+            'light': 1.375,
+            'moderate': 1.55,
+            'high': 1.725,
+            'athlete': 1.9
         };
-        return deficitMap[sesso]?.[deficit] || 0;
+        return multipliers[activity] || 1.2;
     }
 
-    // 3.1 Calorie target dal goal
-    static calcCaloriesTarget({ tdee, goal, variationPct }) {
-      // variationPct è una percentuale decimale: es. -0.10, 0, +0.05
-      if (goal === 'fat_loss') {
-        return Math.round(tdee * (1 + variationPct)); // variationPct negativa
-      }
-      if (goal === 'muscle_gain') {
-        return Math.round(tdee * (1 + variationPct)); // variationPct positiva
-      }
-      // maintenance / performance: niente variazione
-      return Math.round(tdee);
+    static calcCaloriesTarget(tdee, goal, variationPct) {
+        // variationPct è già una percentuale decimale: es. -0.10, 0, +0.05
+        if (goal === 'fat_loss') {
+            return Math.round(tdee * (1 + variationPct)); // variationPct negativa per deficit
+        }
+        if (goal === 'muscle_gain') {
+            return Math.round(tdee * (1 + variationPct)); // variationPct positiva per surplus
+        }
+        // maintenance / performance: niente variazione
+        return Math.round(tdee);
     }
 
-    // 3.2 Macro calculator (versione robusta con goal + activity)
-    static calculateMacros({ calories, weightKg, goal, activity }) {
-      const presets = {
-        fat_loss:      { p: { mid: 2.0, min: 1.6 }, f: { mid: 0.8, min: 0.6 } },
-        maintenance:   { p: { mid: 1.6, min: 1.2 }, f: { mid: 0.9, min: 0.7 } },
-        muscle_gain:   { p: { mid: 1.8, min: 1.6 }, f: { mid: 1.0, min: 0.8 } },
-        performance:   { p: { mid: 1.7, min: 1.5 }, f: { mid: 0.8, min: 0.6 } },
-      };
+    static calculateMacros(calories, weightKg, goal, activity) {
+        const presets = {
+            fat_loss: { p: 2.0, f: 0.8 },
+            maintenance: { p: 1.6, f: 0.9 },
+            muscle_gain: { p: 1.8, f: 1.0 },
+            performance: { p: 1.7, f: 0.8 }
+        };
 
-      const carbFloorPerActivity = {
-        sedentary: 2.0, light: 3.0, moderate: 4.0, high: 5.0, athlete: 6.0,
-      };
+        const carbFloorPerActivity = {
+            sedentary: 2.0,
+            light: 3.0,
+            moderate: 4.0,
+            high: 5.0,
+            athlete: 6.0
+        };
 
-      const P = presets[goal] ?? presets.maintenance;
-      const F = presets[goal] ?? presets.maintenance;
-      const carbFloor = Math.round((carbFloorPerActivity[activity] ?? 3.0) * weightKg);
+        const preset = presets[goal] || presets.maintenance;
+        const carbFloor = Math.round((carbFloorPerActivity[activity] || 3.0) * weightKg);
 
-      let proteine = Math.round(P.p.mid * weightKg);
-      let grassi   = Math.round(F.f.mid * weightKg);
-      let carboidrati = Math.round((calories - (proteine * 4 + grassi * 9)) / 4);
+        let proteine = Math.round(preset.p * weightKg);
+        let grassi = Math.round(preset.f * weightKg);
+        let carboidrati = Math.round((calories - (proteine * 4 + grassi * 9)) / 4);
 
-      // rispetta un minimo di carbo in base all'attività
-      const meta = { adjustedForCarbFloor: false, caloriesTooLow: false };
-      if (carboidrati < carbFloor) {
-        meta.adjustedForCarbFloor = true;
-
-        const grassiMin = Math.round(F.f.min * weightKg);
-        const proteineMin = Math.round(P.p.min * weightKg);
-
-        // libera kcal togliendo grassi prima
-        let kcalShort = (carbFloor - carboidrati) * 4;
-        let cutFat = Math.min(grassi - grassiMin, Math.ceil(kcalShort / 9));
-        if (cutFat > 0) {
-          grassi -= cutFat;
-          kcalShort -= cutFat * 9;
+        // Assicura un minimo di carboidrati
+        if (carboidrati < carbFloor) {
+            carboidrati = carbFloor;
+            // Ricalcola proteine e grassi se necessario
+            const remainingCals = calories - (carboidrati * 4);
+            proteine = Math.round(preset.p * weightKg);
+            grassi = Math.round((remainingCals - (proteine * 4)) / 9);
         }
-        // poi proteine se serve
-        if (kcalShort > 0) {
-          let cutProt = Math.min(proteine - proteineMin, Math.ceil(kcalShort / 4));
-          if (cutProt > 0) {
-            proteine -= cutProt;
-            kcalShort -= cutProt * 4;
-          }
-        }
-        carboidrati = Math.round((calories - (proteine * 4 + grassi * 9)) / 4);
-        if (carboidrati < carbFloor) meta.caloriesTooLow = true;
-      }
 
-      // clamp
-      proteine = Math.max(0, proteine);
-      grassi   = Math.max(0, grassi);
-      carboidrati = Math.max(0, carboidrati);
+        // Evita valori negativi
+        proteine = Math.max(0, proteine);
+        grassi = Math.max(0, grassi);
+        carboidrati = Math.max(0, carboidrati);
 
-      return { proteine, grassi, carboidrati, meta };
+        return { proteine, grassi, carboidrati };
     }
 }
 
@@ -209,6 +176,7 @@ class FormManager {
         }
         this.initEventListeners();
         this.initTooltips();
+        this.initDietaChangeListener();
     }
 
     initEventListeners() {
@@ -225,89 +193,120 @@ class FormManager {
             }
         });
 
-        // Select con calcolo immediato
-        ['sesso', 'tdee', 'deficit_calorico', 'attivita_fisica', 'dieta'].forEach(id => {
+        // Select con calcolo immediato - FIX: rimuovi 'dieta' da qui
+        ['sesso', 'tdee', 'attivita_fisica'].forEach(id => {
             const element = this.form.elements[id];
             if (element) {
                 element.addEventListener('change', () => {
-                    this.validateField(element);
                     this.calculate();
                 });
             }
         });
 
-        // Slider peso obiettivo
-        this.initWeightSlider();
+        // Gestione speciale per deficit_calorico
+        const deficitElement = this.form.elements['deficit_calorico'];
+        if (deficitElement) {
+            deficitElement.addEventListener('change', () => {
+                console.log('Deficit cambiato:', deficitElement.value);
+                this.calculate();
+            });
+        }
 
-        // Form submission
+        // Submit form
         this.form.addEventListener('submit', (e) => {
             e.preventDefault();
-            this.handleSubmit();
+            if (this.validateForm()) {
+                this.submitForm();
+            }
         });
-    }
 
-    recalc() {
-        recalcAll(); // qui chiami la funzione che ti ho scritto
-    }
-
-    initTooltips() {
-        // Verifica che Bootstrap sia caricato
-        if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
-            const tooltipTriggerList = [].slice.call(
-                document.querySelectorAll('[data-bs-toggle="tooltip"]')
-            );
-            tooltipTriggerList.map(tooltipTriggerEl =>
-                new bootstrap.Tooltip(tooltipTriggerEl)
-            );
+        // Peso target slider
+        const slider = safeGetElement('peso_target_slider');
+        if (slider) {
+            slider.addEventListener('input', debounce(() => {
+                const value = parseFloat(slider.value);
+                safeSetValue('pesoObiettivoValue', `${value} kg`, true);
+                safeSetValue('peso_target_hidden', value);
+                this.updateWeightDifference();
+                this.calculate();
+            }, 50));
         }
     }
 
-    initWeightSlider() {
-        const slider = safeGetElement('peso_target_slider');
-        const altezzaInput = this.form?.elements['altezza'];
+    initDietaChangeListener() {
+        const dietaSelect = this.form.elements['dieta'];
+        const deficitSelect = this.form.elements['deficit_calorico'];
 
-        if (!slider || !altezzaInput) return;
+        if (dietaSelect && deficitSelect) {
+            dietaSelect.addEventListener('change', () => {
+                const goal = dietaSelect.value;
+                console.log('Obiettivo cambiato:', goal);
 
-        const updateSlider = () => {
-            const altezza = parseFloat(altezzaInput.value);
-            if (!altezza) return;
+                // Svuota le opzioni esistenti
+                deficitSelect.innerHTML = '';
 
-            const { min, max } = this.getHealthyWeightRange(altezza);
-            slider.min = min;
-            slider.max = max;
+                // Aggiungi opzioni in base all'obiettivo
+                if (goal === 'fat_loss') {
+                    deficitSelect.innerHTML = `
+                        <option value="-0.10">Moderato (-10%)</option>
+                        <option value="-0.15" selected>Standard (-15%)</option>
+                        <option value="-0.20">Aggressivo (-20%)</option>
+                        <option value="-0.25">Molto Aggressivo (-25%)</option>
+                    `;
+                } else if (goal === 'muscle_gain') {
+                    deficitSelect.innerHTML = `
+                        <option value="0.05">Lean Bulk (+5%)</option>
+                        <option value="0.10" selected>Standard (+10%)</option>
+                        <option value="0.15">Moderato (+15%)</option>
+                        <option value="0.20">Aggressivo (+20%)</option>
+                    `;
+                } else {
+                    // maintenance o performance
+                    deficitSelect.innerHTML = `
+                        <option value="0" selected>Mantenimento (0%)</option>
+                    `;
+                }
 
-            const pesoIdeale = NutritionCalculator.calculateIdealWeight(altezza);
-            slider.value = pesoIdeale;
-
-            safeSetValue('pesoMin', `${min} kg`, true);
-            safeSetValue('pesoMax', `${max} kg`, true);
-            safeSetValue('pesoObiettivoValue', `${pesoIdeale} kg`, true);
-            safeSetValue('peso_target_hidden', pesoIdeale);
-            safeSetValue('peso_ideale', pesoIdeale);
-
-            this.updateWeightDifference();
-        };
-
-        altezzaInput.addEventListener('input', debounce(updateSlider, CONFIG.DEBOUNCE_DELAY));
-
-        slider.addEventListener('input', () => {
-            const value = parseFloat(slider.value);
-            safeSetValue('pesoObiettivoValue', `${value.toFixed(1)} kg`, true);
-            safeSetValue('peso_target', value.toFixed(1));
-            this.updateWeightDifference();
-            this.calculate();
-        });
-
-        // Aggiorna subito all'inizio se l'altezza ha già un valore
-        updateSlider();
+                // Ricalcola con il nuovo valore
+                this.calculate();
+            });
+        }
     }
 
-    getHealthyWeightRange(altezza) {
-        const h = altezza / 100;
-        return {
-            min: Math.round(18.5 * h * h),
-            max: Math.round(24.9 * h * h)
-        };
+    initTooltips() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+            new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+
+    initWeightSlider() {
+        const pesoInput = this.form?.elements['peso'];
+        const altezzaInput = this.form?.elements['altezza'];
+        const slider = safeGetElement('peso_target_slider');
+
+        if (!pesoInput || !altezzaInput || !slider) return;
+
+        const peso = parseFloat(pesoInput.value);
+        const altezza = parseFloat(altezzaInput.value);
+
+        if (!peso || !altezza) return;
+
+        const idealWeight = NutritionCalculator.calculateIdealWeight(altezza);
+        const minWeight = Math.max(30, peso - 30);
+        const maxWeight = Math.min(peso + 30, 200);
+
+        slider.min = minWeight;
+        slider.max = maxWeight;
+        slider.value = Math.min(Math.max(idealWeight, minWeight), maxWeight);
+        slider.step = 0.5;
+
+        safeSetValue('pesoMin', `${minWeight} kg`, true);
+        safeSetValue('pesoMax', `${maxWeight} kg`, true);
+        safeSetValue('pesoObiettivoValue', `${slider.value} kg`, true);
+        safeSetValue('peso_target_hidden', slider.value);
+
+        this.updateWeightDifference();
     }
 
     updateWeightDifference() {
@@ -395,21 +394,8 @@ class FormManager {
             return;
         }
 
-        // Controlla cache
-        const cacheKey = JSON.stringify(formData);
-        const cachedResults = cache.get(cacheKey);
-
-        if (cachedResults) {
-            this.updateUI(cachedResults);
-            hideProgress();
-            return;
-        }
-
         // Esegui calcoli
         const results = this.performCalculations(formData);
-
-        // Salva in cache
-        cache.set(cacheKey, results);
 
         // Aggiorna UI
         this.updateUI(results);
@@ -426,45 +412,50 @@ class FormManager {
             eta: parseFloat(this.form.elements['eta']?.value),
             peso: parseFloat(this.form.elements['peso']?.value),
             altezza: parseFloat(this.form.elements['altezza']?.value),
-            tdee: parseFloat(this.form.elements['tdee']?.value),
-            deficit: parseFloat(this.form.elements['deficit_calorico']?.value),
-            attivita_fisica: parseFloat(this.form.elements['attivita_fisica']?.value),
-            dieta: parseFloat(this.form.elements['dieta']?.value),
+            tdee: this.form.elements['tdee']?.value, // Tieni come stringa
+            deficit_calorico: parseFloat(this.form.elements['deficit_calorico']?.value),
+            attivita_fisica: this.form.elements['attivita_fisica']?.value,
+            dieta: this.form.elements['dieta']?.value,
             peso_target: parseFloat(slider?.value || 0)
         };
     }
 
     isDataComplete(data) {
         return data.sesso && !isNaN(data.eta) && !isNaN(data.peso) &&
-               !isNaN(data.altezza) && !isNaN(data.tdee) &&
-               !isNaN(data.deficit) && !isNaN(data.attivita_fisica);
+               !isNaN(data.altezza) && data.tdee && data.attivita_fisica && data.dieta;
     }
 
     performCalculations(data) {
+        // 1. Calcolo BMI
         const bmi = NutritionCalculator.calculateBMI(data.peso, data.altezza);
         const bmiCategory = NutritionCalculator.getBMICategory(bmi);
         const idealWeight = NutritionCalculator.calculateIdealWeight(data.altezza);
+
+        // 2. Calcolo BMR
         const bmr = NutritionCalculator.calculateBMR(data);
-        const tdee = Math.round(bmr * data.tdee);
-        const deficitCal = NutritionCalculator.calculateDeficit(data.deficit, data.sesso);
-        const targetCalories = Math.round((tdee - deficitCal) / 50) * 50;
 
-        // Calcolo settimane
-        let weeks = 0;
-        if (data.deficit > 0 && data.peso_target < data.peso) {
-            const weightToLose = data.peso - data.peso_target;
-            const dailyDeficit = tdee - targetCalories;
-            if (dailyDeficit > 0) {
-                weeks = Math.round((weightToLose * 7700) / (dailyDeficit * 7));
-            }
-        }
+        // 3. Calcolo TDEE
+        const tdeeMultiplier = NutritionCalculator.getTDEEMultiplier(data.tdee);
+        const tdee = Math.round(bmr * tdeeMultiplier);
 
+        // 4. Calcolo calorie target con variazione percentuale
+        const targetCalories = NutritionCalculator.calcCaloriesTarget(tdee, data.dieta, data.deficit_calorico);
+
+        // 5. Calcolo macronutrienti
         const macros = NutritionCalculator.calculateMacros(
             targetCalories,
-            idealWeight,
+            data.peso,
             data.dieta,
             data.attivita_fisica
         );
+
+        // 6. Calcolo settimane (se necessario)
+        let weeks = 0;
+        if (data.peso_target && data.peso_target !== data.peso) {
+            const weightDiff = Math.abs(data.peso - data.peso_target);
+            const weeklyChange = data.dieta === 'fat_loss' ? 0.5 : 0.25; // kg a settimana
+            weeks = Math.round(weightDiff / weeklyChange);
+        }
 
         return {
             bmi: bmi.toFixed(1),
@@ -531,93 +522,70 @@ class FormManager {
         safeSetValue('carboidrati_hidden', results.carboidrati);
         safeSetValue('proteine_hidden', results.proteine);
         safeSetValue('grassi_hidden', results.grassi);
+
+        // Inizializza slider peso se necessario
+        this.initWeightSlider();
     }
 
-    animateValue(elementId, value) {
-        const element = safeGetElement(elementId);
+    animateValue(id, value) {
+        const element = safeGetElement(id);
         if (!element) return;
 
         const current = parseInt(element.textContent) || 0;
-        const increment = (value - current) / 20;
-        let step = 0;
+        const duration = 500;
+        const startTime = Date.now();
 
-        const timer = setInterval(() => {
-            step++;
-            const newValue = Math.round(current + increment * step);
+        const animate = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const newValue = Math.round(current + (value - current) * progress);
+
             element.textContent = newValue;
 
-            if (step >= 20) {
-                element.textContent = value;
-                clearInterval(timer);
+            if (progress < 1) {
+                requestAnimationFrame(animate);
             }
-        }, 20);
+        };
+
+        animate();
     }
 
     addWeeksToDate(weeks) {
         const date = new Date();
-        date.setDate(date.getDate() + weeks * 7);
-        return date.toLocaleDateString('it-IT', {
-            month: 'long',
-            year: 'numeric'
-        });
-    }
-
-    async handleSubmit() {
-        if (!this.validateForm()) {
-            this.showValidationError();
-            return;
-        }
-
-        showProgress();
-
-        try {
-            await this.submitForm();
-            this.showSuccessMessage();
-        } catch (error) {
-            this.showErrorMessage(error);
-        } finally {
-            hideProgress();
-        }
+        date.setDate(date.getDate() + (weeks * 7));
+        const months = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
+        return `${months[date.getMonth()]} ${date.getFullYear()}`;
     }
 
     async submitForm() {
-        if (!this.form) throw new Error('Form non trovato');
-
-        // Sincronizza campi nascosti prima dell'invio
-        const hiddenFields = [
-            'bmi', 'peso_ideale', 'meta_basale', 'meta_giornaliero',
-            'calorie_giornaliere', 'settimane_dieta', 'carboidrati',
-            'proteine', 'grassi', 'peso_target'
-        ];
-
-        hiddenFields.forEach(field => {
-            const visible = safeGetElement(field);
-            const hidden = safeGetElement(`${field}_hidden`);
-            if (visible && hidden) {
-                hidden.value = visible.textContent || visible.value || '';
-            }
-        });
-
-        const formData = new FormData(this.form);
-
-        const response = await fetch('/salva_dati', {
-            method: 'POST',
-            body: formData
-        });
-
-        if (!response.ok) {
-            throw new Error('Errore nel salvataggio');
+        if (!this.validateForm()) {
+            this.showToast('Compila tutti i campi richiesti', 'warning');
+            return;
         }
 
-        return response.json();
-    }
+        try {
+            const formData = new FormData(this.form);
+            const response = await fetch('/salva_dati', {
+                method: 'POST',
+                body: formData
+            });
 
-    showValidationError() {
-        this.showToast('Completa tutti i campi obbligatori', 'warning');
+            if (response.ok) {
+                this.showSuccessMessage();
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 2000);
+            } else {
+                throw new Error('Errore nel salvataggio');
+            }
+        } catch (error) {
+            console.error('Errore:', error);
+            this.showErrorMessage(error);
+        }
     }
 
     showSuccessMessage() {
-        this.showToast('Profilo salvato con successo!', 'success');
+        this.showToast('Dati salvati con successo!', 'success');
     }
 
     showErrorMessage(error) {
@@ -646,61 +614,40 @@ class FormManager {
             }
         });
 
+        // Trigger change event per dieta per impostare correttamente le opzioni di deficit
+        const dietaElement = this.form.elements['dieta'];
+        if (dietaElement) {
+            dietaElement.dispatchEvent(new Event('change'));
+        }
+
         this.calculate();
     }
 }
 
-function recalcAll() {
-    // 1. Recupero i valori dal form
-    const peso = parseFloat(document.querySelector('[name="peso"]').value) || 0;
-    const altezza = parseFloat(document.querySelector('[name="altezza"]').value) || 0;
-    const eta = parseInt(document.querySelector('[name="eta"]').value) || 0;
-    const sesso = document.querySelector('[name="sesso"]').value;
-    const activity = document.getElementById('tdee').value;
-    const goal = document.getElementById('dieta').value;
-    const variationPct = parseFloat(document.getElementById('deficit_calorico').value || '0');
-
-    // 2. Calcolo BMR (Mifflin-St Jeor)
-    let bmr = (10 * peso) + (6.25 * altezza) - (5 * eta) + (sesso === 'M' ? 5 : -161);
-    document.getElementById('meta_basale').textContent = Math.round(bmr);
-    document.getElementById('meta_basale_hidden').value = Math.round(bmr);
-
-    // 3. Calcolo TDEE (fattore in base allo stile di vita)
-    const activityFactors = {
-        sedentary: 1.2,
-        light: 1.375,
-        moderate: 1.55,
-        high: 1.725,
-        athlete: 1.9
-    };
-    const tdee = bmr * (activityFactors[activity] || 1.2);
-    document.getElementById('meta_giornaliero').textContent = Math.round(tdee);
-    document.getElementById('meta_giornaliero_hidden').value = Math.round(tdee);
-
-    // 4. Calorie target in base al goal e alla variazione
-    const calorieTarget = NutritionCalculator.calcCaloriesTarget({ tdee, goal, variationPct });
-    document.getElementById('calorie_giornaliere').textContent = calorieTarget;
-    document.getElementById('calorie_giornaliere_hidden').value = calorieTarget;
-
-    // 5. Calcolo macro
-    const macros = NutritionCalculator.calculateMacros({ calories: calorieTarget, weightKg: peso, goal, activity });
-    document.getElementById('carboidrati_input').textContent = macros.carboidrati;
-    document.getElementById('carboidrati_hidden').value = macros.carboidrati;
-
-    document.getElementById('proteine_input').textContent = macros.proteine;
-    document.getElementById('proteine_hidden').value = macros.proteine;
-
-    document.getElementById('grassi_input').textContent = macros.grassi;
-    document.getElementById('grassi_hidden').value = macros.grassi;
-
-    // 6. (Opzionale) mostra avvisi se meta.caloriesTooLow
-    if (macros.meta.caloriesTooLow) {
-        console.warn("Calorie troppo basse per l'attività scelta");
-        // qui potresti aggiungere un badge visivo nella UI
-    }
-}
-
 // ============= INIZIALIZZAZIONE =============
-// Esporta per uso globale
-window.FormManager = FormManager;
-window.NutritionCalculator = NutritionCalculator;
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Inizializzazione FormManager...');
+
+    // Crea istanza del FormManager
+    const formManager = new FormManager();
+
+    // Esporta per uso globale
+    window.formManager = formManager;
+    window.FormManager = FormManager;
+    window.NutritionCalculator = NutritionCalculator;
+
+    // Se ci sono dati utente preesistenti, caricali
+    if (typeof userData !== 'undefined' && userData) {
+        formManager.loadUserData(userData);
+    }
+
+    // Calcolo iniziale
+    formManager.calculate();
+});
+
+// Funzione globale per ricalcolo (se necessaria per retrocompatibilità)
+window.calculateResults = function() {
+    if (window.formManager) {
+        window.formManager.calculate();
+    }
+};
