@@ -283,6 +283,7 @@ class FormManager {
             safeSetValue('pesoMax', `${max} kg`, true);
             safeSetValue('pesoObiettivoValue', `${pesoIdeale} kg`, true);
             safeSetValue('peso_target_hidden', pesoIdeale);
+            safeSetValue('peso_ideale', pesoIdeale);
 
             this.updateWeightDifference();
         };
