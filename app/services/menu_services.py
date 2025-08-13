@@ -244,7 +244,7 @@ def scegli_pietanza(settimana: dict, giorno_settimana: str, pasto: str, tipo: st
 
     # Prepara le ricette modificate
     ricette_modificate = [
-        {k: r[k] for k in ['id', 'nome_ricetta', 'kcal', 'carboidrati', 'proteine', 'grassi', 'sale',
+        {k: r[k] for k in ['id', 'nome_ricetta', 'kcal', 'carboidrati', 'proteine', 'grassi', 'sale', 'fibre',
                            'colazione', 'spuntino', 'principale', 'contorno', 'ricetta', 'ingredienti', 'info', 'qta', 'complemento']}
         for r in ricette_filtrate
     ]
@@ -431,7 +431,7 @@ def aggiorna_settimana(settimana, giorno_settimana, pasto, ricetta, percentuale)
         'proteine': ricetta['proteine'],
         'grassi': ricetta['grassi'],
         'sale': ricetta['sale'],
-        'fibre': ricetta.get('fibre', 0),
+        'fibre': ricetta['fibre'],
         'info': ricetta['info']
     })
 
