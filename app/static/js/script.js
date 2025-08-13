@@ -1411,14 +1411,14 @@ function renderMenuEditor(data) {
             const mealTableHead = document.createElement('thead');
             mealTableHead.innerHTML = `
                 <tr>
-                    <th style="width:34%; text-align: center;">${formatMealName(meal)}</th>
-                    <th style="width:11%; text-align: center;">KCAL</th>
-                    <th style="width:11%; text-align: center;">Carboidrati</th>
-                    <th style="width:11%; text-align: center;">Proteine</th>
-                    <th style="width:11%; text-align: center;">Grassi</th>
-                    <th style="width:11%; text-align: center;">Sale</th>
-                    <th style="width:11%; text-align: center;">Quantità</th>
-                    <th style="width:11%; text-align: center;">Azioni</th>
+                    <th style="width:30%; text-align: center;">${formatMealName(meal)}</th>
+                    <th style="width:10%; text-align: center;">KCAL</th>
+                    <th style="width:10%; text-align: center;">Carboidrati</th>
+                    <th style="width:10%; text-align: center;">Proteine</th>
+                    <th style="width:10%; text-align: center;">Grassi</th>
+                    <th style="width:10%; text-align: center;">Sale</th>
+                    <th style="width:10%; text-align: center;">Quantità</th>
+                    <th style="width:10%; text-align: center;">Azioni</th>
                 </tr>
             `;
             mealTable.appendChild(mealTableHead);
@@ -1435,6 +1435,7 @@ function renderMenuEditor(data) {
                         <td style="text-align: center;">${(ricetta.carboidrati * ricetta.qta).toFixed(2)}</td>
                         <td style="text-align: center;">${(ricetta.proteine * ricetta.qta).toFixed(2)}</td>
                         <td style="text-align: center;">${(ricetta.grassi * ricetta.qta).toFixed(2)}</td>
+                        <td style="text-align: center;">${(ricetta.sale * ricetta.qta).toFixed(2)}</td>
                         <td style="text-align: center;"><input type="number" class="form-control form-control-sm input-hidden-border" value="${ricetta.qta}" min="0.1" step="0.1" onchange="updateMealQuantity('${day}', '${meal}', '${ricetta.id}', this.value)"></td>
                         <td style="text-align: center;"><button class="btn btn-danger btn-sm" onclick="removeMeal('${day}', '${meal}', '${ricetta.id}')"><i class="fas fa-trash-alt"></button></td>
                     `;
