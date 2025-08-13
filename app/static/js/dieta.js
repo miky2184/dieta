@@ -226,10 +226,13 @@ class FormManager {
         slider.addEventListener('input', () => {
             const value = parseFloat(slider.value);
             safeSetValue('pesoObiettivoValue', `${value.toFixed(1)} kg`, true);
-            safeSetValue('peso_target_hidden', value.toFixed(1));
+            safeSetValue('peso_target', value.toFixed(1));
             this.updateWeightDifference();
             this.calculate();
         });
+
+        // Aggiorna subito all'inizio se l'altezza ha già un valore
+        updateSlider();
     }
 
     getHealthyWeightRange(altezza) {
