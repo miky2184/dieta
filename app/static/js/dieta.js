@@ -129,7 +129,7 @@ class NutritionCalculator {
         return deficitMap[sesso]?.[deficit] || 0;
     }
 
-    static function calculateMacros({
+    static calculateMacros({
       calories,          // kcal totali (TDEE o target)
       weightKg,          // peso o "ideal weight" in kg
       goal = 'fat_loss', // 'fat_loss' | 'maintenance' | 'muscle_gain' | 'performance'
