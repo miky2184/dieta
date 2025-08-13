@@ -1269,10 +1269,11 @@ function renderMenuEditor(data) {
     remainingTableHeader.innerHTML = `
         <tr>
             <th style="width:20%; text-align: center;">Giorno</th>
-            <th style="width:20%; text-align: center;">Kcal</th>
-            <th style="width:20%; text-align: center;">Carbs</th>
-            <th style="width:20%; text-align: center;">Prot</th>
-            <th style="width:20%; text-align: center;">Fat</th>
+            <th style="width:20%; text-align: center;">KCAL</th>
+            <th style="width:20%; text-align: center;">Carboidrati</th>
+            <th style="width:20%; text-align: center;">Proteine</th>
+            <th style="width:20%; text-align: center;">Grassi</th>
+            <th style="width:20%; text-align: center;">Sale</th>
         </tr>
     `;
     remainingTable.appendChild(remainingTableHeader);
@@ -1411,10 +1412,11 @@ function renderMenuEditor(data) {
             mealTableHead.innerHTML = `
                 <tr>
                     <th style="width:34%; text-align: center;">${formatMealName(meal)}</th>
-                    <th style="width:11%; text-align: center;">Kcal</th>
-                    <th style="width:11%; text-align: center;">Carbs</th>
-                    <th style="width:11%; text-align: center;">Prot</th>
-                    <th style="width:11%; text-align: center;">Fat</th>
+                    <th style="width:11%; text-align: center;">KCAL</th>
+                    <th style="width:11%; text-align: center;">Carboidrati</th>
+                    <th style="width:11%; text-align: center;">Proteine</th>
+                    <th style="width:11%; text-align: center;">Grassi</th>
+                    <th style="width:11%; text-align: center;">Sale</th>
                     <th style="width:11%; text-align: center;">Quantità</th>
                     <th style="width:11%; text-align: center;">Azioni</th>
                 </tr>
@@ -1593,6 +1595,7 @@ function populatePopupRemainingMacros(day) {
             document.getElementById('popup-carbs').textContent = cells[2].textContent;
             document.getElementById('popup-protein').textContent = cells[3].textContent;
             document.getElementById('popup-fat').textContent = cells[4].textContent;
+            document.getElementById('popup-salt').textContent = cells[5].textContent;
             break;
         }
     }
