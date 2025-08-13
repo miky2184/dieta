@@ -41,8 +41,7 @@
                     <tfoot>
                     <tr>
                         <td><strong>Rimanente</strong></td>
-                        {% for dati_giorno in ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato',
-                        'domenica'] %}
+                        {% for dati_giorno in ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'] %}
                         <td>
                             <div><strong>Kcal:</strong> <span id="remaining-kcal-{{ dati_giorno }}">{{ remaining_macronutrienti[dati_giorno]['kcal'] }}</span>
                             </div>

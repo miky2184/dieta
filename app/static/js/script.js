@@ -1233,7 +1233,7 @@ function buildRemainingGruppiTable(menuConsumi, gruppi) {
     filteredGruppi.forEach(gruppo => {
         const id = gruppo.id.toString();
         const consumoRimanente = menuConsumi[id] || 0; // Prendi il consumo rimanente o 0 se non trovato
-        bodyHTML += `<td style="width:11% !important; text-align: center;">${consumoRimanente} g</td>`;
+        bodyHTML += `<td style="width:10% !important; text-align: center;">${consumoRimanente} g</td>`;
     });
     bodyHTML += '</tr>';
     remainingGruppiTableBody.innerHTML = bodyHTML;
