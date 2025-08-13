@@ -472,8 +472,8 @@ class FormManager {
         const macros = NutritionCalculator.calculateMacros(
             targetCalories,
             idealWeight,
-            data.attivita_fisica,
-            data.dieta
+            data.dieta,
+            data.attivita_fisica
         );
 
         return {
