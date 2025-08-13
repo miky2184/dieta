@@ -1,8 +1,27 @@
 <!-- app/templates/dieta.html -->
 {% extends "base.html" %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/dieta.css') }}">
+{% block head %}
+<!-- CSS specifico per dieta -->
+<style>
+/* Progress Indicator */
+.progress-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #4a90e2, #667eea);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+    z-index: 9999;
+}
+
+.progress-indicator.active {
+    transform: scaleX(1);
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -315,19 +334,249 @@
         </div>
     </div>
 </div>
+
+<style>
+/* Progress Indicator */
+.progress-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #4a90e2, #667eea);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+    z-index: 9999;
+}
+
+.progress-indicator.active {
+    transform: scaleX(1);
+}
+
+/* Input group ottimizzati */
+.input-group {
+    margin-bottom: 0.5rem;
+}
+
+.input-group-text {
+    min-width: 140px;
+    background: #f8f9fa;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+/* Indicatore BMI */
+.bmi-indicator {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+.bmi-indicator.healthy {
+    background: rgba(92, 184, 92, 0.2);
+    color: #5cb85c;
+}
+
+.bmi-indicator.warning {
+    background: rgba(240, 173, 78, 0.2);
+    color: #f0ad4e;
+}
+
+.bmi-indicator.danger {
+    background: rgba(217, 83, 79, 0.2);
+    color: #d9534f;
+}
+
+/* Result cards */
+.result-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
+    border-left: 4px solid #4a90e2;
+    text-align: center;
+}
+
+.result-card.healthy {
+    border-left-color: #5cb85c;
+}
+
+.result-card.warning {
+    border-left-color: #f0ad4e;
+}
+
+.result-card.danger {
+    border-left-color: #d9534f;
+}
+
+.result-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.result-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Sezioni */
+.section-divider {
+    border-top: 2px solid #e9ecef;
+    margin: 2rem 0 1rem 0;
+    position: relative;
+}
+
+.section-title {
+    background: white;
+    padding: 0 15px;
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    color: #4a90e2;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* Slider peso obiettivo */
+.slider-container {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.form-range::-webkit-slider-thumb {
+    background: #4a90e2;
+}
+
+.slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+}
+
+/* Macro cards */
+.macro-card {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.macro-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.macro-card.carboidrati {
+    border-color: #ffa500;
+}
+
+.macro-card.proteine {
+    border-color: #dc3545;
+}
+
+.macro-card.grassi {
+    border-color: #28a745;
+}
+
+.macro-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.macro-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #333;
+    margin: 0.5rem 0;
+}
+
+.macro-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.macro-calories {
+    margin-top: 0.5rem;
+    color: #999;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .input-group-text {
+        min-width: 120px;
+        font-size: 0.8rem;
+    }
+
+    .macro-value {
+        font-size: 1.5rem;
+    }
+
+    .result-value {
+        font-size: 1.2rem;
+    }
+}
+</style>
 {% endblock %}
 
-{% block extra_js %}
-<script src="{{ url_for('static', filename='js/dieta.js') }}"></script>
+{% block extra_scripts %}
+<!-- Script per debug e inizializzazione -->
 <script>
-// Inizializzazione dei dati utente se presenti
-{% if user_data %}
-const userData = {{ user_data | tojson }};
+console.log('🚀 Caricamento script dieta...');
+
+// Attendi che il DOM sia completamente caricato
 document.addEventListener('DOMContentLoaded', function() {
-    if (window.formManager && userData) {
-        window.formManager.loadUserData(userData);
+    console.log('📄 DOM Ready - Verifica elementi...');
+
+    // Verifica presenza elementi chiave
+    const checks = {
+        'form': document.getElementById('personalInfoForm'),
+        'peso': document.querySelector('[name="peso"]'),
+        'altezza': document.querySelector('[name="altezza"]'),
+        'tdee': document.getElementById('tdee'),
+        'dieta': document.getElementById('dieta'),
+        'deficit_calorico': document.getElementById('deficit_calorico'),
+        'bmi': document.getElementById('bmi'),
+        'calorie_giornaliere': document.getElementById('calorie_giornaliere')
+    };
+
+    for (let [key, element] of Object.entries(checks)) {
+        console.log(`${element ? '✅' : '❌'} ${key}: ${element ? 'trovato' : 'NON TROVATO'}`);
     }
 });
+</script>
+
+<!-- Carica il file dieta.js -->
+<script src="{{ url_for('static', filename='js/dieta.js') }}?v={{ range(1000, 9999) | random }}"></script>
+
+<!-- Inizializzazione dati utente se presenti -->
+<script>
+{% if user_data %}
+const userData = {{ user_data | tojson }};
+console.log('📥 Dati utente disponibili:', userData);
+
+// Attendi l'inizializzazione del FormManager
+setTimeout(function() {
+    if (window.formManager && userData) {
+        console.log('📝 Caricamento dati utente...');
+        window.formManager.loadUserData(userData);
+    }
+}, 500);
+{% else %}
+console.log('ℹ️ Nessun dato utente preesistente');
 {% endif %}
 </script>
 {% endblock %}
