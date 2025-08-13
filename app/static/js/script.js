@@ -2530,12 +2530,14 @@ document.getElementById('addFoodForm').addEventListener('submit', function(event
 
     document.getElementById('confirmDeleteBtn').addEventListener('click', deleteMenu);
 
+    /*
     const form = document.getElementById('personalInfoForm');
 
     if (form) {
         form.addEventListener('input', calculateResults);
         form.addEventListener('submit', synchronizeFields);
     }
+    */
 
     if (document.getElementById("captureButton")) {
         document.getElementById("captureButton").addEventListener("click", function() {
@@ -2689,7 +2691,13 @@ document.getElementById('addFoodForm').addEventListener('submit', function(event
                 .then(response => response.json())
                 .then(data => {
                     if (data) {
-                        populateDietaForm(data);
+                        // Usa la nuova funzione
+                        if (window.formManager) {
+                            window.formManager.loadUserData(data);
+                        } else {
+                            // Fallback al vecchio metodo se necessario
+                            populateDietaForm(data);
+                        }
                     }
                 })
                 .catch(error => console.error('Errore nel caricamento dei dati:', error));

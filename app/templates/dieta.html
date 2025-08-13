@@ -1,143 +1,311 @@
 <!-- app/templates/dieta.html -->
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dieta.css') }}">
+{% endblock %}
+
+{% block content %}
 <div id="DietaForm" class="tabcontent">
-    <div class="card"><div class="card-body">
-    <div class="container-fluid mt-4">
-        <form id="personalInfoForm" action="{{ url_for('views.salva_dati') }}" method="POST">
-            <div class="row">
-                <div class="col-md-6">
-                <input type="text" hidden class="form-control" name="id">
-                <div class="input-group input-group-sm mb-3">
-                    <span  class="input-group-text span-width">Nome</span>
-                    <input type="text" class="form-control" name="nome" placeholder="Inserisci il tuo nome" required>
-                </div>
-                <div class="input-group input-group-sm mb-3">
-                    <span   class="input-group-text span-width">Cognome</span>
-                    <input type="text" class="form-control" name="cognome" placeholder="Inserisci il tuo cognome" required>
-                </div>
-                <div class="input-group input-group-sm mb-3">
-                    <span   class="input-group-text span-width">Email</span>
-                    <input type="text" class="form-control" name="email" disabled>
-                </div>
-                <div class="input-group input-group-sm mb-3">
-                    <span   class="input-group-text span-width">Sesso</span>
-                    <select class="form-control" name="sesso" required>
-                        <option selected disabled>Scegli...</option>
-                        <option value="M">Uomo</option>
-                        <option value="F">Donna</option>
-                    </select>
-                </div>
-                <div class="input-group input-group-sm mb-3">
-                    <span   class="input-group-text span-width">Età</span>
-                    <input type="number" class="form-control" name="eta" placeholder="Inserisci la tua età" required>
-                </div>
-                <div class="input-group input-group-sm mb-3">
-                    <span   class="input-group-text span-width">Altezza</span>
-                    <input type="number" class="form-control" name="altezza" placeholder="Inserisci la tua altezza" required>
-                    <span   class="input-group-text span-width">cm</span>
-                </div>
-                <div class="input-group input-group-sm mb-3">
-                    <span   class="input-group-text span-width">Peso</span>
-                    <input type="number" step=".1" class="form-control" name="peso" placeholder="Inserisci il tuo peso" required>
-                    <span   class="input-group-text span-width">kg</span>
-                </div>
-                <div class="input-group input-group-sm mb-3">
-                <span   class="input-group-text span-width"  data-bs-toggle="tooltip" data-bs-placement="left"  data-bs-title="Seleziona il livello di attività fisica e lavorativa che meglio descrive la tua routine quotidiana. Questo campo viene utilizzato per calcolare il tuo fabbisogno calorico giornaliero (TDEE). Scegliendo un livello più alto, il tuo fabbisogno calorico aumenterà, riflettendo l'energia extra necessaria per sostenere un'attività fisica più intensa.">Stile di vita</span>
-                    <select class="form-control" name="tdee" id="tdee" required>
-                        <option selected disabled>Scegli...</option>
-                        <option value="1.35">Nessuna Attività</option>
-                        <option value="1.45">Sedentario</option>
-                        <option value="1.60">Poco attivo</option>
-                        <option value="1.75">Attivo</option>
-                        <option value="2.00">Molto attivo</option>
-                     </select>
-                </div>
-                 <div class="input-group input-group-sm mb-3">
-                    <span   class="input-group-text span-width" id="deficit_calorico-span"  data-bs-toggle="tooltip" data-bs-placement="left"  data-bs-title="Scegli la percentuale di riduzione delle calorie giornaliere per raggiungere i tuoi obiettivi di perdita di peso. Un deficit più grande porta a una maggiore perdita di peso, ma considera l'impatto sulla tua energia e salute.">Riduzione Calorie (%)</span>
-                    <select class="form-control" id="deficit_calorico" name="deficit_calorico" required>
-                        <option selected disabled>Scegli...</option>
-                        <option value="0.00">Nessuno</option>
-                        <option value="1.00">Moderato</option>
-                        <option value="2.00">Aggressivo</option>
-                    </select>
-                </div>
-                    <div class="input-group input-group-sm mb-3">
-                    <span   class="input-group-text span-width" id="attivita_fisica-span"  data-bs-toggle="tooltip" data-bs-placement="left"  data-bs-title="Scegli l'attività fisica svolta durante il periodo di dieta">Attivita' Fisica</span>
-                    <select class="form-control" id="attivita_fisica" name="attivita_fisica" required>
-                        <option selected disabled>Scegli...</option>
-                        <option value="0.90">Sedentaria - nessuno sport</option>
-                        <option value="1.10">Moderata</option>
-                        <option value="1.40">Sport Aerobici - Fitness</option>
-                        <option value="1.65">Sport Anaerobici</option>
-                        <option value="2.25">Body-building</option>
-                    </select>
-                </div>
-                </div>
-                <div class="col-md-6">
-                <div class="input-group input-group-sm mb-3">
-                    <span   class="input-group-text span-width" id="bmi-span">BMI</span>
-                    <input type="number" class="form-control" name="bmi_visible" id="bmi" disabled>
-                    <input type="hidden" name="bmi" id="bmi_hidden">
-                </div>
-                <div class="input-group input-group-sm mb-3">
-                    <span   class="input-group-text span-width" id="peso_ideale-span" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="Peso calcolato utilizzando la media della formula di Lorenz, Broca, Berthean e Keys">Peso Ideale</span>
-                    <input type="number" class="form-control" name="peso_ideale_visible" id="peso_ideale" disabled>
-                    <input type="hidden" name="peso_ideale" id="peso_ideale_hidden">
-                    <span   class="input-group-text span-width">kg</span>
-                </div>
-                <div class="input-group input-group-sm mb-3">
-                    <span   class="input-group-text span-width" id="meta_basale-span" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="Il metabolismo basale (BMR) è il numero totale di calorie di cui il corpo necessita in fase di riposo e rappresenta circa il 50-70% dell’energia totale consumata." >BMR</span>
-                    <input type="number" class="form-control" name="meta_basale_visible" id="meta_basale" disabled>
-                    <input type="hidden" name="meta_basale" id="meta_basale_hidden">
-                </div>
-                <div class="input-group input-group-sm mb-3">
-                    <span   class="input-group-text span-width" id="meta_giornaliero-span">Metabolismo Giornaliero</span>
-                    <input type="number" class="form-control" name="meta_giornaliero_visible" id="meta_giornaliero" disabled>
-                    <input type="hidden" name="meta_giornaliero" id="meta_giornaliero_hidden">
-                </div>
-                <div class="input-group input-group-sm mb-3">
-                    <span   class="input-group-text span-width" id="calorie_giornaliere-span">Calorie Giornaliere a dieta</span>
-                    <input type="number" class="form-control" name="calorie_giornaliere_visible" id="calorie_giornaliere" disabled>
-                    <input type="hidden" name="calorie_giornaliere" id="calorie_giornaliere_hidden">
-                </div>
-                <div class="input-group input-group-sm mb-3">
-                    <span   class="input-group-text span-width" id="settimane_dieta-span">Settimane necessarie</span>
-                    <input type="text" class="form-control" name="settimane_dieta_visible" id="settimane_dieta" disabled>
-                    <input type="hidden" name="settimane_dieta" id="settimane_dieta_hidden">
-                </div>
-                    <div class="input-group input-group-sm mb-3">
-                        <span   class="input-group-text span-width">Scegli una dieta</span>
-                        <select class="form-control" id="dieta" name="dieta">
-                            <!-- <option value="personalizzata">Dieta Personalizzata</option>
-                            <option value="balanced">Dieta Equilibrata</option>
-                            <option value="low_carb">Dieta Low Carb</option>
-                            <option value="keto">Dieta Chetogenica</option>
-                            <option value="high_protein">Dieta Ricca di Proteine</option>
-                            <option value="low_fat">Dieta a Basso Contenuto di Grassi</option> -->
-                            <option selected value="mediterranean">Dieta Mediterranea</option>
-                        </select>
+    <div class="card">
+        <div class="card-body">
+            <div class="container-fluid">
+                <form id="personalInfoForm" action="{{ url_for('views.salva_dati') }}" method="POST">
+                    <input type="hidden" name="id">
+
+                    <!-- Sezione Dati Personali -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="section-divider">
+                                <span class="section-title">Dati Personali</span>
+                            </div>
+                        </div>
                     </div>
-                 <div class="input-group input-group-sm mb-3">
-                    <span   class="input-group-text span-width" id="carboidrati-span">Carbs</span>
-                     <input type="number" step=".1"  class="form-control" name="carboidrati_visible" id="carboidrati_input" disabled>
-                     <input type="hidden" name="carboidrati" id="carboidrati_hidden">
-                     <span   class="input-group-text span-width" id="proteine-span">Prot</span>
-                    <input type="number" step=".1"  class="form-control" name="proteine_visible" id="proteine_input" disabled>
-                     <input type="hidden" name="proteine" id="proteine_hidden">
-                     <span   class="input-group-text span-width" id="grassi-span">Fat</span>
-                    <input type="number" step=".1"  class="form-control" name="grassi_visible" id="grassi_input" disabled>
-                    <input type="hidden" name="grassi" id="grassi_hidden">
-                    <span   class="input-group-text span-width">gr</span>
-                </div>
 
-                <!-- Pulsante per abilitare l'override -->
-                <!-- <div class="d-flex justify-content-end">
-                    <button type="button" class="btn btn-secondary btn-sm" id="override_macros_btn">Override</button>
-                </div> -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">
+                                    <i class="fas fa-user me-2"></i>Nome
+                                </span>
+                                <input type="text" class="form-control" name="nome" placeholder="Inserisci il tuo nome" required>
+                            </div>
 
-                </div>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">
+                                    <i class="fas fa-user me-2"></i>Cognome
+                                </span>
+                                <input type="text" class="form-control" name="cognome" placeholder="Inserisci il tuo cognome" required>
+                            </div>
+
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">
+                                    <i class="fas fa-envelope me-2"></i>Email
+                                </span>
+                                <input type="email" class="form-control" name="email" disabled>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">
+                                    <i class="fas fa-venus-mars me-2"></i>Sesso
+                                </span>
+                                <select class="form-control" name="sesso" required>
+                                    <option selected disabled>Scegli...</option>
+                                    <option value="M">Uomo</option>
+                                    <option value="F">Donna</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">
+                                    <i class="fas fa-birthday-cake me-2"></i>Età
+                                </span>
+                                <input type="number" class="form-control" name="eta" placeholder="Inserisci la tua età" min="10" max="120" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sezione Misurazioni -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="section-divider">
+                                <span class="section-title">Misurazioni Corporee</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">
+                                    <i class="fas fa-ruler-vertical me-2"></i>Altezza
+                                </span>
+                                <input type="number" class="form-control" name="altezza" placeholder="Inserisci la tua altezza" min="100" max="250" required>
+                                <span class="input-group-text">cm</span>
+                            </div>
+
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">
+                                    <i class="fas fa-weight me-2"></i>Peso
+                                </span>
+                                <input type="number" step="0.1" class="form-control" name="peso" placeholder="Inserisci il tuo peso" min="30" max="300" required>
+                                <span class="input-group-text">kg</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <!-- BMI Card -->
+                            <div class="result-card" id="bmiCard">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <small class="text-muted">BMI</small>
+                                        <div class="h5 mb-0">
+                                            <span id="bmi">--</span>
+                                            <span class="bmi-indicator" id="bmiIndicator" style="display: none;"></span>
+                                        </div>
+                                    </div>
+                                    <i class="fas fa-chart-line fa-2x text-muted"></i>
+                                </div>
+                                <input type="hidden" name="bmi" id="bmi_hidden">
+                            </div>
+
+                            <!-- Peso Ideale Card -->
+                            <div class="result-card">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <small class="text-muted">Peso Ideale</small>
+                                        <div class="h5 mb-0">
+                                            <span id="peso_ideale">--</span> kg
+                                        </div>
+                                    </div>
+                                    <i class="fas fa-balance-scale fa-2x text-muted"></i>
+                                </div>
+                                <input type="hidden" name="peso_ideale" id="peso_ideale_hidden">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sezione Stile di Vita -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="section-divider">
+                                <span class="section-title">Stile di Vita e Obiettivi</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text" data-bs-toggle="tooltip"
+                                     data-bs-title="Seleziona il livello di attività fisica e lavorativa">
+                                    <i class="fas fa-running me-2"></i>Stile di vita
+                                </span>
+                                <select class="form-control" name="tdee" id="tdee" required>
+                                    <option selected disabled>Scegli...</option>
+                                    <option value="1.35">Nessuna Attività</option>
+                                    <option value="1.45">Sedentario</option>
+                                    <option value="1.60">Poco attivo</option>
+                                    <option value="1.75">Attivo</option>
+                                    <option value="2.00">Molto attivo</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text" data-bs-toggle="tooltip"
+                                     data-bs-title="Scegli la percentuale di riduzione delle calorie">
+                                    <i class="fas fa-chart-pie me-2"></i>Riduzione Calorie
+                                </span>
+                                <select class="form-control" id="deficit_calorico" name="deficit_calorico" required>
+                                    <option selected disabled>Scegli...</option>
+                                    <option value="0.00">Nessuno</option>
+                                    <option value="1.00">Moderato</option>
+                                    <option value="2.00">Aggressivo</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text" data-bs-toggle="tooltip"
+                                     data-bs-title="Scegli l'attività fisica svolta">
+                                    <i class="fas fa-dumbbell me-2"></i>Attività Fisica
+                                </span>
+                                <select class="form-control" id="attivita_fisica" name="attivita_fisica" required>
+                                    <option selected disabled>Scegli...</option>
+                                    <option value="0.90">Sedentaria - nessuno sport</option>
+                                    <option value="1.10">Moderata</option>
+                                    <option value="1.40">Sport Aerobici - Fitness</option>
+                                    <option value="1.65">Sport Anaerobici</option>
+                                    <option value="2.25">Body-building</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <!-- Peso Obiettivo Slider -->
+                            <div class="slider-container">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-bullseye"></i> Peso Obiettivo
+                                </label>
+                                <input type="range" class="form-range" id="peso_target_slider" step="0.5">
+                                <div class="slider-labels">
+                                    <span id="pesoMin">--</span>
+                                    <span class="fw-bold text-primary" id="pesoObiettivoValue">--</span>
+                                    <span id="pesoMax">--</span>
+                                </div>
+                                <div class="text-center mt-2">
+                                    <small id="pesoDifferenza" class="text-muted">--</small>
+                                </div>
+                                <input type="hidden" name="peso_target" id="peso_target_hidden">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sezione Risultati -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="section-divider">
+                                <span class="section-title">Piano Nutrizionale Calcolato</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-box">
+                                <i class="fas fa-fire"></i>
+                                <strong>BMR:</strong> <span id="meta_basale">--</span> kcal
+                                <input type="hidden" name="meta_basale" id="meta_basale_hidden">
+                            </div>
+
+                            <div class="info-box">
+                                <i class="fas fa-bolt"></i>
+                                <strong>Metabolismo Giornaliero:</strong> <span id="meta_giornaliero">--</span> kcal
+                                <input type="hidden" name="meta_giornaliero" id="meta_giornaliero_hidden">
+                            </div>
+
+                            <div class="info-box">
+                                <i class="fas fa-utensils"></i>
+                                <strong>Calorie Target:</strong> <span id="calorie_giornaliere">--</span> kcal
+                                <input type="hidden" name="calorie_giornaliere" id="calorie_giornaliere_hidden">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="info-box">
+                                <i class="fas fa-calendar-check"></i>
+                                <strong>Durata:</strong> <span id="settimane_dieta">--</span>
+                                <input type="hidden" name="settimane_dieta" id="settimane_dieta_hidden">
+                            </div>
+
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">
+                                    <i class="fas fa-clipboard-list me-2"></i>Tipo Dieta
+                                </span>
+                                <select class="form-control" id="dieta" name="dieta">
+                                    <option value="mediterranean" selected>Dieta Mediterranea</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Macronutrienti -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="section-divider">
+                                <span class="section-title">Macronutrienti</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="macro-card">
+                                <div class="macro-value" id="carboidrati_input">--</div>
+                                <div class="macro-label">Carboidrati (g)</div>
+                                <input type="hidden" name="carboidrati" id="carboidrati_hidden">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="macro-card">
+                                <div class="macro-value" id="proteine_input">--</div>
+                                <div class="macro-label">Proteine (g)</div>
+                                <input type="hidden" name="proteine" id="proteine_hidden">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="macro-card">
+                                <div class="macro-value" id="grassi_input">--</div>
+                                <div class="macro-label">Grassi (g)</div>
+                                <input type="hidden" name="grassi" id="grassi_hidden">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="row mt-4">
+                        <div class="col-12 text-center">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Salva
+                            </button>
+                        </div>
+                    </div>
+                </form>
             </div>
-              <button type="submit" class="btn btn-primary btn-sm">Salva</button>
-        </form>
+        </div>
     </div>
-    </div></div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/dieta.js') }}"></script>
+<script>
+// Inizializza il form manager quando il DOM è pronto
+document.addEventListener('DOMContentLoaded', function() {
+    if (document.getElementById('personalInfoForm')) {
+        window.formManager = new FormManager();
+    }
+});
+</script>
+{% endblock %}

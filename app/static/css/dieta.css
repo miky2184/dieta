@@ -1,0 +1,208 @@
+                    /* app/static/css/dieta.css */
+
+/* Progress Indicator */
+.progress-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #4a90e2, #667eea);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+    z-index: 9999;
+}
+
+.progress-indicator.active {
+    transform: scaleX(1);
+}
+
+/* Card miglioramenti per il form dieta */
+#DietaForm .card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#DietaForm .card-body {
+    padding: 2rem;
+}
+
+/* Input group ottimizzati */
+#DietaForm .input-group {
+    margin-bottom: 1rem;
+}
+
+#DietaForm .input-group-text {
+    min-width: 140px;
+    background: #f8f9fa;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* Indicatore BMI */
+.bmi-indicator {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+.bmi-indicator.healthy {
+    background: rgba(92, 184, 92, 0.2);
+    color: #5cb85c;
+}
+
+.bmi-indicator.warning {
+    background: rgba(240, 173, 78, 0.2);
+    color: #f0ad4e;
+}
+
+.bmi-indicator.danger {
+    background: rgba(217, 83, 79, 0.2);
+    color: #d9534f;
+}
+
+/* Result cards */
+.result-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
+    border-left: 4px solid #4a90e2;
+}
+
+.result-card.healthy {
+    border-left-color: #5cb85c;
+}
+
+.result-card.warning {
+    border-left-color: #f0ad4e;
+}
+
+.result-card.danger {
+    border-left-color: #d9534f;
+}
+
+/* Sezioni */
+.section-divider {
+    border-top: 2px solid #e9ecef;
+    margin: 2rem 0;
+    position: relative;
+}
+
+.section-title {
+    background: white;
+    padding: 0 15px;
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    color: #4a90e2;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* Slider peso obiettivo */
+.slider-container {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.form-range::-webkit-slider-thumb {
+    background: #4a90e2;
+}
+
+.slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+}
+
+/* Macro cards */
+.macro-card {
+    text-align: center;
+    padding: 1rem;
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+}
+
+.macro-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.macro-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #4a90e2;
+}
+
+.macro-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Info boxes */
+.info-box {
+    background: #e8f4fd;
+    border-left: 4px solid #4a90e2;
+    padding: 1rem;
+    border-radius: 0 8px 8px 0;
+    margin: 1rem 0;
+}
+
+.info-box i {
+    color: #4a90e2;
+    margin-right: 0.5rem;
+}
+
+/* Animazioni campi */
+.field-loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.field-loading::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #DietaForm .input-group-text {
+        min-width: 100px;
+        font-size: 0.8rem;
+    }
+
+    .macro-card {
+        margin-bottom: 1rem;
+    }
+
+    #DietaForm .card-body {
+        padding: 1rem;
+    }
+}
