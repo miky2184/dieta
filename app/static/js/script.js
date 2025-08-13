@@ -1268,12 +1268,12 @@ function renderMenuEditor(data) {
     const remainingTableHeader = document.createElement('thead');
     remainingTableHeader.innerHTML = `
         <tr>
-            <th style="width:20%; text-align: center;">Giorno</th>
-            <th style="width:20%; text-align: center;">KCAL</th>
-            <th style="width:20%; text-align: center;">Carboidrati</th>
-            <th style="width:20%; text-align: center;">Proteine</th>
-            <th style="width:20%; text-align: center;">Grassi</th>
-            <th style="width:20%; text-align: center;">Sale</th>
+            <th style="width:25%; text-align: center;">Giorno</th>
+            <th style="width:15%; text-align: center;">KCAL</th>
+            <th style="width:15%; text-align: center;">Carboidrati</th>
+            <th style="width:15%; text-align: center;">Proteine</th>
+            <th style="width:15%; text-align: center;">Grassi</th>
+            <th style="width:15%; text-align: center;">Sale</th>
         </tr>
     `;
     remainingTable.appendChild(remainingTableHeader);
@@ -1283,7 +1283,8 @@ function renderMenuEditor(data) {
     let totalKcal = 0,
         totalCarboidrati = 0,
         totalProteine = 0,
-        totalGrassi = 0;
+        totalGrassi = 0,
+        totalSale = 0;
 
     days.forEach(day => {
         const remaining = data['remaining_macronutrienti'][day];
@@ -1292,6 +1293,7 @@ function renderMenuEditor(data) {
         totalCarboidrati += remaining.carboidrati;
         totalProteine += remaining.proteine;
         totalGrassi += remaining.grassi;
+        totalSale += remaining.sale;
 
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -1300,6 +1302,7 @@ function renderMenuEditor(data) {
             <td style="text-align: center;">${remaining.carboidrati.toFixed(2)}</td>
             <td style="text-align: center;">${remaining.proteine.toFixed(2)}</td>
             <td style="text-align: center;">${remaining.grassi.toFixed(2)}</td>
+            <td style="text-align: center;">${remaining.sale.toFixed(2)}</td>
         `;
         remainingTableBody.appendChild(row);
     });
@@ -1312,6 +1315,7 @@ function renderMenuEditor(data) {
         <th style="text-align: center;">${totalCarboidrati.toFixed(2)}</th>
         <th style="text-align: center;">${totalProteine.toFixed(2)}</th>
         <th style="text-align: center;">${totalGrassi.toFixed(2)}</th>
+        <th style="text-align: center;">${totalSale.toFixed(2)}</th>
     `;
     remainingTableBody.appendChild(totalRow);
 
