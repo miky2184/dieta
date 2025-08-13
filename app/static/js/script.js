@@ -1,7 +1,7 @@
 var currentDay = '';
-let currentMeal = '';
-let selectedWeekId = null;
-let gruppi = []; // Variabile globale per memorizzare i gruppi
+var currentMeal = '';
+var selectedWeekId = null;
+var gruppi = []; // Variabile globale per memorizzare i gruppi
 var myChart;
 
 // in alto
