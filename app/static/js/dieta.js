@@ -241,7 +241,7 @@ class FormManager {
         });
 
         // Select con calcolo immediato
-        ['sesso', 'tdee', 'deficit_calorico', 'attivita_fisica'].forEach(id => {
+        ['sesso', 'tdee', 'deficit_calorico', 'attivita_fisica', 'dieta'].forEach(id => {
             const element = this.form.elements[id];
             if (element) {
                 element.addEventListener('change', () => {
@@ -380,7 +380,7 @@ class FormManager {
     validateForm() {
         if (!this.form) return false;
 
-        const requiredFields = ['nome', 'cognome', 'sesso', 'eta', 'altezza', 'peso', 'tdee', 'deficit_calorico', 'attivita_fisica'];
+        const requiredFields = ['nome', 'cognome', 'sesso', 'eta', 'altezza', 'peso', 'tdee', 'deficit_calorico', 'attivita_fisica', 'dieta'];
         let isValid = true;
 
         requiredFields.forEach(fieldName => {
@@ -439,6 +439,7 @@ class FormManager {
             tdee: parseFloat(this.form.elements['tdee']?.value),
             deficit: parseFloat(this.form.elements['deficit_calorico']?.value),
             attivita_fisica: parseFloat(this.form.elements['attivita_fisica']?.value),
+            dieta: parseFloat(this.form.elements['dieta']?.value),
             peso_target: parseFloat(slider?.value || 0)
         };
     }
