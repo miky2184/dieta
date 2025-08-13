@@ -431,7 +431,7 @@ def aggiorna_settimana(settimana, giorno_settimana, pasto, ricetta, percentuale)
         'proteine': ricetta['proteine'],
         'grassi': ricetta['grassi'],
         'sale': ricetta['sale'],
-        'fibre': ricetta['fibre'],
+        'fibre': ricetta.get('fibre', 0),
         'info': ricetta['info']
     })
 
