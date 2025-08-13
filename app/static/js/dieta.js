@@ -246,6 +246,10 @@ class FormManager {
         });
     }
 
+    recalc() {
+        recalcAll(); // qui chiami la funzione che ti ho scritto
+    }
+
     initTooltips() {
         // Verifica che Bootstrap sia caricato
         if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
@@ -642,6 +646,56 @@ class FormManager {
         });
 
         this.calculate();
+    }
+}
+
+function recalcAll() {
+    // 1. Recupero i valori dal form
+    const peso = parseFloat(document.querySelector('[name="peso"]').value) || 0;
+    const altezza = parseFloat(document.querySelector('[name="altezza"]').value) || 0;
+    const eta = parseInt(document.querySelector('[name="eta"]').value) || 0;
+    const sesso = document.querySelector('[name="sesso"]').value;
+    const activity = document.getElementById('tdee').value;
+    const goal = document.getElementById('dieta').value;
+    const variationPct = parseFloat(document.getElementById('deficit_calorico').value || '0');
+
+    // 2. Calcolo BMR (Mifflin-St Jeor)
+    let bmr = (10 * peso) + (6.25 * altezza) - (5 * eta) + (sesso === 'M' ? 5 : -161);
+    document.getElementById('meta_basale').textContent = Math.round(bmr);
+    document.getElementById('meta_basale_hidden').value = Math.round(bmr);
+
+    // 3. Calcolo TDEE (fattore in base allo stile di vita)
+    const activityFactors = {
+        sedentary: 1.2,
+        light: 1.375,
+        moderate: 1.55,
+        high: 1.725,
+        athlete: 1.9
+    };
+    const tdee = bmr * (activityFactors[activity] || 1.2);
+    document.getElementById('meta_giornaliero').textContent = Math.round(tdee);
+    document.getElementById('meta_giornaliero_hidden').value = Math.round(tdee);
+
+    // 4. Calorie target in base al goal e alla variazione
+    const calorieTarget = calcCaloriesTarget({ tdee, goal, variationPct });
+    document.getElementById('calorie_giornaliere').textContent = calorieTarget;
+    document.getElementById('calorie_giornaliere_hidden').value = calorieTarget;
+
+    // 5. Calcolo macro
+    const macros = calculateMacros({ calories: calorieTarget, weightKg: peso, goal, activity });
+    document.getElementById('carboidrati_input').textContent = macros.carboidrati;
+    document.getElementById('carboidrati_hidden').value = macros.carboidrati;
+
+    document.getElementById('proteine_input').textContent = macros.proteine;
+    document.getElementById('proteine_hidden').value = macros.proteine;
+
+    document.getElementById('grassi_input').textContent = macros.grassi;
+    document.getElementById('grassi_hidden').value = macros.grassi;
+
+    // 6. (Opzionale) mostra avvisi se meta.caloriesTooLow
+    if (macros.meta.caloriesTooLow) {
+        console.warn("Calorie troppo basse per l'attività scelta");
+        // qui potresti aggiungere un badge visivo nella UI
     }
 }
 
