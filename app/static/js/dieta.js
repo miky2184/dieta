@@ -682,7 +682,7 @@ function recalcAll() {
     document.getElementById('calorie_giornaliere_hidden').value = calorieTarget;
 
     // 5. Calcolo macro
-    const macros = calculateMacros({ calories: calorieTarget, weightKg: peso, goal, activity });
+    const macros = NutritionCalculator.calculateMacros({ calories: calorieTarget, weightKg: peso, goal, activity });
     document.getElementById('carboidrati_input').textContent = macros.carboidrati;
     document.getElementById('carboidrati_hidden').value = macros.carboidrati;
 
