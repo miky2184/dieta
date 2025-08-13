@@ -1,5 +1,4 @@
-// app/js/script.js
-let currentDay = '';
+var currentDay = '';
 let currentMeal = '';
 let selectedWeekId = null;
 let gruppi = []; // Variabile globale per memorizzare i gruppi
