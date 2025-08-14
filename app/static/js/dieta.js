@@ -53,251 +53,129 @@ function hideProgress() {
 
 // ============= NUTRITION CALCULATOR =============
 class NutritionCalculator {
-
-    // Calcolo TDEE più preciso combinando attività quotidiana e allenamento
-    static calculateTDEE(bmr, dailyActivity, trainingFrequency, trainingType, dailySteps) {
-        // Moltiplicatori base per attività quotidiana
-        const activityMultipliers = {
-            'sedentary': 1.2,   // Lavoro sedentario
-            'light': 1.3,       // Lavoro in piedi
-            'moderate': 1.4,    // Lavoro attivo
-            'high': 1.5         // Lavoro fisico pesante
-        };
-
-        // Bonus per allenamento (aggiuntivo)
-        const trainingBonus = {
-            'none': 0,
-            'light': 0.1,       // 1-2 volte/settimana
-            'moderate': 0.2,    // 3-4 volte/settimana
-            'high': 0.3,        // 5-6 volte/settimana
-            'athlete': 0.45     // Tutti i giorni
-        };
-
-        // Aggiustamento per tipo di allenamento
-        const trainingTypeMultiplier = {
-            'none': 1.0,
-            'cardio': 0.9,      // Cardio brucia meno post-allenamento
-            'strength': 1.1,    // Pesi aumentano EPOC
-            'mixed': 1.0,
-            'endurance': 0.95,
-            'power': 1.15       // Crossfit/sport combat hanno alto EPOC
-        };
-
-        // Bonus per passi giornalieri (NEAT)
-        const stepBonus = {
-            'very_low': 0,      // < 3.000 passi
-            'low': 0.05,        // 3.000-5.000
-            'moderate': 0.1,    // 5.000-8.000
-            'high': 0.15,       // 8.000-12.000
-            'very_high': 0.2    // > 12.000
-        };
-
-        let baseMultiplier = activityMultipliers[dailyActivity] || 1.2;
-        let training = trainingBonus[trainingFrequency] || 0;
-        let typeAdjust = trainingTypeMultiplier[trainingType] || 1.0;
-        let steps = stepBonus[dailySteps] || 0.1;
-
-        // Formula combinata
-        const totalMultiplier = (baseMultiplier + training + steps) * typeAdjust;
-
-        return Math.round(bmr * totalMultiplier);
+    static calculateBMI(peso, altezza) {
+        if (!peso || !altezza) return 0;
+        return peso / Math.pow(altezza / 100, 2);
     }
 
-    // Calcolo macronutrienti ottimizzato per tipo di allenamento
-    static calculateOptimizedMacros(calories, weightKg, goal, trainingType, trainingFrequency, stressLevel, sleepHours) {
-        // Aggiustamenti per stress e sonno
-        const stressAdjustment = {
-            'low': 1.0,
-            'medium': 0.95,  // Stress medio riduce leggermente il metabolismo
-            'high': 0.9      // Alto stress può ridurre significativamente
+    static getBMICategory(bmi) {
+        if (bmi < 18.5) return { category: "Sottopeso", class: "warning" };
+        if (bmi < 25) return { category: "Normopeso", class: "healthy" };
+        if (bmi < 30) return { category: "Sovrappeso", class: "warning" };
+        return { category: "Obeso", class: "danger" };
+    }
+
+    static calculateIdealWeight(altezza) {
+        if (!altezza) return 0;
+        return Math.round(21.7 * Math.pow(altezza / 100, 2));
+    }
+
+    static calculateBMR(data) {
+        const { sesso, eta, peso, altezza } = data;
+        if (!sesso || !eta || !peso || !altezza) return 0;
+
+        // Formula di Mifflin-St Jeor
+        if (sesso === 'M') {
+            return Math.round((10 * peso) + (6.25 * altezza) - (5 * eta) + 5);
+        } else {
+            return Math.round((10 * peso) + (6.25 * altezza) - (5 * eta) - 161);
+        }
+    }
+
+    static getTDEEMultiplier(activity) {
+        const multipliers = {
+            'sedentary': 1.2,
+            'light': 1.375,
+            'moderate': 1.55,
+            'high': 1.725,
+            'athlete': 1.9
+        };
+        return multipliers[activity] || 1.2;
+    }
+
+    static calcCaloriesTarget(tdee, goal, variationPct) {
+        if (goal === 'fat_loss') {
+            return Math.round(tdee * (1 + variationPct));
+        }
+        if (goal === 'muscle_gain') {
+            return Math.round(tdee * (1 + variationPct));
+        }
+        return Math.round(tdee);
+    }
+
+    static calculateMacros(calories, weightKg, goal, activity) {
+        // Formule moderne basate su evidenze scientifiche
+        // Proteine: g/kg peso corporeo in base all'obiettivo
+        const proteinRatios = {
+            fat_loss: 2.2,      // Più alte in deficit per preservare massa muscolare
+            maintenance: 1.6,    // Moderate per mantenimento
+            muscle_gain: 2.0,    // Alte per supportare sintesi proteica
+            performance: 1.8     // Moderate-alte per recupero
         };
 
-        const sleepAdjustment = sleepHours < 6 ? 0.95 :
-                               sleepHours < 7 ? 0.98 :
-                               1.0;
+        // Grassi: percentuale delle calorie totali
+        const fatPercentages = {
+            fat_loss: 0.25,      // 25% delle calorie
+            maintenance: 0.30,    // 30% delle calorie
+            muscle_gain: 0.25,    // 25% delle calorie
+            performance: 0.30     // 30% delle calorie
+        };
 
-        // Calorie effettive considerando stress e sonno
-        const adjustedCalories = Math.round(calories * stressAdjustment[stressLevel] * sleepAdjustment);
+        // Aggiustamenti per attività fisica
+        const activityMultipliers = {
+            sedentary: 0.9,
+            light: 1.0,
+            moderate: 1.1,
+            high: 1.2,
+            athlete: 1.3
+        };
 
-        // Proteine base per obiettivo e tipo allenamento
-        let proteinMultiplier = this.getProteinMultiplier(goal, trainingType, trainingFrequency);
-        let proteine = Math.round(proteinMultiplier * weightKg);
+        // Calcolo proteine (g)
+        const baseProtein = proteinRatios[goal] || proteinRatios.maintenance;
+        const activityMult = activityMultipliers[activity] || 1.0;
+        let proteine = Math.round(baseProtein * weightKg * activityMult);
 
-        // Grassi ottimizzati per tipo di allenamento
-        let fatPercentage = this.getFatPercentage(goal, trainingType);
-        let grassi = Math.round((adjustedCalories * fatPercentage) / 9);
+        // Limite massimo proteine: 2.5g/kg
+        proteine = Math.min(proteine, Math.round(2.5 * weightKg));
 
-        // Minimo grassi per salute ormonale
-        const minFat = stressLevel === 'high' ? Math.round(0.9 * weightKg) : Math.round(0.7 * weightKg);
+        // Calcolo grassi (g)
+        const fatPercent = fatPercentages[goal] || fatPercentages.maintenance;
+        let grassi = Math.round((calories * fatPercent) / 9);
+
+        // Minimo grassi per salute: 0.7g/kg
+        const minFat = Math.round(0.7 * weightKg);
         grassi = Math.max(grassi, minFat);
 
-        // Carboidrati: il resto delle calorie
+        // Calcolo carboidrati (g) - il resto delle calorie
         const proteinCals = proteine * 4;
         const fatCals = grassi * 9;
-        let carboidrati = Math.round((adjustedCalories - proteinCals - fatCals) / 4);
+        let carboidrati = Math.round((calories - proteinCals - fatCals) / 4);
 
-        // Minimi carboidrati per tipo di allenamento
-        const minCarbs = this.getMinCarbs(trainingType, trainingFrequency);
+        // Minimo carboidrati per funzione cerebrale e attività
+        const minCarbs = {
+            sedentary: 100,
+            light: 130,
+            moderate: 150,
+            high: 200,
+            athlete: 250
+        };
 
-        if (carboidrati < minCarbs) {
-            carboidrati = minCarbs;
-            // Riaggiusta grassi se necessario
-            const remainingCals = adjustedCalories - (proteine * 4) - (carboidrati * 4);
+        const minCarbsForActivity = minCarbs[activity] || 130;
+
+        // Se i carboidrati sono troppo bassi, riduci i grassi
+        if (carboidrati < minCarbsForActivity) {
+            carboidrati = minCarbsForActivity;
+            const remainingCals = calories - (proteine * 4) - (carboidrati * 4);
             grassi = Math.round(remainingCals / 9);
-            grassi = Math.max(grassi, minFat);
+            grassi = Math.max(grassi, minFat); // Mantieni minimo di grassi
         }
 
-        return {
-            proteine: Math.max(0, proteine),
-            grassi: Math.max(0, grassi),
-            carboidrati: Math.max(0, carboidrati),
-            calorieAdjusted: adjustedCalories,
-            notes: this.generateNotes(stressLevel, sleepHours, trainingType)
-        };
-    }
+        // Validazione finale
+        proteine = Math.max(0, proteine);
+        grassi = Math.max(0, grassi);
+        carboidrati = Math.max(0, carboidrati);
 
-    // Helper: moltiplicatore proteine
-    static getProteinMultiplier(goal, trainingType, trainingFrequency) {
-        const baseProtein = {
-            'fat_loss': 2.2,
-            'maintenance': 1.6,
-            'muscle_gain': 2.0,
-            'performance': 1.8,
-            'recomp': 2.4  // Ricomposizione richiede più proteine
-        };
-
-        const trainingAdjust = {
-            'none': 0.9,
-            'cardio': 0.95,
-            'strength': 1.1,
-            'mixed': 1.05,
-            'endurance': 1.0,
-            'power': 1.15
-        };
-
-        const frequencyAdjust = {
-            'none': 0.9,
-            'light': 0.95,
-            'moderate': 1.0,
-            'high': 1.05,
-            'athlete': 1.1
-        };
-
-        const base = baseProtein[goal] || 1.6;
-        const training = trainingAdjust[trainingType] || 1.0;
-        const frequency = frequencyAdjust[trainingFrequency] || 1.0;
-
-        return base * training * frequency;
-    }
-
-    // Helper: percentuale grassi
-    static getFatPercentage(goal, trainingType) {
-        const baseFat = {
-            'fat_loss': 0.25,
-            'maintenance': 0.30,
-            'muscle_gain': 0.25,
-            'performance': 0.30,
-            'recomp': 0.28
-        };
-
-        // Aggiustamenti per tipo allenamento
-        const trainingAdjust = {
-            'none': 0,
-            'cardio': -0.05,      // Meno grassi per cardio
-            'strength': 0.05,      // Più grassi per forza
-            'mixed': 0,
-            'endurance': -0.05,    // Endurance usa più carbo
-            'power': 0.05          // Power training beneficia da più grassi
-        };
-
-        const base = baseFat[goal] || 0.30;
-        const adjust = trainingAdjust[trainingType] || 0;
-
-        return Math.max(0.20, Math.min(0.35, base + adjust));
-    }
-
-    // Helper: carboidrati minimi
-    static getMinCarbs(trainingType, trainingFrequency) {
-        const baseCarbs = {
-            'none': 100,
-            'cardio': 180,
-            'strength': 130,
-            'mixed': 150,
-            'endurance': 200,
-            'power': 160
-        };
-
-        const frequencyMultiplier = {
-            'none': 0.8,
-            'light': 0.9,
-            'moderate': 1.0,
-            'high': 1.2,
-            'athlete': 1.4
-        };
-
-        const base = baseCarbs[trainingType] || 130;
-        const mult = frequencyMultiplier[trainingFrequency] || 1.0;
-
-        return Math.round(base * mult);
-    }
-
-    // Genera note e suggerimenti
-    static generateNotes(stressLevel, sleepHours, trainingType) {
-        const notes = [];
-
-        if (stressLevel === 'high') {
-            notes.push("⚠️ Stress alto: considera di aumentare i grassi per supportare gli ormoni");
-        }
-
-        if (sleepHours < 6) {
-            notes.push("😴 Sonno insufficiente: potrebbe influenzare il recupero e il metabolismo");
-        } else if (sleepHours < 7) {
-            notes.push("💤 Cerca di dormire almeno 7-8 ore per ottimizzare i risultati");
-        }
-
-        if (trainingType === 'endurance') {
-            notes.push("🏃 Endurance: assicurati di consumare carboidrati durante allenamenti lunghi");
-        } else if (trainingType === 'strength') {
-            notes.push("💪 Forza: timing delle proteine importante per il recupero");
-        }
-
-        return notes;
-    }
-
-    // Calcolo velocità ottimale per l'obiettivo
-    static getGoalOptions(goal, currentWeight, targetWeight) {
-        const weightDiff = targetWeight - currentWeight;
-        const isLosing = weightDiff < 0;
-
-        const options = {
-            'fat_loss': [
-                { value: -0.05, label: "Molto lenta (-5%, -0.25kg/sett)", safe: true },
-                { value: -0.10, label: "Lenta (-10%, -0.5kg/sett)", safe: true },
-                { value: -0.15, label: "Moderata (-15%, -0.75kg/sett)", safe: true },
-                { value: -0.20, label: "Veloce (-20%, -1kg/sett)", safe: false },
-                { value: -0.25, label: "Aggressiva (-25%, -1.25kg/sett)", safe: false }
-            ],
-            'muscle_gain': [
-                { value: 0.05, label: "Lean bulk (+5%, +0.1kg/sett)", safe: true },
-                { value: 0.10, label: "Slow bulk (+10%, +0.2kg/sett)", safe: true },
-                { value: 0.15, label: "Moderate bulk (+15%, +0.3kg/sett)", safe: true },
-                { value: 0.20, label: "Fast bulk (+20%, +0.4kg/sett)", safe: false }
-            ],
-            'maintenance': [
-                { value: 0, label: "Mantenimento (0%)", safe: true }
-            ],
-            'performance': [
-                { value: 0, label: "Mantenimento per performance", safe: true },
-                { value: 0.05, label: "Leggero surplus (+5%)", safe: true }
-            ],
-            'recomp': [
-                { value: -0.05, label: "Mini-cut (-5%)", safe: true },
-                { value: 0, label: "Mantenimento", safe: true },
-                { value: 0.05, label: "Mini-bulk (+5%)", safe: true }
-            ]
-        };
-
-        return options[goal] || options['maintenance'];
+        return { proteine, grassi, carboidrati };
     }
 }
 
