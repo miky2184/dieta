@@ -167,149 +167,135 @@ class NutritionCalculator {
      * @param {string} activity - Livello di attività ('sedentary', 'light', 'moderate', 'high', 'athlete')
      * @returns {Object} - Oggetto contenente grammi di proteine, grassi e carboidrati
      */
-    static calculateMacros(calories, weightKg, goal, activity) {
-        // Definizione dei rapporti proteici e grassi per tipo di dieta
-        const presets = {
-            fat_loss: {
-                p: 2.2,   // Proteine più alte per preservare massa muscolare
-                f: 0.8,   // Grassi moderati
-                name: "Dimagrimento"
-            },
-            maintenance: {
-                p: 1.6,   // Proteine moderate per mantenimento
-                f: 0.9,   // Grassi bilanciati
-                name: "Mantenimento"
-            },
-            muscle_gain: {
-                p: 2.0,   // Proteine alte per costruzione muscolare
-                f: 1.0,   // Grassi leggermente più alti per supportare ormoni
-                name: "Costruzione muscolare"
-            },
-            performance: {
-                p: 1.8,   // Proteine alte per performance
-                f: 0.8,   // Grassi moderati
-                name: "Performance atletica"
-            },
-            keto: {
-                p: 1.6,   // Proteine moderate
-                f: 2.0,   // Grassi alti
-                name: "Chetogenica",
-                forcedRatios: {
-                    p: 0.20,  // 20% calorie da proteine
-                    f: 0.75,  // 75% calorie da grassi
-                    c: 0.05   // 5% calorie da carboidrati
-                }
-            },
-            low_carb: {
-                p: 2.0,   // Proteine alte
-                f: 1.2,   // Grassi medio-alti
-                name: "Low-carb",
-                forcedRatios: {
-                    p: 0.35,  // 35% calorie da proteine
-                    f: 0.40,  // 40% calorie da grassi
-                    c: 0.25   // 25% calorie da carboidrati
-                }
-            },
-            mediterranean: {
-                p: 1.4,   // Proteine moderate
-                f: 1.0,   // Grassi di qualità
-                name: "Mediterranea",
-                forcedRatios: {
-                    p: 0.20,  // 20% calorie da proteine
-                    f: 0.30,  // 30% calorie da grassi
-                    c: 0.50   // 50% calorie da carboidrati
-                }
-            },
-            balanced: {
-                p: 1.6,   // Proteine bilanciate
-                f: 0.8,   // Grassi bilanciati
-                forcedRatios: {
-                    p: 0.25,  // 25% calorie da proteine
-                    f: 0.20,  // 20% calorie da grassi
-                    c: 0.55   // 55% calorie da carboidrati
-                },
-                name: "Bilanciata"
-            }
-        };
+    static calculateMacros(calories, weightKg, goal, activity, trainingType = 'mixed') {
+      // ---- Preset dietetici ----
+      const presets = {
+        fat_loss:    { p: 2.2, f: 0.8,  name: "Dimagrimento" },
+        maintenance: { p: 1.6, f: 0.9,  name: "Mantenimento" },
+        muscle_gain: { p: 2.0, f: 1.0,  name: "Costruzione muscolare" },
+        performance: { p: 1.8, f: 0.9,  name: "Performance" },
+        keto: {
+          p: 1.6, f: 2.0, name: "Chetogenica",
+          forcedRatios: { p: 0.20, f: 0.75, c: 0.05 }
+        },
+        low_carb: {
+          p: 2.0, f: 1.2, name: "Low‑carb",
+          forcedRatios: { p: 0.35, f: 0.40, c: 0.25 }
+        },
+        mediterranean: {
+          p: 1.4, f: 1.0, name: "Mediterranea",
+          forcedRatios: { p: 0.20, f: 0.30, c: 0.50 }
+        },
+        balanced: {
+          p: 1.6, f: 0.8, name: "Bilanciata",
+          forcedRatios: { p: 0.25, f: 0.20, c: 0.55 }
+        }
+      };
+      const preset = presets[goal] || presets.maintenance;
 
-        // Valore minimo di carboidrati (g) basato sul livello di attività
-        const carbFloorPerActivity = {
-            sedentary: 2.0,  // Minimo per funzioni cerebrali
-            light: 3.0,      // Attività leggera
-            moderate: 4.0,   // Attività moderata
-            high: 5.0,       // Attività intensa
-            athlete: 6.0     // Attività atletica
-        };
+      // ---- Minimi/sicurezze ----
+      const FAT_MIN_G_PER_KG = 0.7;           // salute ormonale
+      const PRO_MIN_G_PER_KG = 1.4;           // limite inferiore sicurezza
+      const PRO_MAX_G_PER_KG = 2.5;           // tetto proteine
+      const carbFloorPerActivity = { sedentary: 2.0, light: 3.0, moderate: 4.0, high: 5.0, athlete: 6.0 };
 
-        // Usa la configurazione predefinita o quella di mantenimento
-        const preset = presets[goal] || presets.maintenance;
+      // piccolo bump proteico in base al tipo di allenamento
+      const proBumpByType = { none:0, cardio:0.1, endurance:0.2, strength:0.25, power:0.25, mixed:0.15 };
+      const carbBumpByType = { none:0, cardio:20, endurance:40, strength:0, power:10, mixed:20 };
 
-        // Calcolo dei macronutrienti
-        let proteine, grassi, carboidrati;
+      // ---- Diete con ratio forzati (kcal %) ----
+      if (preset.forcedRatios) {
+        const r = preset.forcedRatios;
+        let proteine = Math.round((calories * r.p) / 4);
+        let grassi   = Math.round((calories * r.f) / 9);
+        let carboidrati = Math.round((calories * r.c) / 4);
 
-        // Se la dieta ha rapporti fissi di macronutrienti (come keto, low-carb, ecc.)
-        if (preset.forcedRatios) {
-            const ratios = preset.forcedRatios;
-
-            proteine = Math.round((calories * ratios.p) / 4);  // 4 kcal per grammo di proteine
-            grassi = Math.round((calories * ratios.f) / 9);    // 9 kcal per grammo di grassi
-            carboidrati = Math.round((calories * ratios.c) / 4); // 4 kcal per grammo di carboidrati
-
-            // Verifica che il totale delle calorie sia corretto
-            const totalCalories = (proteine * 4) + (grassi * 9) + (carboidrati * 4);
-
-            // Aggiusta per arrivare esattamente alle calorie target
-            if (totalCalories !== calories) {
-                const diff = calories - totalCalories;
-                // Aggiungi/sottrai la differenza ai carboidrati (più facili da aggiustare)
-                carboidrati += Math.round(diff / 4);
-            }
-        } else {
-            // Calcolo basato sul peso corporeo per diete non con rapporti fissi
-            const carbFloor = Math.round((carbFloorPerActivity[activity] || 3.0) * weightKg);
-
-            // Calcola proteine e grassi in base al peso corporeo
-            proteine = Math.round(preset.p * weightKg);
-            grassi = Math.round(preset.f * weightKg);
-
-            // Calcola i carboidrati dalle calorie rimanenti
-            const remainingCalories = calories - (proteine * 4 + grassi * 9);
-            carboidrati = Math.round(remainingCalories / 4);
-
-            // Garantisci un minimo di carboidrati, ricalcola i grassi se necessario
-            if (carboidrati < carbFloor) {
-                carboidrati = carbFloor;
-                // Ricalcola i grassi per mantenere le calorie target
-                const caloriesFromProteinsAndCarbs = (proteine * 4) + (carboidrati * 4);
-                grassi = Math.round((calories - caloriesFromProteinsAndCarbs) / 9);
-            }
+        // safety: minimo grassi (sposta dai carbo se necessario)
+        const fatMin = Math.round(FAT_MIN_G_PER_KG * weightKg);
+        if (grassi < fatMin) {
+          const need = fatMin - grassi;              // g di grasso da aggiungere
+          const kcalNeed = need * 9;
+          const takeFromCarbs = Math.ceil(kcalNeed / 4);
+          carboidrati = Math.max(0, carboidrati - takeFromCarbs);
+          grassi = fatMin;
         }
 
-        // Garantisci che non ci siano valori negativi
-        proteine = Math.max(0, proteine);
-        grassi = Math.max(0, grassi);
-        carboidrati = Math.max(0, carboidrati);
+        // riallinea alle calorie precise (aggiusta sui carbo)
+        const effective = proteine*4 + grassi*9 + carboidrati*4;
+        const diff = calories - effective;
+        carboidrati = Math.max(0, carboidrati + Math.round(diff/4));
 
-        // Calcola il totale delle calorie effettive
-        const effectiveCalories = (proteine * 4) + (grassi * 9) + (carboidrati * 4);
-
-        // Calcola le percentuali di macronutrienti
-        const proteinPercentage = Math.round((proteine * 4 / effectiveCalories) * 100);
-        const fatPercentage = Math.round((grassi * 9 / effectiveCalories) * 100);
-        const carbPercentage = Math.round((carboidrati * 4 / effectiveCalories) * 100);
-
-        // Restituisci i macronutrienti, le percentuali e le calorie per macro
+        const eff2 = proteine*4 + grassi*9 + carboidrati*4;
+        const proteinPercentage = Math.round((proteine*4/eff2)*100);
+        const fatPercentage     = Math.round((grassi*9/eff2)*100);
+        const carbPercentage    = Math.round((carboidrati*4/eff2)*100);
         return {
-            proteine,
-            grassi,
-            carboidrati,
-            proteinPercentage,
-            fatPercentage,
-            carbPercentage,
-            proteinCalories: proteine * 4,
-            fatCalories: grassi * 9,
-            carbCalories: carboidrati * 4
+          proteine, grassi, carboidrati,
+          proteinPercentage, fatPercentage, carbPercentage,
+          proteinCalories: proteine*4, fatCalories: grassi*9, carbCalories: carboidrati*4
         };
+      }
+
+      // ---- Diete “libere” (g/kg + resto) ----
+      const carbFloor = Math.round((carbFloorPerActivity[activity] || 3.0) * weightKg) + (carbBumpByType[trainingType] || 0);
+
+      // Proteine iniziali
+      const pPerKg = Math.min(PRO_MAX_G_PER_KG, Math.max(PRO_MIN_G_PER_KG, (preset.p || 1.6) + (proBumpByType[trainingType] || 0)));
+      let proteine = Math.round(pPerKg * weightKg);
+
+      // Grassi iniziali
+      const fatMin = Math.round(FAT_MIN_G_PER_KG * weightKg);
+      let grassi = Math.max(Math.round((preset.f || 0.9) * weightKg), fatMin);
+
+      // Carbo come resto
+      let remaining = calories - (proteine*4 + grassi*9);
+      let carboidrati = Math.round(remaining / 4);
+
+      // 1) rispetta il carb floor (riducendo eventuale grasso sopra il minimo)
+      if (carboidrati < carbFloor) {
+        const need = carbFloor - carboidrati;               // g carbo da aggiungere
+        const kcalNeed = need * 4;
+
+        // prova a prendere dai grassi sopra il minimo
+        const fatAboveMinKcal = Math.max(0, (grassi - fatMin) * 9);
+        const takeFromFatKcal = Math.min(fatAboveMinKcal, kcalNeed);
+        grassi -= Math.round(takeFromFatKcal / 9);
+
+        // ricalcola carbo
+        remaining = calories - (proteine*4 + grassi*9);
+        carboidrati = Math.round(remaining / 4);
+      }
+
+      // 2) se ancora non basta, riduci leggermente le proteine ma non sotto PRO_MIN_G_PER_KG
+      if (carboidrati < carbFloor) {
+        const targetP = Math.max(Math.round(PRO_MIN_G_PER_KG * weightKg), Math.round(proteine - Math.ceil(((carbFloor - carboidrati)*4)/4)));
+        proteine = Math.max(targetP, Math.round(PRO_MIN_G_PER_KG * weightKg));
+        remaining = calories - (proteine*4 + grassi*9);
+        carboidrati = Math.round(remaining / 4);
+      }
+
+      // 3) ultima safety: se il totale supera le calorie o va negativo, ribilancia sui carbo
+      const totalNow = proteine*4 + grassi*9 + carboidrati*4;
+      if (totalNow !== calories) {
+        const diff = calories - totalNow;
+        carboidrati = Math.max(0, carboidrati + Math.round(diff/4));
+      }
+
+      // clamp finali
+      proteine = Math.max(0, proteine);
+      grassi   = Math.max(fatMin, grassi);                 // mai sotto il minimo
+      carboidrati = Math.max(0, carboidrati);
+
+      const effective = proteine*4 + grassi*9 + carboidrati*4;
+      const proteinPercentage = Math.round((proteine*4/effective)*100);
+      const fatPercentage     = Math.round((grassi*9/effective)*100);
+      const carbPercentage    = Math.round((carboidrati*4/effective)*100);
+
+      return {
+        proteine, grassi, carboidrati,
+        proteinPercentage, fatPercentage, carbPercentage,
+        proteinCalories: proteine*4, fatCalories: grassi*9, carbCalories: carboidrati*4
+      };
     }
 }
 
