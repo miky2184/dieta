@@ -851,46 +851,6 @@ function calcolaPesoIdeale(data) {
     return (risultati.reduce((a, b) => a + b, 0) / risultati.length).toFixed(0);
 }
 
-function synchronizeFields() {
-    // Copia i valori dai campi visibili/disabilitati ai campi nascosti
-    const bmiVisible = document.getElementById('bmi');
-    const bmiHidden = document.getElementById('bmi_hidden');
-    bmiHidden.value = bmiVisible.value;
-
-    const pesoIdealeVisible = document.getElementById('peso_ideale');
-    const pesoIdealeHidden = document.getElementById('peso_ideale_hidden');
-    pesoIdealeHidden.value = pesoIdealeVisible.value;
-
-    // Aggiungi altre sincronizzazioni qui
-    const metaBasaleVisible = document.getElementById('meta_basale');
-    const metaBasaleHidden = document.getElementById('meta_basale_hidden');
-    metaBasaleHidden.value = metaBasaleVisible.value;
-
-    const metaGiornalieroVisible = document.getElementById('meta_giornaliero');
-    const metaGiornalieroHidden = document.getElementById('meta_giornaliero_hidden');
-    metaGiornalieroHidden.value = metaGiornalieroVisible.value;
-
-    const calorieGiornaliereVisible = document.getElementById('calorie_giornaliere');
-    const calorieGiornaliereHidden = document.getElementById('calorie_giornaliere_hidden');
-    calorieGiornaliereHidden.value = calorieGiornaliereVisible.value;
-
-    const settimaneDietaVisible = document.getElementById('settimane_dieta');
-    const settimaneDietaHidden = document.getElementById('settimane_dieta_hidden');
-    settimaneDietaHidden.value = settimaneDietaVisible.value;
-
-    const carboidratiVisible = document.getElementById('carboidrati_input');
-    const carboidratiHidden = document.getElementById('carboidrati_hidden');
-    carboidratiHidden.value = carboidratiVisible.value;
-
-    const proteineVisible = document.getElementById('proteine_input');
-    const proteineHidden = document.getElementById('proteine_hidden');
-    proteineHidden.value = proteineVisible.value;
-
-    const grassiVisible = document.getElementById('grassi_input');
-    const grassiHidden = document.getElementById('grassi_hidden');
-    grassiHidden.value = grassiVisible.value;
-}
-
 function addWeeksToDate(weeks) {
     const today = new Date(); // Data di oggi
     const resultDate = new Date(today); // Crea una nuova data basata su oggi
@@ -2693,9 +2653,6 @@ document.getElementById('addFoodForm').addEventListener('submit', function(event
                         // Usa la nuova funzione
                         if (window.formManager) {
                             window.formManager.loadUserData(data);
-                        } else {
-                            // Fallback al vecchio metodo se necessario
-                            populateDietaForm(data);
                         }
                     }
                 })
