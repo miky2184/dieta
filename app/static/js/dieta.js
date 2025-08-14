@@ -168,6 +168,15 @@ class FormManager {
             if (element) {
                 element.addEventListener('input', debounce(() => {
                     this.validateField(element);
+
+                    // Inizializza lo slider solo quando cambiano peso o altezza
+                    if (id === 'peso' || id === 'altezza') {
+                        const slider = safeGetElement('peso_target_slider');
+                        if (slider && !slider.hasAttribute('data-user-modified')) {
+                            this.initWeightSlider();
+                        }
+                    }
+
                     this.calculate();
                 }, CONFIG.DEBOUNCE_DELAY));
             }
@@ -203,12 +212,22 @@ class FormManager {
         const slider = safeGetElement('peso_target_slider');
         if (slider) {
             slider.addEventListener('input', debounce(() => {
+                // Marca lo slider come modificato dall'utente
+                slider.setAttribute('data-user-modified', 'true');
+
                 const value = parseFloat(slider.value);
                 safeSetValue('pesoObiettivoValue', `${value} kg`, true);
                 safeSetValue('peso_target_hidden', value);
                 this.updateWeightDifference();
                 this.calculate();
             }, 50));
+
+            // Reset del flag quando l'utente rilascia lo slider
+            slider.addEventListener('change', () => {
+                setTimeout(() => {
+                    slider.removeAttribute('data-user-modified');
+                }, 1000);
+            });
         }
     }
 
@@ -384,8 +403,11 @@ class FormManager {
         safeSetValue('prot_kcal', results.proteine * 4, true);
         safeSetValue('grassi_kcal', results.grassi * 9, true);
 
-        // Inizializza slider peso se necessario
-        this.initWeightSlider();
+        // Inizializza slider peso SOLO se necessario (non ad ogni update)
+        const slider = safeGetElement('peso_target_slider');
+        if (slider && !slider.hasAttribute('data-initialized')) {
+            this.initWeightSlider();
+        }
     }
 
     animateValue(id, value) {
@@ -554,10 +576,23 @@ class FormManager {
         const minWeight = Math.max(30, peso - 30);
         const maxWeight = Math.min(peso + 30, 200);
 
+        // Salva il valore corrente dello slider se esiste
+        const currentSliderValue = slider.value ? parseFloat(slider.value) : null;
+
+        // Aggiorna i limiti dello slider
         slider.min = minWeight;
         slider.max = maxWeight;
-        slider.value = Math.min(Math.max(idealWeight, minWeight), maxWeight);
         slider.step = 0.5;
+
+        // Se lo slider non è mai stato inizializzato O se non ha un valore valido, usa il peso ideale
+        // Altrimenti mantieni il valore corrente (entro i nuovi limiti)
+        if (!slider.hasAttribute('data-initialized') || !currentSliderValue) {
+            slider.value = Math.min(Math.max(idealWeight, minWeight), maxWeight);
+            slider.setAttribute('data-initialized', 'true');
+        } else {
+            // Mantieni il valore corrente ma assicurati che sia entro i nuovi limiti
+            slider.value = Math.min(Math.max(currentSliderValue, minWeight), maxWeight);
+        }
 
         safeSetValue('pesoMin', `${minWeight} kg`, true);
         safeSetValue('pesoMax', `${maxWeight} kg`, true);
