@@ -221,7 +221,7 @@ class FormManager {
         });
 
         // Select con calcolo immediato - ora include solo tdee, rimuoviamo attivita_fisica se non esiste
-        ['sesso', 'tdee'].forEach(id => {
+        ['sesso', 'tdee', 'training_frequency', 'training_type', 'dieta', 'deficit_calorico', ].forEach(id => {
             const element = this.form.elements[id];
             if (element) {
                 element.addEventListener('change', () => {
