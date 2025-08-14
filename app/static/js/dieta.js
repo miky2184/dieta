@@ -51,6 +51,27 @@ function hideProgress() {
     if (progress) progress.classList.remove('active');
 }
 
+// Modal helper
+function showFeedbackModal(title, body, options = {}) {
+  const titleEl = document.getElementById('feedbackModalLabel');
+  const bodyEl  = document.getElementById('feedbackModalBody');
+  if (titleEl) titleEl.textContent = title || '';
+  if (bodyEl) {
+    bodyEl.textContent = '';
+    if (typeof body === 'string') bodyEl.textContent = body;
+    else if (body && typeof body === 'object' && body.nodeType === 1) bodyEl.appendChild(body);
+  }
+  const modalEl = document.getElementById('feedbackModal');
+  if (!modalEl || typeof bootstrap === 'undefined' || !bootstrap.Modal) {
+    alert((title ? title + '\n\n' : '') + (typeof body === 'string' ? body : ''));
+    return null;
+  }
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl, { backdrop: 'static', keyboard: false });
+  modal.show();
+  if (options.onHidden) modalEl.addEventListener('hidden.bs.modal', options.onHidden, { once: true });
+  return modal;
+}
+
 // ============= NUTRITION CALCULATOR =============
 class NutritionCalculator {
     static calculateBMI(peso, altezza) {
@@ -912,30 +933,105 @@ class FormManager {
     }
 
     async submitForm() {
-        if (!this.validateForm()) {
-            alert('Compila tutti i campi richiesti');
-            return;
+      if (!this.validateForm()) {
+        showFeedbackModal('Campi mancanti', 'Compila tutti i campi richiesti e riprova.');
+        return;
+      }
+
+      const submitBtn = this.form.querySelector('[type="submit"]');
+      if (submitBtn) submitBtn.disabled = true;
+      showProgress();
+
+      try {
+        // Costruisco il FormData
+        const fd = new FormData(this.form);
+
+        // 1) Mappa di campi "visivi" -> "hidden" che contengono i numeri reali
+        const mirrorPairs = [
+          ['bmi', 'bmi_hidden'],
+          ['peso_ideale', 'peso_ideale_hidden'],
+          ['meta_basale', 'meta_basale_hidden'],
+          ['meta_giornaliero', 'meta_giornaliero_hidden'],
+          ['calorie_giornaliere', 'calorie_giornaliere_hidden'],
+          ['settimane_dieta', 'settimane_dieta_hidden'],
+          ['carboidrati', 'carboidrati_hidden'],
+          ['proteine', 'proteine_hidden'],
+          ['grassi', 'grassi_hidden']
+        ];
+
+        // helper: prendi valore numerico dall’hidden, se valido sostituisci
+        const pickHidden = (nameVisible, idHidden) => {
+          const hiddenEl = document.getElementById(idHidden);
+          if (!hiddenEl) return;
+          let v = hiddenEl.value ?? hiddenEl.textContent ?? '';
+          v = (v + '').replace(',', '.').trim(); // normalizza decimali
+          if (v !== '' && v !== 'undefined' && !isNaN(parseFloat(v))) {
+            fd.set(nameVisible, v);
+          } else {
+            // se è spazzatura, non inviare quel campo
+            fd.delete(nameVisible);
+          }
+        };
+
+        mirrorPairs.forEach(([vis, hid]) => {
+          // se il form ha quel name, prova a rimpiazzarlo
+          if (fd.has(vis)) pickHidden(vis, hid);
+        });
+
+        // 2) Rimuovi chiavi con "undefined" / vuote che rompono il backend
+        for (const [k, v] of Array.from(fd.entries())) {
+          const s = (v + '').trim();
+          if (s === '' || s.toLowerCase() === 'undefined' || s.toLowerCase() === 'null') {
+            fd.delete(k);
+          }
         }
 
-        try {
-            const formData = new FormData(this.form);
-            const response = await fetch('/salva_dati', {
-                method: 'POST',
-                body: formData
-            });
+        // 3) Normalizza numerici noti (se esistono ancora nel fd)
+        const numericKeys = [
+          'eta','altezza','peso','bmi','peso_ideale','peso_target',
+          'meta_basale','meta_giornaliero','calorie_giornaliere',
+          'carboidrati','proteine','grassi'
+        ];
+        numericKeys.forEach(k => {
+          if (fd.has(k)) {
+            const n = (fd.get(k) + '').replace(',', '.').trim();
+            if (!isNaN(parseFloat(n))) fd.set(k, n);
+            else fd.delete(k);
+          }
+        });
 
-            if (response.ok) {
-                alert('Dati salvati con successo!');
-                setTimeout(() => {
-                    window.location.href = '/dashboard';
-                }, 2000);
-            } else {
-                throw new Error('Errore nel salvataggio');
-            }
-        } catch (error) {
-            console.error('Errore:', error);
-            alert('Errore nel salvataggio. Riprova.');
+        // 4) Caso particolare: daily_steps deve essere NUMERO (passi/giorno)
+        if (fd.has('daily_steps')) {
+          const stepsRaw = (fd.get('daily_steps') + '').replace(',', '.').trim();
+          if (!/^\d+(\.\d+)?$/.test(stepsRaw)) {
+            // se è tipo "moderate", non inviarlo
+            fd.delete('daily_steps');
+          }
         }
+
+        // invio
+        const response = await fetch('/salva_dati', { method: 'POST', body: fd });
+
+        if (response.ok) {
+          showFeedbackModal('Dati salvati', 'Dati salvati con successo! Verrai reindirizzato alla dashboard.', {
+            onHidden: () => { window.location.href = '/dashboard'; }
+          });
+          setTimeout(() => { window.location.href = '/dashboard'; }, 2000);
+        } else {
+          let msg = 'Errore nel salvataggio. Verifica i dati e riprova.';
+          try {
+            const data = await response.json();
+            if (data?.message) msg = data.message;
+          } catch(_) {}
+          showFeedbackModal('Errore', msg);
+        }
+      } catch (err) {
+        console.error('Errore:', err);
+        showFeedbackModal('Errore di rete', 'Controlla la connessione e riprova.');
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+        hideProgress();
+      }
     }
 
     updateWeightDifference() {
