@@ -120,6 +120,22 @@
                                 </div>
                                 <input type="hidden" name="peso_ideale" id="peso_ideale_hidden">
                             </div>
+                            <!-- PESO OBIETTIVO SLIDER (resta uguale) -->
+                            <div class="slider-container mt-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-weight"></i> Peso Obiettivo
+                                </label>
+                                <input type="range" class="form-range" id="peso_target_slider" step="0.5">
+                                <div class="slider-labels">
+                                    <span id="pesoMin">--</span>
+                                    <span class="fw-bold text-primary" id="pesoObiettivoValue">--</span>
+                                    <span id="pesoMax">--</span>
+                                </div>
+                                <div class="text-center mt-2">
+                                    <small id="pesoDifferenza" class="text-muted">--</small>
+                                </div>
+                                <input type="hidden" name="peso_target" id="peso_target_hidden">
+                            </div>
                         </div>
 
                     </div>
@@ -261,22 +277,6 @@
                                 </div>
                             </div>
 
-                            <!-- PESO OBIETTIVO SLIDER (resta uguale) -->
-                            <div class="slider-container mt-3">
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-weight"></i> Peso Obiettivo
-                                </label>
-                                <input type="range" class="form-range" id="peso_target_slider" step="0.5">
-                                <div class="slider-labels">
-                                    <span id="pesoMin">--</span>
-                                    <span class="fw-bold text-primary" id="pesoObiettivoValue">--</span>
-                                    <span id="pesoMax">--</span>
-                                </div>
-                                <div class="text-center mt-2">
-                                    <small id="pesoDifferenza" class="text-muted">--</small>
-                                </div>
-                                <input type="hidden" name="peso_target" id="peso_target_hidden">
-                            </div>
                         </div>
                     </div>
 
