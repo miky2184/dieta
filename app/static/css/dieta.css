@@ -134,11 +134,12 @@
     border-radius: 12px;
     transition: all 0.3s ease;
     position: relative;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
 }
 
 .macro-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }
 
 .macro-card.carboidrati {
@@ -154,26 +155,141 @@
 }
 
 .macro-icon {
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
+    font-size: 2.2rem;
+    margin-bottom: 0.75rem;
+    background: #f8f9fa;
+    width: 60px;
+    height: 60px;
+    line-height: 60px;
+    border-radius: 50%;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.macro-card:hover .macro-icon {
+    transform: scale(1.1);
+}
+
+.macro-card.carboidrati .macro-icon {
+    background: rgba(255, 165, 0, 0.15);
+    color: #ffa500;
+}
+
+.macro-card.proteine .macro-icon {
+    background: rgba(220, 53, 69, 0.15);
+    color: #dc3545;
+}
+
+.macro-card.grassi .macro-icon {
+    background: rgba(40, 167, 69, 0.15);
+    color: #28a745;
 }
 
 .macro-value {
-    font-size: 2rem;
-    font-weight: bold;
+    font-size: 2.2rem;
+    font-weight: 700;
     color: #333;
     margin: 0.5rem 0;
+    position: relative;
+}
+
+.macro-value::after {
+    content: 'g';
+    font-size: 1rem;
+    position: absolute;
+    top: 0.5rem;
+    margin-left: 0.2rem;
+    color: #6c757d;
 }
 
 .macro-label {
     font-size: 0.9rem;
     color: #6c757d;
-    font-weight: 500;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .macro-calories {
-    margin-top: 0.5rem;
-    color: #999;
+    margin-top: 0.75rem;
+    color: #6c757d;
+    font-size: 0.85rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Pannello informativo sui macronutrienti */
+#macro_distribution_info {
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #17a2b8;
+}
+
+#macro_distribution_info .alert-heading {
+    color: #17a2b8;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+/* Barra di progresso dei macronutrienti */
+.progress {
+    height: 30px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.progress-bar {
+    transition: width 0.8s ease;
+    position: relative;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.85rem;
+    line-height: 30px;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+}
+
+/* Stili per percentuali macronutrienti */
+.badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+
+/* Grafico distribuzione calorica */
+.card-body canvas {
+    max-height: 300px;
+}
+
+/* Pulsanti di esportazione ed info */
+#export_pdf_button, #export_data_button, #macro_help_button {
+    transition: all 0.3s ease;
+}
+
+#export_pdf_button:hover, #export_data_button:hover, #macro_help_button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Animazione per cambio di valori */
+@keyframes highlight {
+    0% { background-color: transparent; }
+    20% { background-color: rgba(74, 144, 226, 0.2); }
+    100% { background-color: transparent; }
+}
+
+.value-updated {
+    animation: highlight 1.5s ease;
 }
 
 /* Responsive adjustments */

@@ -1,428 +1,358 @@
-<!-- app/templates/dieta.html -->
 {% extends "base.html" %}
 
 {% block head %}
 <!-- CSS specifico per dieta -->
-
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dieta.css') }}">
 {% endblock %}
 
 {% block content %}
-<!-- Progress Indicator -->
-<div class="progress-indicator"></div>
+<div class="container py-4">
+    <!-- Indicatore di progresso -->
+    <div class="progress-indicator"></div>
 
-<div id="DietaForm" class="tabcontent">
-    <div class="card">
-        <div class="card-body">
-            <div class="container-fluid">
-                <form id="personalInfoForm" action="{{ url_for('views.salva_dati') }}" method="POST">
-                    <input type="hidden" name="id">
-
-                    <!-- Sezione Dati Personali -->
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="section-divider">
-                                <span class="section-title">Dati Personali</span>
-                            </div>
-                        </div>
+    <!-- Form principale -->
+    <form id="personalInfoForm" method="post" action="/save_dieta">
+        <div class="row">
+            <div class="col-lg-6">
+                <!-- Dati personali -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Dati Personali</h5>
                     </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="input-group input-group-sm mb-2">
-                                <span class="input-group-text">
-                                    <i class="fas fa-user me-2"></i>Nome
-                                </span>
-                                <input type="text" class="form-control" name="nome" placeholder="Inserisci il tuo nome" required>
-                            </div>
-
-                            <div class="input-group input-group-sm mb-2">
-                                <span class="input-group-text">
-                                    <i class="fas fa-user me-2"></i>Cognome
-                                </span>
-                                <input type="text" class="form-control" name="cognome" placeholder="Inserisci il tuo cognome" required>
-                            </div>
-
-                            <div class="input-group input-group-sm mb-2">
-                                <span class="input-group-text">
-                                    <i class="fas fa-envelope me-2"></i>Email
-                                </span>
-                                <input type="email" class="form-control" name="email" disabled>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="input-group input-group-sm mb-2">
-                                <span class="input-group-text">
-                                    <i class="fas fa-venus-mars me-2"></i>Sesso
-                                </span>
-                                <select class="form-control" name="sesso" required>
-                                    <option selected disabled>Scegli...</option>
-                                    <option value="M">Uomo</option>
-                                    <option value="F">Donna</option>
-                                </select>
-                            </div>
-
-                            <div class="input-group input-group-sm mb-2">
-                                <span class="input-group-text">
-                                    <i class="fas fa-birthday-cake me-2"></i>Età
-                                </span>
-                                <input type="number" class="form-control" name="eta" placeholder="Inserisci la tua età" min="10" max="120" required>
-                                <span class="input-group-text">anni</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Sezione Misurazioni -->
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="section-divider">
-                                <span class="section-title">Misurazioni Corporee</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="input-group input-group-sm mb-2">
-                                <span class="input-group-text">
-                                    <i class="fas fa-ruler-vertical me-2"></i>Altezza
-                                </span>
-                                <input type="number" class="form-control" name="altezza" placeholder="Altezza" min="100" max="250" required>
-                                <span class="input-group-text">cm</span>
-                            </div>
-
-                            <div class="input-group input-group-sm mb-2">
-                                <span class="input-group-text">
-                                    <i class="fas fa-weight me-2"></i>Peso
-                                </span>
-                                <input type="number" class="form-control" name="peso" placeholder="Peso attuale" step="0.1" min="30" max="300" required>
-                                <span class="input-group-text">kg</span>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div id="bmiCard" class="result-card">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <strong>BMI:</strong>
-                                        <span id="bmi">--</span>
-                                        <span id="bmiIndicator" class="bmi-indicator" style="display:none"></span>
-                                    </div>
+                    <div class="card-body">
+                        <!-- Sesso -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">Sesso</span>
+                                    <select class="form-select" id="sesso" name="sesso" required>
+                                        <option value="" disabled selected>Seleziona</option>
+                                        <option value="M">Maschio</option>
+                                        <option value="F">Femmina</option>
+                                    </select>
                                 </div>
-                                <input type="hidden" name="bmi" id="bmi_hidden">
                             </div>
-                            <div id="pesoIdealeCard" class="result-card">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <strong>Peso Ideale:</strong>
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">Età</span>
+                                    <input type="number" class="form-control" id="eta" name="eta" min="10" max="100" placeholder="Anni" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Altezza e Peso -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">Altezza</span>
+                                    <input type="number" class="form-control" id="altezza" name="altezza" min="100" max="250" placeholder="cm" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">Peso</span>
+                                    <input type="number" class="form-control" id="peso" name="peso" min="30" max="300" step="0.1" placeholder="kg" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Livello di attività e tipo di allenamento -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">Attività Fisica</span>
+                                    <select class="form-select" id="tdee" name="tdee" required>
+                                        <option value="sedentary">Sedentario</option>
+                                        <option value="light">Leggera (1-2 gg/sett)</option>
+                                        <option value="moderate" selected>Moderata (3-4 gg/sett)</option>
+                                        <option value="high">Intensa (5-6 gg/sett)</option>
+                                        <option value="athlete">Atleta (2x giorno)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">Tipo Allenamento</span>
+                                    <select class="form-select" id="attivita_fisica" name="attivita_fisica" required>
+                                        <option value="none">Nessuno</option>
+                                        <option value="cardio">Cardio</option>
+                                        <option value="endurance">Endurance</option>
+                                        <option value="strength" selected>Forza</option>
+                                        <option value="power">Potenza</option>
+                                        <option value="mixed">Misto</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Obiettivo e variazione calorica -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">Tipo di Dieta</span>
+                                    <select class="form-select" id="dieta" name="dieta" required>
+                                        <option value="fat_loss">Dimagrimento</option>
+                                        <option value="maintenance">Mantenimento</option>
+                                        <option value="muscle_gain">Aumento massa muscolare</option>
+                                        <option value="performance">Performance atletica</option>
+                                        <option value="keto">Chetogenica</option>
+                                        <option value="low_carb">Low-Carb</option>
+                                        <option value="balanced">Bilanciata</option>
+                                        <option value="mediterranean">Mediterranea</option>
+                                    </select>
+                                </div>
+                                <small id="dieta_info" class="form-text text-muted mt-1">
+                                    Seleziona il tipo di dieta in base ai tuoi obiettivi.
+                                </small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">Variazione Calorica</span>
+                                    <select class="form-select" id="deficit_calorico" name="deficit_calorico" required>
+                                        <option value="-0.15">Standard (-15%)</option>
+                                    </select>
+                                </div>
+                                <small id="deficit_info" class="form-text text-muted mt-1">
+                                    Seleziona l'intensità della variazione calorica.
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Slider peso obiettivo -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="slider-container">
+                                    <label for="peso_target_slider" class="form-label">Peso Obiettivo: <span id="pesoObiettivoValue">--</span></label>
+                                    <input type="range" class="form-range" id="peso_target_slider" min="0" max="0" step="0.5">
+                                    <div class="slider-labels">
+                                        <span id="pesoMin">-- kg</span>
+                                        <span id="pesoDifferenza" class="text-center">--</span>
+                                        <span id="pesoMax">-- kg</span>
+                                    </div>
+                                    <input type="hidden" name="peso_target" id="peso_target_hidden">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <!-- Risultati -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Risultati</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Risultati Principali -->
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="result-card" id="bmiCard">
+                                    <div class="result-label">BMI</div>
+                                    <div class="result-value">
+                                        <span id="bmi">--</span>
+                                        <span class="bmi-indicator" id="bmiIndicator" style="display: none;">--</span>
+                                    </div>
+                                    <input type="hidden" name="bmi" id="bmi_hidden">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="result-card">
+                                    <div class="result-label">Peso Ideale</div>
+                                    <div class="result-value">
                                         <span id="peso_ideale">--</span> kg
                                     </div>
+                                    <input type="hidden" name="peso_ideale" id="peso_ideale_hidden">
                                 </div>
-                                <input type="hidden" name="peso_ideale" id="peso_ideale_hidden">
                             </div>
-                            <!-- PESO OBIETTIVO SLIDER (resta uguale) -->
-                            <div class="slider-container mt-3">
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-weight"></i> Peso Obiettivo
-                                </label>
-                                <input type="range" class="form-range" id="peso_target_slider" step="0.5">
-                                <div class="slider-labels">
-                                    <span id="pesoMin">--</span>
-                                    <span class="fw-bold text-primary" id="pesoObiettivoValue">--</span>
-                                    <span id="pesoMax">--</span>
-                                </div>
-                                <div class="text-center mt-2">
-                                    <small id="pesoDifferenza" class="text-muted">--</small>
-                                </div>
-                                <input type="hidden" name="peso_target" id="peso_target_hidden">
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <!-- Sezione Stile di Vita e Obiettivi MIGLIORATA -->
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="section-divider">
-                                <span class="section-title">Stile di Vita e Obiettivi</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <!-- ATTIVITÀ QUOTIDIANA (per calcolo TDEE) -->
-                            <div class="input-group input-group-sm mb-2">
-                                <span class="input-group-text" data-bs-toggle="tooltip"
-                                      data-bs-title="Il tuo livello di attività quotidiana (lavoro + tempo libero)">
-                                    <i class="fas fa-briefcase me-2"></i>Attività Quotidiana
-                                </span>
-                                <select class="form-control" id="tdee" name="tdee" required>
-                                    <option selected disabled>Scegli...</option>
-                                    <option value="sedentary">Sedentaria (lavoro scrivania, poco movimento)</option>
-                                    <option value="light">Leggera (lavoro in piedi, camminate occasionali)</option>
-                                    <option value="moderate">Moderata (lavoro attivo, movimento regolare)</option>
-                                    <option value="high">Intensa (lavoro fisico pesante)</option>
-                                </select>
-                            </div>
-
-                            <!-- ALLENAMENTO SETTIMANALE (per calcolo macro e TDEE fine-tuning) -->
-                            <div class="input-group input-group-sm mb-2">
-                                <span class="input-group-text" data-bs-toggle="tooltip"
-                                      data-bs-title="Frequenza e intensità dei tuoi allenamenti">
-                                    <i class="fas fa-dumbbell me-2"></i>Allenamento
-                                </span>
-                                <select class="form-control" id="training_frequency" name="training_frequency" required>
-                                    <option selected disabled>Scegli...</option>
-                                    <option value="none">Non mi alleno</option>
-                                    <option value="light">1-2 volte/settimana (leggero)</option>
-                                    <option value="moderate">3-4 volte/settimana (moderato)</option>
-                                    <option value="high">5-6 volte/settimana (intenso)</option>
-                                    <option value="athlete">Tutti i giorni (agonistico)</option>
-                                </select>
-                            </div>
-
-                            <!-- TIPO DI ALLENAMENTO (per ottimizzare i macro) -->
-                            <div class="input-group input-group-sm mb-2">
-                                <span class="input-group-text" data-bs-toggle="tooltip"
-                                      data-bs-title="Il tipo di allenamento influenza la ripartizione dei nutrienti">
-                                    <i class="fas fa-running me-2"></i>Tipo Allenamento
-                                </span>
-                                <select class="form-control" id="training_type" name="training_type" required>
-                                    <option selected disabled>Scegli...</option>
-                                    <option value="none">Nessuno</option>
-                                    <option value="cardio">Principalmente cardio</option>
-                                    <option value="strength">Principalmente pesi</option>
-                                    <option value="mixed">Misto (cardio + pesi)</option>
-                                    <option value="endurance">Endurance (corsa, ciclismo)</option>
-                                    <option value="power">Power (crossfit, sport da combattimento)</option>
-                                </select>
-                            </div>
-
-                            <!-- OBIETTIVO -->
-                            <div class="input-group input-group-sm mb-2">
-                                <span class="input-group-text">
-                                    <i class="fas fa-bullseye me-2"></i>Obiettivo
-                                </span>
-                                <select class="form-control" id="dieta" name="dieta" required>
-                                    <option value="fat_loss" selected>Perdere grasso</option>
-                                    <option value="maintenance">Mantenimento</option>
-                                    <option value="muscle_gain">Aumentare massa</option>
-                                    <option value="performance">Migliorare performance</option>
-                                    <option value="recomp">Ricomposizione corporea</option>
-                                </select>
-                            </div>
-
-                            <!-- AGGRESSIVITÀ/VELOCITÀ -->
-                            <div class="input-group input-group-sm mb-2">
-                                <span class="input-group-text" data-bs-toggle="tooltip"
-                                      data-bs-title="Quanto velocemente vuoi raggiungere l'obiettivo">
-                                    <i class="fas fa-tachometer-alt me-2"></i>Velocità
-                                </span>
-                                <select class="form-control" id="deficit_calorico" name="deficit_calorico" required>
-                                    <!-- Opzioni dinamiche in base all'obiettivo -->
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <!-- INFORMAZIONI AGGIUNTIVE -->
-                            <div class="card bg-light">
-                                <div class="card-body">
-                                    <h6 class="card-title"><i class="fas fa-info-circle"></i> Fattori Aggiuntivi</h6>
-
-                                    <!-- STRESS LEVEL -->
-                                    <div class="mb-2">
-                                        <label class="form-label small">Livello di Stress</label>
-                                        <div class="btn-group btn-group-sm w-100" role="group">
-                                            <input type="radio" class="btn-check" name="stress_level" id="stress_low" value="low">
-                                            <label class="btn btn-outline-success" for="stress_low">Basso</label>
-
-                                            <input type="radio" class="btn-check" name="stress_level" id="stress_medium" value="medium" checked>
-                                            <label class="btn btn-outline-warning" for="stress_medium">Medio</label>
-
-                                            <input type="radio" class="btn-check" name="stress_level" id="stress_high" value="high">
-                                            <label class="btn btn-outline-danger" for="stress_high">Alto</label>
-                                        </div>
-                                        <small class="text-muted">Lo stress influenza il metabolismo e il recupero</small>
+                            <div class="col-md-3">
+                                <div class="result-card">
+                                    <div class="result-label">Metabolismo Basale</div>
+                                    <div class="result-value">
+                                        <span id="meta_basale">--</span> kcal
                                     </div>
-
-                                    <!-- SLEEP QUALITY -->
-                                    <div class="mb-2">
-                                        <label class="form-label small">Qualità del Sonno</label>
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text"><i class="fas fa-bed"></i></span>
-                                            <input type="number" class="form-control" id="sleep_hours" name="sleep_hours"
-                                                   min="4" max="12" step="0.5" value="7" placeholder="Ore di sonno">
-                                            <span class="input-group-text">ore/notte</span>
-                                        </div>
-                                        <small class="text-muted">Il sonno influenza il recupero e gli ormoni</small>
+                                    <input type="hidden" name="meta_basale" id="meta_basale_hidden">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="result-card">
+                                    <div class="result-label">TDEE Giornaliero</div>
+                                    <div class="result-value">
+                                        <span id="meta_giornaliero">--</span> kcal
                                     </div>
+                                    <input type="hidden" name="meta_giornaliero" id="meta_giornaliero_hidden">
+                                </div>
+                            </div>
+                        </div>
 
-                                    <!-- STEP GIORNALIERI -->
-                                    <div class="mb-2">
-                                        <label class="form-label small">Passi Giornalieri (media)</label>
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text"><i class="fas fa-walking"></i></span>
-                                            <select class="form-control" id="daily_steps" name="daily_steps">
-                                                <option value="very_low">< 3.000</option>
-                                                <option value="low">3.000 - 5.000</option>
-                                                <option value="moderate" selected>5.000 - 8.000</option>
-                                                <option value="high">8.000 - 12.000</option>
-                                                <option value="very_high">> 12.000</option>
-                                            </select>
-                                        </div>
-                                        <small class="text-muted">I passi contribuiscono al dispendio calorico</small>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="result-card">
+                                    <div class="result-label">Calorie Target</div>
+                                    <div class="result-value text-primary fw-bold">
+                                        <span id="calorie_giornaliere">--</span> kcal
                                     </div>
+                                    <input type="hidden" name="calorie_giornaliere" id="calorie_giornaliere_hidden">
                                 </div>
                             </div>
-
-                        </div>
-                    </div>
-
-                    <!-- Sezione Risultati -->
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="section-divider">
-                                <span class="section-title">Risultati Calcolati</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="result-card">
-                                <div class="result-label">Metabolismo Basale</div>
-                                <div class="result-value">
-                                    <span id="meta_basale">--</span> kcal
-                                </div>
-                                <input type="hidden" name="meta_basale" id="meta_basale_hidden">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="result-card">
-                                <div class="result-label">TDEE Giornaliero</div>
-                                <div class="result-value">
-                                    <span id="meta_giornaliero">--</span> kcal
-                                </div>
-                                <input type="hidden" name="meta_giornaliero" id="meta_giornaliero_hidden">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="result-card">
-                                <div class="result-label">Calorie Target</div>
-                                <div class="result-value text-primary fw-bold">
-                                    <span id="calorie_giornaliere">--</span> kcal
-                                </div>
-                                <input type="hidden" name="calorie_giornaliere" id="calorie_giornaliere_hidden">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="result-card">
-                                <div class="result-label">Durata Stimata</div>
-                                <div class="result-value">
-                                    <span id="settimane_dieta">--</span>
-                                </div>
-                                <input type="hidden" name="settimane_dieta" id="settimane_dieta_hidden">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Sezione Macronutrienti -->
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="section-divider">
-                                <span class="section-title">Macronutrienti Giornalieri</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Modifiche da apportare alla sezione dei macronutrienti in dieta.html -->
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="macro-card carboidrati">
-                                <div class="macro-icon">🌾</div>
-                                <div class="macro-value" id="carboidrati_input">--</div>
-                                <div class="macro-label">Carboidrati (g)</div>
-                                <div class="macro-calories">
-                                    <small><span id="carbo_kcal">--</span> kcal</small>
-                                    <span class="badge bg-light text-dark ms-1" id="carbo_percentage">--%</span>
-                                </div>
-                                <input type="hidden" name="carboidrati" id="carboidrati_hidden">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="macro-card proteine">
-                                <div class="macro-icon">🥩</div>
-                                <div class="macro-value" id="proteine_input">--</div>
-                                <div class="macro-label">Proteine (g)</div>
-                                <div class="macro-calories">
-                                    <small><span id="prot_kcal">--</span> kcal</small>
-                                    <span class="badge bg-light text-dark ms-1" id="protein_percentage">--%</span>
-                                </div>
-                                <input type="hidden" name="proteine" id="proteine_hidden">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="macro-card grassi">
-                                <div class="macro-icon">🥑</div>
-                                <div class="macro-value" id="grassi_input">--</div>
-                                <div class="macro-label">Grassi (g)</div>
-                                <div class="macro-calories">
-                                    <small><span id="grassi_kcal">--</span> kcal</small>
-                                    <span class="badge bg-light text-dark ms-1" id="fat_percentage">--%</span>
-                                </div>
-                                <input type="hidden" name="grassi" id="grassi_hidden">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Aggiunta di una nuova visualizzazione grafica della distribuzione dei macronutrienti -->
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5 class="card-title">Distribuzione calorica</h5>
-                                    <div class="progress" style="height: 30px;">
-                                        <div class="progress-bar bg-warning" id="carb_progress" role="progressbar"
-                                             style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                                            <span id="carb_progress_text">Carboidrati</span>
-                                        </div>
-                                        <div class="progress-bar bg-danger" id="protein_progress" role="progressbar"
-                                             style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                                            <span id="protein_progress_text">Proteine</span>
-                                        </div>
-                                        <div class="progress-bar bg-success" id="fat_progress" role="progressbar"
-                                             style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                                            <span id="fat_progress_text">Grassi</span>
-                                        </div>
+                            <div class="col-md-6">
+                                <div class="result-card">
+                                    <div class="result-label">Durata Stimata</div>
+                                    <div class="result-value">
+                                        <span id="settimane_dieta">--</span>
                                     </div>
-                                    <div class="d-flex justify-content-between mt-2 small text-muted">
-                                        <div>Carboidrati <span id="carb_progress_perc">0%</span></div>
-                                        <div>Proteine <span id="protein_progress_perc">0%</span></div>
-                                        <div>Grassi <span id="fat_progress_perc">0%</span></div>
-                                    </div>
+                                    <input type="hidden" name="settimane_dieta" id="settimane_dieta_hidden">
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Submit Button -->
-                    <div class="row mt-4">
-                        <div class="col-12 text-center">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-save me-2"></i>Salva Dati
-                            </button>
+                        <!-- Aggiungiamo una nuova sezione informativa sulla distribuzione dei macronutrienti -->
+                        <div class="alert alert-info mt-4" id="macro_distribution_info" style="display: none;">
+                            <h5 class="alert-heading">Informazioni sulla distribuzione dei macronutrienti</h5>
+                            <p id="macro_distribution_text">
+                                Questa dieta prevede una distribuzione equilibrata dei macronutrienti per raggiungere i tuoi obiettivi.
+                            </p>
+                            <hr>
+                            <div class="d-flex justify-content-between small">
+                                <div><i class="fas fa-info-circle"></i> Proteine: <span id="protein_info">--</span></div>
+                                <div><i class="fas fa-info-circle"></i> Carboidrati: <span id="carb_info">--</span></div>
+                                <div><i class="fas fa-info-circle"></i> Grassi: <span id="fat_info">--</span></div>
+                            </div>
+                            <div class="text-center mt-2 small text-muted" id="macro_calorie_info">
+                                Proteine: 4 kcal/g • Carboidrati: 4 kcal/g • Grassi: 9 kcal/g
+                            </div>
                         </div>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
-    </div>
+
+        <!-- Sezione Macronutrienti -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Macronutrienti Giornalieri</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="macro-card carboidrati">
+                            <div class="macro-icon">🌾</div>
+                            <div class="macro-value" id="carboidrati_input">--</div>
+                            <div class="macro-label">Carboidrati (g)</div>
+                            <div class="macro-calories">
+                                <small><span id="carbo_kcal">--</span> kcal</small>
+                                <span class="badge bg-light text-dark ms-1" id="carbo_percentage">--%</span>
+                            </div>
+                            <input type="hidden" name="carboidrati" id="carboidrati_hidden">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="macro-card proteine">
+                            <div class="macro-icon">🥩</div>
+                            <div class="macro-value" id="proteine_input">--</div>
+                            <div class="macro-label">Proteine (g)</div>
+                            <div class="macro-calories">
+                                <small><span id="prot_kcal">--</span> kcal</small>
+                                <span class="badge bg-light text-dark ms-1" id="protein_percentage">--%</span>
+                            </div>
+                            <input type="hidden" name="proteine" id="proteine_hidden">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="macro-card grassi">
+                            <div class="macro-icon">🥑</div>
+                            <div class="macro-value" id="grassi_input">--</div>
+                            <div class="macro-label">Grassi (g)</div>
+                            <div class="macro-calories">
+                                <small><span id="grassi_kcal">--</span> kcal</small>
+                                <span class="badge bg-light text-dark ms-1" id="fat_percentage">--%</span>
+                            </div>
+                            <input type="hidden" name="grassi" id="grassi_hidden">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Barra di progresso e bottoni -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="progress" style="height: 30px;">
+                            <div class="progress-bar bg-warning" id="carb_progress" role="progressbar"
+                                 style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                <span id="carb_progress_text">Carboidrati</span>
+                            </div>
+                            <div class="progress-bar bg-danger" id="protein_progress" role="progressbar"
+                                 style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                <span id="protein_progress_text">Proteine</span>
+                            </div>
+                            <div class="progress-bar bg-success" id="fat_progress" role="progressbar"
+                                 style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                <span id="fat_progress_text">Grassi</span>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-2 small text-muted">
+                            <div>Carboidrati <span id="carb_progress_perc">0%</span></div>
+                            <div>Proteine <span id="protein_progress_perc">0%</span></div>
+                            <div>Grassi <span id="fat_progress_perc">0%</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottoni di esportazione -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <button type="button" id="macro_help_button" class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-question-circle"></i> Info
+                                </button>
+                            </div>
+                            <div>
+                                <button type="button" id="export_pdf_button" class="btn btn-sm btn-outline-primary me-2">
+                                    <i class="fas fa-file-pdf"></i> Esporta PDF
+                                </button>
+                                <button type="button" id="export_data_button" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-download"></i> Esporta Dati
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grafico distribuzione calorica -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Distribuzione calorica giornaliera</h5>
+                                <canvas id="macroChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="row">
+            <div class="col-12 text-center mb-3">
+                <button type="submit" class="btn btn-primary btn-lg px-5">
+                    <i class="fas fa-save me-2"></i>Salva Piano Alimentare
+                </button>
+            </div>
+        </div>
+    </form>
 </div>
 {% endblock %}
 
+{% block extra_styles %}
+
+{% endblock %}
+
 {% block extra_scripts %}
+<!-- Inclusione Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+
 <!-- Script per debug e inizializzazione -->
 <script>
 console.log('🚀 Caricamento script dieta...');
