@@ -104,35 +104,73 @@ class NutritionCalculator {
     }
 
     static calculateMacros(calories, weightKg, goal, activity) {
-        const presets = {
-            fat_loss: { p: 2.0, f: 0.8 },
-            maintenance: { p: 1.6, f: 0.9 },
-            muscle_gain: { p: 1.8, f: 1.0 },
-            performance: { p: 1.7, f: 0.8 }
+        // Formule moderne basate su evidenze scientifiche
+        // Proteine: g/kg peso corporeo in base all'obiettivo
+        const proteinRatios = {
+            fat_loss: 2.2,      // Più alte in deficit per preservare massa muscolare
+            maintenance: 1.6,    // Moderate per mantenimento
+            muscle_gain: 2.0,    // Alte per supportare sintesi proteica
+            performance: 1.8     // Moderate-alte per recupero
         };
 
-        const carbFloorPerActivity = {
-            sedentary: 2.0,
-            light: 3.0,
-            moderate: 4.0,
-            high: 5.0,
-            athlete: 6.0
+        // Grassi: percentuale delle calorie totali
+        const fatPercentages = {
+            fat_loss: 0.25,      // 25% delle calorie
+            maintenance: 0.30,    // 30% delle calorie
+            muscle_gain: 0.25,    // 25% delle calorie
+            performance: 0.30     // 30% delle calorie
         };
 
-        const preset = presets[goal] || presets.maintenance;
-        const carbFloor = Math.round((carbFloorPerActivity[activity] || 3.0) * weightKg);
+        // Aggiustamenti per attività fisica
+        const activityMultipliers = {
+            sedentary: 0.9,
+            light: 1.0,
+            moderate: 1.1,
+            high: 1.2,
+            athlete: 1.3
+        };
 
-        let proteine = Math.round(preset.p * weightKg);
-        let grassi = Math.round(preset.f * weightKg);
-        let carboidrati = Math.round((calories - (proteine * 4 + grassi * 9)) / 4);
+        // Calcolo proteine (g)
+        const baseProtein = proteinRatios[goal] || proteinRatios.maintenance;
+        const activityMult = activityMultipliers[activity] || 1.0;
+        let proteine = Math.round(baseProtein * weightKg * activityMult);
 
-        if (carboidrati < carbFloor) {
-            carboidrati = carbFloor;
-            const remainingCals = calories - (carboidrati * 4);
-            proteine = Math.round(preset.p * weightKg);
-            grassi = Math.round((remainingCals - (proteine * 4)) / 9);
+        // Limite massimo proteine: 2.5g/kg
+        proteine = Math.min(proteine, Math.round(2.5 * weightKg));
+
+        // Calcolo grassi (g)
+        const fatPercent = fatPercentages[goal] || fatPercentages.maintenance;
+        let grassi = Math.round((calories * fatPercent) / 9);
+
+        // Minimo grassi per salute: 0.7g/kg
+        const minFat = Math.round(0.7 * weightKg);
+        grassi = Math.max(grassi, minFat);
+
+        // Calcolo carboidrati (g) - il resto delle calorie
+        const proteinCals = proteine * 4;
+        const fatCals = grassi * 9;
+        let carboidrati = Math.round((calories - proteinCals - fatCals) / 4);
+
+        // Minimo carboidrati per funzione cerebrale e attività
+        const minCarbs = {
+            sedentary: 100,
+            light: 130,
+            moderate: 150,
+            high: 200,
+            athlete: 250
+        };
+
+        const minCarbsForActivity = minCarbs[activity] || 130;
+
+        // Se i carboidrati sono troppo bassi, riduci i grassi
+        if (carboidrati < minCarbsForActivity) {
+            carboidrati = minCarbsForActivity;
+            const remainingCals = calories - (proteine * 4) - (carboidrati * 4);
+            grassi = Math.round(remainingCals / 9);
+            grassi = Math.max(grassi, minFat); // Mantieni minimo di grassi
         }
 
+        // Validazione finale
         proteine = Math.max(0, proteine);
         grassi = Math.max(0, grassi);
         carboidrati = Math.max(0, carboidrati);
@@ -328,8 +366,21 @@ class FormManager {
         let weeks = 0;
         if (data.peso_target && data.peso_target !== data.peso) {
             const weightDiff = Math.abs(data.peso - data.peso_target);
-            const weeklyChange = data.dieta === 'fat_loss' ? 0.5 : 0.25;
-            weeks = Math.round(weightDiff / weeklyChange);
+
+            // Calcolo deficit/surplus calorico giornaliero
+            const dailyCalorieChange = Math.abs(tdee - targetCalories);
+
+            // 7700 kcal = 1 kg di grasso corporeo (approssimazione)
+            // Calcolo più realistico considerando il deficit/surplus effettivo
+            if (dailyCalorieChange > 0) {
+                const daysNeeded = (weightDiff * 7700) / dailyCalorieChange;
+                weeks = Math.round(daysNeeded / 7);
+            } else {
+                // Se non c'è deficit/surplus, usa una stima conservativa
+                const weeklyChange = data.dieta === 'fat_loss' ? 0.5 :
+                                    data.dieta === 'muscle_gain' ? 0.25 : 0;
+                weeks = weeklyChange > 0 ? Math.round(weightDiff / weeklyChange) : 0;
+            }
         }
 
         return {
@@ -612,10 +663,55 @@ class FormManager {
         Object.keys(data).forEach(key => {
             const element = this.form.elements[key];
             if (element) {
-                element.value = data[key];
-                console.log(`Campo ${key} impostato a:`, data[key]);
+                // Gestione speciale per alcuni campi
+                if (key === 'tdee' && typeof data[key] === 'number') {
+                    // Converti valore numerico in stringa per il select
+                    const tdeeMap = {
+                        1.2: 'sedentary',
+                        1.375: 'light',
+                        1.55: 'moderate',
+                        1.725: 'high',
+                        1.9: 'athlete'
+                    };
+                    element.value = tdeeMap[data[key]] || 'sedentary';
+                } else if (key === 'attivita_fisica' && typeof data[key] === 'number') {
+                    // Converti valore numerico in stringa per il select
+                    const activityMap = {
+                        1.2: 'sedentary',
+                        1.5: 'light',
+                        1.8: 'moderate',
+                        2.0: 'high',
+                        2.2: 'athlete'
+                    };
+                    element.value = activityMap[data[key]] || 'sedentary';
+                } else {
+                    element.value = data[key];
+                }
+                console.log(`Campo ${key} impostato a:`, element.value);
             }
         });
+
+        // Gestione del peso target slider
+        const slider = safeGetElement('peso_target_slider');
+        if (slider) {
+            // Se c'è un peso_target nei dati, usalo
+            // Altrimenti usa peso_ideale come default
+            const targetWeight = data.peso_target || data.peso_ideale || data.peso;
+
+            // Inizializza lo slider con i range corretti
+            const minWeight = Math.max(30, data.peso - 30);
+            const maxWeight = Math.min(data.peso + 30, 200);
+
+            slider.min = minWeight;
+            slider.max = maxWeight;
+            slider.value = Math.min(Math.max(targetWeight, minWeight), maxWeight);
+            slider.setAttribute('data-initialized', 'true');
+
+            safeSetValue('pesoMin', `${minWeight} kg`, true);
+            safeSetValue('pesoMax', `${maxWeight} kg`, true);
+            safeSetValue('pesoObiettivoValue', `${slider.value} kg`, true);
+            safeSetValue('peso_target_hidden', slider.value);
+        }
 
         // Trigger change event per dieta per impostare correttamente le opzioni di deficit
         const dietaElement = this.form.elements['dieta'];
