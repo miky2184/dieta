@@ -337,6 +337,7 @@
                         </div>
                     </div>
 
+                    <!-- Modifiche da apportare alla sezione dei macronutrienti in dieta.html -->
                     <div class="row">
                         <div class="col-md-4">
                             <div class="macro-card carboidrati">
@@ -345,6 +346,7 @@
                                 <div class="macro-label">Carboidrati (g)</div>
                                 <div class="macro-calories">
                                     <small><span id="carbo_kcal">--</span> kcal</small>
+                                    <span class="badge bg-light text-dark ms-1" id="carbo_percentage">--%</span>
                                 </div>
                                 <input type="hidden" name="carboidrati" id="carboidrati_hidden">
                             </div>
@@ -356,6 +358,7 @@
                                 <div class="macro-label">Proteine (g)</div>
                                 <div class="macro-calories">
                                     <small><span id="prot_kcal">--</span> kcal</small>
+                                    <span class="badge bg-light text-dark ms-1" id="protein_percentage">--%</span>
                                 </div>
                                 <input type="hidden" name="proteine" id="proteine_hidden">
                             </div>
@@ -367,8 +370,39 @@
                                 <div class="macro-label">Grassi (g)</div>
                                 <div class="macro-calories">
                                     <small><span id="grassi_kcal">--</span> kcal</small>
+                                    <span class="badge bg-light text-dark ms-1" id="fat_percentage">--%</span>
                                 </div>
                                 <input type="hidden" name="grassi" id="grassi_hidden">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aggiunta di una nuova visualizzazione grafica della distribuzione dei macronutrienti -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Distribuzione calorica</h5>
+                                    <div class="progress" style="height: 30px;">
+                                        <div class="progress-bar bg-warning" id="carb_progress" role="progressbar"
+                                             style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                            <span id="carb_progress_text">Carboidrati</span>
+                                        </div>
+                                        <div class="progress-bar bg-danger" id="protein_progress" role="progressbar"
+                                             style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                            <span id="protein_progress_text">Proteine</span>
+                                        </div>
+                                        <div class="progress-bar bg-success" id="fat_progress" role="progressbar"
+                                             style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                            <span id="fat_progress_text">Grassi</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-between mt-2 small text-muted">
+                                        <div>Carboidrati <span id="carb_progress_perc">0%</span></div>
+                                        <div>Proteine <span id="protein_progress_perc">0%</span></div>
+                                        <div>Grassi <span id="fat_progress_perc">0%</span></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

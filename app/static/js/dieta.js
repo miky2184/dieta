@@ -157,74 +157,159 @@ class NutritionCalculator {
         return Math.round(tdee);
     }
 
-    static calculateMacros(calories, weightKg, goal, activity, trainingType = 'none') {
-        // Proteine base per obiettivo (g/kg)
-        const proteinRatios = {
-            fat_loss: 2.2,
-            maintenance: 1.6,
-            muscle_gain: 2.0,
-            performance: 1.8,
-            recomp: 1.8
+    /**
+     * Calcola i macronutrienti in base alle calorie target e al tipo di dieta.
+     * Versione migliorata che assicura distribuzione precisa delle calorie.
+     *
+     * @param {number} calories - Calorie giornaliere target
+     * @param {number} weightKg - Peso corporeo in kg
+     * @param {string} goal - Obiettivo dieta ('fat_loss', 'maintenance', 'muscle_gain', 'performance')
+     * @param {string} activity - Livello di attività ('sedentary', 'light', 'moderate', 'high', 'athlete')
+     * @returns {Object} - Oggetto contenente grammi di proteine, grassi e carboidrati
+     */
+    static calculateMacros(calories, weightKg, goal, activity) {
+        // Definizione dei rapporti proteici e grassi per tipo di dieta
+        const presets = {
+            fat_loss: {
+                p: 2.2,   // Proteine più alte per preservare massa muscolare
+                f: 0.8,   // Grassi moderati
+                name: "Dimagrimento"
+            },
+            maintenance: {
+                p: 1.6,   // Proteine moderate per mantenimento
+                f: 0.9,   // Grassi bilanciati
+                name: "Mantenimento"
+            },
+            muscle_gain: {
+                p: 2.0,   // Proteine alte per costruzione muscolare
+                f: 1.0,   // Grassi leggermente più alti per supportare ormoni
+                name: "Costruzione muscolare"
+            },
+            performance: {
+                p: 1.8,   // Proteine alte per performance
+                f: 0.8,   // Grassi moderati
+                name: "Performance atletica"
+            },
+            keto: {
+                p: 1.6,   // Proteine moderate
+                f: 2.0,   // Grassi alti
+                name: "Chetogenica",
+                forcedRatios: {
+                    p: 0.20,  // 20% calorie da proteine
+                    f: 0.75,  // 75% calorie da grassi
+                    c: 0.05   // 5% calorie da carboidrati
+                }
+            },
+            low_carb: {
+                p: 2.0,   // Proteine alte
+                f: 1.2,   // Grassi medio-alti
+                name: "Low-carb",
+                forcedRatios: {
+                    p: 0.35,  // 35% calorie da proteine
+                    f: 0.40,  // 40% calorie da grassi
+                    c: 0.25   // 25% calorie da carboidrati
+                }
+            },
+            mediterranean: {
+                p: 1.4,   // Proteine moderate
+                f: 1.0,   // Grassi di qualità
+                name: "Mediterranea",
+                forcedRatios: {
+                    p: 0.20,  // 20% calorie da proteine
+                    f: 0.30,  // 30% calorie da grassi
+                    c: 0.50   // 50% calorie da carboidrati
+                }
+            },
+            balanced: {
+                p: 1.6,   // Proteine bilanciate
+                f: 0.8,   // Grassi bilanciati
+                forcedRatios: {
+                    p: 0.25,  // 25% calorie da proteine
+                    f: 0.20,  // 20% calorie da grassi
+                    c: 0.55   // 55% calorie da carboidrati
+                },
+                name: "Bilanciata"
+            }
         };
 
-        // Aggiustamenti per tipo allenamento (g/kg)
-        const proteinAdjByType = {
-            none: 0.0,
-            cardio: 0.1,
-            endurance: 0.2,
-            strength: 0.25,
-            power: 0.25,
-            mixed: 0.15
+        // Valore minimo di carboidrati (g) basato sul livello di attività
+        const carbFloorPerActivity = {
+            sedentary: 2.0,  // Minimo per funzioni cerebrali
+            light: 3.0,      // Attività leggera
+            moderate: 4.0,   // Attività moderata
+            high: 5.0,       // Attività intensa
+            athlete: 6.0     // Attività atletica
         };
 
-        // Grassi: % calorie totali
-        const fatPercentages = {
-            fat_loss: 0.25,
-            maintenance: 0.30,
-            muscle_gain: 0.25,
-            performance: 0.30,
-            recomp: 0.28
-        };
+        // Usa la configurazione predefinita o quella di mantenimento
+        const preset = presets[goal] || presets.maintenance;
 
-        // Moltiplicatori attività per i macro
-        const activityMultipliers = {
-            sedentary: 0.9,
-            light: 1.0,
-            moderate: 1.1,
-            high: 1.2,
-            athlete: 1.3
-        };
+        // Calcolo dei macronutrienti
+        let proteine, grassi, carboidrati;
 
-        // 1) Proteine
-        const baseProtein = (proteinRatios[goal] || proteinRatios.maintenance) + (proteinAdjByType[trainingType] || 0);
-        const activityMult = activityMultipliers[activity] || 1.0;
-        let proteine = Math.round(baseProtein * weightKg * activityMult);
-        proteine = Math.min(proteine, Math.round(2.5 * weightKg)); // cap
+        // Se la dieta ha rapporti fissi di macronutrienti (come keto, low-carb, ecc.)
+        if (preset.forcedRatios) {
+            const ratios = preset.forcedRatios;
 
-        // 2) Grassi
-        const fatPercent = fatPercentages[goal] || fatPercentages.maintenance;
-        let grassi = Math.round((calories * fatPercent) / 9);
-        const minFat = Math.round(0.7 * weightKg);
-        grassi = Math.max(grassi, minFat);
+            proteine = Math.round((calories * ratios.p) / 4);  // 4 kcal per grammo di proteine
+            grassi = Math.round((calories * ratios.f) / 9);    // 9 kcal per grammo di grassi
+            carboidrati = Math.round((calories * ratios.c) / 4); // 4 kcal per grammo di carboidrati
 
-        // 3) Carbo = resto
-        const proteinCals = proteine * 4;
-        const fatCals = grassi * 9;
-        let carboidrati = Math.round((calories - proteinCals - fatCals) / 4);
+            // Verifica che il totale delle calorie sia corretto
+            const totalCalories = (proteine * 4) + (grassi * 9) + (carboidrati * 4);
 
-        // Minimo carbo per attività + bump per tipo allenamento
-        const minCarbs = { sedentary: 100, light: 130, moderate: 150, high: 200, athlete: 250 };
-        const carbBumpByType = { none: 0, cardio: 20, endurance: 40, strength: 0, power: 10, mixed: 20 };
-        const minCarbsForActivity = (minCarbs[activity] || 130) + (carbBumpByType[trainingType] || 0);
+            // Aggiusta per arrivare esattamente alle calorie target
+            if (totalCalories !== calories) {
+                const diff = calories - totalCalories;
+                // Aggiungi/sottrai la differenza ai carboidrati (più facili da aggiustare)
+                carboidrati += Math.round(diff / 4);
+            }
+        } else {
+            // Calcolo basato sul peso corporeo per diete non con rapporti fissi
+            const carbFloor = Math.round((carbFloorPerActivity[activity] || 3.0) * weightKg);
 
-        if (carboidrati < minCarbsForActivity) {
-            carboidrati = minCarbsForActivity;
-            const remainingCals = calories - (proteine * 4) - (carboidrati * 4);
-            grassi = Math.round(remainingCals / 9);
-            grassi = Math.max(grassi, minFat);
+            // Calcola proteine e grassi in base al peso corporeo
+            proteine = Math.round(preset.p * weightKg);
+            grassi = Math.round(preset.f * weightKg);
+
+            // Calcola i carboidrati dalle calorie rimanenti
+            const remainingCalories = calories - (proteine * 4 + grassi * 9);
+            carboidrati = Math.round(remainingCalories / 4);
+
+            // Garantisci un minimo di carboidrati, ricalcola i grassi se necessario
+            if (carboidrati < carbFloor) {
+                carboidrati = carbFloor;
+                // Ricalcola i grassi per mantenere le calorie target
+                const caloriesFromProteinsAndCarbs = (proteine * 4) + (carboidrati * 4);
+                grassi = Math.round((calories - caloriesFromProteinsAndCarbs) / 9);
+            }
         }
 
-        return { proteine, grassi, carboidrati };
+        // Garantisci che non ci siano valori negativi
+        proteine = Math.max(0, proteine);
+        grassi = Math.max(0, grassi);
+        carboidrati = Math.max(0, carboidrati);
+
+        // Calcola il totale delle calorie effettive
+        const effectiveCalories = (proteine * 4) + (grassi * 9) + (carboidrati * 4);
+
+        // Calcola le percentuali di macronutrienti
+        const proteinPercentage = Math.round((proteine * 4 / effectiveCalories) * 100);
+        const fatPercentage = Math.round((grassi * 9 / effectiveCalories) * 100);
+        const carbPercentage = Math.round((carboidrati * 4 / effectiveCalories) * 100);
+
+        // Restituisci i macronutrienti, le percentuali e le calorie per macro
+        return {
+            proteine,
+            grassi,
+            carboidrati,
+            proteinPercentage,
+            fatPercentage,
+            carbPercentage,
+            proteinCalories: proteine * 4,
+            fatCalories: grassi * 9,
+            carbCalories: carboidrati * 4
+        };
     }
 }
 
@@ -340,43 +425,88 @@ class FormManager {
         }
     }
 
+    /**
+     * Miglioramento della funzione initDietaChangeListener nel FormManager
+     * per supportare tutti i tipi di dieta e spiegazioni
+     */
     initDietaChangeListener() {
         const dietaSelect = this.form.elements['dieta'];
         const deficitSelect = this.form.elements['deficit_calorico'];
+        const dietaInfo = safeGetElement('dieta_info');
 
-        if (dietaSelect && deficitSelect) {
-            dietaSelect.addEventListener('change', () => {
-                const goal = dietaSelect.value;
+        if (!dietaSelect || !deficitSelect) return;
 
-                // Svuota le opzioni esistenti
-                deficitSelect.innerHTML = '';
+        // Definizione delle descrizioni per ogni tipo di dieta
+        const dietaDescriptions = {
+            fat_loss: "Una dieta progettata per la perdita di grasso, con proteine elevate per preservare la massa muscolare.",
+            maintenance: "Una dieta bilanciata per mantenere il peso attuale.",
+            muscle_gain: "Una dieta con surplus calorico per favorire la crescita muscolare.",
+            performance: "Una dieta ottimizzata per le prestazioni atletiche, con maggiore apporto di carboidrati.",
+            keto: "Una dieta a bassissimo contenuto di carboidrati (5%), alta in grassi (75%) e moderata in proteine (20%).",
+            low_carb: "Una dieta a basso contenuto di carboidrati (25%), alta in proteine (35%) e grassi (40%).",
+            balanced: "Una dieta bilanciata con distribuzione classica: 55% carboidrati, 25% proteine, 20% grassi.",
+            mediterranean: "Una dieta mediterranea con 50% carboidrati, 20% proteine e 30% grassi di alta qualità."
+        };
 
-                // Aggiungi opzioni in base all'obiettivo
-                if (goal === 'fat_loss') {
-                    deficitSelect.innerHTML = `
-                        <option value="-0.10">Moderato (-10%)</option>
-                        <option value="-0.15" selected>Standard (-15%)</option>
-                        <option value="-0.20">Aggressivo (-20%)</option>
-                        <option value="-0.25">Molto Aggressivo (-25%)</option>
-                    `;
-                } else if (goal === 'muscle_gain') {
-                    deficitSelect.innerHTML = `
-                        <option value="0.05">Lean Bulk (+5%)</option>
-                        <option value="0.10" selected>Standard (+10%)</option>
-                        <option value="0.15">Moderato (+15%)</option>
-                        <option value="0.20">Aggressivo (+20%)</option>
-                    `;
-                } else {
-                    // maintenance o performance
-                    deficitSelect.innerHTML = `
-                        <option value="0" selected>Mantenimento (0%)</option>
-                    `;
-                }
-
-                // Ricalcola con il nuovo valore
-                this.calculate();
-            });
+        // Aggiorna le opzioni del selettore dieta (se necessario)
+        if (dietaSelect.options.length < Object.keys(dietaDescriptions).length) {
+            dietaSelect.innerHTML = `
+                <option value="fat_loss">Dimagrimento</option>
+                <option value="maintenance">Mantenimento</option>
+                <option value="muscle_gain">Aumento massa muscolare</option>
+                <option value="performance">Performance atletica</option>
+                <option value="keto">Chetogenica</option>
+                <option value="low_carb">Low-Carb</option>
+                <option value="balanced">Bilanciata</option>
+                <option value="mediterranean">Mediterranea</option>
+            `;
         }
+
+        dietaSelect.addEventListener('change', () => {
+            const goal = dietaSelect.value;
+
+            // Aggiorna la descrizione della dieta
+            if (dietaInfo) {
+                dietaInfo.textContent = dietaDescriptions[goal] || '';
+            }
+
+            // Svuota le opzioni esistenti
+            deficitSelect.innerHTML = '';
+
+            // Aggiungi opzioni in base all'obiettivo
+            if (goal === 'fat_loss') {
+                deficitSelect.innerHTML = `
+                    <option value="-0.10">Moderato (-10%)</option>
+                    <option value="-0.15" selected>Standard (-15%)</option>
+                    <option value="-0.20">Aggressivo (-20%)</option>
+                    <option value="-0.25">Molto Aggressivo (-25%)</option>
+                `;
+            } else if (goal === 'muscle_gain') {
+                deficitSelect.innerHTML = `
+                    <option value="0.05">Lean Bulk (+5%)</option>
+                    <option value="0.10" selected>Standard (+10%)</option>
+                    <option value="0.15">Moderato (+15%)</option>
+                    <option value="0.20">Aggressivo (+20%)</option>
+                `;
+            } else if (goal === 'keto' || goal === 'low_carb' || goal === 'balanced' || goal === 'mediterranean') {
+                // Per le diete con rapporti fissi, l'unica opzione è il mantenimento
+                deficitSelect.innerHTML = `
+                    <option value="0" selected>Mantenimento (0%)</option>
+                `;
+                // Nascondi il selettore del deficit poiché c'è solo un'opzione
+                deficitSelect.parentNode.style.display = 'none';
+            } else {
+                // maintenance o performance
+                deficitSelect.innerHTML = `
+                    <option value="0" selected>Mantenimento (0%)</option>
+                `;
+                // Mostra il selettore
+                deficitSelect.parentNode.style.display = '';
+            }
+
+            // Ricalcola con il nuovo valore
+            this.calculate();
+        });
     }
 
     getFormData() {
@@ -516,8 +646,12 @@ class FormManager {
         };
     }
 
+    /**
+     * Aggiornamento della funzione updateUI nel FormManager
+     * per mostrare le percentuali dei macronutrienti e altre informazioni aggiuntive
+     */
     updateUI(results) {
-        // Aggiorna BMI
+        // Aggiornamenti esistenti
         safeSetValue('bmi', results.bmi, true);
         safeSetValue('bmi_hidden', results.bmi);
 
@@ -561,25 +695,33 @@ class FormManager {
             }
         }
 
-        // Macronutrienti
+        // Macronutrienti - Aggiornati con animazioni
         this.animateValue('carboidrati_input', results.carboidrati);
         this.animateValue('proteine_input', results.proteine);
         this.animateValue('grassi_input', results.grassi);
 
+        // Aggiorna i campi nascosti
         safeSetValue('carboidrati_hidden', results.carboidrati);
         safeSetValue('proteine_hidden', results.proteine);
         safeSetValue('grassi_hidden', results.grassi);
 
-        // Calorie per macro
-        safeSetValue('carbo_kcal', results.carboidrati * 4, true);
-        safeSetValue('prot_kcal', results.proteine * 4, true);
-        safeSetValue('grassi_kcal', results.grassi * 9, true);
+        // NUOVE FUNZIONALITÀ: Usa i valori calcolati direttamente dalla funzione calculateMacros
+        // invece di ricalcolarli qui
+        safeSetValue('carbo_kcal', results.carbCalories, true);
+        safeSetValue('prot_kcal', results.proteinCalories, true);
+        safeSetValue('grassi_kcal', results.fatCalories, true);
 
-        // Inizializza slider peso SOLO se necessario (non ad ogni update)
-        const slider = safeGetElement('peso_target_slider');
-        if (slider && !slider.hasAttribute('data-initialized')) {
-            this.initWeightSlider();
-        }
+        // NUOVE FUNZIONALITÀ: Mostra le percentuali dei macronutrienti
+        const carboPercentage = safeGetElement('carbo_percentage');
+        const proteinPercentage = safeGetElement('protein_percentage');
+        const fatPercentage = safeGetElement('fat_percentage');
+
+        if (carboPercentage) carboPercentage.textContent = `${results.carbPercentage}%`;
+        if (proteinPercentage) proteinPercentage.textContent = `${results.proteinPercentage}%`;
+        if (fatPercentage) fatPercentage.textContent = `${results.fatPercentage}%`;
+
+        // Inizializza slider peso se necessario
+        this.initWeightSlider();
     }
 
     animateValue(id, value) {
@@ -612,33 +754,130 @@ class FormManager {
         return `${months[date.getMonth()]} ${date.getFullYear()}`;
     }
 
+    /**
+     * Funzione per aggiornare la barra di progresso dei macronutrienti
+     * Da aggiungere alla classe FormManager
+     */
+    updateMacroProgressBar(results) {
+        // Recupera gli elementi della barra di progresso
+        const carbProgress = safeGetElement('carb_progress');
+        const proteinProgress = safeGetElement('protein_progress');
+        const fatProgress = safeGetElement('fat_progress');
+
+        // Recupera gli elementi di testo percentuale
+        const carbProgressPerc = safeGetElement('carb_progress_perc');
+        const proteinProgressPerc = safeGetElement('protein_progress_perc');
+        const fatProgressPerc = safeGetElement('fat_progress_perc');
+
+        // Recupera gli elementi di testo nella barra
+        const carbProgressText = safeGetElement('carb_progress_text');
+        const proteinProgressText = safeGetElement('protein_progress_text');
+        const fatProgressText = safeGetElement('fat_progress_text');
+
+        // Verifica che gli elementi esistano
+        if (!carbProgress || !proteinProgress || !fatProgress) return;
+
+        // Ottieni le percentuali dei macronutrienti
+        const carbPerc = results.carbPercentage;
+        const proteinPerc = results.proteinPercentage;
+        const fatPerc = results.fatPercentage;
+
+        // Aggiorna la larghezza delle barre di progresso con animazione
+        this.animateProgressBar(carbProgress, carbPerc);
+        this.animateProgressBar(proteinProgress, proteinPerc);
+        this.animateProgressBar(fatProgress, fatPerc);
+
+        // Aggiorna i testi percentuali
+        if (carbProgressPerc) carbProgressPerc.textContent = `${carbPerc}%`;
+        if (proteinProgressPerc) proteinProgressPerc.textContent = `${proteinPerc}%`;
+        if (fatProgressPerc) fatProgressPerc.textContent = `${fatPerc}%`;
+
+        // Aggiorna i testi nelle barre solo se c'è spazio sufficiente
+        if (carbProgressText && carbPerc >= 10) {
+            carbProgressText.textContent = `Carboidrati ${carbPerc}%`;
+        } else if (carbProgressText) {
+            carbProgressText.textContent = '';
+        }
+
+        if (proteinProgressText && proteinPerc >= 10) {
+            proteinProgressText.textContent = `Proteine ${proteinPerc}%`;
+        } else if (proteinProgressText) {
+            proteinProgressText.textContent = '';
+        }
+
+        if (fatProgressText && fatPerc >= 10) {
+            fatProgressText.textContent = `Grassi ${fatPerc}%`;
+        } else if (fatProgressText) {
+            fatProgressText.textContent = '';
+        }
+    }
+
+    /**
+     * Anima la barra di progresso
+     * @param {HTMLElement} element - Elemento DOM della barra di progresso
+     * @param {number} targetPercentage - Percentuale target
+     */
+    animateProgressBar(element, targetPercentage) {
+        if (!element) return;
+
+        const currentWidth = parseInt(element.style.width) || 0;
+        const duration = 500;
+        const startTime = Date.now();
+
+        const animate = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const currentPercentage = currentWidth + (targetPercentage - currentWidth) * progress;
+
+            element.style.width = `${currentPercentage}%`;
+            element.setAttribute('aria-valuenow', currentPercentage);
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        };
+
+        animate();
+    }
+
+    /**
+     * Aggiornamento al metodo calculate() della classe FormManager
+     * per includere l'aggiornamento della barra di progresso
+     */
     calculate() {
         if (!this.form) return;
 
-        console.log('🔄 Inizio calcolo...');
         showProgress();
 
         const formData = this.getFormData();
-        console.log('📊 Dati del form:', formData);
-
         if (!this.isDataComplete(formData)) {
-            console.warn('⚠️ Dati incompleti, calcolo interrotto');
             hideProgress();
             return;
         }
 
         try {
-            // Esegui calcoli
+            // Esegui i calcoli
             const results = this.performCalculations(formData);
-            console.log('✅ Risultati calcolati:', results);
 
-            // Aggiorna UI
+            // Aggiorna l'interfaccia utente
             this.updateUI(results);
-        } catch (error) {
-            console.error('❌ Errore nel calcolo:', error);
-        }
 
-        hideProgress();
+            // Aggiorna la barra di progresso dei macronutrienti
+            this.updateMacroProgressBar(results);
+
+            // NUOVO: Aggiorna le informazioni sui macronutrienti
+            this.updateMacroInfo(results, formData.dieta);
+
+            // Sincronizza i campi nascosti
+            if (typeof synchronizeFields === 'function') {
+                synchronizeFields();
+            }
+
+            hideProgress();
+        } catch (error) {
+            console.error('Errore durante il calcolo:', error);
+            hideProgress();
+        }
     }
 
     validateField(element) {
@@ -855,6 +1094,59 @@ class FormManager {
             this.calculate();
         }, 100);
     }
+
+    /**
+     * Funzione per aggiornare le informazioni sui macronutrienti
+     * Da aggiungere alla classe FormManager
+     */
+    updateMacroInfo(results, dietaType) {
+        const macroDistributionInfo = safeGetElement('macro_distribution_info');
+        const macroDistributionText = safeGetElement('macro_distribution_text');
+        const proteinInfo = safeGetElement('protein_info');
+        const carbInfo = safeGetElement('carb_info');
+        const fatInfo = safeGetElement('fat_info');
+
+        if (!macroDistributionInfo || !macroDistributionText) return;
+
+        // Rendi visibile il pannello informativo
+        macroDistributionInfo.style.display = 'block';
+
+        // Definizione dei testi informativi per tipo di dieta
+        const dietaTexts = {
+            fat_loss: "Questa dieta per dimagrimento prevede un alto apporto proteico per preservare la massa muscolare durante il deficit calorico.",
+            maintenance: "Questa dieta di mantenimento prevede una distribuzione bilanciata dei macronutrienti per mantenere il peso attuale.",
+            muscle_gain: "Questa dieta per aumento massa prevede un surplus calorico con alto apporto proteico per favorire la crescita muscolare.",
+            performance: "Questa dieta per performance atletica è ottimizzata con carboidrati adeguati per l'energia e proteine per il recupero muscolare.",
+            keto: "La dieta chetogenica prevede un bassissimo apporto di carboidrati per indurre la chetosi, con alta percentuale di grassi e moderata di proteine.",
+            low_carb: "La dieta low-carb riduce significativamente i carboidrati a favore di proteine e grassi, utile per controllo glicemico e peso.",
+            balanced: "La dieta bilanciata segue le linee guida nutrizionali standard con una distribuzione equilibrata tra carboidrati, proteine e grassi.",
+            mediterranean: "La dieta mediterranea privilegia carboidrati complessi, grassi salutari (olio d'oliva) e proteine magre, con benefici per la salute."
+        };
+
+        // Aggiorna il testo principale
+        macroDistributionText.textContent = dietaTexts[dietaType] || dietaTexts.balanced;
+
+        // Aggiorna le informazioni specifiche sui macronutrienti
+        if (proteinInfo) {
+            proteinInfo.textContent = `${results.proteinPercentage}% (${results.proteine}g - ${results.proteinCalories} kcal)`;
+        }
+
+        if (carbInfo) {
+            carbInfo.textContent = `${results.carbPercentage}% (${results.carboidrati}g - ${results.carbCalories} kcal)`;
+        }
+
+        if (fatInfo) {
+            fatInfo.textContent = `${results.fatPercentage}% (${results.grassi}g - ${results.fatCalories} kcal)`;
+        }
+
+        // Aggiungi il testo sulla densità calorica per ogni macronutriente
+        const macroCalorieInfo = safeGetElement('macro_calorie_info');
+        if (macroCalorieInfo) {
+            macroCalorieInfo.textContent = "Proteine: 4 kcal/g • Carboidrati: 4 kcal/g • Grassi: 9 kcal/g";
+        }
+    }
+
+
 }
 
 // ============= INIZIALIZZAZIONE =============
