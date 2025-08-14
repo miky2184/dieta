@@ -220,20 +220,31 @@ class FormManager {
             }
         });
 
-        // Select con calcolo immediato
-        ['sesso', 'tdee', 'attivita_fisica'].forEach(id => {
+        // Select con calcolo immediato - ora include solo tdee, rimuoviamo attivita_fisica se non esiste
+        ['sesso', 'tdee'].forEach(id => {
             const element = this.form.elements[id];
             if (element) {
                 element.addEventListener('change', () => {
+                    console.log(`Campo ${id} cambiato:`, element.value);
                     this.calculate();
                 });
             }
         });
 
+        // Aggiungi listener per attivita_fisica solo se esiste
+        const attivitaElement = this.form.elements['attivita_fisica'];
+        if (attivitaElement) {
+            attivitaElement.addEventListener('change', () => {
+                console.log('Attività fisica cambiata:', attivitaElement.value);
+                this.calculate();
+            });
+        }
+
         // Gestione speciale per deficit_calorico
         const deficitElement = this.form.elements['deficit_calorico'];
         if (deficitElement) {
             deficitElement.addEventListener('change', () => {
+                console.log('Deficit calorico cambiato:', deficitElement.value);
                 this.calculate();
             });
         }
@@ -313,6 +324,11 @@ class FormManager {
 
         const slider = safeGetElement('peso_target_slider');
 
+        // Gestione del campo attivita_fisica che potrebbe non esistere
+        // Se non esiste, usa lo stesso valore di tdee come fallback
+        const attivitaFisica = this.form.elements['attivita_fisica']?.value ||
+                               this.form.elements['tdee']?.value;
+
         return {
             sesso: this.form.elements['sesso']?.value,
             eta: parseFloat(this.form.elements['eta']?.value),
@@ -320,7 +336,7 @@ class FormManager {
             altezza: parseFloat(this.form.elements['altezza']?.value),
             tdee: this.form.elements['tdee']?.value,
             deficit_calorico: parseFloat(this.form.elements['deficit_calorico']?.value),
-            attivita_fisica: this.form.elements['attivita_fisica']?.value,
+            attivita_fisica: attivitaFisica,
             dieta: this.form.elements['dieta']?.value,
             peso_target: parseFloat(slider?.value || 0)
         };
@@ -328,39 +344,62 @@ class FormManager {
 
     isDataComplete(data) {
         // Verifica solo i campi essenziali per il calcolo
-        return data.sesso &&
+        // Rimuoviamo attivita_fisica dalla verifica obbligatoria
+        const isComplete = data.sesso &&
                !isNaN(data.eta) && data.eta > 0 &&
                !isNaN(data.peso) && data.peso > 0 &&
                !isNaN(data.altezza) && data.altezza > 0 &&
                data.tdee &&
-               data.attivita_fisica &&
                data.dieta &&
                !isNaN(data.deficit_calorico);
+
+        console.log('Data completeness check:', {
+            sesso: !!data.sesso,
+            eta: !isNaN(data.eta) && data.eta > 0,
+            peso: !isNaN(data.peso) && data.peso > 0,
+            altezza: !isNaN(data.altezza) && data.altezza > 0,
+            tdee: !!data.tdee,
+            dieta: !!data.dieta,
+            deficit_calorico: !isNaN(data.deficit_calorico),
+            isComplete: isComplete
+        });
+
+        return isComplete;
     }
 
     performCalculations(data) {
+        console.log('🧮 Performo calcoli con:', data);
+
         // 1. Calcolo BMI
         const bmi = NutritionCalculator.calculateBMI(data.peso, data.altezza);
         const bmiCategory = NutritionCalculator.getBMICategory(bmi);
         const idealWeight = NutritionCalculator.calculateIdealWeight(data.altezza);
 
+        console.log('BMI:', bmi, 'Categoria:', bmiCategory, 'Peso ideale:', idealWeight);
+
         // 2. Calcolo BMR
         const bmr = NutritionCalculator.calculateBMR(data);
+        console.log('BMR:', bmr);
 
         // 3. Calcolo TDEE
         const tdeeMultiplier = NutritionCalculator.getTDEEMultiplier(data.tdee);
         const tdee = Math.round(bmr * tdeeMultiplier);
+        console.log('TDEE:', tdee, '(BMR:', bmr, '× Multiplier:', tdeeMultiplier, ')');
 
         // 4. Calcolo calorie target con variazione percentuale
         const targetCalories = NutritionCalculator.calcCaloriesTarget(tdee, data.dieta, data.deficit_calorico);
+        console.log('Calorie target:', targetCalories);
 
         // 5. Calcolo macronutrienti
+        // Usa attivita_fisica se presente, altrimenti usa tdee come fallback
+        const activityForMacros = data.attivita_fisica || data.tdee;
         const macros = NutritionCalculator.calculateMacros(
             targetCalories,
             data.peso,
             data.dieta,
-            data.attivita_fisica
+            activityForMacros
         );
+        console.log('Macronutrienti:', macros);
 
         // 6. Calcolo settimane (se necessario)
         let weeks = 0;
@@ -371,7 +410,6 @@ class FormManager {
             const dailyCalorieChange = Math.abs(tdee - targetCalories);
 
             // 7700 kcal = 1 kg di grasso corporeo (approssimazione)
-            // Calcolo più realistico considerando il deficit/surplus effettivo
             if (dailyCalorieChange > 0) {
                 const daysNeeded = (weightDiff * 7700) / dailyCalorieChange;
                 weeks = Math.round(daysNeeded / 7);
@@ -494,19 +532,29 @@ class FormManager {
     calculate() {
         if (!this.form) return;
 
+        console.log('🔄 Inizio calcolo...');
         showProgress();
 
         const formData = this.getFormData();
+        console.log('📊 Dati del form:', formData);
+
         if (!this.isDataComplete(formData)) {
+            console.warn('⚠️ Dati incompleti, calcolo interrotto');
             hideProgress();
             return;
         }
 
-        // Esegui calcoli
-        const results = this.performCalculations(formData);
+        try {
+            // Esegui calcoli
+            const results = this.performCalculations(formData);
+            console.log('✅ Risultati calcolati:', results);
 
-        // Aggiorna UI
-        this.updateUI(results);
+            // Aggiorna UI
+            this.updateUI(results);
+        } catch (error) {
+            console.error('❌ Errore nel calcolo:', error);
+        }
+
         hideProgress();
     }
 
