@@ -103,25 +103,36 @@ class NutritionCalculator {
         return Math.round(tdee);
     }
 
-    static calculateMacros(calories, weightKg, goal, activity) {
-        // Formule moderne basate su evidenze scientifiche
-        // Proteine: g/kg peso corporeo in base all'obiettivo
+    static calculateMacros(calories, weightKg, goal, activity, trainingType = 'none') {
+        // Proteine base per obiettivo (g/kg)
         const proteinRatios = {
-            fat_loss: 2.2,      // Più alte in deficit per preservare massa muscolare
-            maintenance: 1.6,    // Moderate per mantenimento
-            muscle_gain: 2.0,    // Alte per supportare sintesi proteica
-            performance: 1.8     // Moderate-alte per recupero
+            fat_loss: 2.2,
+            maintenance: 1.6,
+            muscle_gain: 2.0,
+            performance: 1.8,
+            recomp: 1.8
         };
 
-        // Grassi: percentuale delle calorie totali
+        // Aggiustamenti per tipo allenamento (g/kg)
+        const proteinAdjByType = {
+            none: 0.0,
+            cardio: 0.1,
+            endurance: 0.2,
+            strength: 0.25,
+            power: 0.25,
+            mixed: 0.15
+        };
+
+        // Grassi: % calorie totali
         const fatPercentages = {
-            fat_loss: 0.25,      // 25% delle calorie
-            maintenance: 0.30,    // 30% delle calorie
-            muscle_gain: 0.25,    // 25% delle calorie
-            performance: 0.30     // 30% delle calorie
+            fat_loss: 0.25,
+            maintenance: 0.30,
+            muscle_gain: 0.25,
+            performance: 0.30,
+            recomp: 0.28
         };
 
-        // Aggiustamenti per attività fisica
+        // Moltiplicatori attività per i macro
         const activityMultipliers = {
             sedentary: 0.9,
             light: 1.0,
@@ -130,50 +141,34 @@ class NutritionCalculator {
             athlete: 1.3
         };
 
-        // Calcolo proteine (g)
-        const baseProtein = proteinRatios[goal] || proteinRatios.maintenance;
+        // 1) Proteine
+        const baseProtein = (proteinRatios[goal] || proteinRatios.maintenance) + (proteinAdjByType[trainingType] || 0);
         const activityMult = activityMultipliers[activity] || 1.0;
         let proteine = Math.round(baseProtein * weightKg * activityMult);
+        proteine = Math.min(proteine, Math.round(2.5 * weightKg)); // cap
 
-        // Limite massimo proteine: 2.5g/kg
-        proteine = Math.min(proteine, Math.round(2.5 * weightKg));
-
-        // Calcolo grassi (g)
+        // 2) Grassi
         const fatPercent = fatPercentages[goal] || fatPercentages.maintenance;
         let grassi = Math.round((calories * fatPercent) / 9);
-
-        // Minimo grassi per salute: 0.7g/kg
         const minFat = Math.round(0.7 * weightKg);
         grassi = Math.max(grassi, minFat);
 
-        // Calcolo carboidrati (g) - il resto delle calorie
+        // 3) Carbo = resto
         const proteinCals = proteine * 4;
         const fatCals = grassi * 9;
         let carboidrati = Math.round((calories - proteinCals - fatCals) / 4);
 
-        // Minimo carboidrati per funzione cerebrale e attività
-        const minCarbs = {
-            sedentary: 100,
-            light: 130,
-            moderate: 150,
-            high: 200,
-            athlete: 250
-        };
+        // Minimo carbo per attività + bump per tipo allenamento
+        const minCarbs = { sedentary: 100, light: 130, moderate: 150, high: 200, athlete: 250 };
+        const carbBumpByType = { none: 0, cardio: 20, endurance: 40, strength: 0, power: 10, mixed: 20 };
+        const minCarbsForActivity = (minCarbs[activity] || 130) + (carbBumpByType[trainingType] || 0);
 
-        const minCarbsForActivity = minCarbs[activity] || 130;
-
-        // Se i carboidrati sono troppo bassi, riduci i grassi
         if (carboidrati < minCarbsForActivity) {
             carboidrati = minCarbsForActivity;
             const remainingCals = calories - (proteine * 4) - (carboidrati * 4);
             grassi = Math.round(remainingCals / 9);
-            grassi = Math.max(grassi, minFat); // Mantieni minimo di grassi
+            grassi = Math.max(grassi, minFat);
         }
-
-        // Validazione finale
-        proteine = Math.max(0, proteine);
-        grassi = Math.max(0, grassi);
-        carboidrati = Math.max(0, carboidrati);
 
         return { proteine, grassi, carboidrati };
     }
@@ -338,7 +333,9 @@ class FormManager {
             deficit_calorico: parseFloat(this.form.elements['deficit_calorico']?.value),
             attivita_fisica: attivitaFisica,
             dieta: this.form.elements['dieta']?.value,
-            peso_target: parseFloat(slider?.value || 0)
+            peso_target: parseFloat(slider?.value || 0),
+            training_frequency: this.form.elements['training_frequency']?.value,
+            training_type: this.form.elements['training_type']?.value
         };
     }
 
@@ -392,12 +389,17 @@ class FormManager {
 
         // 5. Calcolo macronutrienti
         // Usa attivita_fisica se presente, altrimenti usa tdee come fallback
-        const activityForMacros = data.attivita_fisica || data.tdee;
+        // Priorità alla frequenza di allenamento; fallback su attivita_fisica/tdee
+        let activityForMacros = (data.training_frequency && data.training_frequency !== 'none')
+          ? data.training_frequency
+          : (data.attivita_fisica || data.tdee);
+
         const macros = NutritionCalculator.calculateMacros(
             targetCalories,
             data.peso,
             data.dieta,
-            activityForMacros
+            activityForMacros,
+            data.training_type || 'none'
         );
         console.log('Macronutrienti:', macros);
 
