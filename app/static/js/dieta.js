@@ -93,6 +93,60 @@ class NutritionCalculator {
         return multipliers[activity] || 1.2;
     }
 
+    static getLifestyleAdjustment({ sleepQuality, dailySteps, extraFactors = [], trainingFrequency }) {
+        // Normalizza input
+        const sleepVal = (sleepQuality || '').toString().toLowerCase();
+        const steps = parseInt(dailySteps || 0, 10) || 0;
+        const factors = Array.isArray(extraFactors) ? extraFactors.map(v => (v || '').toString().toLowerCase()) : [];
+
+        // 1) Moltiplicatore passi (NEAT)
+        // ~5k passi ≈ neutro. Sotto riduce leggermente, sopra aumenta.
+        let stepsMult = 1.0;
+        if (steps < 3000) stepsMult = 0.97;
+        else if (steps < 7000) stepsMult = 1.0;
+        else if (steps < 10000) stepsMult = 1.03;
+        else if (steps < 15000) stepsMult = 1.06;
+        else stepsMult = 1.09;
+
+        // 2) Qualità del sonno
+        // valori attesi: 'poor'/'scarso', 'fair'/'discreto', 'good'/'buono', 'excellent'/'ottimo'
+        let sleepMult = 1.0;
+        if (['poor', 'scarso', 'basso'].includes(sleepVal)) sleepMult = 0.95;
+        else if (['fair', 'discreto', 'medio'].includes(sleepVal)) sleepMult = 1.0;
+        else if (['good', 'buono'].includes(sleepVal)) sleepMult = 1.02;
+        else if (['excellent', 'ottimo', 'alto'].includes(sleepVal)) sleepMult = 1.03;
+        // supporta scala numerica 1..5
+        if (/^[1-5]$/.test(sleepVal)) {
+            const n = parseInt(sleepVal, 10);
+            if (n <= 2) sleepMult = 0.96;
+            else if (n === 3) sleepMult = 1.0;
+            else if (n === 4) sleepMult = 1.02;
+            else sleepMult = 1.03;
+        }
+
+        // 3) Fattori aggiuntivi (opzionali)
+        // mapping semplice: riconosci alcune chiavi comuni; gli altri ignorati
+        let extraMult = 1.0;
+        const has = (k) => factors.some(f => f.includes(k));
+        if (has('stress_alto') || has('stress-high') || has('stress_high')) extraMult *= 0.97;
+        if (has('neat_alto') || has('camminate') || has('standing')) extraMult *= 1.02;
+        if (has('metabolismo_lento')) extraMult *= 0.98;
+        if (has('termogenesi') || has('tef_alto')) extraMult *= 1.01;
+
+        // 4) Frequenza allenamento come lieve aggiustamento del NEAT (non sostituisce tdee/attivita)
+        let freqAdj = 1.0;
+        const freq = (trainingFrequency || '').toString().toLowerCase();
+        if (['low', 'bassa', '1-2', '1x', '2x'].includes(freq)) freqAdj = 1.0;
+        else if (['medium', 'media', '3-4', '3x', '4x', 'moderate'].includes(freq)) freqAdj = 1.01;
+        else if (['high', 'alta', '5+', '5x', '6x', 'daily', 'quotidiana', 'athlete'].includes(freq)) freqAdj = 1.02;
+
+        // Moltiplicatore totale (clamp prudenziale)
+        let total = stepsMult * sleepMult * extraMult * freqAdj;
+        total = Math.max(0.90, Math.min(1.15, total)); // +/-15% max
+
+        return total;
+    }
+
     static calcCaloriesTarget(tdee, goal, variationPct) {
         if (goal === 'fat_loss') {
             return Math.round(tdee * (1 + variationPct));
@@ -215,8 +269,8 @@ class FormManager {
             }
         });
 
-        // Select con calcolo immediato - ora include solo tdee, rimuoviamo attivita_fisica se non esiste
-        ['sesso', 'tdee', 'training_frequency', 'training_type', 'dieta', 'deficit_calorico', ].forEach(id => {
+        // Select con calcolo immediato - ora include anche sleep/steps e alias comuni
+        ['sesso', 'tdee', 'training_frequency', 'training_type', 'dieta', 'deficit_calorico', 'sleep_quality', 'qualita_sonno', 'daily_steps', 'passi', 'passi_giornalieri'].forEach(id => {
             const element = this.form.elements[id];
             if (element) {
                 element.addEventListener('change', () => {
@@ -273,6 +327,17 @@ class FormManager {
                 }, 1000);
             });
         }
+
+        // Passi giornalieri in tempo reale se campo numerico
+        const stepsEl = this.form.elements['daily_steps'] || this.form.elements['passi_giornalieri'] || this.form.elements['passi'];
+        if (stepsEl) {
+            const handler = debounce(() => {
+                console.log('Passi giornalieri cambiati:', stepsEl.value);
+                this.calculate();
+            }, 200);
+            stepsEl.addEventListener('input', handler);
+            stepsEl.addEventListener('change', () => this.calculate());
+        }
     }
 
     initDietaChangeListener() {
@@ -324,6 +389,12 @@ class FormManager {
         const attivitaFisica = this.form.elements['attivita_fisica']?.value ||
                                this.form.elements['tdee']?.value;
 
+        // Nuovi campi opzionali per lifestyle adjustment
+        const sleepQuality = this.form.elements['sleep_quality']?.value || this.form.elements['qualita_sonno']?.value || '';
+        const dailySteps = parseInt(this.form.elements['daily_steps']?.value || this.form.elements['passi_giornalieri']?.value || this.form.elements['passi']?.value || '0', 10) || 0;
+        const extraFactors = Array.from(this.form.querySelectorAll('input[name="fattori_aggiuntivi[]"]:checked, input[name="fattori_aggiuntivi"]:checked'))
+            .map(el => el.value);
+
         return {
             sesso: this.form.elements['sesso']?.value,
             eta: parseFloat(this.form.elements['eta']?.value),
@@ -335,7 +406,10 @@ class FormManager {
             dieta: this.form.elements['dieta']?.value,
             peso_target: parseFloat(slider?.value || 0),
             training_frequency: this.form.elements['training_frequency']?.value,
-            training_type: this.form.elements['training_type']?.value
+            training_type: this.form.elements['training_type']?.value,
+            sleep_quality: sleepQuality,
+            daily_steps: dailySteps,
+            extra_factors: extraFactors
         };
     }
 
@@ -379,9 +453,16 @@ class FormManager {
         console.log('BMR:', bmr);
 
         // 3. Calcolo TDEE
-        const tdeeMultiplier = NutritionCalculator.getTDEEMultiplier(data.tdee);
+        const baseMult = NutritionCalculator.getTDEEMultiplier(data.tdee);
+        const lifestyleAdj = NutritionCalculator.getLifestyleAdjustment({
+            sleepQuality: data.sleep_quality,
+            dailySteps: data.daily_steps,
+            extraFactors: data.extra_factors,
+            trainingFrequency: data.training_frequency
+        });
+        const tdeeMultiplier = +(baseMult * lifestyleAdj).toFixed(3);
         const tdee = Math.round(bmr * tdeeMultiplier);
-        console.log('TDEE:', tdee, '(BMR:', bmr, '× Multiplier:', tdeeMultiplier, ')');
+        console.log('TDEE:', tdee, '(BMR:', bmr, '× BaseMult:', baseMult, '× LifestyleAdj:', lifestyleAdj, '= Mult:', tdeeMultiplier, ')');
 
         // 4. Calcolo calorie target con variazione percentuale
         const targetCalories = NutritionCalculator.calcCaloriesTarget(tdee, data.dieta, data.deficit_calorico);
