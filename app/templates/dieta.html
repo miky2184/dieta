@@ -126,7 +126,7 @@
                         </div>
                     </div>
 
-                    <!-- Sezione Stile di Vita e Obiettivi -->
+                    <!-- Sezione Stile di Vita e Obiettivi MIGLIORATA -->
                     <div class="row mt-4">
                         <div class="col-12">
                             <div class="section-divider">
@@ -136,85 +136,150 @@
                     </div>
 
                     <div class="row">
-                      <div class="col-md-6">
-                        <!-- Stile di vita -->
-                        <div class="input-group input-group-sm mb-2">
-                          <span class="input-group-text" data-bs-toggle="tooltip"
-                                data-bs-title="Seleziona il livello di attività fisica e lavorativa">
-                            <i class="fas fa-running me-2"></i>Stile di vita
-                          </span>
-                          <select class="form-control" id="tdee" name="tdee" required>
-                            <option selected disabled>Scegli...</option>
-                            <option value="sedentary">Sedentaria (lavoro d'ufficio, poco movimento)</option>
-                            <option value="light">Leggera (1-3 giorni/settimana esercizio)</option>
-                            <option value="moderate">Moderata (3-5 giorni/settimana esercizio)</option>
-                            <option value="high">Alta (6-7 giorni/settimana esercizio)</option>
-                            <option value="athlete">Atleta (allenamento intenso quotidiano)</option>
-                          </select>
+                        <div class="col-md-6">
+                            <!-- ATTIVITÀ QUOTIDIANA (per calcolo TDEE) -->
+                            <div class="input-group input-group-sm mb-2">
+                                <span class="input-group-text" data-bs-toggle="tooltip"
+                                      data-bs-title="Il tuo livello di attività quotidiana (lavoro + tempo libero)">
+                                    <i class="fas fa-briefcase me-2"></i>Attività Quotidiana
+                                </span>
+                                <select class="form-control" id="tdee" name="tdee" required>
+                                    <option selected disabled>Scegli...</option>
+                                    <option value="sedentary">Sedentaria (lavoro scrivania, poco movimento)</option>
+                                    <option value="light">Leggera (lavoro in piedi, camminate occasionali)</option>
+                                    <option value="moderate">Moderata (lavoro attivo, movimento regolare)</option>
+                                    <option value="high">Intensa (lavoro fisico pesante)</option>
+                                </select>
+                            </div>
+
+                            <!-- ALLENAMENTO SETTIMANALE (per calcolo macro e TDEE fine-tuning) -->
+                            <div class="input-group input-group-sm mb-2">
+                                <span class="input-group-text" data-bs-toggle="tooltip"
+                                      data-bs-title="Frequenza e intensità dei tuoi allenamenti">
+                                    <i class="fas fa-dumbbell me-2"></i>Allenamento
+                                </span>
+                                <select class="form-control" id="training_frequency" name="training_frequency" required>
+                                    <option selected disabled>Scegli...</option>
+                                    <option value="none">Non mi alleno</option>
+                                    <option value="light">1-2 volte/settimana (leggero)</option>
+                                    <option value="moderate">3-4 volte/settimana (moderato)</option>
+                                    <option value="high">5-6 volte/settimana (intenso)</option>
+                                    <option value="athlete">Tutti i giorni (agonistico)</option>
+                                </select>
+                            </div>
+
+                            <!-- TIPO DI ALLENAMENTO (per ottimizzare i macro) -->
+                            <div class="input-group input-group-sm mb-2">
+                                <span class="input-group-text" data-bs-toggle="tooltip"
+                                      data-bs-title="Il tipo di allenamento influenza la ripartizione dei nutrienti">
+                                    <i class="fas fa-running me-2"></i>Tipo Allenamento
+                                </span>
+                                <select class="form-control" id="training_type" name="training_type" required>
+                                    <option selected disabled>Scegli...</option>
+                                    <option value="none">Nessuno</option>
+                                    <option value="cardio">Principalmente cardio</option>
+                                    <option value="strength">Principalmente pesi</option>
+                                    <option value="mixed">Misto (cardio + pesi)</option>
+                                    <option value="endurance">Endurance (corsa, ciclismo)</option>
+                                    <option value="power">Power (crossfit, sport da combattimento)</option>
+                                </select>
+                            </div>
+
+                            <!-- OBIETTIVO -->
+                            <div class="input-group input-group-sm mb-2">
+                                <span class="input-group-text">
+                                    <i class="fas fa-bullseye me-2"></i>Obiettivo
+                                </span>
+                                <select class="form-control" id="dieta" name="dieta" required>
+                                    <option value="fat_loss" selected>Perdere grasso</option>
+                                    <option value="maintenance">Mantenimento</option>
+                                    <option value="muscle_gain">Aumentare massa</option>
+                                    <option value="performance">Migliorare performance</option>
+                                    <option value="recomp">Ricomposizione corporea</option>
+                                </select>
+                            </div>
+
+                            <!-- AGGRESSIVITÀ/VELOCITÀ -->
+                            <div class="input-group input-group-sm mb-2">
+                                <span class="input-group-text" data-bs-toggle="tooltip"
+                                      data-bs-title="Quanto velocemente vuoi raggiungere l'obiettivo">
+                                    <i class="fas fa-tachometer-alt me-2"></i>Velocità
+                                </span>
+                                <select class="form-control" id="deficit_calorico" name="deficit_calorico" required>
+                                    <!-- Opzioni dinamiche in base all'obiettivo -->
+                                </select>
+                            </div>
                         </div>
 
-                        <!-- Attività fisica -->
-                        <div class="input-group input-group-sm mb-2">
-                          <span class="input-group-text">
-                            <i class="fas fa-dumbbell me-2"></i>Attività Fisica
-                          </span>
-                          <select class="form-control" id="attivita_fisica" name="attivita_fisica" required>
-                            <option selected disabled>Scegli...</option>
-                            <option value="sedentary">Sedentaria</option>
-                            <option value="light">Leggera</option>
-                            <option value="moderate">Moderata</option>
-                            <option value="high">Intensa</option>
-                            <option value="athlete">Agonistica</option>
-                          </select>
-                        </div>
+                        <div class="col-md-6">
+                            <!-- INFORMAZIONI AGGIUNTIVE -->
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title"><i class="fas fa-info-circle"></i> Fattori Aggiuntivi</h6>
 
-                        <!-- Tipo dieta -->
-                        <div class="input-group input-group-sm mb-2">
-                          <span class="input-group-text">
-                            <i class="fas fa-clipboard-list me-2"></i>Obiettivo
-                          </span>
-                          <select class="form-control" id="dieta" name="dieta" required>
-                            <option value="fat_loss" selected>Dimagrimento</option>
-                            <option value="maintenance">Mantenimento</option>
-                            <option value="muscle_gain">Massa Muscolare</option>
-                            <option value="performance">Performance</option>
-                          </select>
-                        </div>
+                                    <!-- STRESS LEVEL -->
+                                    <div class="mb-2">
+                                        <label class="form-label small">Livello di Stress</label>
+                                        <div class="btn-group btn-group-sm w-100" role="group">
+                                            <input type="radio" class="btn-check" name="stress_level" id="stress_low" value="low">
+                                            <label class="btn btn-outline-success" for="stress_low">Basso</label>
 
-                        <!-- Variazione Calorie -->
-                        <div class="input-group input-group-sm mb-2">
-                          <span class="input-group-text" data-bs-toggle="tooltip"
-                                data-bs-title="Deficit per dimagrire, surplus per massa. In mantenimento/performance non si applica.">
-                            <i class="fas fa-chart-pie me-2"></i>Variazione Calorie
-                          </span>
-                          <select class="form-control" id="deficit_calorico" name="deficit_calorico" required>
-                            <!-- Opzioni dinamiche in base all'obiettivo -->
-                            <option value="-0.10">Moderato (-10%)</option>
-                            <option value="-0.15" selected>Standard (-15%)</option>
-                            <option value="-0.20">Aggressivo (-20%)</option>
-                            <option value="-0.25">Molto Aggressivo (-25%)</option>
-                          </select>
-                        </div>
-                      </div>
+                                            <input type="radio" class="btn-check" name="stress_level" id="stress_medium" value="medium" checked>
+                                            <label class="btn btn-outline-warning" for="stress_medium">Medio</label>
 
-                      <div class="col-md-6">
-                        <!-- Peso Obiettivo Slider -->
-                        <div class="slider-container">
-                          <label class="form-label fw-bold">
-                            <i class="fas fa-bullseye"></i> Peso Obiettivo
-                          </label>
-                          <input type="range" class="form-range" id="peso_target_slider" step="0.5">
-                          <div class="slider-labels">
-                            <span id="pesoMin">--</span>
-                            <span class="fw-bold text-primary" id="pesoObiettivoValue">--</span>
-                            <span id="pesoMax">--</span>
-                          </div>
-                          <div class="text-center mt-2">
-                            <small id="pesoDifferenza" class="text-muted">--</small>
-                          </div>
-                          <input type="hidden" name="peso_target" id="peso_target_hidden">
+                                            <input type="radio" class="btn-check" name="stress_level" id="stress_high" value="high">
+                                            <label class="btn btn-outline-danger" for="stress_high">Alto</label>
+                                        </div>
+                                        <small class="text-muted">Lo stress influenza il metabolismo e il recupero</small>
+                                    </div>
+
+                                    <!-- SLEEP QUALITY -->
+                                    <div class="mb-2">
+                                        <label class="form-label small">Qualità del Sonno</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text"><i class="fas fa-bed"></i></span>
+                                            <input type="number" class="form-control" id="sleep_hours" name="sleep_hours"
+                                                   min="4" max="12" step="0.5" value="7" placeholder="Ore di sonno">
+                                            <span class="input-group-text">ore/notte</span>
+                                        </div>
+                                        <small class="text-muted">Il sonno influenza il recupero e gli ormoni</small>
+                                    </div>
+
+                                    <!-- STEP GIORNALIERI -->
+                                    <div class="mb-2">
+                                        <label class="form-label small">Passi Giornalieri (media)</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text"><i class="fas fa-walking"></i></span>
+                                            <select class="form-control" id="daily_steps" name="daily_steps">
+                                                <option value="very_low">< 3.000</option>
+                                                <option value="low">3.000 - 5.000</option>
+                                                <option value="moderate" selected>5.000 - 8.000</option>
+                                                <option value="high">8.000 - 12.000</option>
+                                                <option value="very_high">> 12.000</option>
+                                            </select>
+                                        </div>
+                                        <small class="text-muted">I passi contribuiscono al dispendio calorico</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- PESO OBIETTIVO SLIDER (resta uguale) -->
+                            <div class="slider-container mt-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-weight"></i> Peso Obiettivo
+                                </label>
+                                <input type="range" class="form-range" id="peso_target_slider" step="0.5">
+                                <div class="slider-labels">
+                                    <span id="pesoMin">--</span>
+                                    <span class="fw-bold text-primary" id="pesoObiettivoValue">--</span>
+                                    <span id="pesoMax">--</span>
+                                </div>
+                                <div class="text-center mt-2">
+                                    <small id="pesoDifferenza" class="text-muted">--</small>
+                                </div>
+                                <input type="hidden" name="peso_target" id="peso_target_hidden">
+                            </div>
                         </div>
-                      </div>
                     </div>
 
                     <!-- Sezione Risultati -->
