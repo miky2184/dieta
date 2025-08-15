@@ -114,13 +114,11 @@ class NutritionCalculator {
         return multipliers[activity] || 1.2;
     }
 
-    static getLifestyleAdjustment({ sleepQuality, dailySteps, extraFactors = [], trainingFrequency }) {
+    static getLifestyleAdjustment({ dailySteps, trainingFrequency }) {
         // Normalizza input
-        const sleepVal = (sleepQuality || '').toString().toLowerCase();
         const steps = parseInt(dailySteps || 0, 10) || 0;
-        const factors = Array.isArray(extraFactors) ? extraFactors.map(v => (v || '').toString().toLowerCase()) : [];
 
-        // 1) Moltiplicatore passi (NEAT)
+        // Moltiplicatore passi (NEAT)
         // ~5k passi ≈ neutro. Sotto riduce leggermente, sopra aumenta.
         let stepsMult = 1.0;
         if (steps < 3000) stepsMult = 0.97;
@@ -129,37 +127,14 @@ class NutritionCalculator {
         else if (steps < 15000) stepsMult = 1.06;
         else stepsMult = 1.09;
 
-        // 2) Qualità del sonno
-        // valori attesi: 'poor'/'scarso', 'fair'/'discreto', 'good'/'buono', 'excellent'/'ottimo'
-        let sleepMult = 1.0;
-        if (['poor', 'scarso', 'basso'].includes(sleepVal)) sleepMult = 0.95;
-        else if (['fair', 'discreto', 'medio'].includes(sleepVal)) sleepMult = 1.0;
-        else if (['good', 'buono'].includes(sleepVal)) sleepMult = 1.02;
-        else if (['excellent', 'ottimo', 'alto'].includes(sleepVal)) sleepMult = 1.03;
-        // supporta scala numerica 1..5
-        if (/^[1-5]$/.test(sleepVal)) {
-            const n = parseInt(sleepVal, 10);
-            if (n <= 2) sleepMult = 0.96;
-            else if (n === 3) sleepMult = 1.0;
-            else if (n === 4) sleepMult = 1.02;
-            else sleepMult = 1.03;
-        }
-
-        // 3) Fattori aggiuntivi (opzionali)
-        // mapping semplice: riconosci alcune chiavi comuni; gli altri ignorati
-        let extraMult = 1.0;
-        const has = (k) => factors.some(f => f.includes(k));
-        if (has('stress_alto') || has('stress-high') || has('stress_high')) extraMult *= 0.97;
-        if (has('neat_alto') || has('camminate') || has('standing')) extraMult *= 1.02;
-        if (has('metabolismo_lento')) extraMult *= 0.98;
-        if (has('termogenesi') || has('tef_alto')) extraMult *= 1.01;
-
-        // 4) Frequenza allenamento come lieve aggiustamento del NEAT (non sostituisce tdee/attivita)
+        // Frequenza allenamento come lieve aggiustamento del NEAT (non sostituisce tdee/attivita)
         let freqAdj = 1.0;
         const freq = (trainingFrequency || '').toString().toLowerCase();
-        if (['low', 'bassa', '1-2', '1x', '2x'].includes(freq)) freqAdj = 1.0;
-        else if (['medium', 'media', '3-4', '3x', '4x', 'moderate'].includes(freq)) freqAdj = 1.01;
-        else if (['high', 'alta', '5+', '5x', '6x', 'daily', 'quotidiana', 'athlete'].includes(freq)) freqAdj = 1.02;
+        if (['none'].includes(freq)) freqAdj = 1.0;
+        else if (['light'].includes(freq)) freqAdj = 1.01;
+        else if (['moderate'].includes(freq)) freqAdj = 1.02;
+        else if (['high'].includes(freq)) freqAdj = 1.03;
+        else if (['athlete'].includes(freq)) freqAdj = 1.04;
 
         // Moltiplicatore totale (clamp prudenziale)
         let total = stepsMult * sleepMult * extraMult * freqAdj;
@@ -191,9 +166,9 @@ class NutritionCalculator {
     static calculateMacros(calories, weightKg, goal, activity, trainingType = 'mixed') {
       // ---- Preset dietetici ----
       const presets = {
-        fat_loss:    { p: 2.2, f: 0.8,  name: "Dimagrimento" },
-        maintenance: { p: 1.6, f: 0.9,  name: "Mantenimento" },
-        muscle_gain: { p: 2.0, f: 1.0,  name: "Costruzione muscolare" }
+        fat_loss:    { p: 2.0, f: 0.9,  name: "Dimagrimento" },
+        maintenance: { p: 1.8, f: 0.9,  name: "Mantenimento" },
+        muscle_gain: { p: 1.8, f: 0.9,  name: "Costruzione muscolare" }
       };
       const preset = presets[goal] || presets.maintenance;
 
@@ -206,39 +181,6 @@ class NutritionCalculator {
       // piccolo bump proteico in base al tipo di allenamento
       const proBumpByType = { none:0, cardio:0.1, endurance:0.2, strength:0.25, power:0.25, mixed:0.15 };
       const carbBumpByType = { none:0, cardio:20, endurance:40, strength:0, power:10, mixed:20 };
-
-      // ---- Diete con ratio forzati (kcal %) ----
-      if (preset.forcedRatios) {
-        const r = preset.forcedRatios;
-        let proteine = Math.round((calories * r.p) / 4);
-        let grassi   = Math.round((calories * r.f) / 9);
-        let carboidrati = Math.round((calories * r.c) / 4);
-
-        // safety: minimo grassi (sposta dai carbo se necessario)
-        const fatMin = Math.round(FAT_MIN_G_PER_KG * weightKg);
-        if (grassi < fatMin) {
-          const need = fatMin - grassi;              // g di grasso da aggiungere
-          const kcalNeed = need * 9;
-          const takeFromCarbs = Math.ceil(kcalNeed / 4);
-          carboidrati = Math.max(0, carboidrati - takeFromCarbs);
-          grassi = fatMin;
-        }
-
-        // riallinea alle calorie precise (aggiusta sui carbo)
-        const effective = proteine*4 + grassi*9 + carboidrati*4;
-        const diff = calories - effective;
-        carboidrati = Math.max(0, carboidrati + Math.round(diff/4));
-
-        const eff2 = proteine*4 + grassi*9 + carboidrati*4;
-        const proteinPercentage = Math.round((proteine*4/eff2)*100);
-        const fatPercentage     = Math.round((grassi*9/eff2)*100);
-        const carbPercentage    = Math.round((carboidrati*4/eff2)*100);
-        return {
-          proteine, grassi, carboidrati,
-          proteinPercentage, fatPercentage, carbPercentage,
-          proteinCalories: proteine*4, fatCalories: grassi*9, carbCalories: carboidrati*4
-        };
-      }
 
       // ---- Diete “libere” (g/kg + resto) ----
       const carbFloor = Math.round((carbFloorPerActivity[activity] || 3.0) * weightKg) + (carbBumpByType[trainingType] || 0);
@@ -255,39 +197,9 @@ class NutritionCalculator {
       let remaining = calories - (proteine*4 + grassi*9);
       let carboidrati = Math.round(remaining / 4);
 
-      // 1) rispetta il carb floor (riducendo eventuale grasso sopra il minimo)
-      if (carboidrati < carbFloor) {
-        const need = carbFloor - carboidrati;               // g carbo da aggiungere
-        const kcalNeed = need * 4;
-
-        // prova a prendere dai grassi sopra il minimo
-        const fatAboveMinKcal = Math.max(0, (grassi - fatMin) * 9);
-        const takeFromFatKcal = Math.min(fatAboveMinKcal, kcalNeed);
-        grassi -= Math.round(takeFromFatKcal / 9);
-
-        // ricalcola carbo
-        remaining = calories - (proteine*4 + grassi*9);
-        carboidrati = Math.round(remaining / 4);
-      }
-
-      // 2) se ancora non basta, riduci leggermente le proteine ma non sotto PRO_MIN_G_PER_KG
-      if (carboidrati < carbFloor) {
-        const targetP = Math.max(Math.round(PRO_MIN_G_PER_KG * weightKg), Math.round(proteine - Math.ceil(((carbFloor - carboidrati)*4)/4)));
-        proteine = Math.max(targetP, Math.round(PRO_MIN_G_PER_KG * weightKg));
-        remaining = calories - (proteine*4 + grassi*9);
-        carboidrati = Math.round(remaining / 4);
-      }
-
-      // 3) ultima safety: se il totale supera le calorie o va negativo, ribilancia sui carbo
-      const totalNow = proteine*4 + grassi*9 + carboidrati*4;
-      if (totalNow !== calories) {
-        const diff = calories - totalNow;
-        carboidrati = Math.max(0, carboidrati + Math.round(diff/4));
-      }
-
       // clamp finali
       proteine = Math.max(0, proteine);
-      grassi   = Math.max(fatMin, grassi);                 // mai sotto il minimo
+      grassi   = Math.max(0, grassi);                 // mai sotto il minimo
       carboidrati = Math.max(0, carboidrati);
 
       const effective = proteine*4 + grassi*9 + carboidrati*4;
@@ -315,10 +227,6 @@ class FormManager {
         }
 
         this.initEventListeners();
-        this.initDietaChangeListener();
-
-        // NON eseguire calcolo iniziale se i campi sono vuoti
-        // Il calcolo verrà eseguito solo quando l'utente inserisce dati
     }
 
     initEventListeners() {
@@ -345,7 +253,7 @@ class FormManager {
         });
 
         // Select con calcolo immediato - ora include anche sleep/steps e alias comuni
-        ['sesso', 'tdee', 'training_frequency', 'training_type', 'dieta', 'deficit_calorico', 'sleep_quality', 'qualita_sonno', 'daily_steps', 'passi', 'passi_giornalieri'].forEach(id => {
+        ['sesso', 'tdee', 'training_frequency', 'training_type', 'deficit_calorico','daily_steps'].forEach(id => {
             const element = this.form.elements[id];
             if (element) {
                 element.addEventListener('change', () => {
@@ -355,23 +263,44 @@ class FormManager {
             }
         });
 
-        // Aggiungi listener per attivita_fisica solo se esiste
-        const attivitaElement = this.form.elements['attivita_fisica'];
-        if (attivitaElement) {
-            attivitaElement.addEventListener('change', () => {
-                console.log('Attività fisica cambiata:', attivitaElement.value);
-                this.calculate();
-            });
-        }
+        const dietaSelect = this.form.elements['dieta'];
+        const deficitSelect = this.form.elements['deficit_calorico'];
 
-        // Gestione speciale per deficit_calorico
-        const deficitElement = this.form.elements['deficit_calorico'];
-        if (deficitElement) {
-            deficitElement.addEventListener('change', () => {
-                console.log('Deficit calorico cambiato:', deficitElement.value);
-                this.calculate();
-            });
-        }
+        if (!dietaSelect || !deficitSelect) return;
+
+        dietaSelect.addEventListener('change', () => {
+            const goal = dietaSelect.value;
+
+            // Svuota le opzioni esistenti
+            deficitSelect.innerHTML = '';
+            // Mostra il selettore
+            deficitSelect.parentNode.style.display = '';
+
+            // Aggiungi opzioni in base all'obiettivo
+            if (goal === 'fat_loss') {
+                deficitSelect.innerHTML = `
+                    <option value="-0.10">Moderato (-10%)</option>
+                    <option value="-0.15" selected>Standard (-15%)</option>
+                    <option value="-0.20">Aggressivo (-20%)</option>
+                    <option value="-0.25">Molto Aggressivo (-25%)</option>
+                `;
+            } else if (goal === 'muscle_gain') {
+                deficitSelect.innerHTML = `
+                    <option value="0.05">Lean Bulk (+5%)</option>
+                    <option value="0.10" selected>Standard (+10%)</option>
+                    <option value="0.15">Moderato (+15%)</option>
+                    <option value="0.20">Aggressivo (+20%)</option>
+                `;
+            } else {
+                // maintenance o performance
+                deficitSelect.innerHTML = `
+                    <option value="0" selected>Mantenimento (0%)</option>
+                `;
+            }
+
+            // Ricalcola con il nuovo valore
+            this.calculate();
+        });
 
         // Submit form
         this.form.addEventListener('submit', (e) => {
@@ -415,73 +344,13 @@ class FormManager {
         }
     }
 
-    /**
-     * Miglioramento della funzione initDietaChangeListener nel FormManager
-     * per supportare tutti i tipi di dieta e spiegazioni
-     */
-    initDietaChangeListener() {
-        const dietaSelect = this.form.elements['dieta'];
-        const deficitSelect = this.form.elements['deficit_calorico'];
-
-        if (!dietaSelect || !deficitSelect) return;
-
-        dietaSelect.addEventListener('change', () => {
-            const goal = dietaSelect.value;
-
-            // Svuota le opzioni esistenti
-            deficitSelect.innerHTML = '';
-            // Mostra il selettore
-            deficitSelect.parentNode.style.display = '';
-
-            // Aggiungi opzioni in base all'obiettivo
-            if (goal === 'fat_loss') {
-                deficitSelect.innerHTML = `
-                    <option value="-0.10">Moderato (-10%)</option>
-                    <option value="-0.15" selected>Standard (-15%)</option>
-                    <option value="-0.20">Aggressivo (-20%)</option>
-                    <option value="-0.25">Molto Aggressivo (-25%)</option>
-                `;
-            } else if (goal === 'muscle_gain') {
-                deficitSelect.innerHTML = `
-                    <option value="0.05">Lean Bulk (+5%)</option>
-                    <option value="0.10" selected>Standard (+10%)</option>
-                    <option value="0.15">Moderato (+15%)</option>
-                    <option value="0.20">Aggressivo (+20%)</option>
-                `;
-            } else if (goal === 'keto' || goal === 'low_carb' || goal === 'balanced' || goal === 'mediterranean') {
-                // Per le diete con rapporti fissi, l'unica opzione è il mantenimento
-                deficitSelect.innerHTML = `
-                    <option value="0" selected>Mantenimento (0%)</option>
-                `;
-                // Nascondi il selettore del deficit poiché c'è solo un'opzione
-                deficitSelect.parentNode.style.display = 'none';
-            } else {
-                // maintenance o performance
-                deficitSelect.innerHTML = `
-                    <option value="0" selected>Mantenimento (0%)</option>
-                `;
-            }
-
-            // Ricalcola con il nuovo valore
-            this.calculate();
-        });
-    }
-
     getFormData() {
         if (!this.form) return {};
 
         const slider = safeGetElement('peso_target_slider');
 
-        // Gestione del campo attivita_fisica che potrebbe non esistere
-        // Se non esiste, usa lo stesso valore di tdee come fallback
-        const attivitaFisica = this.form.elements['attivita_fisica']?.value ||
-                               this.form.elements['tdee']?.value;
-
         // Nuovi campi opzionali per lifestyle adjustment
-        const sleepQuality = this.form.elements['sleep_quality']?.value || this.form.elements['qualita_sonno']?.value || '';
         const dailySteps = parseInt(this.form.elements['daily_steps']?.value || this.form.elements['passi_giornalieri']?.value || this.form.elements['passi']?.value || '0', 10) || 0;
-        const extraFactors = Array.from(this.form.querySelectorAll('input[name="fattori_aggiuntivi[]"]:checked, input[name="fattori_aggiuntivi"]:checked'))
-            .map(el => el.value);
 
         return {
             sesso: this.form.elements['sesso']?.value,
@@ -490,14 +359,11 @@ class FormManager {
             altezza: parseFloat(this.form.elements['altezza']?.value),
             tdee: this.form.elements['tdee']?.value,
             deficit_calorico: parseFloat(this.form.elements['deficit_calorico']?.value),
-            attivita_fisica: attivitaFisica,
             dieta: this.form.elements['dieta']?.value,
             peso_target: parseFloat(slider?.value || 0),
             training_frequency: this.form.elements['training_frequency']?.value,
             training_type: this.form.elements['training_type']?.value,
-            sleep_quality: sleepQuality,
-            daily_steps: dailySteps,
-            extra_factors: extraFactors
+            daily_steps: dailySteps
         };
     }
 
@@ -532,9 +398,7 @@ class FormManager {
         // 3. Calcolo TDEE
         const baseMult = NutritionCalculator.getTDEEMultiplier(data.tdee);
         const lifestyleAdj = NutritionCalculator.getLifestyleAdjustment({
-            sleepQuality: data.sleep_quality,
             dailySteps: data.daily_steps,
-            extraFactors: data.extra_factors,
             trainingFrequency: data.training_frequency
         });
         const tdeeMultiplier = +(baseMult * lifestyleAdj).toFixed(3);
@@ -550,11 +414,11 @@ class FormManager {
         // Priorità alla frequenza di allenamento; fallback su attivita_fisica/tdee
         let activityForMacros = (data.training_frequency && data.training_frequency !== 'none')
           ? data.training_frequency
-          : (data.attivita_fisica || data.tdee);
+          : data.tdee;
 
         const macros = NutritionCalculator.calculateMacros(
             targetCalories,
-            data.peso,
+            data.peso_target,
             data.dieta,
             activityForMacros,
             data.training_type || 'none'
