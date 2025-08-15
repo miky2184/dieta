@@ -36,7 +36,6 @@ class Utente(db.Model):
     # Nuovi campi lifestyle
     training_frequency = db.Column(db.String(16))
     training_type = db.Column(db.String(16))
-    sleep_quality = db.Column(db.String(16))
     daily_steps = db.Column(db.String(16))
 
     menu_settimanale = db.relationship('MenuSettimanale', backref='utente', cascade='all, delete-orphan')
