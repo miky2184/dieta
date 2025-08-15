@@ -1024,33 +1024,38 @@ def elimina_ingredienti(ingredient_id: int, recipe_id: int, user_id: int):
     db.session.commit()
 
 
-def salva_utente_dieta(utente_id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
-                       meta_basale, meta_giornaliero, calorie_giornaliere, settimane_dieta, carboidrati,
-                       proteine, grassi, dieta, attivita_fisica):
-    utente = Utente.get_by_id(utente_id)
+def salva_utente_dieta(
+    utente_id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico,
+    calorie_giornaliere, carboidrati, proteine, grassi, peso_target, dieta, settimane_dieta, attivita_fisica,
+    training_frequency=None, training_type=None, sleep_quality=None, daily_steps=None, extra_factors=None
+):
+    record = Utente.get_by_id(utente_id)
 
-    # Aggiorna i dati dell'utente
-    utente.nome = nome
-    utente.cognome = cognome
-    utente.sesso = sesso
-    utente.eta = eta
-    utente.peso = peso
-    utente.altezza = altezza
-    utente.tdee = tdee
-    utente.deficit_calorico = deficit_calorico
-    utente.bmi = bmi
-    utente.peso_ideale = peso_ideale
-    utente.meta_basale = meta_basale
-    utente.meta_giornaliero = meta_giornaliero
-    utente.calorie_giornaliere = calorie_giornaliere
-    utente.settimane_dieta = settimane_dieta
-    utente.carboidrati = carboidrati
-    utente.proteine = proteine
-    utente.grassi = grassi
-    utente.dieta = dieta
-    utente.attivita_fisica = attivita_fisica
+    record.nome = nome
+    record.cognome = cognome
+    record.sesso = sesso
+    record.eta = eta
+    record.altezza = altezza
+    record.peso = peso
+    record.tdee = tdee                       # stringa: "sedentary", "moderate", ecc.
+    record.deficit_calorico = deficit_calorico
 
-    db.session.add(utente)
+    record.calorie_target = calorie_giornaliere
+    record.carboidrati = carboidrati
+    record.proteine = proteine
+    record.grassi = grassi
+
+    record.dieta = dieta
+    record.attivita_fisica = attivita_fisica
+
+    # nuovi campi
+    record.training_frequency = training_frequency
+    record.training_type = training_type
+    record.sleep_quality = sleep_quality
+    record.daily_steps = daily_steps
+    record.extra_factors = extra_factors     # opzionale: JSON string
+
+    db.session.add(record)
 
     # Cancella tutti i record di peso ideale esistenti per questo utente
     # db.session.query(PesoIdeale).filter(PesoIdeale.user_id == utente_id).delete()
@@ -1073,8 +1078,8 @@ def salva_utente_dieta(utente_id, nome, cognome, sesso, eta, altezza, peso, tdee
     data_fine_dieta = lunedi_corrente + (timedelta(days=7 * settimane))
 
     # Calcola la perdita di peso settimanale
-    peso_iniziale = utente.peso
-    perdita_peso_totale = peso_iniziale - peso_ideale
+    peso_iniziale = record.peso
+    perdita_peso_totale = peso_iniziale - peso_target
 
     perdita_peso_settimanale = perdita_peso_totale
     if settimane > 0:
@@ -1085,7 +1090,7 @@ def salva_utente_dieta(utente_id, nome, cognome, sesso, eta, altezza, peso, tdee
         if settimana == settimane:
             # Settimana finale - usa la data di fine dieta
             data_settimana = data_fine_dieta
-            peso_ideale_settimana = peso_ideale
+            peso_ideale_settimana = peso_target
         else:
             # Settimane intermedie
             data_settimana = lunedi_corrente + timedelta(days=7 * settimana)

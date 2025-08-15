@@ -158,38 +158,92 @@ def submit_weight():
 @login_required
 def salva_dati():
     """
-    Questa funzione salva i dati personali dell'utente relativi alla dieta nel database.
+    Salva i dati dieta dell'utente.
+    - Obbligatori (input utente): nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, dieta, attivita_fisica
+    - Obbligatori (derivati front-end, usati altrove): calorie_giornaliere, carboidrati, proteine, grassi
+    - Opzionali (stile di vita): training_frequency, training_type, sleep_quality, daily_steps, extra_factors
     """
 
+    def req(key, cast=str):
+        v = request.form.get(key, None)
+        if v is None:
+            raise KeyError(key)
+        v = v.strip() if isinstance(v, str) else v
+        if v in ("", "undefined", "null", None):
+            raise KeyError(key)
+        return cast(v) if cast else v
+
+    def opt(key, cast=str, default=None):
+        v = request.form.get(key, None)
+        if v is None:
+            return default
+        v = v.strip() if isinstance(v, str) else v
+        if v in ("", "undefined", "null"):
+            return default
+        return cast(v) if cast else v
+
     user_id = current_user.user_id
+
     try:
-        nome = request.form['nome']
-        cognome = request.form['cognome']
-        sesso = request.form['sesso']
-        eta = int(request.form['eta'])
-        altezza = int(request.form['altezza'])
-        peso = float(request.form['peso'])
-        tdee = request.form['tdee']
-        deficit_calorico = request.form['deficit_calorico']
-        bmi = float(request.form['bmi'])
-        peso_ideale = int(request.form['peso_ideale'])
-        meta_basale = int(request.form['meta_basale'])
-        meta_giornaliero = int(request.form['meta_giornaliero'])
-        calorie_giornaliere = int(request.form['calorie_giornaliere'])
-        settimane_dieta = request.form['settimane_dieta']
-        carboidrati = float(request.form['carboidrati'])
-        proteine = float(request.form['proteine'])
-        grassi = float(request.form['grassi'])
-        dieta = request.form['dieta']
-        attivita_fisica = request.form['attivita_fisica']
+        # --- Obbligatori: input utente ---
+        nome              = req('nome', str)
+        cognome           = req('cognome', str)
+        sesso             = req('sesso', str)
+        eta               = req('eta', int)
+        altezza           = req('altezza', int)
+        peso              = req('peso', float)
+        peso_target       = req('peso_target', float)
+        tdee_label        = req('tdee', str)                  # es. "sedentary"
+        deficit_calorico  = req('deficit_calorico', float)    # es. -0.15, 0.10...
+        dieta             = req('dieta', str)
+        attivita_fisica   = req('attivita_fisica', str)
 
-        salva_utente_dieta(user_id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, bmi, peso_ideale,
-                           meta_basale, meta_giornaliero, calorie_giornaliere, settimane_dieta, carboidrati,
-                           proteine, grassi, dieta, attivita_fisica)
+        # >>> nuovo: settimane_dieta come intero (default 0)
+        settimane_dieta     = opt('settimane_dieta', int, default=0)
 
-        #current_app.cache.delete(f'get_data_utente_{user_id}')
-        #current_app.cache.delete(f'get_peso_data_{user_id}')
+        # --- Obbligatori: derivati dal FE che vogliamo salvare ---
+        calorie_giornaliere = req('calorie_giornaliere', int)
+        carboidrati         = req('carboidrati', float)
+        proteine            = req('proteine', float)
+        grassi              = req('grassi', float)
+
+        # --- Opzionali: stile di vita (nuovi campi) ---
+        training_frequency = opt('training_frequency', str, default='none')
+        training_type      = opt('training_type', str, default='none')
+        sleep_quality      = opt('sleep_quality', str, default=None)
+        daily_steps        = opt('daily_steps', int, default=None)
+
+        # Puoi inviarli come stringa JSON o CSV
+        extra_factors_raw  = opt('extra_factors', str, default=None)
+
+        # Salvataggio (aggiorna la firma della funzione e il model)
+        salva_utente_dieta(
+            utente_id=user_id,
+            nome=nome,
+            cognome=cognome,
+            sesso=sesso,
+            eta=eta,
+            altezza=altezza,
+            peso=peso,
+            tdee=tdee_label,
+            deficit_calorico=deficit_calorico,
+            calorie_giornaliere=calorie_giornaliere,
+            carboidrati=carboidrati,
+            proteine=proteine,
+            grassi=grassi,
+            peso_target=peso_target,
+            dieta=dieta,
+            settimane_dieta=settimane_dieta,
+            attivita_fisica=attivita_fisica,
+            training_frequency=training_frequency,
+            training_type=training_type,
+            sleep_quality=sleep_quality,
+            daily_steps=daily_steps,
+            extra_factors=extra_factors_raw
+        )
+
         return redirect(url_for('views.dashboard'))
+
     except SQLAlchemyError as db_err:
         print({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)})
         return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
@@ -197,7 +251,7 @@ def salva_dati():
         print({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'})
         return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
     except Exception as e:
-        print({'status': 'error', 'message': 'Errore di database.', 'details': str(e)})
+        print({'status': 'error', 'message': str(e)})
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 

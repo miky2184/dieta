@@ -1,5 +1,4 @@
-from sqlalchemy import CheckConstraint
-
+from sqlalchemy import CheckConstraint, func
 from app.models import db
 
 
@@ -34,6 +33,15 @@ class Utente(db.Model):
     attivita_fisica = db.Column(db.String(255), nullable=True)
     sale = db.Column(db.Integer, nullable=True)
     peso_target = db.Column(db.Numeric(5, 2), nullable=True)
+
+    # Nuovi campi lifestyle
+    training_frequency = db.Column(db.String(16))
+    training_type = db.Column(db.String(16))
+    sleep_quality = db.Column(db.String(16))
+    daily_steps = db.Column(db.Integer)
+    extra_factors = db.Column(db.Text)  # JSON/CSV opzionale
+
+    updated_at = db.Column(db.DateTime, server_default=func.now(), onupdate=func.now())
 
     menu_settimanale = db.relationship('MenuSettimanale', backref='utente', cascade='all, delete-orphan')
     registro_peso = db.relationship('RegistroPeso', backref='utente', cascade='all, delete-orphan')

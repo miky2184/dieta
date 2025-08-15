@@ -946,68 +946,27 @@ class FormManager {
         // Costruisco il FormData
         const fd = new FormData(this.form);
 
-        // 1) Mappa di campi "visivi" -> "hidden" che contengono i numeri reali
-        const mirrorPairs = [
-          ['bmi', 'bmi_hidden'],
-          ['peso_ideale', 'peso_ideale_hidden'],
-          ['meta_basale', 'meta_basale_hidden'],
-          ['meta_giornaliero', 'meta_giornaliero_hidden'],
-          ['calorie_giornaliere', 'calorie_giornaliere_hidden'],
-          ['settimane_dieta', 'settimane_dieta_hidden'],
-          ['carboidrati', 'carboidrati_hidden'],
-          ['proteine', 'proteine_hidden'],
-          ['grassi', 'grassi_hidden']
+        // Rimuovi derivati che NON vogliamo più mandare
+        ['bmi','peso_ideale','meta_basale','meta_giornaliero'].forEach(k => fd.delete(k));
+
+        // Assicura sempre i "richiesti" dal BE
+        const requiredKeys = [
+          'nome','cognome','sesso','eta','altezza','peso','tdee','deficit_calorico','dieta','attivita_fisica',
+          'calorie_giornaliere','carboidrati','proteine','grassi','settimane_dieta'
         ];
-
-        // helper: prendi valore numerico dall’hidden, se valido sostituisci
-        const pickHidden = (nameVisible, idHidden) => {
-          const hiddenEl = document.getElementById(idHidden);
-          if (!hiddenEl) return;
-          let v = hiddenEl.value ?? hiddenEl.textContent ?? '';
-          v = (v + '').replace(',', '.').trim(); // normalizza decimali
-          if (v !== '' && v !== 'undefined' && !isNaN(parseFloat(v))) {
-            fd.set(nameVisible, v);
-          } else {
-            // se è spazzatura, non inviare quel campo
-            fd.delete(nameVisible);
-          }
-        };
-
-        mirrorPairs.forEach(([vis, hid]) => {
-          // se il form ha quel name, prova a rimpiazzarlo
-          if (fd.has(vis)) pickHidden(vis, hid);
+        requiredKeys.forEach(k => {
+          if (!fd.has(k)) fd.set(k, '');
         });
 
-        // 2) Rimuovi chiavi con "undefined" / vuote che rompono il backend
-        for (const [k, v] of Array.from(fd.entries())) {
-          const s = (v + '').trim();
-          if (s === '' || s.toLowerCase() === 'undefined' || s.toLowerCase() === 'null') {
-            fd.delete(k);
-          }
-        }
+        // Normalizza numerici principali
+        ['eta','altezza','peso','deficit_calorico','calorie_giornaliere','carboidrati','proteine','grassi']
+          .forEach(k => { if (fd.has(k)) fd.set(k, (fd.get(k)+'').replace(',', '.').trim()); });
 
-        // 3) Normalizza numerici noti (se esistono ancora nel fd)
-        const numericKeys = [
-          'eta','altezza','peso','bmi','peso_ideale','peso_target',
-          'meta_basale','meta_giornaliero','calorie_giornaliere',
-          'carboidrati','proteine','grassi'
-        ];
-        numericKeys.forEach(k => {
-          if (fd.has(k)) {
-            const n = (fd.get(k) + '').replace(',', '.').trim();
-            if (!isNaN(parseFloat(n))) fd.set(k, n);
-            else fd.delete(k);
-          }
+        // Aggiungi lifestyle se presenti (non obbligatori)
+        ['training_frequency','training_type','sleep_quality','daily_steps','extra_factors'].forEach(k => {
+          const el = this.form.elements[k];
+          if (el && el.value !== '') fd.set(k, el.value);
         });
-
-        // 4) Caso particolare: daily_steps deve essere NUMERO (passi/giorno)
-        if (fd.has('daily_steps')) {
-          const stepsRaw = (fd.get('daily_steps') + '').replace(',', '.').trim();
-          if (!/^\d+(\.\d+)?$/.test(stepsRaw)) {
-            // se è tipo "moderate", non inviarlo
-            fd.delete('daily_steps');
-          }
-        }
 
         // invio
         const response = await fetch('/salva_dati', { method: 'POST', body: fd });
