@@ -192,6 +192,7 @@ def salva_dati():
         eta               = req('eta', int)
         altezza           = req('altezza', int)
         peso              = req('peso', float)
+        peso_ideale       = req('peso_ideale', float)
         peso_target       = req('peso_target', float)
         tdee_label        = req('tdee', str)                  # es. "sedentary"
         deficit_calorico  = req('deficit_calorico', float)    # es. -0.15, 0.10...
