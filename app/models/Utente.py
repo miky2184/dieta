@@ -23,7 +23,7 @@ class Utente(db.Model):
     peso_ideale = db.Column(db.Numeric(5, 2), nullable=True)
     meta_basale = db.Column(db.Numeric(8, 2), nullable=True)
     meta_giornaliero = db.Column(db.Numeric(8, 2), nullable=True)
-    calorie_giornaliere = db.Column(db.Numeric(8, 2), nullable=True)
+    calorie_giornaliere = db.Column(db.Integer, nullable=True)
     settimane_dieta = db.Column(db.String, nullable=True)
     carboidrati = db.Column(db.Integer, nullable=True)
     proteine = db.Column(db.Integer, nullable=True)

@@ -369,7 +369,6 @@ class FormManager {
 
     isDataComplete(data) {
         // Verifica solo i campi essenziali per il calcolo
-        // Rimuoviamo attivita_fisica dalla verifica obbligatoria
         const isComplete = data.sesso &&
                !isNaN(data.eta) && data.eta > 0 &&
                !isNaN(data.peso) && data.peso > 0 &&
@@ -410,8 +409,6 @@ class FormManager {
         //console.log('Calorie target:', targetCalories);
 
         // 5. Calcolo macronutrienti
-        // Usa attivita_fisica se presente, altrimenti usa tdee come fallback
-        // Priorità alla frequenza di allenamento; fallback su attivita_fisica/tdee
         let activityForMacros = (data.training_frequency && data.training_frequency !== 'none')
           ? data.training_frequency
           : data.tdee;
@@ -757,7 +754,7 @@ class FormManager {
     validateForm() {
         if (!this.form) return false;
 
-        const requiredFields = ['nome', 'cognome', 'sesso', 'eta', 'altezza', 'peso', 'tdee', 'deficit_calorico', 'attivita_fisica', 'dieta'];
+        const requiredFields = ['nome', 'cognome', 'sesso', 'eta', 'altezza', 'peso', 'tdee', 'deficit_calorico', 'dieta'];
         let isValid = true;
 
         requiredFields.forEach(fieldName => {
@@ -793,7 +790,7 @@ class FormManager {
         // Assicura sempre le chiavi richieste dal BE
         const requiredKeys = [
           'nome', 'cognome', 'sesso', 'eta', 'altezza', 'peso',
-          'tdee', 'deficit_calorico', 'dieta', 'attivita_fisica',
+          'tdee', 'deficit_calorico', 'dieta',
           'calorie_giornaliere', 'carboidrati', 'proteine', 'grassi',
           'settimane_dieta', 'peso_target', 'peso_ideale'
         ];
@@ -818,7 +815,8 @@ class FormManager {
             'grassi': 'grassi_hidden',
             'settimane_dieta': 'settimane_dieta_hidden',
             'peso_target': 'peso_target_hidden',
-            'peso_ideale': 'peso_ideale_hidden'
+            'peso_ideale': 'peso_ideale_hidden',
+            'bmi': 'bmi_hidden'
           };
 
           missing.forEach(k => {
@@ -831,8 +829,6 @@ class FormManager {
               } else {
                 fd.set(k, '0'); // Fallback a 0 per campi numerici
               }
-            } else if (k === 'attivita_fisica') {
-              fd.set(k, fd.get('tdee') || 'sedentary');
             } else {
               fd.set(k, ''); // Fallback a stringa vuota
             }
@@ -848,13 +844,14 @@ class FormManager {
           ['grassi',              'grassi_hidden'],
           ['peso_target',         'peso_target_hidden'],
           ['peso_ideale',         'peso_ideale_hidden'],
+          ['bmi',                 'bmi_hidden'],
         ];
 
         // chiavi numeriche obbligatorie per cui usiamo fallback "0" se hidden vuoto
         const numericRequired = new Set([
           'eta', 'altezza', 'peso', 'deficit_calorico',
           'calorie_giornaliere', 'carboidrati', 'proteine', 'grassi',
-          'settimane_dieta', 'peso_target', 'peso_ideale'
+          'settimane_dieta', 'peso_target', 'peso_ideale', 'bmi'
         ]);
 
         const pickHidden = (nameVisible, idHidden) => {
@@ -878,7 +875,7 @@ class FormManager {
         [
           'eta', 'altezza', 'peso', 'deficit_calorico',
           'calorie_giornaliere', 'carboidrati', 'proteine', 'grassi',
-          'settimane_dieta', 'peso_target', 'peso_ideale'
+          'settimane_dieta', 'peso_target', 'peso_ideale', 'bmi'
         ].forEach(k => {
           if (fd.has(k)) fd.set(k, (fd.get(k)+'').replace(',', '.').trim() || '0');
         });
@@ -888,10 +885,6 @@ class FormManager {
           const stepsRaw = (fd.get('daily_steps') + '').trim();
           if (!/^\d+(\.\d+)?$/.test(stepsRaw)) fd.delete('daily_steps');
         }
-
-        // 5) attivita_fisica: se vuota, usa tdee come fallback
-        const att = (fd.get('attivita_fisica') || '').trim();
-        if (!att) fd.set('attivita_fisica', (fd.get('tdee') || '').trim() || 'sedentary');
 
         // 6) Lifestyle opzionali: aggiungi se presenti nel form
         ['training_frequency','training_type'].forEach(k => {
@@ -927,6 +920,7 @@ class FormManager {
         hideProgress();
       }
     }
+
     updateWeightDifference() {
         const pesoInput = this.form?.elements['peso'];
         const slider = safeGetElement('peso_target_slider');
@@ -1018,16 +1012,6 @@ class FormManager {
                         1.9: 'athlete'
                     };
                     element.value = tdeeMap[data[key]] || 'sedentary';
-                } else if (key === 'attivita_fisica' && typeof data[key] === 'number') {
-                    // Converti valore numerico in stringa per il select
-                    const activityMap = {
-                        1.2: 'sedentary',
-                        1.5: 'light',
-                        1.8: 'moderate',
-                        2.0: 'high',
-                        2.2: 'athlete'
-                    };
-                    element.value = activityMap[data[key]] || 'sedentary';
                 } else {
                     element.value = data[key];
                 }

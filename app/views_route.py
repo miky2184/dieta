@@ -164,55 +164,28 @@ def salva_dati():
     - Opzionali (stile di vita): training_frequency, training_type, sleep_quality, daily_steps, extra_factors
     """
 
-    def req(key, cast=str):
-        v = request.form.get(key, None)
-        if v is None:
-            raise KeyError(key)
-        v = v.strip() if isinstance(v, str) else v
-        if v in ("", "undefined", "null", None):
-            raise KeyError(key)
-        return cast(v) if cast else v
-
-    def opt(key, cast=str, default=None):
-        v = request.form.get(key, None)
-        if v is None:
-            return default
-        v = v.strip() if isinstance(v, str) else v
-        if v in ("", "undefined", "null"):
-            return default
-        return cast(v) if cast else v
-
     user_id = current_user.user_id
 
     try:
-        # --- Obbligatori: input utente ---
-        nome              = req('nome', str)
-        cognome           = req('cognome', str)
-        sesso             = req('sesso', str)
-        eta               = req('eta', int)
-        altezza           = req('altezza', int)
-        peso              = req('peso', float)
-        peso_ideale       = req('peso_ideale', float)
-        peso_target       = req('peso_target', float)
-        tdee_label        = req('tdee', str)                  # es. "sedentary"
-        deficit_calorico  = req('deficit_calorico', float)    # es. -0.15, 0.10...
-        dieta             = req('dieta', str)
-        attivita_fisica   = req('attivita_fisica', str)
-
-        # >>> nuovo: settimane_dieta come intero (default 0)
-        settimane_dieta     = opt('settimane_dieta', int, default=0)
-
-        # --- Obbligatori: derivati dal FE che vogliamo salvare ---
-        calorie_giornaliere = req('calorie_giornaliere', int)
-        carboidrati         = req('carboidrati', float)
-        proteine            = req('proteine', float)
-        grassi              = req('grassi', float)
-
-        # --- Opzionali: stile di vita (nuovi campi) ---
-        training_frequency = opt('training_frequency', str, default='none')
-        training_type      = opt('training_type', str, default='none')
-        sleep_quality      = opt('sleep_quality', str, default=None)
-        daily_steps        = opt('daily_steps', str, default=None)
+        altezza             = int(request.form['altezza'])
+        calorie_giornaliere = int(request.form['calorie_giornaliere'])
+        carboidrati         = float(request.form['carboidrati'])
+        cognome             = request.form['cognome']
+        deficit_calorico    = float(request.form['deficit_calorico'])
+        dieta               = request.form['dieta']
+        eta                 = int(request.form['eta'])
+        grassi              = float(request.form['grassi'])
+        nome                = request.form['nome']
+        peso                = float(request.form['peso'])
+        peso_ideale         = float(request.form['peso_ideale'])
+        peso_target         = float(request.form['peso_target'])
+        proteine            = float(request.form['proteine'])
+        sesso               = request.form['sesso']
+        settimane_dieta     = request.form['settimane_dieta']
+        tdee_label          = request.form['tdee']
+        training_frequency  = request.form['training_frequency']
+        training_type       = request.form['training_type']
+        daily_steps         = request.form['daily_steps']
 
         # Salvataggio (aggiorna la firma della funzione e il model)
         salva_utente_dieta(
@@ -232,10 +205,8 @@ def salva_dati():
             peso_target=peso_target,
             dieta=dieta,
             settimane_dieta=settimane_dieta,
-            attivita_fisica=attivita_fisica,
             training_frequency=training_frequency,
             training_type=training_type,
-            sleep_quality=sleep_quality,
             daily_steps=daily_steps
         )
 

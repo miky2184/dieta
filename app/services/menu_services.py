@@ -1026,8 +1026,8 @@ def elimina_ingredienti(ingredient_id: int, recipe_id: int, user_id: int):
 
 def salva_utente_dieta(
     utente_id, nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico,
-    calorie_giornaliere, carboidrati, proteine, grassi, peso_target, dieta, settimane_dieta, attivita_fisica,
-    training_frequency=None, training_type=None, sleep_quality=None, daily_steps=None, extra_factors=None
+    calorie_giornaliere, carboidrati, proteine, grassi, peso_target, dieta, settimane_dieta,
+    training_frequency=None, training_type=None, daily_steps=None
 ):
     record = Utente.get_by_id(utente_id)
 
@@ -1046,14 +1046,11 @@ def salva_utente_dieta(
     record.grassi = grassi
 
     record.dieta = dieta
-    record.attivita_fisica = attivita_fisica
 
     # nuovi campi
     record.training_frequency = training_frequency
     record.training_type = training_type
-    record.sleep_quality = sleep_quality
     record.daily_steps = daily_steps
-    record.extra_factors = extra_factors     # opzionale: JSON string
 
     db.session.add(record)
 
