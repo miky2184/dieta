@@ -817,7 +817,8 @@ class FormManager {
             'proteine': 'proteine_hidden',
             'grassi': 'grassi_hidden',
             'settimane_dieta': 'settimane_dieta_hidden',
-            'peso_target': 'peso_target_hidden'
+            'peso_target': 'peso_target_hidden',
+            'peso_ideale': 'peso_ideale_hidden'
           };
 
           missing.forEach(k => {
