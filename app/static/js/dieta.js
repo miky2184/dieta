@@ -137,7 +137,7 @@ class NutritionCalculator {
         else if (['athlete'].includes(freq)) freqAdj = 1.04;
 
         // Moltiplicatore totale (clamp prudenziale)
-        let total = stepsMult * sleepMult * extraMult * freqAdj;
+        let total = stepsMult * freqAdj;
         total = Math.max(0.90, Math.min(1.15, total)); // +/-15% max
 
         return total;
@@ -892,7 +892,7 @@ class FormManager {
         if (!att) fd.set('attivita_fisica', (fd.get('tdee') || '').trim() || 'sedentary');
 
         // 6) Lifestyle opzionali: aggiungi se presenti nel form
-        ['training_frequency','training_type','sleep_quality','extra_factors'].forEach(k => {
+        ['training_frequency','training_type'].forEach(k => {
           const el = this.form.elements[k];
           if (el && el.value !== '') fd.set(k, el.value);
         });
