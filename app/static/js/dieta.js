@@ -583,12 +583,8 @@ class FormManager {
             // Aggiorna l'interfaccia utente
             this.updateUI(results);
 
-            // Aggiorna la barra di progresso dei macronutrienti
-            this.updateMacroProgressBar(results);
-
             // Sincronizza i campi nascosti
             this.synchronizeFields();
-
 
             hideProgress();
         } catch (error) {
