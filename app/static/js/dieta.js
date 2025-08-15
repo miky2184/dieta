@@ -938,69 +938,83 @@ class FormManager {
         return;
       }
 
+      // 1) Forza calcolo e attendi un frame per aggiornare hidden
+      this.calculate();
+      await new Promise(r => requestAnimationFrame(r));
+
       const submitBtn = this.form.querySelector('[type="submit"]');
       if (submitBtn) submitBtn.disabled = true;
       showProgress();
 
       try {
-        // Costruisco il FormData
         const fd = new FormData(this.form);
 
-        // Rimuovi derivati che NON vogliamo più mandare
+        // Rimuovi derivati che NON vogliamo più mandare (teniamo settimane_dieta perché la vuoi salvare)
         ['bmi','peso_ideale','meta_basale','meta_giornaliero'].forEach(k => fd.delete(k));
 
-        // Assicura sempre i "richiesti" dal BE
+        // Assicura sempre le chiavi richieste dal BE
         const requiredKeys = [
-          'nome','cognome','sesso','eta','altezza','peso','tdee','deficit_calorico','dieta','attivita_fisica',
+          'nome','cognome','sesso','eta','altezza','peso',
+          'tdee','deficit_calorico','dieta','attivita_fisica',
           'calorie_giornaliere','carboidrati','proteine','grassi','settimane_dieta'
         ];
-        requiredKeys.forEach(k => {
-          if (!fd.has(k)) fd.set(k, '');
-        });
+        requiredKeys.forEach(k => { if (!fd.has(k)) fd.set(k, ''); });
 
-        // Normalizza numerici principali
-        ['eta','altezza','peso','deficit_calorico','calorie_giornaliere','carboidrati','proteine','grassi']
-          .forEach(k => { if (fd.has(k)) fd.set(k, (fd.get(k)+'').replace(',', '.').trim()); });
-
-        // Aggiungi lifestyle se presenti (non obbligatori)
-        ['training_frequency','training_type','sleep_quality','daily_steps','extra_factors'].forEach(k => {
-          const el = this.form.elements[k];
-          if (el && el.value !== '') fd.set(k, el.value);
-        });
-
-                // 1) Mappa di campi "visivi" -> "hidden" che contengono i numeri reali
+        // 2) Mappa visivo->hidden (prende i numeri reali)
         const mirrorPairs = [
-          ['bmi', 'bmi_hidden'],
-          ['peso_ideale', 'peso_ideale_hidden'],
-          ['meta_basale', 'meta_basale_hidden'],
-          ['meta_giornaliero', 'meta_giornaliero_hidden'],
           ['calorie_giornaliere', 'calorie_giornaliere_hidden'],
-          ['settimane_dieta', 'settimane_dieta_hidden'],
-          ['carboidrati', 'carboidrati_hidden'],
-          ['proteine', 'proteine_hidden'],
-          ['grassi', 'grassi_hidden']
+          ['settimane_dieta',     'settimane_dieta_hidden'],
+          ['carboidrati',         'carboidrati_hidden'],
+          ['proteine',            'proteine_hidden'],
+          ['grassi',              'grassi_hidden'],
+          // opzionali: se li stai ancora tenendo
+          ['bmi',                 'bmi_hidden'],
+          ['peso_ideale',         'peso_ideale_hidden'],
+          ['meta_basale',         'meta_basale_hidden'],
+          ['meta_giornaliero',    'meta_giornaliero_hidden']
         ];
 
-        // helper: prendi valore numerico dall’hidden, se valido sostituisci
+        // chiavi numeriche obbligatorie per cui usiamo fallback "0" se hidden vuoto
+        const numericRequired = new Set(['eta','altezza','peso','deficit_calorico','calorie_giornaliere','carboidrati','proteine','grassi','settimane_dieta']);
+
         const pickHidden = (nameVisible, idHidden) => {
           const hiddenEl = document.getElementById(idHidden);
           if (!hiddenEl) return;
           let v = hiddenEl.value ?? hiddenEl.textContent ?? '';
-          v = (v + '').replace(',', '.').trim(); // normalizza decimali
-          if (v !== '' && v !== 'undefined' && !isNaN(parseFloat(v))) {
-            fd.set(nameVisible, v);
+          v = (v + '').replace(',', '.').trim();
+          if (v === '' || v.toLowerCase() === 'undefined' || v.toLowerCase() === 'null' || isNaN(parseFloat(v))) {
+            // non cancellare le chiavi richieste: metti fallback se numeriche
+            if (numericRequired.has(nameVisible)) fd.set(nameVisible, '0');
+            // altrimenti lascia com'è (potrebbe essere testo)
           } else {
-            // se è spazzatura, non inviare quel campo
-            fd.delete(nameVisible);
+            fd.set(nameVisible, v);
           }
         };
 
-        mirrorPairs.forEach(([vis, hid]) => {
-          // se il form ha quel name, prova a rimpiazzarlo
-          if (fd.has(vis)) pickHidden(vis, hid);
+        // prima normalizza i required testuali vuoti, poi applica hidden
+        mirrorPairs.forEach(([vis, hid]) => { if (fd.has(vis)) pickHidden(vis, hid); });
+
+        // 3) Normalizza numerici (stringhe -> numeri), senza eliminare le chiavi
+        ['eta','altezza','peso','deficit_calorico','calorie_giornaliere','carboidrati','proteine','grassi','settimane_dieta']
+          .forEach(k => { if (fd.has(k)) fd.set(k, (fd.get(k)+'').replace(',', '.').trim() || '0'); });
+
+        // 4) daily_steps deve essere numero: se non lo è, rimuovi
+        if (fd.has('daily_steps')) {
+          const stepsRaw = (fd.get('daily_steps') + '').trim();
+          if (!/^\d+(\.\d+)?$/.test(stepsRaw)) fd.delete('daily_steps');
+        }
+
+        // 5) attivita_fisica: se vuota, usa tdee come fallback
+        const att = (fd.get('attivita_fisica') || '').trim();
+        if (!att) fd.set('attivita_fisica', (fd.get('tdee') || '').trim());
+
+        // 6) Lifestyle opzionali: aggiungi se presenti nel form
+        ['training_frequency','training_type','sleep_quality','extra_factors'].forEach(k => {
+          const el = this.form.elements[k];
+          if (el && el.value !== '') fd.set(k, el.value);
         });
 
-        // invio
+        // INVIO
         const response = await fetch('/salva_dati', { method: 'POST', body: fd });
 
         if (response.ok) {
