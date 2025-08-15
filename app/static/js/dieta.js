@@ -850,9 +850,6 @@ class FormManager {
             // Aggiorna la barra di progresso dei macronutrienti
             this.updateMacroProgressBar(results);
 
-            // NUOVO: Aggiorna le informazioni sui macronutrienti
-            this.updateMacroInfo(results, formData.dieta);
-
             // Sincronizza i campi nascosti
             this.synchronizeFields();
 
@@ -1204,57 +1201,6 @@ class FormManager {
         setTimeout(() => {
             this.calculate();
         }, 100);
-    }
-
-    /**
-     * Funzione per aggiornare le informazioni sui macronutrienti
-     * Da aggiungere alla classe FormManager
-     */
-    updateMacroInfo(results, dietaType) {
-        const macroDistributionInfo = safeGetElement('macro_distribution_info');
-        const macroDistributionText = safeGetElement('macro_distribution_text');
-        const proteinInfo = safeGetElement('protein_info');
-        const carbInfo = safeGetElement('carb_info');
-        const fatInfo = safeGetElement('fat_info');
-
-        if (!macroDistributionInfo || !macroDistributionText) return;
-
-        // Rendi visibile il pannello informativo
-        macroDistributionInfo.style.display = 'block';
-
-        // Definizione dei testi informativi per tipo di dieta
-        const dietaTexts = {
-            fat_loss: "Questa dieta per dimagrimento prevede un alto apporto proteico per preservare la massa muscolare durante il deficit calorico.",
-            maintenance: "Questa dieta di mantenimento prevede una distribuzione bilanciata dei macronutrienti per mantenere il peso attuale.",
-            muscle_gain: "Questa dieta per aumento massa prevede un surplus calorico con alto apporto proteico per favorire la crescita muscolare.",
-            performance: "Questa dieta per performance atletica è ottimizzata con carboidrati adeguati per l'energia e proteine per il recupero muscolare.",
-            keto: "La dieta chetogenica prevede un bassissimo apporto di carboidrati per indurre la chetosi, con alta percentuale di grassi e moderata di proteine.",
-            low_carb: "La dieta low-carb riduce significativamente i carboidrati a favore di proteine e grassi, utile per controllo glicemico e peso.",
-            balanced: "La dieta bilanciata segue le linee guida nutrizionali standard con una distribuzione equilibrata tra carboidrati, proteine e grassi.",
-            mediterranean: "La dieta mediterranea privilegia carboidrati complessi, grassi salutari (olio d'oliva) e proteine magre, con benefici per la salute."
-        };
-
-        // Aggiorna il testo principale
-        macroDistributionText.textContent = dietaTexts[dietaType] || dietaTexts.balanced;
-
-        // Aggiorna le informazioni specifiche sui macronutrienti
-        if (proteinInfo) {
-            proteinInfo.textContent = `${results.proteinPercentage}% (${results.proteine}g - ${results.proteinCalories} kcal)`;
-        }
-
-        if (carbInfo) {
-            carbInfo.textContent = `${results.carbPercentage}% (${results.carboidrati}g - ${results.carbCalories} kcal)`;
-        }
-
-        if (fatInfo) {
-            fatInfo.textContent = `${results.fatPercentage}% (${results.grassi}g - ${results.fatCalories} kcal)`;
-        }
-
-        // Aggiungi il testo sulla densità calorica per ogni macronutriente
-        const macroCalorieInfo = safeGetElement('macro_calorie_info');
-        if (macroCalorieInfo) {
-            macroCalorieInfo.textContent = "Proteine: 4 kcal/g • Carboidrati: 4 kcal/g • Grassi: 9 kcal/g";
-        }
     }
 
     synchronizeFields() {
