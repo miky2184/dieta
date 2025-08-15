@@ -793,7 +793,10 @@ class FormManager {
           ['peso_ideale',         'peso_ideale_hidden'],
           ['peso_target',         'peso_target_hidden'],
           ['calorie_giornaliere', 'calorie_giornaliere_hidden'],
-          ['settimane_dieta',     'settimane_dieta_hidden']
+          ['settimane_dieta',     'settimane_dieta_hidden'],
+          ['carboidrati',         'carboidrati_hidden'],
+          ['proteine',            'proteine_hidden'],
+          ['grassi',              'grassi_hidden'],
         ];
 
         // chiavi numeriche obbligatorie per cui usiamo fallback "0" se hidden vuoto
@@ -1022,15 +1025,15 @@ class FormManager {
 
         const carboidratiVisible = document.getElementById('carboidrati_input');
         const carboidratiHidden = document.getElementById('carboidrati_hidden');
-        carboidratiHidden.value = carboidratiVisible.value;
+        carboidratiHidden.value = carboidratiVisible.textContent;
 
         const proteineVisible = document.getElementById('proteine_input');
         const proteineHidden = document.getElementById('proteine_hidden');
-        proteineHidden.value = proteineVisible.value;
+        proteineHidden.value = proteineVisible.textContent;
 
         const grassiVisible = document.getElementById('grassi_input');
         const grassiHidden = document.getElementById('grassi_hidden');
-        grassiHidden.value = grassiVisible.value;
+        grassiHidden.value = grassiVisible.textContent;
     }
 
 
