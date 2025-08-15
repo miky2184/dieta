@@ -968,6 +968,38 @@ class FormManager {
           if (el && el.value !== '') fd.set(k, el.value);
         });
 
+                // 1) Mappa di campi "visivi" -> "hidden" che contengono i numeri reali
+        const mirrorPairs = [
+          ['bmi', 'bmi_hidden'],
+          ['peso_ideale', 'peso_ideale_hidden'],
+          ['meta_basale', 'meta_basale_hidden'],
+          ['meta_giornaliero', 'meta_giornaliero_hidden'],
+          ['calorie_giornaliere', 'calorie_giornaliere_hidden'],
+          ['settimane_dieta', 'settimane_dieta_hidden'],
+          ['carboidrati', 'carboidrati_hidden'],
+          ['proteine', 'proteine_hidden'],
+          ['grassi', 'grassi_hidden']
+        ];
+
+        // helper: prendi valore numerico dall’hidden, se valido sostituisci
+        const pickHidden = (nameVisible, idHidden) => {
+          const hiddenEl = document.getElementById(idHidden);
+          if (!hiddenEl) return;
+          let v = hiddenEl.value ?? hiddenEl.textContent ?? '';
+          v = (v + '').replace(',', '.').trim(); // normalizza decimali
+          if (v !== '' && v !== 'undefined' && !isNaN(parseFloat(v))) {
+            fd.set(nameVisible, v);
+          } else {
+            // se è spazzatura, non inviare quel campo
+            fd.delete(nameVisible);
+          }
+        };
+
+        mirrorPairs.forEach(([vis, hid]) => {
+          // se il form ha quel name, prova a rimpiazzarlo
+          if (fd.has(vis)) pickHidden(vis, hid);
+        });
+
         // invio
         const response = await fetch('/salva_dati', { method: 'POST', body: fd });
 
