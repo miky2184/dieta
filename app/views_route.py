@@ -242,14 +242,27 @@ def salva_dati():
         return redirect(url_for('views.dashboard'))
 
     except SQLAlchemyError as db_err:
-        print({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)})
-        return jsonify({'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}), 500
+        error_msg = {'status': 'error', 'message': 'Errore di database.', 'details': str(db_err)}
+        print(f"❌ SQLAlchemyError: {error_msg}")
+        print("========== FINE SALVA DATI (CON ERRORE) ==========")
+        return jsonify(error_msg), 500
     except KeyError as key_err:
-        print({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'})
-        return jsonify({'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}), 400
+        error_msg = {'status': 'error', 'message': f'Chiave mancante: {str(key_err)}'}
+        print(f"❌ KeyError: {error_msg}")
+        print("========== FINE SALVA DATI (CON ERRORE) ==========")
+        return jsonify(error_msg), 400
+    except ValueError as val_err:
+        error_msg = {'status': 'error', 'message': f'Errore di valore: {str(val_err)}'}
+        print(f"❌ ValueError: {error_msg}")
+        print("========== FINE SALVA DATI (CON ERRORE) ==========")
+        return jsonify(error_msg), 400
     except Exception as e:
-        print({'status': 'error', 'message': str(e)})
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        error_msg = {'status': 'error', 'message': str(e)}
+        print(f"❌ Exception: {error_msg}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        print("========== FINE SALVA DATI (CON ERRORE) ==========")
+        return jsonify(error_msg), 500
 
 
 @views.route('/get_peso_data', methods=['GET'])
