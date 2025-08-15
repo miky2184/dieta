@@ -210,7 +210,7 @@ def salva_dati():
             settimane_dieta=settimane_dieta,
             training_frequency=training_frequency,
             training_type=training_type,
-            daily_steps=daily_steps
+            #daily_steps=daily_steps
         )
 
         return redirect(url_for('views.dashboard'))
