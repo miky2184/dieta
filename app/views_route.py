@@ -214,9 +214,6 @@ def salva_dati():
         sleep_quality      = opt('sleep_quality', str, default=None)
         daily_steps        = opt('daily_steps', int, default=None)
 
-        # Puoi inviarli come stringa JSON o CSV
-        extra_factors_raw  = opt('extra_factors', str, default=None)
-
         # Salvataggio (aggiorna la firma della funzione e il model)
         salva_utente_dieta(
             utente_id=user_id,
@@ -239,8 +236,7 @@ def salva_dati():
             training_frequency=training_frequency,
             training_type=training_type,
             sleep_quality=sleep_quality,
-            daily_steps=daily_steps,
-            extra_factors=extra_factors_raw
+            daily_steps=daily_steps
         )
 
         return redirect(url_for('views.dashboard'))
