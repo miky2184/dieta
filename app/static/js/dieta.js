@@ -748,6 +748,44 @@ class FormManager {
         animate();
     }
 
+    updateMacroPercentages(protGrams, carbGrams, fatGrams, totalCalories) {
+      // Calcola calorie per ogni macronutriente
+      const protCals = protGrams * 4;
+      const carbCals = carbGrams * 4;
+      const fatCals = fatGrams * 9;
+
+      // Calcola percentuali
+      const protPerc = (protCals / totalCalories) * 100;
+      const carbPerc = (carbCals / totalCalories) * 100;
+      const fatPerc = (fatCals / totalCalories) * 100;
+
+      // Aggiorna testo calorie
+      document.getElementById('prot_kcal').textContent = Math.round(protCals);
+      document.getElementById('carbo_kcal').textContent = Math.round(carbCals);
+      document.getElementById('grassi_kcal').textContent = Math.round(fatCals);
+
+      // Aggiorna percentuali nei badge
+      document.getElementById('protein_percentage').textContent = Math.round(protPerc) + '%';
+      document.getElementById('carbo_percentage').textContent = Math.round(carbPerc) + '%';
+      document.getElementById('fat_percentage').textContent = Math.round(fatPerc) + '%';
+
+      // Aggiorna barra di progresso
+      const protProgress = document.getElementById('protein_progress');
+      const carbProgress = document.getElementById('carb_progress');
+      const fatProgress = document.getElementById('fat_progress');
+
+      if (protProgress && carbProgress && fatProgress) {
+        protProgress.style.width = protPerc + '%';
+        carbProgress.style.width = carbPerc + '%';
+        fatProgress.style.width = fatPerc + '%';
+
+        // Aggiorna testi percentuali nella barra
+        document.getElementById('protein_progress_perc').textContent = Math.round(protPerc) + '%';
+        document.getElementById('carb_progress_perc').textContent = Math.round(carbPerc) + '%';
+        document.getElementById('fat_progress_perc').textContent = Math.round(fatPerc) + '%';
+      }
+    }
+
     addWeeksToDate(weeks) {
         const date = new Date();
         date.setDate(date.getDate() + (weeks * 7));
