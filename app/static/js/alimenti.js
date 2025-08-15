@@ -326,7 +326,7 @@ function filterAlimentiTable() {
 
         // Ottieni i mesi di stagionalità dell'alimento
         const stagionalitaCell = Array.from(
-            cells[9].querySelectorAll('.btn-primary')
+            cells[11].querySelectorAll('.btn-primary')
         ).map(button => parseInt(button.getAttribute('data-month')));
 
         const calorieMatch = calorieCell >= calorieMin && calorieCell <= calorieMax;
