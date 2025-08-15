@@ -240,32 +240,6 @@
                                 </div>
                                 <input type="hidden" name="peso_target" id="peso_target_hidden">
                             </div>
-
-                            <!-- Aggiunta di alcuni fattori aggiuntivi -->
-                            <div class="mt-3">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <label class="form-label small mb-0">Livello di Stress</label>
-                                        <div class="btn-group btn-group-sm" role="group">
-                                            <input type="radio" class="btn-check" name="stress_level" id="stress_low" value="low">
-                                            <label class="btn btn-outline-success btn-sm" for="stress_low">Basso</label>
-                                            <input type="radio" class="btn-check" name="stress_level" id="stress_medium" value="medium" checked>
-                                            <label class="btn btn-outline-warning btn-sm" for="stress_medium">Medio</label>
-                                            <input type="radio" class="btn-check" name="stress_level" id="stress_high" value="high">
-                                            <label class="btn btn-outline-danger btn-sm" for="stress_high">Alto</label>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label class="form-label small mb-0">Ore di Sonno</label>
-                                        <div class="input-group input-group-sm">
-                                            <input type="number" class="form-control form-control-sm" id="sleep_hours" name="sleep_hours"
-                                                   min="4" max="12" step="0.5" value="7" style="width: 60px">
-                                            <span class="input-group-text">h</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
 
@@ -353,29 +327,6 @@
                                         </div>
                                         <input type="hidden" name="grassi" id="grassi_hidden">
                                     </div>
-                                </div>
-                            </div>
-
-                            <!-- Barra percentuali macronutrienti -->
-                            <div class="mt-3">
-                                <div class="progress" style="height: 25px;">
-                                    <div class="progress-bar bg-warning" id="carb_progress" role="progressbar"
-                                         style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                                        <span id="carb_progress_text">Carboidrati</span>
-                                    </div>
-                                    <div class="progress-bar bg-danger" id="protein_progress" role="progressbar"
-                                         style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                                        <span id="protein_progress_text">Proteine</span>
-                                    </div>
-                                    <div class="progress-bar bg-success" id="fat_progress" role="progressbar"
-                                         style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                                        <span id="fat_progress_text">Grassi</span>
-                                    </div>
-                                </div>
-                                <div class="d-flex justify-content-between mt-1 small text-muted">
-                                    <div>Carboidrati <span id="carb_progress_perc">0%</span></div>
-                                    <div>Proteine <span id="protein_progress_perc">0%</span></div>
-                                    <div>Grassi <span id="fat_progress_perc">0%</span></div>
                                 </div>
                             </div>
                         </div>
