@@ -346,45 +346,6 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<!-- Script per debug e inizializzazione -->
-<script>
-console.log('🚀 Caricamento script dieta...');
-
-// Attendi che il DOM sia completamente caricato
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('📄 DOM Ready - Verifica elementi...');
-
-    // Verifica presenza elementi chiave
-    const checks = {
-        'form': document.getElementById('personalInfoForm'),
-        'peso': document.querySelector('[name="peso"]'),
-        'altezza': document.querySelector('[name="altezza"]'),
-        'tdee': document.getElementById('tdee'),
-        'dieta': document.getElementById('dieta'),
-        'deficit_calorico': document.getElementById('deficit_calorico'),
-        'bmi': document.getElementById('bmi'),
-        'calorie_giornaliere': document.getElementById('calorie_giornaliere')
-    };
-
-    for (let [key, element] of Object.entries(checks)) {
-        console.log(`${element ? '✅' : '❌'} ${key}: ${element ? 'trovato' : 'NON TROVATO'}`);
-    }
-
-    // Inizializza attivita_fisica in base a tdee
-    const tdeeSelect = document.getElementById('tdee');
-    const attivitaInput = document.getElementById('attivita_fisica');
-
-    if (tdeeSelect && attivitaInput) {
-        // Inizializza al caricamento
-        attivitaInput.value = tdeeSelect.value || '';
-
-        // Aggiorna quando cambia
-        tdeeSelect.addEventListener('change', () => {
-            attivitaInput.value = tdeeSelect.value || '';
-        });
-    }
-});
-</script>
 
 <!-- Carica il file dieta.js -->
 <script src="{{ url_for('static', filename='js/dieta.js') }}?v={{ range(1000, 9999) | random }}"></script>

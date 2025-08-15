@@ -30,7 +30,6 @@ class Utente(db.Model):
     grassi = db.Column(db.Integer, nullable=True)
     email = db.Column(db.String, nullable=False)
     dieta = db.Column(db.String, nullable=True)
-    attivita_fisica = db.Column(db.String(255), nullable=True)
     sale = db.Column(db.Integer, nullable=True)
     peso_target = db.Column(db.Numeric(5, 2), nullable=True)
 

@@ -159,7 +159,7 @@ def submit_weight():
 def salva_dati():
     """
     Salva i dati dieta dell'utente.
-    - Obbligatori (input utente): nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, dieta, attivita_fisica
+    - Obbligatori (input utente): nome, cognome, sesso, eta, altezza, peso, tdee, deficit_calorico, dieta
     - Obbligatori (derivati front-end, usati altrove): calorie_giornaliere, carboidrati, proteine, grassi
     - Opzionali (stile di vita): training_frequency, training_type, sleep_quality, daily_steps, extra_factors
     """
