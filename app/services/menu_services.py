@@ -1063,16 +1063,14 @@ def salva_utente_dieta(
     ).delete()
 
     # Calcola la data di fine dieta
-    match = re.match(r"^(.*?)\s*\(", settimane_dieta)
+    #match = re.match(r"^(.*?)\s*\(", settimane_dieta)
     oggi = datetime.now().date()
     giorni_indietro = (oggi.weekday() - 0) % 7
     lunedi_corrente = oggi - timedelta(days=giorni_indietro)
 
-    settimane = 0
-    if match:
-        settimane = int(match.group(1))
+    settimane = int(settimane_dieta)
 
-    data_fine_dieta = lunedi_corrente + (timedelta(days=7 * settimane))
+    data_fine_dieta = lunedi_corrente + (timedelta(days=7 * int(settimane)))
 
     # Calcola la perdita di peso settimanale
     peso_iniziale = record.peso
