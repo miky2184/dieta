@@ -212,7 +212,7 @@ def salva_dati():
         training_frequency = opt('training_frequency', str, default='none')
         training_type      = opt('training_type', str, default='none')
         sleep_quality      = opt('sleep_quality', str, default=None)
-        daily_steps        = opt('daily_steps', int, default=None)
+        daily_steps        = opt('daily_steps', str, default=None)
 
         # Salvataggio (aggiorna la firma della funzione e il model)
         salva_utente_dieta(

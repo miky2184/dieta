@@ -38,8 +38,7 @@ class Utente(db.Model):
     training_frequency = db.Column(db.String(16))
     training_type = db.Column(db.String(16))
     sleep_quality = db.Column(db.String(16))
-    daily_steps = db.Column(db.Integer)
-    extra_factors = db.Column(db.Text)  # JSON/CSV opzionale
+    daily_steps = db.Column(db.String(16))
 
     updated_at = db.Column(db.DateTime, server_default=func.now(), onupdate=func.now())
 
