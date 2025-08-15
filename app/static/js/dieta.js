@@ -1000,28 +1000,28 @@ class FormManager {
         // Copia i valori dai campi visibili/disabilitati ai campi nascosti
         const bmiVisible = document.getElementById('bmi');
         const bmiHidden = document.getElementById('bmi_hidden');
-        bmiHidden.value = bmiVisible.value;
+        bmiHidden.value = bmiVisible.textContent;
 
         const pesoIdealeVisible = document.getElementById('peso_ideale');
         const pesoIdealeHidden = document.getElementById('peso_ideale_hidden');
-        pesoIdealeHidden.value = pesoIdealeVisible.value;
+        pesoIdealeHidden.value = pesoIdealeVisible.textContent;
 
         // Aggiungi altre sincronizzazioni qui
         const metaBasaleVisible = document.getElementById('meta_basale');
         const metaBasaleHidden = document.getElementById('meta_basale_hidden');
-        metaBasaleHidden.value = metaBasaleVisible.value;
+        metaBasaleHidden.value = metaBasaleVisible.textContent;
 
         const metaGiornalieroVisible = document.getElementById('meta_giornaliero');
         const metaGiornalieroHidden = document.getElementById('meta_giornaliero_hidden');
-        metaGiornalieroHidden.value = metaGiornalieroVisible.value;
+        metaGiornalieroHidden.value = metaGiornalieroVisible.textContent;
 
         const calorieGiornaliereVisible = document.getElementById('calorie_giornaliere');
         const calorieGiornaliereHidden = document.getElementById('calorie_giornaliere_hidden');
-        calorieGiornaliereHidden.value = calorieGiornaliereVisible.value;
+        calorieGiornaliereHidden.value = calorieGiornaliereVisible.textContent;
 
         const settimaneDietaVisible = document.getElementById('settimane_dieta');
         const settimaneDietaHidden = document.getElementById('settimane_dieta_hidden');
-        settimaneDietaHidden.value = settimaneDietaVisible.value;
+        settimaneDietaHidden.value = settimaneDietaVisible.textContent.split('settimane')[0].trim();
 
         const carboidratiVisible = document.getElementById('carboidrati_input');
         const carboidratiHidden = document.getElementById('carboidrati_hidden');
