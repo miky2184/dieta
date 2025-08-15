@@ -1,108 +1,185 @@
-<!-- app/templates/alimenti.html -->
+<!-- app/templates/dieta.html REDESIGN -->
+{% extends "base.html" %}
+
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/alimenti.css') }}">
+{% endblock %}
+
+{% block content %}
 <div id="Alimenti" class="tabcontent">
     <div class="card">
-        <div class="card-body">
-            <table id="alimenti-table" class="table table-sm table-hover table-bordered">
-                <thead>
-                <tr>
-                    <th style="width:23%; text-align: center;" onclick="sortTable('alimenti-table', 0)">
-                        <button class="btn btn-secondary btn-sm" data-bs-toggle="modal"
-                                data-bs-target="#addFoodModal">Alimento +
-                        </button>
-                    </th>
-                    <th style="width:7%; text-align: center;" onclick="sortTable('alimenti-table', 1)">Kcal</th>
-                    <th style="width:7%; text-align: center;" onclick="sortTable('alimenti-table', 2)">Carbs</th>
-                    <th style="width:7%; text-align: center;" onclick="sortTable('alimenti-table', 3)">Prot</th>
-                    <th style="width:7%; text-align: center;" onclick="sortTable('alimenti-table', 4)">Fat</th>
-                    <th style="width:7%; text-align: center;" onclick="sortTable('alimenti-table', 5)">Fibre</th>
-                    <th style="width:7%; text-align: center;" onclick="sortTable('alimenti-table', 6)">Zucchero</th>
-                    <th style="width:7%; text-align: center;" onclick="sortTable('alimenti-table', 7)">Sale</th>
-                    <th style="width:10%; text-align: center;" onclick="sortTable('alimenti-table', 8)">Gruppo</th>
-                    <th style="width:5%; text-align: center;" onclick="sortTable('alimenti-table', 9)">Vegan</th>
-                    <th style="width:5%; text-align: center;" onclick="sortTable('alimenti-table', 10)">Surgelato</th>
-                    <th style="width:17%; text-align: center;" onclick="sortTable('alimenti-table', 11)">Stagionalità</th>
-                    <th style="width:5%; text-align: center;">Azioni</th>
-                </tr>
-                <tr>
-                    <th><input type="text" id="filter-nome-alimento" class="form-control form-control-sm"
-                               placeholder="Filtra per nome" onkeyup="filterAlimentiTable()"></th>
-                    <th><input type="number" id="filter-calorie-min" class="form-control form-control-sm"
-                               placeholder="Min" oninput="filterAlimentiTable()">
-                        <input type="number" id="filter-calorie-max" class="form-control form-control-sm"
-                               placeholder="Max" oninput="filterAlimentiTable()">
-                    </th>
-                    <th><input type="number" id="filter-carbo-min" class="form-control form-control-sm"
-                               placeholder="Min" oninput="filterAlimentiTable()">
-                        <input type="number" id="filter-carbo-max" class="form-control form-control-sm"
-                               placeholder="Max" oninput="filterAlimentiTable()">
-                    </th>
-                    <th><input type="number" id="filter-proteine-min" class="form-control form-control-sm"
-                               placeholder="Min" oninput="filterAlimentiTable()">
-                        <input type="number" id="filter-proteine-max" class="form-control form-control-sm"
-                               placeholder="Max" oninput="filterAlimentiTable()">
-                    </th>
-                    <th><input type="number" id="filter-grassi-min" class="form-control form-control-sm"
-                               placeholder="Min" oninput="filterAlimentiTable()">
-                        <input type="number" id="filter-grassi-max" class="form-control form-control-sm"
-                               placeholder="Max" oninput="filterAlimentiTable()">
-                    </th>
-                    <th><input type="number" id="filter-fibre-min" class="form-control form-control-sm"
-                               placeholder="Min" oninput="filterAlimentiTable()">
-                        <input type="number" id="filter-fibre-max" class="form-control form-control-sm"
-                               placeholder="Max" oninput="filterAlimentiTable()">
-                    </th>
-                    <th><input type="number" id="filter-zucchero-min" class="form-control form-control-sm"
-                               placeholder="Min" oninput="filterAlimentiTable()">
-                        <input type="number" id="filter-zucchero-max" class="form-control form-control-sm"
-                               placeholder="Max" oninput="filterAlimentiTable()">
-                    </th>
-                    <th><input type="number" id="filter-sale-min" class="form-control form-control-sm"
-                               placeholder="Min" oninput="filterAlimentiTable()">
-                        <input type="number" id="filter-sale-max" class="form-control form-control-sm"
-                               placeholder="Max" oninput="filterAlimentiTable()">
-                    </th>
-                    <th>
-                        <select id="filter-gruppo" class="form-select form-select-sm" onchange="filterAlimentiTable()">
-                            <option value="all"></option>
-                            <!-- Dinamicamente popolato dai gruppi -->
-                        </select>
-                    </th>
-                    <th><select id="filter-vegan" class="form-select form-select-sm" onchange="filterAlimentiTable()">
-                        <option value="all"></option>
-                        <option value="true">T</option>
-                        <option value="false">F</option>
-                    </select></th>
-                    <th><select id="filter-surgelato" class="form-select form-select-sm" onchange="filterAlimentiTable()">
-                        <option value="all"></option>
-                        <option value="true">T</option>
-                        <option value="false">F</option>
-                    </select></th>
-                    <th>
-                        <div class="month-filter-group">
-                            <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary" data-month="1">gen</button>
-                            <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary" data-month="2">feb</button>
-                            <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary" data-month="3">mar</button>
-                            <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary" data-month="4">apr</button>
-                            <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary" data-month="5">mag</button>
-                            <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary" data-month="6">giu</button>
-                            <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary" data-month="7">lug</button>
-                            <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary" data-month="8">ago</button>
-                            <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary" data-month="9">set</button>
-                            <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary" data-month="10">ott</button>
-                            <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary" data-month="11">nov</button>
-                            <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary" data-month="12">dic</button>
-                        </div>
-                    </th>
-                    <th style="text-align: center;">
-                        <button id="cleanFiltersBtn" class="btn btn-sm btn-secondary" onclick="cleanFiltersAlimenti()">
-                            Pulisci Filtri
-                        </button>
-                    </th>
-                </tr>
-                </thead>
-                <tbody id="alimenti-tbody">
-                </tbody>
-            </table>
+        <div class="card-body p-0">
+            <div class="table-container">
+                <table id="alimenti-table" class="table table-sm table-hover mb-0">
+                    <thead>
+                    <tr>
+                        <th class="col-nome" onclick="sortTable('alimenti-table', 0)">
+                            <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addFoodModal">
+                                <i class="fas fa-plus me-1"></i>Nuovo Alimento
+                            </button>
+                        </th>
+                        <th class="col-numeric" onclick="sortTable('alimenti-table', 1)">
+                            <i class="fas fa-fire me-1"></i>Kcal
+                        </th>
+                        <th class="col-numeric" onclick="sortTable('alimenti-table', 2)">
+                            <i class="fas fa-bread-slice me-1"></i>Carb
+                        </th>
+                        <th class="col-numeric" onclick="sortTable('alimenti-table', 3)">
+                            <i class="fas fa-drumstick-bite me-1"></i>Prot
+                        </th>
+                        <th class="col-numeric" onclick="sortTable('alimenti-table', 4)">
+                            <i class="fas fa-tint me-1"></i>Grassi
+                        </th>
+                        <th class="col-numeric" onclick="sortTable('alimenti-table', 5)">
+                            <i class="fas fa-seedling me-1"></i>Fibre
+                        </th>
+                        <th class="col-numeric" onclick="sortTable('alimenti-table', 6)">
+                            <i class="fas fa-candy-cane me-1"></i>Zucch
+                        </th>
+                        <th class="col-numeric" onclick="sortTable('alimenti-table', 7)">
+                            <i class="fas fa-prescription-bottle me-1"></i>Sale
+                        </th>
+                        <th class="col-gruppo" onclick="sortTable('alimenti-table', 8)">
+                            <i class="fas fa-tags me-1"></i>Gruppo
+                        </th>
+                        <th class="col-boolean" onclick="sortTable('alimenti-table', 9)">
+                            <i class="fas fa-leaf me-1"></i>Veg
+                        </th>
+                        <th class="col-boolean" onclick="sortTable('alimenti-table', 10)">
+                            <i class="fas fa-snowflake me-1"></i>Surg
+                        </th>
+                        <th class="col-stagionalita" onclick="sortTable('alimenti-table', 11)">
+                            <i class="fas fa-calendar-alt me-1"></i>Stagionalità
+                        </th>
+                        <th class="col-azioni">
+                            <i class="fas fa-cogs"></i>
+                        </th>
+                    </tr>
+                    <tr class="filter-row">
+                        <th>
+                            <input type="text" id="filter-nome-alimento" class="form-control form-control-sm"
+                                   placeholder="🔍 Nome alimento" onkeyup="filterAlimentiTable()">
+                        </th>
+                        <th>
+                            <div class="d-flex gap-1">
+                                <input type="number" id="filter-calorie-min" class="form-control form-control-sm"
+                                       placeholder="Min" oninput="filterAlimentiTable()">
+                                <input type="number" id="filter-calorie-max" class="form-control form-control-sm"
+                                       placeholder="Max" oninput="filterAlimentiTable()">
+                            </div>
+                        </th>
+                        <th>
+                            <div class="d-flex gap-1">
+                                <input type="number" id="filter-carbo-min" class="form-control form-control-sm"
+                                       placeholder="Min" oninput="filterAlimentiTable()">
+                                <input type="number" id="filter-carbo-max" class="form-control form-control-sm"
+                                       placeholder="Max" oninput="filterAlimentiTable()">
+                            </div>
+                        </th>
+                        <th>
+                            <div class="d-flex gap-1">
+                                <input type="number" id="filter-proteine-min" class="form-control form-control-sm"
+                                       placeholder="Min" oninput="filterAlimentiTable()">
+                                <input type="number" id="filter-proteine-max" class="form-control form-control-sm"
+                                       placeholder="Max" oninput="filterAlimentiTable()">
+                            </div>
+                        </th>
+                        <th>
+                            <div class="d-flex gap-1">
+                                <input type="number" id="filter-grassi-min" class="form-control form-control-sm"
+                                       placeholder="Min" oninput="filterAlimentiTable()">
+                                <input type="number" id="filter-grassi-max" class="form-control form-control-sm"
+                                       placeholder="Max" oninput="filterAlimentiTable()">
+                            </div>
+                        </th>
+                        <th>
+                            <div class="d-flex gap-1">
+                                <input type="number" id="filter-fibre-min" class="form-control form-control-sm"
+                                       placeholder="Min" oninput="filterAlimentiTable()">
+                                <input type="number" id="filter-fibre-max" class="form-control form-control-sm"
+                                       placeholder="Max" oninput="filterAlimentiTable()">
+                            </div>
+                        </th>
+                        <th>
+                            <div class="d-flex gap-1">
+                                <input type="number" id="filter-zucchero-min" class="form-control form-control-sm"
+                                       placeholder="Min" oninput="filterAlimentiTable()">
+                                <input type="number" id="filter-zucchero-max" class="form-control form-control-sm"
+                                       placeholder="Max" oninput="filterAlimentiTable()">
+                            </div>
+                        </th>
+                        <th>
+                            <div class="d-flex gap-1">
+                                <input type="number" id="filter-sale-min" class="form-control form-control-sm"
+                                       placeholder="Min" oninput="filterAlimentiTable()">
+                                <input type="number" id="filter-sale-max" class="form-control form-control-sm"
+                                       placeholder="Max" oninput="filterAlimentiTable()">
+                            </div>
+                        </th>
+                        <th>
+                            <select id="filter-gruppo" class="form-select form-select-sm" onchange="filterAlimentiTable()">
+                                <option value="all">Tutti</option>
+                                <!-- Dinamicamente popolato dai gruppi -->
+                            </select>
+                        </th>
+                        <th>
+                            <select id="filter-vegan" class="form-select form-select-sm" onchange="filterAlimentiTable()">
+                                <option value="all">Tutti</option>
+                                <option value="true">✓</option>
+                                <option value="false">✗</option>
+                            </select>
+                        </th>
+                        <th>
+                            <select id="filter-surgelato" class="form-select form-select-sm" onchange="filterAlimentiTable()">
+                                <option value="all">Tutti</option>
+                                <option value="true">✓</option>
+                                <option value="false">✗</option>
+                            </select>
+                        </th>
+                        <th>
+                            <div class="month-filter-group">
+                                <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary season-winter" data-month="1" title="Gennaio">G</button>
+                                <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary season-winter" data-month="2" title="Febbraio">F</button>
+                                <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary season-spring" data-month="3" title="Marzo">M</button>
+                                <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary season-spring" data-month="4" title="Aprile">A</button>
+                                <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary season-spring" data-month="5" title="Maggio">M</button>
+                                <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary season-summer" data-month="6" title="Giugno">G</button>
+                                <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary season-summer" data-month="7" title="Luglio">L</button>
+                                <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary season-summer" data-month="8" title="Agosto">A</button>
+                                <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary season-autumn" data-month="9" title="Settembre">S</button>
+                                <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary season-autumn" data-month="10" title="Ottobre">O</button>
+                                <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary season-autumn" data-month="11" title="Novembre">N</button>
+                                <button type="button" class="btn btn-sm month-filter-btn btn-outline-secondary season-winter" data-month="12" title="Dicembre">D</button>
+                            </div>
+                        </th>
+                        <th>
+                            <button id="cleanFiltersBtn" class="btn btn-sm btn-warning" onclick="cleanFiltersAlimenti()" title="Pulisci tutti i filtri">
+                                <i class="fas fa-broom"></i>
+                            </button>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody id="alimenti-tbody">
+                        <!-- Contenuto generato dinamicamente -->
+                        <tr>
+                            <td colspan="13" class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Caricamento...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Caricamento alimenti in corso...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+
+<!-- Carica il file dieta.js -->
+<script src="{{ url_for('static', filename='js/alimenti.js') }}?v={{ range(1000, 9999) | random }}"></script>
+
+{% endblock %}
