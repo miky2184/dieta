@@ -168,6 +168,7 @@ def salva_dati():
 
     try:
         altezza             = int(request.form['altezza'])
+        bmi                 = int(request.form['bmi'])
         calorie_giornaliere = int(request.form['calorie_giornaliere'])
         carboidrati         = float(request.form['carboidrati'])
         cognome             = request.form['cognome']
@@ -175,6 +176,8 @@ def salva_dati():
         dieta               = request.form['dieta']
         eta                 = int(request.form['eta'])
         grassi              = float(request.form['grassi'])
+        meta_basale         = request.form['meta_basale']
+        meta_giornaliero    = request.form['meta_giornaliero']
         nome                = request.form['nome']
         peso                = float(request.form['peso'])
         peso_ideale         = float(request.form['peso_ideale'])
@@ -185,7 +188,7 @@ def salva_dati():
         tdee_label          = request.form['tdee']
         training_frequency  = request.form['training_frequency']
         training_type       = request.form['training_type']
-        daily_steps         = request.form['daily_steps']
+        #daily_steps         = request.form['daily_steps']
 
         # Salvataggio (aggiorna la firma della funzione e il model)
         salva_utente_dieta(
