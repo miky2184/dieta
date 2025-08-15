@@ -852,38 +852,118 @@ class FormManager {
      * per includere l'aggiornamento della barra di progresso
      */
     calculate() {
-        if (!this.form) return;
+      // Raccogli valori input (assicurati che tutte queste proprietà esistano)
+      const sesso = this.form.elements.sesso.value;
+      const eta = parseFloat(this.form.elements.eta.value) || 0;
+      const altezza = parseFloat(this.form.elements.altezza.value) || 0;
+      const peso = parseFloat(this.form.elements.peso.value) || 0;
+      const tdee = this.form.elements.tdee.value;
+      const dieta = this.form.elements.dieta.value;
+      const deficitRaw = parseFloat(this.form.elements.deficit_calorico.value) || 0;
 
-        showProgress();
+      // NUOVO: Assicurati che attivita_fisica sia valorizzato
+      const attivitaEl = document.getElementById('attivita_fisica');
+      if (attivitaEl) attivitaEl.value = tdee;
 
-        const formData = this.getFormData();
-        if (!this.isDataComplete(formData)) {
-            hideProgress();
-            return;
-        }
+      // Calcola BMI
+      const bmi = peso / ((altezza / 100) ** 2);
+      document.getElementById('bmi').textContent = bmi.toFixed(1);
+      document.getElementById('bmi_hidden').value = bmi.toFixed(1);
 
-        try {
-            // Esegui i calcoli
-            const results = this.performCalculations(formData);
+      // Calcola peso ideale
+      let pesoIdeale;
+      if (sesso === 'M') {
+        pesoIdeale = (altezza - 100) - ((altezza - 150) / 4);
+      } else {
+        pesoIdeale = (altezza - 100) - ((altezza - 150) / 2);
+      }
+      document.getElementById('peso_ideale').textContent = pesoIdeale.toFixed(1);
+      document.getElementById('peso_ideale_hidden').value = pesoIdeale.toFixed(1);
 
-            // Aggiorna l'interfaccia utente
-            this.updateUI(results);
+      // Calcola metabolismo basale
+      let mb;
+      if (sesso === 'M') {
+        mb = 10 * peso + 6.25 * altezza - 5 * eta + 5;
+      } else {
+        mb = 10 * peso + 6.25 * altezza - 5 * eta - 161;
+      }
+      document.getElementById('meta_basale').textContent = Math.round(mb);
+      document.getElementById('meta_basale_hidden').value = Math.round(mb);
 
-            // Aggiorna la barra di progresso dei macronutrienti
-            this.updateMacroProgressBar(results);
+      // Calcola TDEE
+      let tdeeMultiplier = 1.2;
+      switch (tdee) {
+        case 'sedentary': tdeeMultiplier = 1.2; break;
+        case 'light': tdeeMultiplier = 1.375; break;
+        case 'moderate': tdeeMultiplier = 1.55; break;
+        case 'high': tdeeMultiplier = 1.725; break;
+      }
+      const tdeeValue = Math.round(mb * tdeeMultiplier);
+      document.getElementById('meta_giornaliero').textContent = tdeeValue;
+      document.getElementById('meta_giornaliero_hidden').value = tdeeValue;
 
-            // NUOVO: Aggiorna le informazioni sui macronutrienti
-            this.updateMacroInfo(results, formData.dieta);
+      // Calcola calorie giornaliere
+      let calorieTarget = tdeeValue;
+      if (dieta === 'fat_loss') {
+        calorieTarget = Math.round(tdeeValue * (1 + deficitRaw));
+      } else if (dieta === 'muscle_gain') {
+        calorieTarget = Math.round(tdeeValue * (1 + Math.abs(deficitRaw)));
+      }
+      document.getElementById('calorie_giornaliere').textContent = calorieTarget;
+      document.getElementById('calorie_giornaliere_hidden').value = calorieTarget;
 
-            // Sincronizza i campi nascosti
-            this.synchronizeFields();
+      // Calcola macronutrienti
+      let protPerKg = 1.6; // default per perdita peso
+      let carbPerc = 0.45; // default (45% carb, 25% protein, 30% fat)
+      let fatPerc = 0.3;
 
+      if (dieta === 'muscle_gain') {
+        protPerKg = 2.0;
+        carbPerc = 0.5;
+        fatPerc = 0.25;
+      } else if (dieta === 'maintenance') {
+        protPerKg = 1.4;
+        carbPerc = 0.45;
+        fatPerc = 0.3;
+      }
 
-            hideProgress();
-        } catch (error) {
-            console.error('Errore durante il calcolo:', error);
-            hideProgress();
-        }
+      // Calcola grammi di proteine
+      const protGrams = Math.round(peso * protPerKg);
+      document.getElementById('proteine_input').textContent = protGrams;
+      document.getElementById('proteine_hidden').value = protGrams;
+
+      // Calcola grammi di grassi
+      const fatCals = calorieTarget * fatPerc;
+      const fatGrams = Math.round(fatCals / 9);
+      document.getElementById('grassi_input').textContent = fatGrams;
+      document.getElementById('grassi_hidden').value = fatGrams;
+
+      // Calcola grammi di carboidrati
+      const protCals = protGrams * 4;
+      const remainingCals = calorieTarget - protCals - fatCals;
+      const carbGrams = Math.round(remainingCals / 4);
+      document.getElementById('carboidrati_input').textContent = carbGrams;
+      document.getElementById('carboidrati_hidden').value = carbGrams;
+
+      // Calcola durata dieta (settimane)
+      let settimane = 0;
+      const pesoTarget = parseFloat(document.getElementById('peso_target_hidden').value) || peso;
+      const kgDaPerdereSett = 0.5; // kg per settimana
+
+      if (dieta === 'fat_loss' && pesoTarget < peso) {
+        settimane = Math.ceil((peso - pesoTarget) / kgDaPerdereSett);
+      } else if (dieta === 'muscle_gain' && pesoTarget > peso) {
+        // guadagno massa più lento della perdita
+        settimane = Math.ceil((pesoTarget - peso) / 0.25);
+      }
+
+      // Assicurati che settimane_dieta abbia sempre un valore
+      document.getElementById('settimane_dieta').textContent = settimane > 0 ?
+        `${settimane} settimane` : 'N/A';
+      document.getElementById('settimane_dieta_hidden').value = settimane;
+
+      // Aggiorna percentuali macronutrienti
+      this.updateMacroPercentages(protGrams, carbGrams, fatGrams, calorieTarget);
     }
 
     validateField(element) {
@@ -941,6 +1021,8 @@ class FormManager {
       // 1) Forza calcolo e attendi un frame per aggiornare hidden
       this.calculate();
       await new Promise(r => requestAnimationFrame(r));
+      // Aggiungi un altro delay per sicurezza
+      await new Promise(r => setTimeout(r, 100));
 
       const submitBtn = this.form.querySelector('[type="submit"]');
       if (submitBtn) submitBtn.disabled = true;
@@ -949,16 +1031,53 @@ class FormManager {
       try {
         const fd = new FormData(this.form);
 
-        // Rimuovi derivati che NON vogliamo più mandare (teniamo settimane_dieta perché la vuoi salvare)
-        ['bmi','peso_ideale','meta_basale','meta_giornaliero'].forEach(k => fd.delete(k));
-
         // Assicura sempre le chiavi richieste dal BE
         const requiredKeys = [
-          'nome','cognome','sesso','eta','altezza','peso',
-          'tdee','deficit_calorico','dieta','attivita_fisica',
-          'calorie_giornaliere','carboidrati','proteine','grassi','settimane_dieta'
+          'nome', 'cognome', 'sesso', 'eta', 'altezza', 'peso',
+          'tdee', 'deficit_calorico', 'dieta', 'attivita_fisica',
+          'calorie_giornaliere', 'carboidrati', 'proteine', 'grassi',
+          'settimane_dieta', 'peso_target'
         ];
-        requiredKeys.forEach(k => { if (!fd.has(k)) fd.set(k, ''); });
+
+        // Verifica se mancano campi critici
+        const missing = [];
+        requiredKeys.forEach(k => {
+          if (!fd.has(k) || !fd.get(k) || fd.get(k) === '' ||
+              fd.get(k) === 'undefined' || fd.get(k) === 'null') {
+            missing.push(k);
+          }
+        });
+
+        if (missing.length > 0) {
+          console.error('Campi mancanti:', missing);
+
+          // Copia valori dai campi hidden ai campi mancanti
+          const hiddenMapping = {
+            'calorie_giornaliere': 'calorie_giornaliere_hidden',
+            'carboidrati': 'carboidrati_hidden',
+            'proteine': 'proteine_hidden',
+            'grassi': 'grassi_hidden',
+            'settimane_dieta': 'settimane_dieta_hidden',
+            'peso_target': 'peso_target_hidden'
+          };
+
+          missing.forEach(k => {
+            if (hiddenMapping[k]) {
+              const hiddenEl = document.getElementById(hiddenMapping[k]);
+              if (hiddenEl) {
+                const v = hiddenEl.value || hiddenEl.textContent || '0';
+                fd.set(k, v);
+                console.log(`Recuperato ${k} da ${hiddenMapping[k]}: ${v}`);
+              } else {
+                fd.set(k, '0'); // Fallback a 0 per campi numerici
+              }
+            } else if (k === 'attivita_fisica') {
+              fd.set(k, fd.get('tdee') || 'sedentary');
+            } else {
+              fd.set(k, ''); // Fallback a stringa vuota
+            }
+          });
+        }
 
         // 2) Mappa visivo->hidden (prende i numeri reali)
         const mirrorPairs = [
@@ -967,15 +1086,15 @@ class FormManager {
           ['carboidrati',         'carboidrati_hidden'],
           ['proteine',            'proteine_hidden'],
           ['grassi',              'grassi_hidden'],
-          // opzionali: se li stai ancora tenendo
-          ['bmi',                 'bmi_hidden'],
-          ['peso_ideale',         'peso_ideale_hidden'],
-          ['meta_basale',         'meta_basale_hidden'],
-          ['meta_giornaliero',    'meta_giornaliero_hidden']
+          ['peso_target',         'peso_target_hidden']
         ];
 
         // chiavi numeriche obbligatorie per cui usiamo fallback "0" se hidden vuoto
-        const numericRequired = new Set(['eta','altezza','peso','deficit_calorico','calorie_giornaliere','carboidrati','proteine','grassi','settimane_dieta']);
+        const numericRequired = new Set([
+          'eta', 'altezza', 'peso', 'deficit_calorico',
+          'calorie_giornaliere', 'carboidrati', 'proteine', 'grassi',
+          'settimane_dieta', 'peso_target'
+        ]);
 
         const pickHidden = (nameVisible, idHidden) => {
           const hiddenEl = document.getElementById(idHidden);
@@ -992,11 +1111,16 @@ class FormManager {
         };
 
         // prima normalizza i required testuali vuoti, poi applica hidden
-        mirrorPairs.forEach(([vis, hid]) => { if (fd.has(vis)) pickHidden(vis, hid); });
+        mirrorPairs.forEach(([vis, hid]) => { pickHidden(vis, hid); });
 
         // 3) Normalizza numerici (stringhe -> numeri), senza eliminare le chiavi
-        ['eta','altezza','peso','deficit_calorico','calorie_giornaliere','carboidrati','proteine','grassi','settimane_dieta']
-          .forEach(k => { if (fd.has(k)) fd.set(k, (fd.get(k)+'').replace(',', '.').trim() || '0'); });
+        [
+          'eta', 'altezza', 'peso', 'deficit_calorico',
+          'calorie_giornaliere', 'carboidrati', 'proteine', 'grassi',
+          'settimane_dieta', 'peso_target'
+        ].forEach(k => {
+          if (fd.has(k)) fd.set(k, (fd.get(k)+'').replace(',', '.').trim() || '0');
+        });
 
         // 4) daily_steps deve essere numero: se non lo è, rimuovi
         if (fd.has('daily_steps')) {
@@ -1006,13 +1130,16 @@ class FormManager {
 
         // 5) attivita_fisica: se vuota, usa tdee come fallback
         const att = (fd.get('attivita_fisica') || '').trim();
-        if (!att) fd.set('attivita_fisica', (fd.get('tdee') || '').trim());
+        if (!att) fd.set('attivita_fisica', (fd.get('tdee') || '').trim() || 'sedentary');
 
         // 6) Lifestyle opzionali: aggiungi se presenti nel form
         ['training_frequency','training_type','sleep_quality','extra_factors'].forEach(k => {
           const el = this.form.elements[k];
           if (el && el.value !== '') fd.set(k, el.value);
         });
+
+        // Log finale per debug
+        console.log('FORM DATA FINALE:', Object.fromEntries(fd.entries()));
 
         // INVIO
         const response = await fetch('/salva_dati', { method: 'POST', body: fd });
@@ -1029,6 +1156,7 @@ class FormManager {
             if (data?.message) msg = data.message;
           } catch(_) {}
           showFeedbackModal('Errore', msg);
+          console.error('Risposta errore:', msg);
         }
       } catch (err) {
         console.error('Errore:', err);
@@ -1038,7 +1166,6 @@ class FormManager {
         hideProgress();
       }
     }
-
     updateWeightDifference() {
         const pesoInput = this.form?.elements['peso'];
         const slider = safeGetElement('peso_target_slider');
