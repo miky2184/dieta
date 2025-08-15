@@ -439,7 +439,6 @@ class FormManager {
     initDietaChangeListener() {
         const dietaSelect = this.form.elements['dieta'];
         const deficitSelect = this.form.elements['deficit_calorico'];
-        const dietaInfo = safeGetElement('dieta_info');
 
         if (!dietaSelect || !deficitSelect) return;
 
@@ -471,11 +470,6 @@ class FormManager {
 
         dietaSelect.addEventListener('change', () => {
             const goal = dietaSelect.value;
-
-            // Aggiorna la descrizione della dieta
-            if (dietaInfo) {
-                dietaInfo.textContent = dietaDescriptions[goal] || '';
-            }
 
             // Svuota le opzioni esistenti
             deficitSelect.innerHTML = '';
