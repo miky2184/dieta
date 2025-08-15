@@ -299,11 +299,11 @@ function filterAlimentiTable() {
     const excludeMonths = [];
     monthButtons.forEach(button => {
         const month = parseInt(button.getAttribute('data-month'));
-        if (button.classList.contains('btn-primary')) {
+        if (button.classList.contains('btn-outline-secondary')) {
             includeMonths.push(month);
-        } else if (button.classList.contains('btn-danger')) {
+        } /*else if (button.classList.contains('btn-danger')) {
             excludeMonths.push(month);
-        }
+        }*/
     });
 
     const table = document.getElementById('alimenti-table').querySelector('tbody');
