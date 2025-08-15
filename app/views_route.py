@@ -168,7 +168,7 @@ def salva_dati():
 
     try:
         altezza             = int(request.form['altezza'])
-        bmi                 = int(request.form['bmi'])
+        bmi                 = float(request.form['bmi'])
         calorie_giornaliere = int(request.form['calorie_giornaliere'])
         carboidrati         = float(request.form['carboidrati'])
         cognome             = request.form['cognome']
