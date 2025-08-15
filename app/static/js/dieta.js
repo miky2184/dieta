@@ -442,37 +442,13 @@ class FormManager {
 
         if (!dietaSelect || !deficitSelect) return;
 
-        // Definizione delle descrizioni per ogni tipo di dieta
-        const dietaDescriptions = {
-            fat_loss: "Una dieta progettata per la perdita di grasso, con proteine elevate per preservare la massa muscolare.",
-            maintenance: "Una dieta bilanciata per mantenere il peso attuale.",
-            muscle_gain: "Una dieta con surplus calorico per favorire la crescita muscolare.",
-            performance: "Una dieta ottimizzata per le prestazioni atletiche, con maggiore apporto di carboidrati.",
-            keto: "Una dieta a bassissimo contenuto di carboidrati (5%), alta in grassi (75%) e moderata in proteine (20%).",
-            low_carb: "Una dieta a basso contenuto di carboidrati (25%), alta in proteine (35%) e grassi (40%).",
-            balanced: "Una dieta bilanciata con distribuzione classica: 55% carboidrati, 25% proteine, 20% grassi.",
-            mediterranean: "Una dieta mediterranea con 50% carboidrati, 20% proteine e 30% grassi di alta qualità."
-        };
-
-        // Aggiorna le opzioni del selettore dieta (se necessario)
-        if (dietaSelect.options.length < Object.keys(dietaDescriptions).length) {
-            dietaSelect.innerHTML = `
-                <option value="fat_loss">Dimagrimento</option>
-                <option value="maintenance">Mantenimento</option>
-                <option value="muscle_gain">Aumento massa muscolare</option>
-                <option value="performance">Performance atletica</option>
-                <option value="keto">Chetogenica</option>
-                <option value="low_carb">Low-Carb</option>
-                <option value="balanced">Bilanciata</option>
-                <option value="mediterranean">Mediterranea</option>
-            `;
-        }
-
         dietaSelect.addEventListener('change', () => {
             const goal = dietaSelect.value;
 
             // Svuota le opzioni esistenti
             deficitSelect.innerHTML = '';
+            // Mostra il selettore
+            deficitSelect.parentNode.style.display = '';
 
             // Aggiungi opzioni in base all'obiettivo
             if (goal === 'fat_loss') {
@@ -501,8 +477,6 @@ class FormManager {
                 deficitSelect.innerHTML = `
                     <option value="0" selected>Mantenimento (0%)</option>
                 `;
-                // Mostra il selettore
-                deficitSelect.parentNode.style.display = '';
             }
 
             // Ricalcola con il nuovo valore
@@ -555,33 +529,22 @@ class FormManager {
                data.dieta &&
                !isNaN(data.deficit_calorico);
 
-        console.log('Data completeness check:', {
-            sesso: !!data.sesso,
-            eta: !isNaN(data.eta) && data.eta > 0,
-            peso: !isNaN(data.peso) && data.peso > 0,
-            altezza: !isNaN(data.altezza) && data.altezza > 0,
-            tdee: !!data.tdee,
-            dieta: !!data.dieta,
-            deficit_calorico: !isNaN(data.deficit_calorico),
-            isComplete: isComplete
-        });
-
         return isComplete;
     }
 
     performCalculations(data) {
-        console.log('🧮 Performo calcoli con:', data);
+        //console.log('🧮 Performo calcoli con:', data);
 
         // 1. Calcolo BMI
         const bmi = NutritionCalculator.calculateBMI(data.peso, data.altezza);
         const bmiCategory = NutritionCalculator.getBMICategory(bmi);
         const idealWeight = NutritionCalculator.calculateIdealWeight(data.altezza);
 
-        console.log('BMI:', bmi, 'Categoria:', bmiCategory, 'Peso ideale:', idealWeight);
+        //console.log('BMI:', bmi, 'Categoria:', bmiCategory, 'Peso ideale:', idealWeight);
 
         // 2. Calcolo BMR
         const bmr = NutritionCalculator.calculateBMR(data);
-        console.log('BMR:', bmr);
+        //console.log('BMR:', bmr);
 
         // 3. Calcolo TDEE
         const baseMult = NutritionCalculator.getTDEEMultiplier(data.tdee);
@@ -593,11 +556,11 @@ class FormManager {
         });
         const tdeeMultiplier = +(baseMult * lifestyleAdj).toFixed(3);
         const tdee = Math.round(bmr * tdeeMultiplier);
-        console.log('TDEE:', tdee, '(BMR:', bmr, '× BaseMult:', baseMult, '× LifestyleAdj:', lifestyleAdj, '= Mult:', tdeeMultiplier, ')');
+        //console.log('TDEE:', tdee, '(BMR:', bmr, '× BaseMult:', baseMult, '× LifestyleAdj:', lifestyleAdj, '= Mult:', tdeeMultiplier, ')');
 
         // 4. Calcolo calorie target con variazione percentuale
         const targetCalories = NutritionCalculator.calcCaloriesTarget(tdee, data.dieta, data.deficit_calorico);
-        console.log('Calorie target:', targetCalories);
+        //console.log('Calorie target:', targetCalories);
 
         // 5. Calcolo macronutrienti
         // Usa attivita_fisica se presente, altrimenti usa tdee come fallback
@@ -613,7 +576,7 @@ class FormManager {
             activityForMacros,
             data.training_type || 'none'
         );
-        console.log('Macronutrienti:', macros);
+        //console.log('Macronutrienti:', macros);
 
         // 6. Calcolo settimane (se necessario)
         let weeks = 0;
@@ -1099,7 +1062,7 @@ class FormManager {
               if (hiddenEl) {
                 const v = hiddenEl.value || hiddenEl.textContent || '0';
                 fd.set(k, v);
-                console.log(`Recuperato ${k} da ${hiddenMapping[k]}: ${v}`);
+                //console.log(`Recuperato ${k} da ${hiddenMapping[k]}: ${v}`);
               } else {
                 fd.set(k, '0'); // Fallback a 0 per campi numerici
               }
@@ -1436,23 +1399,23 @@ class FormManager {
 
 // ============= INIZIALIZZAZIONE =============
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Inizializzazione FormManager...');
+    //console.log('Inizializzazione FormManager...');
 
     // Crea istanza del FormManager
     const formManager = new FormManager();
 
     // Esporta per uso globale
     window.formManager = formManager;
-    window.FormManager = FormManager;
+    //window.FormManager = FormManager;
     window.NutritionCalculator = NutritionCalculator;
 
     // Se ci sono dati utente preesistenti, caricali
     if (typeof userData !== 'undefined' && userData) {
-        console.log('Caricamento dati utente esistenti...');
+        //console.log('Caricamento dati utente esistenti...');
         formManager.loadUserData(userData);
     }
 
-    console.log('Inizializzazione completata!');
+    //console.log('Inizializzazione completata!');
 });
 
 // Funzione globale per ricalcolo (retrocompatibilità)
