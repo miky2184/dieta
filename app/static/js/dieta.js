@@ -554,44 +554,6 @@ class FormManager {
         animate();
     }
 
-    updateMacroPercentages(protGrams, carbGrams, fatGrams, totalCalories) {
-      // Calcola calorie per ogni macronutriente
-      const protCals = protGrams * 4;
-      const carbCals = carbGrams * 4;
-      const fatCals = fatGrams * 9;
-
-      // Calcola percentuali
-      const protPerc = (protCals / totalCalories) * 100;
-      const carbPerc = (carbCals / totalCalories) * 100;
-      const fatPerc = (fatCals / totalCalories) * 100;
-
-      // Aggiorna testo calorie
-      document.getElementById('prot_kcal').textContent = Math.round(protCals);
-      document.getElementById('carbo_kcal').textContent = Math.round(carbCals);
-      document.getElementById('grassi_kcal').textContent = Math.round(fatCals);
-
-      // Aggiorna percentuali nei badge
-      document.getElementById('protein_percentage').textContent = Math.round(protPerc) + '%';
-      document.getElementById('carbo_percentage').textContent = Math.round(carbPerc) + '%';
-      document.getElementById('fat_percentage').textContent = Math.round(fatPerc) + '%';
-
-      // Aggiorna barra di progresso
-      const protProgress = document.getElementById('protein_progress');
-      const carbProgress = document.getElementById('carb_progress');
-      const fatProgress = document.getElementById('fat_progress');
-
-      if (protProgress && carbProgress && fatProgress) {
-        protProgress.style.width = protPerc + '%';
-        carbProgress.style.width = carbPerc + '%';
-        fatProgress.style.width = fatPerc + '%';
-
-        // Aggiorna testi percentuali nella barra
-        document.getElementById('protein_progress_perc').textContent = Math.round(protPerc) + '%';
-        document.getElementById('carb_progress_perc').textContent = Math.round(carbPerc) + '%';
-        document.getElementById('fat_progress_perc').textContent = Math.round(fatPerc) + '%';
-      }
-    }
-
     addWeeksToDate(weeks) {
         const date = new Date();
         date.setDate(date.getDate() + (weeks * 7));
@@ -600,92 +562,6 @@ class FormManager {
     }
 
     /**
-     * Funzione per aggiornare la barra di progresso dei macronutrienti
-     * Da aggiungere alla classe FormManager
-     */
-    updateMacroProgressBar(results) {
-        // Recupera gli elementi della barra di progresso
-        const carbProgress = safeGetElement('carb_progress');
-        const proteinProgress = safeGetElement('protein_progress');
-        const fatProgress = safeGetElement('fat_progress');
-
-        // Recupera gli elementi di testo percentuale
-        const carbProgressPerc = safeGetElement('carb_progress_perc');
-        const proteinProgressPerc = safeGetElement('protein_progress_perc');
-        const fatProgressPerc = safeGetElement('fat_progress_perc');
-
-        // Recupera gli elementi di testo nella barra
-        const carbProgressText = safeGetElement('carb_progress_text');
-        const proteinProgressText = safeGetElement('protein_progress_text');
-        const fatProgressText = safeGetElement('fat_progress_text');
-
-        // Verifica che gli elementi esistano
-        if (!carbProgress || !proteinProgress || !fatProgress) return;
-
-        // Ottieni le percentuali dei macronutrienti
-        const carbPerc = results.carbPercentage;
-        const proteinPerc = results.proteinPercentage;
-        const fatPerc = results.fatPercentage;
-
-        // Aggiorna la larghezza delle barre di progresso con animazione
-        this.animateProgressBar(carbProgress, carbPerc);
-        this.animateProgressBar(proteinProgress, proteinPerc);
-        this.animateProgressBar(fatProgress, fatPerc);
-
-        // Aggiorna i testi percentuali
-        if (carbProgressPerc) carbProgressPerc.textContent = `${carbPerc}%`;
-        if (proteinProgressPerc) proteinProgressPerc.textContent = `${proteinPerc}%`;
-        if (fatProgressPerc) fatProgressPerc.textContent = `${fatPerc}%`;
-
-        // Aggiorna i testi nelle barre solo se c'è spazio sufficiente
-        if (carbProgressText && carbPerc >= 10) {
-            carbProgressText.textContent = `Carboidrati ${carbPerc}%`;
-        } else if (carbProgressText) {
-            carbProgressText.textContent = '';
-        }
-
-        if (proteinProgressText && proteinPerc >= 10) {
-            proteinProgressText.textContent = `Proteine ${proteinPerc}%`;
-        } else if (proteinProgressText) {
-            proteinProgressText.textContent = '';
-        }
-
-        if (fatProgressText && fatPerc >= 10) {
-            fatProgressText.textContent = `Grassi ${fatPerc}%`;
-        } else if (fatProgressText) {
-            fatProgressText.textContent = '';
-        }
-    }
-
-    /**
-     * Anima la barra di progresso
-     * @param {HTMLElement} element - Elemento DOM della barra di progresso
-     * @param {number} targetPercentage - Percentuale target
-     */
-    animateProgressBar(element, targetPercentage) {
-        if (!element) return;
-
-        const currentWidth = parseInt(element.style.width) || 0;
-        const duration = 500;
-        const startTime = Date.now();
-
-        const animate = () => {
-            const elapsed = Date.now() - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const currentPercentage = currentWidth + (targetPercentage - currentWidth) * progress;
-
-            element.style.width = `${currentPercentage}%`;
-            element.setAttribute('aria-valuenow', currentPercentage);
-
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            }
-        };
-
-        animate();
-    }
-
-        /**
      * Aggiornamento al metodo calculate() della classe FormManager
      * per includere l'aggiornamento della barra di progresso
      */
