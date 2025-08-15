@@ -787,64 +787,13 @@ class FormManager {
       try {
         const fd = new FormData(this.form);
 
-        // Assicura sempre le chiavi richieste dal BE
-        const requiredKeys = [
-          'nome', 'cognome', 'sesso', 'eta', 'altezza', 'peso',
-          'tdee', 'deficit_calorico', 'dieta',
-          'calorie_giornaliere', 'carboidrati', 'proteine', 'grassi',
-          'settimane_dieta', 'peso_target', 'peso_ideale'
-        ];
-
-        // Verifica se mancano campi critici
-        const missing = [];
-        requiredKeys.forEach(k => {
-          if (!fd.has(k) || !fd.get(k) || fd.get(k) === '' ||
-              fd.get(k) === 'undefined' || fd.get(k) === 'null') {
-            missing.push(k);
-          }
-        });
-
-        if (missing.length > 0) {
-          console.error('Campi mancanti:', missing);
-
-          // Copia valori dai campi hidden ai campi mancanti
-          const hiddenMapping = {
-            'calorie_giornaliere': 'calorie_giornaliere_hidden',
-            'carboidrati': 'carboidrati_hidden',
-            'proteine': 'proteine_hidden',
-            'grassi': 'grassi_hidden',
-            'settimane_dieta': 'settimane_dieta_hidden',
-            'peso_target': 'peso_target_hidden',
-            'peso_ideale': 'peso_ideale_hidden',
-            'bmi': 'bmi_hidden'
-          };
-
-          missing.forEach(k => {
-            if (hiddenMapping[k]) {
-              const hiddenEl = document.getElementById(hiddenMapping[k]);
-              if (hiddenEl) {
-                const v = hiddenEl.value || hiddenEl.textContent || '0';
-                fd.set(k, v);
-                //console.log(`Recuperato ${k} da ${hiddenMapping[k]}: ${v}`);
-              } else {
-                fd.set(k, '0'); // Fallback a 0 per campi numerici
-              }
-            } else {
-              fd.set(k, ''); // Fallback a stringa vuota
-            }
-          });
-        }
-
-        // 2) Mappa visivo->hidden (prende i numeri reali)
+        // Mappa visivo->hidden (prende i numeri reali)
         const mirrorPairs = [
-          ['calorie_giornaliere', 'calorie_giornaliere_hidden'],
-          ['settimane_dieta',     'settimane_dieta_hidden'],
-          ['carboidrati',         'carboidrati_hidden'],
-          ['proteine',            'proteine_hidden'],
-          ['grassi',              'grassi_hidden'],
-          ['peso_target',         'peso_target_hidden'],
-          ['peso_ideale',         'peso_ideale_hidden'],
           ['bmi',                 'bmi_hidden'],
+          ['peso_ideale',         'peso_ideale_hidden'],
+          ['peso_target',         'peso_target_hidden'],
+          ['calorie_giornaliere', 'calorie_giornaliere_hidden'],
+          ['settimane_dieta',     'settimane_dieta_hidden']
         ];
 
         // chiavi numeriche obbligatorie per cui usiamo fallback "0" se hidden vuoto
@@ -885,9 +834,6 @@ class FormManager {
           const el = this.form.elements[k];
           if (el && el.value !== '') fd.set(k, el.value);
         });
-
-        // Log finale per debug
-        console.log('FORM DATA FINALE:', Object.fromEntries(fd.entries()));
 
         // INVIO
         const response = await fetch('/salva_dati', { method: 'POST', body: fd });
