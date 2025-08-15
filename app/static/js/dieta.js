@@ -252,7 +252,6 @@ class FormManager {
             }
         });
 
-        // Select con calcolo immediato - ora include anche sleep/steps e alias comuni
         ['sesso', 'tdee', 'training_frequency', 'training_type', 'deficit_calorico','daily_steps'].forEach(id => {
             const element = this.form.elements[id];
             if (element) {
