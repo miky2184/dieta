@@ -795,7 +795,7 @@ class FormManager {
           'nome', 'cognome', 'sesso', 'eta', 'altezza', 'peso',
           'tdee', 'deficit_calorico', 'dieta', 'attivita_fisica',
           'calorie_giornaliere', 'carboidrati', 'proteine', 'grassi',
-          'settimane_dieta', 'peso_target'
+          'settimane_dieta', 'peso_target', 'peso_ideale'
         ];
 
         // Verifica se mancano campi critici
