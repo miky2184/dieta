@@ -188,7 +188,7 @@ def salva_dati():
         tdee_label          = request.form['tdee']
         training_frequency  = request.form['training_frequency']
         training_type       = request.form['training_type']
-        #daily_steps         = request.form['daily_steps']
+        daily_steps         = request.form['daily_steps']
 
         # Salvataggio (aggiorna la firma della funzione e il model)
         salva_utente_dieta(
@@ -210,7 +210,7 @@ def salva_dati():
             settimane_dieta=settimane_dieta,
             training_frequency=training_frequency,
             training_type=training_type,
-            #daily_steps=daily_steps
+            daily_steps=daily_steps
         )
 
         return redirect(url_for('views.dashboard'))

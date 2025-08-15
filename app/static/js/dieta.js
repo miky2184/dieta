@@ -880,14 +880,8 @@ class FormManager {
           if (fd.has(k)) fd.set(k, (fd.get(k)+'').replace(',', '.').trim() || '0');
         });
 
-        // 4) daily_steps deve essere numero: se non lo è, rimuovi
-        if (fd.has('daily_steps')) {
-          const stepsRaw = (fd.get('daily_steps') + '').trim();
-          if (!/^\d+(\.\d+)?$/.test(stepsRaw)) fd.delete('daily_steps');
-        }
-
         // 6) Lifestyle opzionali: aggiungi se presenti nel form
-        ['training_frequency','training_type'].forEach(k => {
+        ['training_frequency','training_type', 'daily_steps'].forEach(k => {
           const el = this.form.elements[k];
           if (el && el.value !== '') fd.set(k, el.value);
         });
