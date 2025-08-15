@@ -846,14 +846,15 @@ class FormManager {
           ['carboidrati',         'carboidrati_hidden'],
           ['proteine',            'proteine_hidden'],
           ['grassi',              'grassi_hidden'],
-          ['peso_target',         'peso_target_hidden']
+          ['peso_target',         'peso_target_hidden'],
+          ['peso_ideale',         'peso_ideale_hidden'],
         ];
 
         // chiavi numeriche obbligatorie per cui usiamo fallback "0" se hidden vuoto
         const numericRequired = new Set([
           'eta', 'altezza', 'peso', 'deficit_calorico',
           'calorie_giornaliere', 'carboidrati', 'proteine', 'grassi',
-          'settimane_dieta', 'peso_target'
+          'settimane_dieta', 'peso_target', 'peso_ideale'
         ]);
 
         const pickHidden = (nameVisible, idHidden) => {
@@ -877,7 +878,7 @@ class FormManager {
         [
           'eta', 'altezza', 'peso', 'deficit_calorico',
           'calorie_giornaliere', 'carboidrati', 'proteine', 'grassi',
-          'settimane_dieta', 'peso_target'
+          'settimane_dieta', 'peso_target', 'peso_ideale'
         ].forEach(k => {
           if (fd.has(k)) fd.set(k, (fd.get(k)+'').replace(',', '.').trim() || '0');
         });
