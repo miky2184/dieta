@@ -1864,61 +1864,28 @@ function updateWeightChart(weights) {
 
 
 function startMenuGeneration() {
-  // (opzionale) azzera barra e stato
-  updateProgress(10);
-
-  fetch('/generate_menu', { method: 'POST' })
-    .then(async (response) => {
-      // prova a leggere il JSON anche se non ok
-      let data = null;
-      try { data = await response.json(); } catch (_) {}
-
-      if (!response.ok) {
-        // Errore HTTP (400/500): prendi message/trace se ci sono
-        const msg   = data?.message || 'Errore durante la generazione del menu.';
-        const trace = data?.trace   || data?.details || '';
-
-        // Inserisci testo nel modal
-        const body = document.querySelector('#errorModal .modal-body');
-        if (body) {
-          body.innerHTML = `
-            <div class="text-danger mb-2"><strong>${escapeHtml(msg)}</strong></div>
-            ${trace ? `<details><summary>Dettagli</summary><pre style="white-space:pre-wrap; font-size:12px; margin-top:8px;">${escapeHtml(trace)}</pre></details>` : ''}
-          `;
-        }
-
-        // Mostra subito l'error modal e chiudi l'altro
-        $('#generateMenuModal').modal('hide');
-        $('#errorModal').modal('show');
-        return;
-      }
-
-      // Qui response.ok === true
-      if (data?.status === 'success') {
-        updateProgress(100);
-        setTimeout(() => {
-          $('#generateMenuModal').modal('hide');
-          location.reload();
-        }, 500);
-      } else {
-        // Caso anomalo: ok ma status non success
-        const body = document.querySelector('#errorModal .modal-body');
-        if (body) {
-          body.textContent = data?.message || 'Errore sconosciuto.';
-        }
-        $('#generateMenuModal').modal('hide');
-        $('#errorModal').modal('show');
-      }
-    })
-    .catch((error) => {
-      // Errori di rete / parsing
-      const body = document.querySelector('#errorModal .modal-body');
-      if (body) {
-        body.textContent = `Errore di rete: ${error}`;
-      }
-      $('#generateMenuModal').modal('hide');
-      $('#errorModal').modal('show');
-    });
+    // Effettua una richiesta AJAX per avviare la generazione del menu
+    fetch('/generate_menu', {
+            method: 'POST',
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                updateProgress(100); // Imposta il progresso al 100%
+                setTimeout(() => {
+                    $('#generateMenuModal').modal('hide'); // Chiudi il modal
+                    location.reload(); // Ricarica la pagina per visualizzare il nuovo menu
+                }, 1000);
+            } else if (data.status === 'error') {
+                setTimeout(() => {
+                    $('#errorModal').modal('show');
+                    $('#generateMenuModal').modal('hide'); // Chiudi il modal
+                }, 4000);
+            }
+        })
+        .catch(error => {
+            console.error('Errore durante la generazione del menu:', error);
+        });
 }
 
 // Sanitizza testo prima di iniettarlo in innerHTML
