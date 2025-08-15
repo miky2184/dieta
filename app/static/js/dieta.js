@@ -1041,13 +1041,15 @@ class FormManager {
 // ============= INIZIALIZZAZIONE =============
 document.addEventListener('DOMContentLoaded', function() {
     //console.log('Inizializzazione FormManager...');
+    if (window.__DIETA_INIT__) return;         // guard
+    window.__DIETA_INIT__ = true;
 
     // Crea istanza del FormManager
     const formManager = new FormManager();
 
     // Esporta per uso globale
     window.formManager = formManager;
-    //window.FormManager = FormManager;
+    window.FormManager = FormManager;
     window.NutritionCalculator = NutritionCalculator;
 
     // Se ci sono dati utente preesistenti, caricali

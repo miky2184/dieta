@@ -107,6 +107,9 @@ function completeTutorial() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    if (window.__MENU_TUTORIAL_DONE__) return;
+    window.__MENU_TUTORIAL_DONE__ = true;
+
     if (typeof showTutorial !== 'undefined' && showTutorial) {
         // Mostra il modal di benvenuto
         var welcomeModal = new bootstrap.Modal(document.getElementById('welcomeModal'));

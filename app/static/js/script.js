@@ -2302,6 +2302,9 @@ function showConfirmDeleteAlimentoModal(alimentoId, alimentoNome) {
 
 document.addEventListener('DOMContentLoaded', function() {
 
+  if (window.__MENU_BINDINGS_DONE__) return;
+  window.__MENU_BINDINGS_DONE__ = true;
+
     // Gestisci i click sui filtri
     document.querySelectorAll('.month-filter-btn').forEach(button => {
         button.addEventListener('click', function () {
