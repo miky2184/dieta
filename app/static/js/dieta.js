@@ -184,7 +184,7 @@ class NutritionCalculator {
      *
      * @param {number} calories - Calorie giornaliere target
      * @param {number} weightKg - Peso corporeo in kg
-     * @param {string} goal - Obiettivo dieta ('fat_loss', 'maintenance', 'muscle_gain', 'performance')
+     * @param {string} goal - Obiettivo dieta ('fat_loss', 'maintenance', 'muscle_gain')
      * @param {string} activity - Livello di attività ('sedentary', 'light', 'moderate', 'high', 'athlete')
      * @returns {Object} - Oggetto contenente grammi di proteine, grassi e carboidrati
      */
@@ -193,24 +193,7 @@ class NutritionCalculator {
       const presets = {
         fat_loss:    { p: 2.2, f: 0.8,  name: "Dimagrimento" },
         maintenance: { p: 1.6, f: 0.9,  name: "Mantenimento" },
-        muscle_gain: { p: 2.0, f: 1.0,  name: "Costruzione muscolare" },
-        performance: { p: 1.8, f: 0.9,  name: "Performance" },
-        keto: {
-          p: 1.6, f: 2.0, name: "Chetogenica",
-          forcedRatios: { p: 0.20, f: 0.75, c: 0.05 }
-        },
-        low_carb: {
-          p: 2.0, f: 1.2, name: "Low‑carb",
-          forcedRatios: { p: 0.35, f: 0.40, c: 0.25 }
-        },
-        mediterranean: {
-          p: 1.4, f: 1.0, name: "Mediterranea",
-          forcedRatios: { p: 0.20, f: 0.30, c: 0.50 }
-        },
-        balanced: {
-          p: 1.6, f: 0.8, name: "Bilanciata",
-          forcedRatios: { p: 0.25, f: 0.20, c: 0.55 }
-        }
+        muscle_gain: { p: 2.0, f: 1.0,  name: "Costruzione muscolare" }
       };
       const preset = presets[goal] || presets.maintenance;
 
@@ -842,123 +825,43 @@ class FormManager {
         animate();
     }
 
-    /**
+        /**
      * Aggiornamento al metodo calculate() della classe FormManager
      * per includere l'aggiornamento della barra di progresso
      */
     calculate() {
-      // Raccogli valori input (assicurati che tutte queste proprietà esistano)
-      const sesso = this.form.elements.sesso.value;
-      const eta = parseFloat(this.form.elements.eta.value) || 0;
-      const altezza = parseFloat(this.form.elements.altezza.value) || 0;
-      const peso = parseFloat(this.form.elements.peso.value) || 0;
-      const tdee = this.form.elements.tdee.value;
-      const dieta = this.form.elements.dieta.value;
-      const deficitRaw = parseFloat(this.form.elements.deficit_calorico.value) || 0;
+        if (!this.form) return;
 
-      // NUOVO: Assicurati che attivita_fisica sia valorizzato
-      const attivitaEl = document.getElementById('attivita_fisica');
-      if (attivitaEl) attivitaEl.value = tdee;
+        showProgress();
 
-      // Calcola BMI
-      const bmi = peso / ((altezza / 100) ** 2);
-      document.getElementById('bmi').textContent = bmi.toFixed(1);
-      document.getElementById('bmi_hidden').value = bmi.toFixed(1);
+        const formData = this.getFormData();
+        if (!this.isDataComplete(formData)) {
+            hideProgress();
+            return;
+        }
 
-      // Calcola peso ideale
-      let pesoIdeale;
-      if (sesso === 'M') {
-        pesoIdeale = (altezza - 100) - ((altezza - 150) / 4);
-      } else {
-        pesoIdeale = (altezza - 100) - ((altezza - 150) / 2);
-      }
-      document.getElementById('peso_ideale').textContent = pesoIdeale.toFixed(1);
-      document.getElementById('peso_ideale_hidden').value = pesoIdeale.toFixed(1);
+        try {
+            // Esegui i calcoli
+            const results = this.performCalculations(formData);
 
-      // Calcola metabolismo basale
-      let mb;
-      if (sesso === 'M') {
-        mb = 10 * peso + 6.25 * altezza - 5 * eta + 5;
-      } else {
-        mb = 10 * peso + 6.25 * altezza - 5 * eta - 161;
-      }
-      document.getElementById('meta_basale').textContent = Math.round(mb);
-      document.getElementById('meta_basale_hidden').value = Math.round(mb);
+            // Aggiorna l'interfaccia utente
+            this.updateUI(results);
 
-      // Calcola TDEE
-      let tdeeMultiplier = 1.2;
-      switch (tdee) {
-        case 'sedentary': tdeeMultiplier = 1.2; break;
-        case 'light': tdeeMultiplier = 1.375; break;
-        case 'moderate': tdeeMultiplier = 1.55; break;
-        case 'high': tdeeMultiplier = 1.725; break;
-      }
-      const tdeeValue = Math.round(mb * tdeeMultiplier);
-      document.getElementById('meta_giornaliero').textContent = tdeeValue;
-      document.getElementById('meta_giornaliero_hidden').value = tdeeValue;
+            // Aggiorna la barra di progresso dei macronutrienti
+            this.updateMacroProgressBar(results);
 
-      // Calcola calorie giornaliere
-      let calorieTarget = tdeeValue;
-      if (dieta === 'fat_loss') {
-        calorieTarget = Math.round(tdeeValue * (1 + deficitRaw));
-      } else if (dieta === 'muscle_gain') {
-        calorieTarget = Math.round(tdeeValue * (1 + Math.abs(deficitRaw)));
-      }
-      document.getElementById('calorie_giornaliere').textContent = calorieTarget;
-      document.getElementById('calorie_giornaliere_hidden').value = calorieTarget;
+            // NUOVO: Aggiorna le informazioni sui macronutrienti
+            this.updateMacroInfo(results, formData.dieta);
 
-      // Calcola macronutrienti
-      let protPerKg = 1.6; // default per perdita peso
-      let carbPerc = 0.45; // default (45% carb, 25% protein, 30% fat)
-      let fatPerc = 0.3;
+            // Sincronizza i campi nascosti
+            this.synchronizeFields();
 
-      if (dieta === 'muscle_gain') {
-        protPerKg = 2.0;
-        carbPerc = 0.5;
-        fatPerc = 0.25;
-      } else if (dieta === 'maintenance') {
-        protPerKg = 1.4;
-        carbPerc = 0.45;
-        fatPerc = 0.3;
-      }
 
-      // Calcola grammi di proteine
-      const protGrams = Math.round(peso * protPerKg);
-      document.getElementById('proteine_input').textContent = protGrams;
-      document.getElementById('proteine_hidden').value = protGrams;
-
-      // Calcola grammi di grassi
-      const fatCals = calorieTarget * fatPerc;
-      const fatGrams = Math.round(fatCals / 9);
-      document.getElementById('grassi_input').textContent = fatGrams;
-      document.getElementById('grassi_hidden').value = fatGrams;
-
-      // Calcola grammi di carboidrati
-      const protCals = protGrams * 4;
-      const remainingCals = calorieTarget - protCals - fatCals;
-      const carbGrams = Math.round(remainingCals / 4);
-      document.getElementById('carboidrati_input').textContent = carbGrams;
-      document.getElementById('carboidrati_hidden').value = carbGrams;
-
-      // Calcola durata dieta (settimane)
-      let settimane = 0;
-      const pesoTarget = parseFloat(document.getElementById('peso_target_hidden').value) || peso;
-      const kgDaPerdereSett = 0.5; // kg per settimana
-
-      if (dieta === 'fat_loss' && pesoTarget < peso) {
-        settimane = Math.ceil((peso - pesoTarget) / kgDaPerdereSett);
-      } else if (dieta === 'muscle_gain' && pesoTarget > peso) {
-        // guadagno massa più lento della perdita
-        settimane = Math.ceil((pesoTarget - peso) / 0.25);
-      }
-
-      // Assicurati che settimane_dieta abbia sempre un valore
-      document.getElementById('settimane_dieta').textContent = settimane > 0 ?
-        `${settimane} settimane` : 'N/A';
-      document.getElementById('settimane_dieta_hidden').value = settimane;
-
-      // Aggiorna percentuali macronutrienti
-      this.updateMacroPercentages(protGrams, carbGrams, fatGrams, calorieTarget);
+            hideProgress();
+        } catch (error) {
+            console.error('Errore durante il calcolo:', error);
+            hideProgress();
+        }
     }
 
     validateField(element) {
