@@ -180,7 +180,6 @@
 {% block extra_scripts %}
 
 <!-- Carica il file dieta.js -->
- <link rel="stylesheet" href="{{ url_for('static', filename='css/alimenti.css') }}">
 <script src="{{ url_for('static', filename='js/alimenti.js') }}?v={{ range(1000, 9999) | random }}"></script>
 
 {% endblock %}

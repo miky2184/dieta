@@ -1,0 +1,798 @@
+/* ====== VARIABILI CSS ====== */
+:root {
+    --primary-color: #444;
+    --secondary-color: #6c757d;
+    --accent-color: #adb5bd;
+    --success-color: #5cb85c;
+    --warning-color: #f0ad4e;
+    --danger-color: #d9534f;
+    --light-bg: #fdfdfd;
+    --border-color: #e0e0e0;
+    --shadow: 0 2px 8px rgba(0,0,0,0.05);
+    --border-radius: 8px;
+    --transition: all 0.3s ease;
+}
+
+/* ====== LAYOUT GENERALE ====== */
+html, body {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #ffffff 0%, #e9ecef 100%);
+    min-height: 100vh;
+    font-size: 1rem !important;
+}
+
+.main-container {
+    padding: 2rem;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+/* ====== HEADER E SEZIONI ====== */
+.page-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow);
+    text-align: center;
+}
+
+.page-header h1 {
+    color: var(--primary-color);
+    margin: 0;
+    font-weight: 600;
+    font-size: 2.5rem;
+}
+
+.page-header p {
+    color: var(--secondary-color);
+    margin: 0.5rem 0 0 0;
+}
+
+.section-divider {
+    border-top: 2px solid #e9ecef;
+    margin: 2rem 0 1rem 0;
+    position: relative;
+}
+
+.section-title {
+    background: white;
+    padding: 0 15px;
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    color: #4a90e2;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* ====== TABS ====== */
+.tab {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    border-bottom: 1px solid #ccc;
+    background-color: #f1f1f1;
+}
+
+.tab button {
+    flex: 1;
+    text-align: center;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: var(--transition);
+    font-size: 17px;
+}
+
+.tab button:hover {
+    background-color: #ddd;
+}
+
+.tab button.active {
+    background-color: #ccc;
+}
+
+/* ====== CARDS ====== */
+.card {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(15px);
+    border: none;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    animation: fadeIn 0.6s ease;
+}
+
+/* ====== TABELLE ====== */
+.table-container {
+    background: white;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+.table thead th {
+    background: linear-gradient(135deg, var(--primary-color), #34495e);
+    color: white;
+    border: none;
+    font-weight: 600;
+    padding: 1rem 0.75rem;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.table thead th:hover {
+    background: linear-gradient(135deg, #34495e, var(--primary-color));
+}
+
+.table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(52, 152, 219, 0.05);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    cursor: pointer;
+}
+
+.table tbody tr:nth-child(odd) {
+    background-color: #fdfdfd;
+}
+
+.table tbody tr:nth-child(even) {
+    background-color: #f7f7f7;
+}
+
+.table td, .table th {
+    padding: 0.75rem 0.5rem;
+    text-align: left;
+    border: 1px solid var(--border-color);
+    vertical-align: middle;
+}
+
+.table-sm {
+    margin-top: 0.3rem;
+}
+
+.table-bordered {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    background-color: #fff;
+}
+
+/* Filtri tabella */
+.filter-row {
+    background: var(--light-bg);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.filter-row th {
+    background: var(--light-bg) !important;
+    color: var(--primary-color) !important;
+    padding: 0.75rem 0.5rem;
+}
+
+.sticky-container {
+    position: sticky !important;
+    top: 0;
+    z-index: 1000;
+    background-color: white !important;
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+    padding: 10px 0;
+}
+
+/* ====== FORM ELEMENTS ====== */
+.form-control, .form-select {
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    transition: var(--transition);
+    font-size: 0.875rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25);
+}
+
+.form-control-sm {
+    font-size: 0.7rem !important;
+}
+
+.input-group {
+    margin-bottom: 0.5rem;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: var(--transition);
+}
+
+.input-group:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.input-group-text {
+    background: linear-gradient(135deg, var(--primary-color), #34495e);
+    color: white;
+    border: none;
+    font-weight: 500;
+    min-width: 100px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.input-hidden-border {
+    border: 1px solid transparent !important;
+    background: transparent !important;
+    outline: none !important;
+    font-size: inherit !important;
+    color: inherit !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.input-hidden-border:hover {
+    border-color: var(--border-color) !important;
+    background: white !important;
+}
+
+.input-hidden-border:focus {
+    border-color: var(--secondary-color) !important;
+    background: white !important;
+    box-shadow: none !important;
+}
+
+.input-hidden-border::placeholder {
+    color: inherit !important;
+    opacity: 0.7;
+}
+
+/* ====== BOTTONI ====== */
+.btn {
+    border-radius: 6px;
+    font-weight: 500;
+    transition: var(--transition);
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    transform: translate(-50%, -50%);
+}
+
+.btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--secondary-color), #2980b9);
+    box-shadow: 0 2px 4px rgba(108, 117, 125, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #2980b9, var(--secondary-color));
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--success-color), #229954);
+    box-shadow: 0 2px 4px rgba(92, 184, 92, 0.3);
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #229954, var(--success-color));
+    transform: translateY(-1px);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, var(--danger-color), #c0392b);
+    box-shadow: 0 2px 4px rgba(217, 83, 79, 0.3);
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #c0392b, var(--danger-color));
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+}
+
+.btn-outline-secondary {
+    border-color: #95a5a6;
+    color: #95a5a6;
+}
+
+.btn-outline-secondary:hover {
+    background: #95a5a6;
+    border-color: #95a5a6;
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, var(--warning-color), #ec971f);
+}
+
+/* ====== BOTTONI STAGIONALITA' ====== */
+.month-filter-group, .month-toggle-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    justify-content: center;
+}
+
+.month-filter-btn, .month-toggle-btn {
+    min-width: 35px;
+    height: 28px;
+    padding: 2px 4px;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    width: 3rem;
+    text-align: center;
+    border: 1px solid #6c757d;
+}
+
+.month-toggle-btn.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.month-toggle-btn.btn-outline-secondary {
+    background-color: white;
+    color: var(--secondary-color);
+    border: 1px solid var(--secondary-color);
+}
+
+/* ====== CHECKBOXES ====== */
+input[type="checkbox"] {
+    transform: scale(1.2);
+    accent-color: var(--secondary-color);
+}
+
+.form-check {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: white;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    transition: var(--transition);
+}
+
+.form-check:hover {
+    background: rgba(108, 117, 125, 0.02);
+    border-color: var(--secondary-color);
+}
+
+.form-check-input {
+    width: 1.2em;
+    height: 1.2em;
+    margin-top: 0;
+    margin-right: 0.75rem;
+}
+
+.form-check-label {
+    font-weight: 500;
+    color: var(--primary-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ====== TOOLTIP ====== */
+#tooltip {
+    display: none;
+    position: absolute;
+    background-color: #333;
+    color: #fff;
+    padding: 5px;
+    border-radius: 5px;
+    pointer-events: none;
+    z-index: 1000;
+    font-size: 0.8rem;
+    max-width: 200px;
+    word-wrap: break-word;
+}
+
+.tooltip {
+    font-size: 0.8rem;
+}
+
+/* ====== PROGRESS INDICATOR ====== */
+.progress-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #4a90e2, #667eea);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+    z-index: 9999;
+}
+
+.progress-indicator.active {
+    transform: scaleX(1);
+}
+
+/* ====== BMI E RISULTATI ====== */
+.bmi-indicator {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+.bmi-indicator.healthy {
+    background: rgba(92, 184, 92, 0.2);
+    color: var(--success-color);
+}
+
+.bmi-indicator.warning {
+    background: rgba(240, 173, 78, 0.2);
+    color: var(--warning-color);
+}
+
+.bmi-indicator.danger {
+    background: rgba(217, 83, 79, 0.2);
+    color: var(--danger-color);
+}
+
+.result-card {
+    background: #f8f9fa;
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
+    border-left: 4px solid #4a90e2;
+    text-align: center;
+}
+
+.result-card.healthy {
+    border-left-color: var(--success-color);
+}
+
+.result-card.warning {
+    border-left-color: var(--warning-color);
+}
+
+.result-card.danger {
+    border-left-color: var(--danger-color);
+}
+
+.result-label {
+    font-size: 0.875rem;
+    color: var(--secondary-color);
+    margin-bottom: 0.5rem;
+}
+
+.result-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+}
+
+/* ====== MACRO CARDS ====== */
+.macro-card {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    transition: var(--transition);
+    position: relative;
+}
+
+.macro-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.macro-card.carboidrati {
+    border-color: #ffa500;
+}
+
+.macro-card.proteine {
+    border-color: var(--danger-color);
+}
+
+.macro-card.grassi {
+    border-color: #28a745;
+}
+
+.macro-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.macro-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #333;
+    margin: 0.5rem 0;
+}
+
+.macro-label {
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+    font-weight: 500;
+}
+
+.macro-calories {
+    margin-top: 0.5rem;
+    color: #999;
+}
+
+.macro-cards {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+/* ====== SLIDER ====== */
+.slider-container {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: var(--border-radius);
+    margin-top: 10px;
+}
+
+.form-range::-webkit-slider-thumb {
+    background: #4a90e2;
+}
+
+.slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--secondary-color);
+    margin-top: 0.5rem;
+}
+
+/* ====== ACTION BUTTONS ====== */
+.action-buttons {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 10;
+    margin-right: 11px;
+}
+
+/* ====== PASTI E RICETTE ====== */
+.day-container {
+    margin-bottom: 20px;
+}
+
+.meal-container {
+    margin-left: 20px;
+    margin-bottom: 15px;
+}
+
+.ricetta {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.ricetta input {
+    margin-right: 10px;
+    width: 60%;
+}
+
+.ricetta button {
+    margin-left: 10px;
+}
+
+#mealSelectionTable {
+    margin-top: 20px;
+}
+
+#mealSelectionTable .table th,
+#mealSelectionTable .table td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* ====== LARGHEZZE COLONNE ====== */
+.col-nome { width: 20%; }
+.col-numeric { width: 7%; text-align: center; }
+.col-gruppo { width: 12%; }
+.col-boolean { width: 5%; text-align: center; }
+.col-stagionalita { width: 15%; }
+.col-azioni { width: 8%; text-align: center; }
+
+.span-width {
+    width: fit-content;
+    min-width: 10%;
+    max-width: 30%;
+}
+
+/* ====== INDICATORI DI STATO ====== */
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.status-vegan {
+    background-color: var(--success-color);
+}
+
+.status-frozen {
+    background-color: var(--secondary-color);
+}
+
+/* ====== SCROLLBAR PERSONALIZZATA ====== */
+.table-container::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background: var(--secondary-color);
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color);
+}
+
+/* ====== ANIMAZIONI ====== */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.btn-loading {
+    position: relative;
+    color: transparent;
+}
+
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* ====== RESPONSIVE DESIGN ====== */
+@media (max-width: 1200px) {
+    .main-container { padding: 1rem; }
+    .table { font-size: 0.8rem; }
+    .month-filter-btn, .month-toggle-btn { min-width: 30px; font-size: 0.65rem; }
+}
+
+@media (max-width: 768px) {
+    .page-header h1 { font-size: 2rem; }
+    .table-container { overflow-x: auto; }
+
+    .month-filter-group, .month-toggle-group {
+        flex-direction: column;
+        max-height: 80px;
+        overflow-y: auto;
+    }
+
+    .tab button {
+        width: 100%;
+        font-size: 16px;
+    }
+
+    th, td {
+        font-size: 0.7rem;
+        padding: 6px;
+    }
+
+    .input-group-text {
+        min-width: 120px;
+        font-size: 0.8rem;
+    }
+
+    .macro-value {
+        font-size: 1.5rem;
+    }
+
+    .result-value {
+        font-size: 1.2rem;
+    }
+
+    .action-buttons {
+        position: static;
+        margin-bottom: 15px;
+        text-align: right;
+    }
+}
+
+/* ====== UTILITA' ====== */
+.results-section {
+    margin-top: 20px;
+}
+
+.modal-footer .btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.table td input[type="number"] {
+    width: 100%;
+    text-align: right;
+    box-sizing: border-box;
+    padding: 0.25rem;
+    height: 100%;
+    display: block;
+}
+
+td div {
+    border-bottom: 1px solid #ccc;
+    padding: 5px 0;
+}
+
+td div:last-child {
+    border-bottom: none;
+}
+
+#filter-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    gap: 5px;
+    height: auto;
+}
+
+#filter-info option {
+    text-align: center;
+}
