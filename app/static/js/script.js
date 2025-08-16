@@ -201,57 +201,76 @@ function cancellaMealDaily(day, meal_type) {
 
 function aggiornaTabellaMenu(menu) {
     const tbody = document.getElementById('menu_tbody');
-    tbody.innerHTML = ''; // Pulisci la tabella
+    tbody.innerHTML = '';
 
     const days = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
     const macroNutrients = ['kcal', 'carboidrati', 'proteine', 'grassi', 'sale'];
 
-    // Itera su ogni pasto e giorno
-    ['colazione', 'spuntino_mattina', 'pranzo', 'spuntino_pomeriggio', 'cena', 'spuntino_sera'].forEach(pasto => {
+    const pasti = [
+        { key: 'colazione', name: 'Colazione', class: 'meal-colazione', icon: 'fas fa-coffee' },
+        { key: 'spuntino_mattina', name: 'Spuntino Mattina', class: 'meal-spuntino', icon: 'fas fa-apple-alt' },
+        { key: 'pranzo', name: 'Pranzo', class: 'meal-pranzo', icon: 'fas fa-hamburger' },
+        { key: 'spuntino_pomeriggio', name: 'Spuntino Pomeriggio', class: 'meal-spuntino', icon: 'fas fa-cookie-bite' },
+        { key: 'cena', name: 'Cena', class: 'meal-cena', icon: 'fas fa-pizza-slice' },
+        { key: 'spuntino_sera', name: 'Spuntino Sera', class: 'meal-spuntino', icon: 'fas fa-ice-cream' }
+    ];
+
+    pasti.forEach(pasto => {
         const tr = document.createElement('tr');
         const tdPasto = document.createElement('td');
-        tdPasto.textContent = capitalize(pasto.replace('_', ' '));
+        tdPasto.className = 'meal-header';
+        tdPasto.innerHTML = `<i class="${pasto.icon} me-1"></i>${pasto.name}`;
         tr.appendChild(tdPasto);
+
         days.forEach(giorno => {
             const td = document.createElement('td');
-            if (menu.day[giorno].pasto[pasto].ricette && menu.day[giorno].pasto[pasto].ricette.length > 0) {
-                menu.day[giorno].pasto[pasto].ricette.forEach(ricetta => {
+            if (menu.day[giorno].pasto[pasto.key].ricette && menu.day[giorno].pasto[pasto.key].ricette.length > 0) {
+                menu.day[giorno].pasto[pasto.key].ricette.forEach(ricetta => {
                     const div = document.createElement('div');
-                    // Aggiungi il contenuto di testo
-                    div.textContent = `${ricetta.nome_ricetta} (${ricetta.qta}x) ${ricetta.info}`;
+                    div.innerHTML = `
+                        <strong>${ricetta.nome_ricetta}</strong><br>
+                        <small class="text-muted">(${ricetta.qta}x) ${ricetta.info}</small>
+                    `;
 
-                    // Aggiungi gli attributi per il popover
                     div.setAttribute('data-bs-toggle', 'tooltip');
-                    div.setAttribute(
-                        'data-bs-html', 'true' // Indica che il tooltip utilizza HTML
-                    );
+                    div.setAttribute('data-bs-html', 'true');
                     div.setAttribute(
                         'data-bs-title',
                         ricetta.ricetta && ricetta.ricetta.length > 0
-                            ? ricetta.ricetta.map(item => `${item.nome} ${item.qta}g.`).join('<br>')
-                            : 'vuoto'
+                            ? ricetta.ricetta.map(item => `• ${item.nome} ${item.qta}g`).join('<br>')
+                            : 'Nessun ingrediente'
                     );
 
-                    // Aggiungi la classe "recipe-cell"
-                    div.classList.add('recipe-cell');
-
-                    // Aggiungi il div all'elemento td (o un altro elemento genitore)
+                    div.className = `recipe-cell ${pasto.class}`;
                     td.appendChild(div);
-
-                    // Inizializza il popover sul nuovo elemento
                     new bootstrap.Tooltip(div);
                 });
+            } else {
+                // Cella vuota con stile
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'recipe-cell empty';
+                emptyDiv.innerHTML = '<i class="fas fa-plus text-muted"></i> <small class="text-muted">Vuoto</small>';
+                td.appendChild(emptyDiv);
             }
             tr.appendChild(td);
         });
         tbody.appendChild(tr);
     });
 
-    // Aggiorna le informazioni rimanenti
+    // Aggiorna valori rimanenti con indicatori colorati
     days.forEach(giorno => {
         macroNutrients.forEach(macro => {
             const remainingValue = menu.day[giorno][macro];
-            document.getElementById(`remaining-${macro}-${giorno}`).textContent = remainingValue.toFixed(2);
+            const element = document.getElementById(`remaining-${macro}-${giorno}`);
+            element.textContent = remainingValue.toFixed(1);
+
+            // Aggiungi classe per colorazione
+            element.className = 'nutrient-value';
+            if (remainingValue > 0) {
+                element.classList.add('positive');
+            } else if (remainingValue < 0) {
+                element.classList.add('negative');
+            }
         });
     });
 

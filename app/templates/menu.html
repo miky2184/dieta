@@ -1,64 +1,108 @@
-<!-- app/templates/menu.html -->
 <div id="Menu" class="tabcontent">
     <div id="capture">
-        <div class="card">
+        <div class="card menu-container">
             <div class="card-body">
-                <div class="d-flex">
-                    <div class="input-group mb-3">
-                        {% include 'week_selector.html' %}
-                        <button id="generateMenuBtn" class="btn btn-primary btn-sm" data-bs-toggle="modal"
-                                data-bs-target="#generateMenuModal">Genera Menu
-                        </button>
-                        <button id="completeMenuBtn" class="btn btn-primary btn-sm" data-bs-toggle="modal"
-                                data-bs-target="#generateMenuModal">Completa Menu
-                        </button>
-                        <button id="captureButton" class="btn btn-primary btn-sm" {% if settimane|length== 0
-                                %}disabled{% endif %}>
-                            Stampa Menu
-                        </button>
-                        <button id="deleteMenuBtn" class="btn btn-danger btn-sm delete-menu-btn" {% if
-                                settimane|length== 0
-                                %}disabled{% endif %}>Elimina Menu
-                        </button>
-                    </div>
+                <!-- Week Info -->
+                <div class="week-info">
+                    <i class="fas fa-calendar-week me-2"></i>
+                    Settimana del <span id="current-week-display"><!-- Data settimana --></span>
                 </div>
-                <div>
-                <table class="table table-sm table-striped table-bordered">
-                    <thead>
-                    <tr>
-                        <th style="width:9%; text-align: center;">Pasto</th>
-                        <th style="width:13%; text-align: center;">Lunedì</th>
-                        <th style="width:13%; text-align: center;">Martedì</th>
-                        <th style="width:13%; text-align: center;">Mercoledì</th>
-                        <th style="width:13%; text-align: center;">Giovedì</th>
-                        <th style="width:13%; text-align: center;">Venerdì</th>
-                        <th style="width:13%; text-align: center;">Sabato</th>
-                        <th style="width:13%; text-align: center;">Domenica</th>
-                    </tr>
-                    </thead>
-                    <tbody id="menu_tbody">
-                    </tbody>
-                    <tfoot>
-                    <tr>
-                        <td><strong>Rimanente</strong></td>
-                        {% for dati_giorno in ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'] %}
-                        <td>
-                            <div><strong>Kcal:</strong> <span id="remaining-kcal-{{ dati_giorno }}">{{ remaining_macronutrienti[dati_giorno]['kcal'] }}</span>
-                            </div>
-                            <div><strong>Carbs:</strong> <span id="remaining-carboidrati-{{ dati_giorno }}">{{ remaining_macronutrienti[dati_giorno]['carboidrati'] }}</span>
-                            </div>
-                            <div><strong>Prot:</strong> <span id="remaining-proteine-{{ dati_giorno }}">{{ remaining_macronutrienti[dati_giorno]['proteine'] }}</span>
-                            </div>
-                            <div><strong>Fat:</strong> <span id="remaining-grassi-{{ dati_giorno }}">{{ remaining_macronutrienti[dati_giorno]['grassi'] }}</span>
-                            </div>
-                            <div><strong>Sale:</strong> <span id="remaining-sale-{{ dati_giorno }}">{{ remaining_macronutrienti[dati_giorno]['sale'] }}</span>
-                            </div>
-                        </td>
-                        {% endfor %}
-                    </tr>
-                    </tfoot>
-                </table>
+
+                <!-- Actions -->
+                <div class="menu-actions">
+                    <div class="input-group">
+                        {% include 'week_selector.html' %}
                     </div>
+                    <button id="generateMenuBtn" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#generateMenuModal">
+                        <i class="fas fa-magic me-1"></i>Genera Menu
+                    </button>
+                    <button id="completeMenuBtn" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#generateMenuModal">
+                        <i class="fas fa-plus-circle me-1"></i>Completa Menu
+                    </button>
+                    <button id="captureButton" class="btn btn-secondary btn-sm" {% if settimane|length == 0 %}disabled{% endif %}>
+                        <i class="fas fa-print me-1"></i>Stampa Menu
+                    </button>
+                    <button id="deleteMenuBtn" class="btn btn-danger btn-sm delete-menu-btn" {% if settimane|length == 0 %}disabled{% endif %}>
+                        <i class="fas fa-trash me-1"></i>Elimina Menu
+                    </button>
+                </div>
+
+                <!-- Menu Table -->
+                <div class="table-container">
+                    <table class="table table-sm table-striped table-bordered menu-table">
+                        <thead>
+                        <tr>
+                            <th class="meal-header">
+                                <i class="fas fa-utensils me-1"></i>
+                                Pasto
+                            </th>
+                            <th><i class="fas fa-calendar-day me-1"></i>Lunedì</th>
+                            <th><i class="fas fa-calendar-day me-1"></i>Martedì</th>
+                            <th><i class="fas fa-calendar-day me-1"></i>Mercoledì</th>
+                            <th><i class="fas fa-calendar-day me-1"></i>Giovedì</th>
+                            <th><i class="fas fa-calendar-day me-1"></i>Venerdì</th>
+                            <th><i class="fas fa-calendar-day me-1"></i>Sabato</th>
+                            <th><i class="fas fa-calendar-day me-1"></i>Domenica</th>
+                        </tr>
+                        </thead>
+                        <tbody id="menu_tbody">
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <td class="meal-header">
+                                <i class="fas fa-chart-bar me-1"></i>
+                                Rimanente
+                            </td>
+                            {% for dati_giorno in ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'] %}
+                            <td>
+                                <div class="remaining-nutrients">
+                                    <div class="nutrient-item">
+                                        <span class="nutrient-label">
+                                            <i class="fas fa-fire text-danger"></i> Kcal
+                                        </span>
+                                        <span class="nutrient-value" id="remaining-kcal-{{ dati_giorno }}">
+                                            {{ remaining_macronutrienti[dati_giorno]['kcal'] }}
+                                        </span>
+                                    </div>
+                                    <div class="nutrient-item">
+                                        <span class="nutrient-label">
+                                            <i class="fas fa-bread-slice text-warning"></i> Carbs
+                                        </span>
+                                        <span class="nutrient-value" id="remaining-carboidrati-{{ dati_giorno }}">
+                                            {{ remaining_macronutrienti[dati_giorno]['carboidrati'] }}
+                                        </span>
+                                    </div>
+                                    <div class="nutrient-item">
+                                        <span class="nutrient-label">
+                                            <i class="fas fa-drumstick-bite text-danger"></i> Prot
+                                        </span>
+                                        <span class="nutrient-value" id="remaining-proteine-{{ dati_giorno }}">
+                                            {{ remaining_macronutrienti[dati_giorno]['proteine'] }}
+                                        </span>
+                                    </div>
+                                    <div class="nutrient-item">
+                                        <span class="nutrient-label">
+                                            <i class="fas fa-tint text-success"></i> Fat
+                                        </span>
+                                        <span class="nutrient-value" id="remaining-grassi-{{ dati_giorno }}">
+                                            {{ remaining_macronutrienti[dati_giorno]['grassi'] }}
+                                        </span>
+                                    </div>
+                                    <div class="nutrient-item">
+                                        <span class="nutrient-label">
+                                            <i class="fas fa-prescription-bottle text-info"></i> Sale
+                                        </span>
+                                        <span class="nutrient-value" id="remaining-sale-{{ dati_giorno }}">
+                                            {{ remaining_macronutrienti[dati_giorno]['sale'] }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
