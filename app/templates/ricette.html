@@ -1,156 +1,268 @@
-<!- app/templates/ricette.html ->
 <div id="Ricette" class="tabcontent">
-    <div class="card">
-        <div class="card-body">
-            <table id="ricette-table" class="table table-sm table-hover table-bordered">
-                <thead>
-                <tr>
-                    <th style="width:30% !important; text-align: center;" onclick="sortTable('ricette-table', 0)">
-                            <button class="btn btn-secondary btn-sm" data-bs-toggle="modal"
-                                    data-bs-target="#addRecipeModal">Ricetta +
-                            </button>
-                    </th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 1)">Kcal</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 2)">Carbs</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 3)">Prot</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 4)">Fat</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 5)">Fibre</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 6)">Zucchero</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 7)">Sale</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 8)">Colazione</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 9)">Merenda</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 10)">Spuntino</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 11)">Principale</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 12)">Contorno</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 13)">Complemento</th>
-                    <th style="text-align: center;" onclick="sortTable('ricette-table', 14)">Attiva</th>
-                    <th style="text-align: center;">Info</th>
-                    <th style="text-align: center;">Azioni</th>
-                </tr>
-                <tr>
-                    <th><input type="text" id="filter-nome" class="form-control form-control-sm"
-                               placeholder="Filtra per nome" onkeyup="filterTable()"></th>
-                    <th><input type="number" id="filter-ricette-calorie-min"
-                               class="form-control form-control-sm"
-                               placeholder="Min" oninput="filterTable()">
-                        <input type="number" id="filter-ricette-calorie-max"
-                               class="form-control form-control-sm" placeholder="Max"
-                               oninput="filterTable()">
-                    </th>
-                    <th><input type="number" id="filter-ricette-carbo-min"
-                               class="form-control form-control-sm" placeholder="Min"
-                               oninput="filterTable()">
-                        <input type="number" id="filter-ricette-carbo-max"
-                               class="form-control form-control-sm" placeholder="Max"
-                               oninput="filterTable()">
-                    </th>
-                    <th><input type="number" id="filter-ricette-proteine-min"
-                               class="form-control form-control-sm" placeholder="Min"
-                               oninput="filterTable()">
-                        <input type="number" id="filter-ricette-proteine-max"
-                               class="form-control form-control-sm" placeholder="Max"
-                               oninput="filterTable()">
-                    </th>
-                    <th><input type="number" id="filter-ricette-grassi-min"
-                               class="form-control form-control-sm" placeholder="Min"
-                               oninput="filterTable()">
-                        <input type="number" id="filter-ricette-grassi-max"
-                               class="form-control form-control-sm" placeholder="Max"
-                               oninput="filterTable()"></th>
-                    <th><input type="number" id="filter-ricette-fibre-min"
-                               class="form-control form-control-sm" placeholder="Min"
-                               oninput="filterTable()">
-                        <input type="number" id="filter-ricette-fibre-max"
-                               class="form-control form-control-sm" placeholder="Max"
-                               oninput="filterTable()">
-                    </th>
-                    <th><input type="number" id="filter-ricette-zucchero-min"
-                               class="form-control form-control-sm" placeholder="Min"
-                               oninput="filterTable()">
-                        <input type="number" id="filter-ricette-zucchero-max"
-                               class="form-control form-control-sm" placeholder="Max"
-                               oninput="filterTable()">
-                    </th>
-                    <th><input type="number" id="filter-ricette-sale-min"
-                               class="form-control form-control-sm" placeholder="Min"
-                               oninput="filterTable()">
-                        <input type="number" id="filter-ricette-sale-max"
-                               class="form-control form-control-sm" placeholder="Max"
-                               oninput="filterTable()"></th>
-                    <th>
-                        <select id="filter-colazione" class="form-select form-select-sm" onchange="filterTable()">
-                            <option value="all"></option>
-                            <option value="true">T</option>
-                            <option value="false">F</option>
-                        </select></th>
-                    <th>
-                        <select id="filter-colazione-sec" class="form-select form-select-sm" onchange="filterTable()">
-                            <option value="all"></option>
-                            <option value="true">T</option>
-                            <option value="false">F</option>
-                        </select></th>
-                    <th>
-                        <select id="filter-spuntino" class="form-select form-select-sm" onchange="filterTable()">
-                            <option value="all"></option>
-                            <option value="true">T</option>
-                            <option value="false">F</option>
-                        </select></th>
-                    <th>
-                        <select id="filter-principale" class="form-select form-select-sm" onchange="filterTable()">
-                            <option value="all"></option>
-                            <option value="true">T</option>
-                            <option value="false">F</option>
-                        </select></th>
-                    <th>
-                        <select id="filter-contorno" class="form-select form-select-sm" onchange="filterTable()">
-                            <option value="all"></option>
-                            <option value="true">T</option>
-                            <option value="false">F</option>
-                        </select></th>
-                    <th>
-                        <select id="filter-complemento-ricette" class="form-select form-select-sm" onchange="filterTable()">
-                            <option value="all"></option>
-                            <option value="true">T</option>
-                            <option value="false">F</option>
-                        </select></th>
-                    <th>
-                        <select id="filter-attiva" class="form-select form-select-sm" onchange="filterTable()">
-                            <option value="all"></option>
-                            <option value="true">T</option>
-                            <option value="false">F</option>
-                        </select>
-                    </th>
-                    <th>
-                        <div id="filter-info-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;">
+    <div class="page-header">
+        <h1><i class="fas fa-book-open me-3"></i>Gestione Ricette</h1>
+        <p>Gestisci il database delle ricette con i loro valori nutrizionali e categorie</p>
+    </div>
+
+    <div class="card ricette-container">
+        <div class="card-body p-0">
+            <div class="table-container">
+                <table id="ricette-table" class="table table-sm table-hover table-bordered ricette-table">
+                    <thead>
+                    <tr>
+                        <th class="recipe-name-header">
+                            <div class="header-with-icon">
+                                <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addRecipeModal">
+                                    <i class="fas fa-plus me-1"></i>Nuova Ricetta
+                                </button>
+                            </div>
+                        </th>
+                        <th class="nutrient-header" onclick="sortTable('ricette-table', 1)">
+                            <div class="header-with-icon">
+                                <i class="fas fa-fire header-icon text-danger"></i>
+                                <span class="header-text">Kcal</span>
+                            </div>
+                        </th>
+                        <th class="nutrient-header" onclick="sortTable('ricette-table', 2)">
+                            <div class="header-with-icon">
+                                <i class="fas fa-bread-slice header-icon text-warning"></i>
+                                <span class="header-text">Carb</span>
+                            </div>
+                        </th>
+                        <th class="nutrient-header" onclick="sortTable('ricette-table', 3)">
+                            <div class="header-with-icon">
+                                <i class="fas fa-drumstick-bite header-icon text-danger"></i>
+                                <span class="header-text">Prot</span>
+                            </div>
+                        </th>
+                        <th class="nutrient-header" onclick="sortTable('ricette-table', 4)">
+                            <div class="header-with-icon">
+                                <i class="fas fa-tint header-icon text-success"></i>
+                                <span class="header-text">Grassi</span>
+                            </div>
+                        </th>
+                        <th class="nutrient-header" onclick="sortTable('ricette-table', 5)">
+                            <div class="header-with-icon">
+                                <i class="fas fa-seedling header-icon text-success"></i>
+                                <span class="header-text">Fibre</span>
+                            </div>
+                        </th>
+                        <th class="nutrient-header" onclick="sortTable('ricette-table', 6)">
+                            <div class="header-with-icon">
+                                <i class="fas fa-candy-cane header-icon text-info"></i>
+                                <span class="header-text">Zucch</span>
+                            </div>
+                        </th>
+                        <th class="nutrient-header" onclick="sortTable('ricette-table', 7)">
+                            <div class="header-with-icon">
+                                <i class="fas fa-prescription-bottle header-icon text-secondary"></i>
+                                <span class="header-text">Sale</span>
+                            </div>
+                        </th>
+                        <th class="category-header" onclick="sortTable('ricette-table', 8)">
+                            <div class="header-with-icon">
+                                <i class="fas fa-coffee header-icon"></i>
+                                <span class="header-text">Colaz</span>
+                            </div>
+                        </th>
+                        <th class="category-header" onclick="sortTable('ricette-table', 9)">
+                            <div class="header-with-icon">
+                                <i class="fas fa-apple-alt header-icon"></i>
+                                <span class="header-text">Meren</span>
+                            </div>
+                        </th>
+                        <th class="category-header" onclick="sortTable('ricette-table', 10)">
+                            <div class="header-with-icon">
+                                <i class="fas fa-cookie-bite header-icon"></i>
+                                <span class="header-text">Spunt</span>
+                            </div>
+                        </th>
+                        <th class="category-header" onclick="sortTable('ricette-table', 11)">
+                            <div class="header-with-icon">
+                                <i class="fas fa-hamburger header-icon"></i>
+                                <span class="header-text">Princ</span>
+                            </div>
+                        </th>
+                        <th class="category-header" onclick="sortTable('ricette-table', 12)">
+                            <div class="header-with-icon">
+                                <i class="fas fa-carrot header-icon"></i>
+                                <span class="header-text">Cont</span>
+                            </div>
+                        </th>
+                        <th class="category-header" onclick="sortTable('ricette-table', 13)">
+                            <div class="header-with-icon">
+                                <i class="fas fa-plus-circle header-icon"></i>
+                                <span class="header-text">Compl</span>
+                            </div>
+                        </th>
+                        <th class="category-header" onclick="sortTable('ricette-table', 14)">
+                            <div class="header-with-icon">
+                                <i class="fas fa-toggle-on header-icon"></i>
+                                <span class="header-text">Attiva</span>
+                            </div>
+                        </th>
+                        <th class="info-header">
+                            <div class="header-with-icon">
+                                <i class="fas fa-info-circle header-icon"></i>
+                                <span class="header-text">Caratteristiche</span>
+                            </div>
+                        </th>
+                        <th class="actions-header">
+                            <div class="header-with-icon">
+                                <i class="fas fa-cogs header-icon"></i>
+                                <span class="header-text">Azioni</span>
+                            </div>
+                        </th>
+                    </tr>
+                    <tr class="filter-row-ricette">
+                        <th>
+                            <input type="text" id="filter-nome" class="form-control form-control-sm"
+                                   placeholder="🔍 Nome ricetta" onkeyup="filterTable()">
+                        </th>
+                        <th>
+                            <div class="filter-input-group">
+                                <input type="number" id="filter-ricette-calorie-min"
+                                       class="form-control form-control-sm" placeholder="Min" oninput="filterTable()">
+                                <input type="number" id="filter-ricette-calorie-max"
+                                       class="form-control form-control-sm" placeholder="Max" oninput="filterTable()">
+                            </div>
+                        </th>
+                        <th>
+                            <div class="filter-input-group">
+                                <input type="number" id="filter-ricette-carbo-min"
+                                       class="form-control form-control-sm" placeholder="Min" oninput="filterTable()">
+                                <input type="number" id="filter-ricette-carbo-max"
+                                       class="form-control form-control-sm" placeholder="Max" oninput="filterTable()">
+                            </div>
+                        </th>
+                        <th>
+                            <div class="filter-input-group">
+                                <input type="number" id="filter-ricette-proteine-min"
+                                       class="form-control form-control-sm" placeholder="Min" oninput="filterTable()">
+                                <input type="number" id="filter-ricette-proteine-max"
+                                       class="form-control form-control-sm" placeholder="Max" oninput="filterTable()">
+                            </div>
+                        </th>
+                        <th>
+                            <div class="filter-input-group">
+                                <input type="number" id="filter-ricette-grassi-min"
+                                       class="form-control form-control-sm" placeholder="Min" oninput="filterTable()">
+                                <input type="number" id="filter-ricette-grassi-max"
+                                       class="form-control form-control-sm" placeholder="Max" oninput="filterTable()">
+                            </div>
+                        </th>
+                        <th>
+                            <div class="filter-input-group">
+                                <input type="number" id="filter-ricette-fibre-min"
+                                       class="form-control form-control-sm" placeholder="Min" oninput="filterTable()">
+                                <input type="number" id="filter-ricette-fibre-max"
+                                       class="form-control form-control-sm" placeholder="Max" oninput="filterTable()">
+                            </div>
+                        </th>
+                        <th>
+                            <div class="filter-input-group">
+                                <input type="number" id="filter-ricette-zucchero-min"
+                                       class="form-control form-control-sm" placeholder="Min" oninput="filterTable()">
+                                <input type="number" id="filter-ricette-zucchero-max"
+                                       class="form-control form-control-sm" placeholder="Max" oninput="filterTable()">
+                            </div>
+                        </th>
+                        <th>
+                            <div class="filter-input-group">
+                                <input type="number" id="filter-ricette-sale-min"
+                                       class="form-control form-control-sm" placeholder="Min" oninput="filterTable()">
+                                <input type="number" id="filter-ricette-sale-max"
+                                       class="form-control form-control-sm" placeholder="Max" oninput="filterTable()">
+                            </div>
+                        </th>
+                        <th>
+                            <select id="filter-colazione" class="form-select form-select-sm" onchange="filterTable()">
+                                <option value="all">Tutti</option>
+                                <option value="true">✓</option>
+                                <option value="false">✗</option>
+                            </select>
+                        </th>
+                        <th>
+                            <select id="filter-colazione-sec" class="form-select form-select-sm" onchange="filterTable()">
+                                <option value="all">Tutti</option>
+                                <option value="true">✓</option>
+                                <option value="false">✗</option>
+                            </select>
+                        </th>
+                        <th>
+                            <select id="filter-spuntino" class="form-select form-select-sm" onchange="filterTable()">
+                                <option value="all">Tutti</option>
+                                <option value="true">✓</option>
+                                <option value="false">✗</option>
+                            </select>
+                        </th>
+                        <th>
+                            <select id="filter-principale" class="form-select form-select-sm" onchange="filterTable()">
+                                <option value="all">Tutti</option>
+                                <option value="true">✓</option>
+                                <option value="false">✗</option>
+                            </select>
+                        </th>
+                        <th>
+                            <select id="filter-contorno" class="form-select form-select-sm" onchange="filterTable()">
+                                <option value="all">Tutti</option>
+                                <option value="true">✓</option>
+                                <option value="false">✗</option>
+                            </select>
+                        </th>
+                        <th>
+                            <select id="filter-complemento-ricette" class="form-select form-select-sm" onchange="filterTable()">
+                                <option value="all">Tutti</option>
+                                <option value="true">✓</option>
+                                <option value="false">✗</option>
+                            </select>
+                        </th>
+                        <th>
+                            <select id="filter-attiva" class="form-select form-select-sm" onchange="filterTable()">
+                                <option value="all">Tutti</option>
+                                <option value="true">✓</option>
+                                <option value="false">✗</option>
+                            </select>
+                        </th>
+                        <th>
                             <select id="filter-info" class="form-select form-select-sm" multiple onchange="filterTable()">
                                 <option selected value="all">Tutti</option>
-                                <option value="🌱">🌱</option>
-                                <option value="🥚">🥚</option>
-                                <option value="🐟">🐟</option>
-                                <option value="🍗">🍗</option>
-                                <option value="🥩">🥩</option>
-                                <option value="🫘">🫘</option>
-                                <option value="🍎">🍎</option>
-                                <option value="🥕">🥕</option>
-                                <option value="🌾">🌾</option>
-                                <option value="🍞">🍞</option>
-                                <option value="🧀">🧀</option>
-                                <option value="🥜">🥜</option>
-                                <option value="🥔">🥔</option>
-                                <option value="🧈">🧈</option>
+                                <option value="🌱">🌱 Vegan</option>
+                                <option value="🥚">🥚 Uova</option>
+                                <option value="🐟">🐟 Pesce</option>
+                                <option value="🍗">🍗 Pollo</option>
+                                <option value="🥩">🥩 Carne</option>
+                                <option value="🫘">🫘 Legumi</option>
+                                <option value="🍎">🍎 Frutta</option>
+                                <option value="🥕">🥕 Verdura</option>
+                                <option value="🌾">🌾 Cereali</option>
+                                <option value="🍞">🍞 Pane</option>
+                                <option value="🧀">🧀 Latticini</option>
+                                <option value="🥜">🥜 Frutta secca</option>
+                                <option value="🥔">🥔 Patate</option>
+                                <option value="🧈">🧈 Grassi</option>
                             </select>
-                        </div>
-                    </th>
-                    <th  style="text-align: center;">
-                        <button id="cleanFiltersRicetteBtn" class="btn btn-sm btn-secondary" onclick="cleanFilters()">
-                            Pulisci Filtri
-                        </button>
-                    </th>
-                </tr>
-                </thead>
-                <tbody id="ricette-tbody">
-                </tbody>
-            </table>
+                        </th>
+                        <th>
+                            <button id="cleanFiltersRicetteBtn" class="btn btn-sm btn-warning" onclick="cleanFilters()" title="Pulisci tutti i filtri">
+                                <i class="fas fa-broom"></i>
+                            </button>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody id="ricette-tbody">
+                        <!-- Contenuto generato dinamicamente -->
+                        <tr>
+                            <td colspan="17" class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Caricamento...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Caricamento ricette in corso...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

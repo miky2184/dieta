@@ -550,189 +550,298 @@ function addIngredientToRecipe() {
 
 function populateRicetteTable(ricette) {
     const tbody = document.getElementById('ricette-tbody');
-    tbody.innerHTML = ''; // Svuota il contenuto attuale della tabella
+    tbody.innerHTML = '';
 
     ricette.forEach(ricetta => {
         const row = document.createElement('tr');
 
+        // Aggiungi classe per stato attivo/inattivo
+        row.className = ricetta.attiva ? 'recipe-active' : 'recipe-inactive';
+
         // Determina le emoji per le caratteristiche della ricetta
-        let infoEmoji = '';
-        if (ricetta.is_vegan) infoEmoji += '🌱'; // Emoji per ricetta vegana
-        if (ricetta.is_carne_rossa) infoEmoji += '🥩'; // Emoji per ricetta di carne rossa
-        if (ricetta.contains_fish) infoEmoji += '🐟'; // Emoji per ricetta con pesce
-        if (ricetta.is_frutta) infoEmoji += '🍎';
-        if (ricetta.is_verdura) infoEmoji += '🥕';
-        if (ricetta.is_carne_bianca) infoEmoji += '🍗';
-        if (ricetta.contains_uova) infoEmoji += '🥚';
-        if (ricetta.contains_legumi) infoEmoji += '🫘';
-        if (ricetta.contains_cereali) infoEmoji += '🌾';
-        if (ricetta.contains_pane) infoEmoji += '🍞';
-        if (ricetta.contains_latticini) infoEmoji += '🧀';
-        if (ricetta.contains_frutta_secca) infoEmoji += '🥜';
-        if (ricetta.contains_patate) infoEmoji += '🥔';
-        if (ricetta.contains_grassi) infoEmoji += '🧈';
+        let infoEmojis = [];
+        if (ricetta.is_vegan) infoEmojis.push('<span title="Vegano">🌱</span>');
+        if (ricetta.contains_uova) infoEmojis.push('<span title="Contiene uova">🥚</span>');
+        if (ricetta.contains_fish) infoEmojis.push('<span title="Contiene pesce">🐟</span>');
+        if (ricetta.is_carne_bianca) infoEmojis.push('<span title="Carne bianca">🍗</span>');
+        if (ricetta.is_carne_rossa) infoEmojis.push('<span title="Carne rossa">🥩</span>');
+        if (ricetta.contains_legumi) infoEmojis.push('<span title="Contiene legumi">🫘</span>');
+        if (ricetta.is_frutta) infoEmojis.push('<span title="Contiene frutta">🍎</span>');
+        if (ricetta.is_verdura) infoEmojis.push('<span title="Contiene verdura">🥕</span>');
+        if (ricetta.contains_cereali) infoEmojis.push('<span title="Contiene cereali">🌾</span>');
+        if (ricetta.contains_pane) infoEmojis.push('<span title="Contiene pane">🍞</span>');
+        if (ricetta.contains_latticini) infoEmojis.push('<span title="Contiene latticini">🧀</span>');
+        if (ricetta.contains_frutta_secca) infoEmojis.push('<span title="Contiene frutta secca">🥜</span>');
+        if (ricetta.contains_patate) infoEmojis.push('<span title="Contiene patate">🥔</span>');
+        if (ricetta.contains_grassi) infoEmojis.push('<span title="Contiene grassi">🧈</span>');
+
+        // Determina indicatori categoria
+        let categoryClass = '';
+        if (ricetta.colazione) categoryClass += ' category-colazione';
+        if (ricetta.colazione_sec) categoryClass += ' category-merenda';
+        if (ricetta.spuntino) categoryClass += ' category-spuntino';
+        if (ricetta.principale) categoryClass += ' category-principale';
+        if (ricetta.contorno) categoryClass += ' category-contorno';
+        if (ricetta.complemento) categoryClass += ' category-complemento';
 
         row.innerHTML = `
-            <td>
+            <td class="recipe-name-cell category-indicator${categoryClass}">
                 <div>
-                    <input type="text" class="form-control form-control-sm input-hidden-border" data-ricetta-id="${ricetta.id}" name="nome_ricetta_${ricetta.id}" value="${ricetta.nome_ricetta}">
+                    <input type="text" class="form-control form-control-sm input-hidden-border"
+                           data-ricetta-id="${ricetta.id}" name="nome_ricetta_${ricetta.id}"
+                           value="${ricetta.nome_ricetta}">
                     <label hidden class="form-control form-control-sm">${ricetta.nome_ricetta}</label>
                 </div>
             </td>
-            <td style="text-align: center;">
-                 <div>
-                    <input type="number" class="form-control form-control-sm input-hidden-border"  min="0.1" step="0.1" data-ricetta-id="${ricetta.id}" name="kcal_{ricetta.id}" value="${ricetta.kcal}">
+            <td class="nutrient-cell">
+                <div>
+                    <input type="number" class="form-control form-control-sm input-hidden-border"
+                           min="0.1" step="0.1" data-ricetta-id="${ricetta.id}"
+                           name="kcal_${ricetta.id}" value="${ricetta.kcal}">
                     <label hidden class="form-control form-control-sm">${ricetta.kcal}</label>
                 </div>
             </td>
-
-            <td style="text-align: center;">
+            <td class="nutrient-cell">
                 <div>
-                    <input type="number" class="form-control form-control-sm input-hidden-border"  min="0.1" step="0.1" data-ricetta-id="${ricetta.id}" name="carboidrati_{ricetta.id}" value="${ricetta.carboidrati}">
+                    <input type="number" class="form-control form-control-sm input-hidden-border"
+                           min="0.1" step="0.1" data-ricetta-id="${ricetta.id}"
+                           name="carboidrati_${ricetta.id}" value="${ricetta.carboidrati}">
                     <label hidden class="form-control form-control-sm">${ricetta.carboidrati}</label>
                 </div>
             </td>
-            <td style="text-align: center;">
+            <td class="nutrient-cell">
                 <div>
-                    <input type="number" class="form-control form-control-sm input-hidden-border"  min="0.1" step="0.1" data-ricetta-id="${ricetta.id}" name="proteine_{ricetta.id}" value="${ricetta.proteine}">
+                    <input type="number" class="form-control form-control-sm input-hidden-border"
+                           min="0.1" step="0.1" data-ricetta-id="${ricetta.id}"
+                           name="proteine_${ricetta.id}" value="${ricetta.proteine}">
                     <label hidden class="form-control form-control-sm">${ricetta.proteine}</label>
                 </div>
             </td>
-            <td style="text-align: center;">
+            <td class="nutrient-cell">
                 <div>
-                    <input type="number" class="form-control form-control-sm input-hidden-border"  min="0.1" step="0.1" data-ricetta-id="${ricetta.id}" name="grassi_{ricetta.id}" value="${ricetta.grassi}">
+                    <input type="number" class="form-control form-control-sm input-hidden-border"
+                           min="0.1" step="0.1" data-ricetta-id="${ricetta.id}"
+                           name="grassi_${ricetta.id}" value="${ricetta.grassi}">
                     <label hidden class="form-control form-control-sm">${ricetta.grassi}</label>
                 </div>
             </td>
-            <td style="text-align: center;">
+            <td class="nutrient-cell">
                 <div>
-                    <input type="number" class="form-control form-control-sm input-hidden-border"  min="0.1" step="0.1" data-ricetta-id="${ricetta.id}" name="fibre_{ricetta.id}" value="${ricetta.fibre}">
+                    <input type="number" class="form-control form-control-sm input-hidden-border"
+                           min="0.1" step="0.1" data-ricetta-id="${ricetta.id}"
+                           name="fibre_${ricetta.id}" value="${ricetta.fibre}">
                     <label hidden class="form-control form-control-sm">${ricetta.fibre}</label>
                 </div>
             </td>
-            <td style="text-align: center;">
+            <td class="nutrient-cell">
                 <div>
-                    <input type="number" class="form-control form-control-sm input-hidden-border"  min="0.1" step="0.1" data-ricetta-id="${ricetta.id}" name="zucchero_{ricetta.id}" value="${ricetta.zucchero}">
+                    <input type="number" class="form-control form-control-sm input-hidden-border"
+                           min="0.1" step="0.1" data-ricetta-id="${ricetta.id}"
+                           name="zucchero_${ricetta.id}" value="${ricetta.zucchero}">
                     <label hidden class="form-control form-control-sm">${ricetta.zucchero}</label>
                 </div>
             </td>
-            <td style="text-align: center;">
+            <td class="nutrient-cell">
                 <div>
-                    <input type="number" class="form-control form-control-sm input-hidden-border"  min="0.1" step="0.1" data-ricetta-id="${ricetta.id}" name="sale_{ricetta.id}" value="${ricetta.sale}">
+                    <input type="number" class="form-control form-control-sm input-hidden-border"
+                           min="0.1" step="0.1" data-ricetta-id="${ricetta.id}"
+                           name="sale_${ricetta.id}" value="${ricetta.sale}">
                     <label hidden class="form-control form-control-sm">${ricetta.sale}</label>
                 </div>
             </td>
+            <td class="category-cell">
+                <input type="checkbox" class="recipe-checkbox" name="colazione_${ricetta.id}"
+                       ${ricetta.colazione ? 'checked' : ''}>
+                <label hidden>${ricetta.colazione}</label>
+            </td>
+            <td class="category-cell">
+                <input type="checkbox" class="recipe-checkbox" name="colazione_sec_${ricetta.id}"
+                       ${ricetta.colazione_sec ? 'checked' : ''}>
+                <label hidden>${ricetta.colazione_sec}</label>
+            </td>
+            <td class="category-cell">
+                <input type="checkbox" class="recipe-checkbox" name="spuntino_${ricetta.id}"
+                       ${ricetta.spuntino ? 'checked' : ''}>
+                <label hidden>${ricetta.spuntino}</label>
+            </td>
+            <td class="category-cell">
+                <input type="checkbox" class="recipe-checkbox" name="principale_${ricetta.id}"
+                       ${ricetta.principale ? 'checked' : ''}>
+                <label hidden>${ricetta.principale}</label>
+            </td>
+            <td class="category-cell">
+                <input type="checkbox" class="recipe-checkbox" name="contorno_${ricetta.id}"
+                       ${ricetta.contorno ? 'checked' : ''}>
+                <label hidden>${ricetta.contorno}</label>
+            </td>
+            <td class="category-cell">
+                <input type="checkbox" class="recipe-checkbox" name="complemento_${ricetta.id}"
+                       ${ricetta.complemento ? 'checked' : ''}>
+                <label hidden>${ricetta.complemento}</label>
+            </td>
+            <td class="category-cell">
+                <input type="checkbox" class="recipe-checkbox attiva-checkbox"
+                       name="attiva_${ricetta.id}" data-ricetta-id="${ricetta.id}"
+                       ${ricetta.attiva ? 'checked' : ''} disabled>
+                <label hidden>${ricetta.attiva}</label>
+            </td>
+            <td class="info-cell">
+                <div class="recipe-info-emoji">
+                    ${infoEmojis.join('')}
+                </div>
+            </td>
+            <td class="actions-cell">
+                <div class="recipe-actions">
+                    <button class="btn btn-success btn-sm update-ricetta-btn"
+                            data-ricetta-id="${ricetta.id}"
+                            data-bs-toggle="tooltip" title="Salva modifiche">
+                       <i class="fas fa-save"></i>
+                   </button>
+                   <button class="btn btn-primary btn-sm edit-btn"
+                           data-ricetta-id="${ricetta.id}"
+                           data-bs-toggle="modal" data-bs-target="#editRecipeModal"
+                           data-bs-toggle="tooltip" title="Modifica ingredienti">
+                       <i class="fas fa-edit"></i>
+                   </button>
+                   <button class="btn btn-warning btn-sm toggle-btn"
+                           data-ricetta-id="${ricetta.id}"
+                           data-ricetta-attiva="${ricetta.attiva}"
+                           data-bs-toggle="tooltip" title="Attiva/Disattiva">
+                       <i class="fas fa-toggle-${ricetta.attiva ? 'on' : 'off'}"></i>
+                   </button>
+                   <button class="btn btn-danger btn-sm delete-btn"
+                           data-ricetta-id="${ricetta.id}"
+                           data-bs-toggle="tooltip" title="Elimina ricetta">
+                       <i class="fas fa-trash-alt"></i>
+                   </button>
+               </div>
+           </td>
+       `;
+       tbody.appendChild(row);
+   });
 
-            <td style="text-align: center;">
-                <div>
-                    <input type="checkbox" name="colazione_${ricetta.id}" ${ricetta.colazione ? 'checked' : ''}>
-                    <label hidden class="form-control form-control-sm">${ricetta.colazione}</label>
-                </div>
-            </td>
-            <td style="text-align: center;">
-                <div>
-                    <input type="checkbox" name="colazione_sec_${ricetta.id}" ${ricetta.colazione_sec ? 'checked' : ''}>
-                    <label hidden class="form-control form-control-sm">${ricetta.colazione_sec}</label>
-                </div>
-            </td>
-            <td style="text-align: center;">
-                <div>
-                    <input type="checkbox" name="spuntino_${ricetta.id}" ${ricetta.spuntino ? 'checked' : ''}>
-                    <label hidden class="form-control form-control-sm">${ricetta.spuntino}</label>
-                </div>
-            </td>
-            <td style="text-align: center;">
-                <div>
-                    <input type="checkbox" name="principale_${ricetta.id}" ${ricetta.principale ? 'checked' : ''}>
-                    <label hidden class="form-control form-control-sm">${ricetta.principale}</label>
-                </div>
-            </td>
-            <td style="text-align: center;">
-                <div>
-                    <input type="checkbox" name="contorno_${ricetta.id}" ${ricetta.contorno ? 'checked' : ''}>
-                    <label hidden class="form-control form-control-sm">${ricetta.contorno}</label>
-                </div>
-            </td>
-            <td style="text-align: center;">
-                <div>
-                    <input type="checkbox" name="complemento_${ricetta.id}" ${ricetta.complemento ? 'checked' : ''}>
-                    <label hidden class="form-control form-control-sm">${ricetta.complemento}</label>
-                </div>
-            </td>
-            <td style="text-align: center;">
-                <div>
-                    <label hidden class="form-control form-control-sm">${ricetta.attiva}</label>
-                    <input type="checkbox" class="attiva-checkbox" name="attiva_${ricetta.id}" data-ricetta-id="${ricetta.id}" ${ricetta.attiva ? 'checked' : ''} disabled>
-                </div>
-            </td>
-            <td style="text-align: center;">${infoEmoji}</td>
-            <td style="text-align: center;">
-                <div class="btn-group" role="group">
-                    <button class="btn btn-primary btn-sm update-ricetta-btn" data-ricetta-id="${ricetta.id}" data-ricetta-nome="${ricetta.nome_ricetta}" data-ricetta-colazione="${ricetta.colazione}" data-ricetta-colazione_sec="${ricetta.colazione_sec}" data-ricetta-spuntino="${ricetta.spuntino}" data-ricetta-principale="${ricetta.principale}" data-ricetta-contorno="${ricetta.contorno}" data-ricetta-complemento="${ricetta.complemento}" data-ricetta-attiva="${ricetta.attiva}" data-bs-toggle="tooltip" title="Salva"><i class="fas fa-save"></i></button>
-                    <button class="btn btn-primary btn-sm edit-btn" data-ricetta-id="${ricetta.id}" data-bs-toggle="modal" data-bs-target="#editRecipeModal" data-bs-toggle="tooltip" title="Modifica"><i class="fas fa-edit"></i></button>
-                    <button class="btn btn-warning btn-sm toggle-btn" data-ricetta-id="${ricetta.id}" data-ricetta-attiva="${ricetta.attiva}" data-bs-toggle="tooltip" title="Attiva/Disattiva"><i class="fas fa-toggle-on"></i></button>
-                    <button class="btn btn-danger btn-sm delete-btn" data-ricetta-id="${ricetta.id}" data-bs-toggle="tooltip" title="Elimina"><i class="fas fa-trash-alt"></i></button>
-                </div>
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
+// Event listeners per i bottoni
+   document.querySelectorAll('.update-ricetta-btn').forEach(button => {
+       button.addEventListener('click', function() {
+           const ricettaId = this.getAttribute('data-ricetta-id');
+           const ricettaData = {
+               id: ricettaId,
+               nome: document.querySelector(`input[name='nome_ricetta_${ricettaId}']`).value,
+               kcal: parseFloat(document.querySelector(`input[name='kcal_${ricettaId}']`).value),
+               carboidrati: parseFloat(document.querySelector(`input[name='carboidrati_${ricettaId}']`).value),
+               proteine: parseFloat(document.querySelector(`input[name='proteine_${ricettaId}']`).value),
+               grassi: parseFloat(document.querySelector(`input[name='grassi_${ricettaId}']`).value),
+               fibre: parseFloat(document.querySelector(`input[name='fibre_${ricettaId}']`).value),
+               zucchero: parseFloat(document.querySelector(`input[name='zucchero_${ricettaId}']`).value),
+               sale: parseFloat(document.querySelector(`input[name='sale_${ricettaId}']`).value),
+               colazione: document.querySelector(`input[name='colazione_${ricettaId}']`).checked,
+               colazione_sec: document.querySelector(`input[name='colazione_sec_${ricettaId}']`).checked,
+               spuntino: document.querySelector(`input[name='spuntino_${ricettaId}']`).checked,
+               principale: document.querySelector(`input[name='principale_${ricettaId}']`).checked,
+               contorno: document.querySelector(`input[name='contorno_${ricettaId}']`).checked,
+               complemento: document.querySelector(`input[name='complemento_${ricettaId}']`).checked
+           };
 
-    // Attacca i listener per i bottoni
-    document.querySelectorAll('.update-ricetta-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const ricettaId = this.getAttribute('data-ricetta-id');
-            const ricettaData = {
-                id: ricettaId,
-                nome: document.querySelector(`input[name='nome_ricetta_${ricettaId}']`).value,
-                colazione: document.querySelector(`input[name='colazione_${ricettaId}']`).checked,
-                colazione_sec: document.querySelector(`input[name='colazione_sec_${ricettaId}']`).checked,
-                spuntino: document.querySelector(`input[name='spuntino_${ricettaId}']`).checked,
-                principale: document.querySelector(`input[name='principale_${ricettaId}']`).checked,
-                contorno: document.querySelector(`input[name='contorno_${ricettaId}']`).checked,
-                complemento: document.querySelector(`input[name='complemento_${ricettaId}']`).checked
-            };
-            updateRicetta(ricettaData);
-        });
-    });
+           // Aggiungi stato di loading al bottone
+           this.classList.add('btn-loading');
+           this.disabled = true;
 
-    document.querySelectorAll('.toggle-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const ricettaId = this.getAttribute('data-ricetta-id');
-            const ricettaAttiva = this.getAttribute('data-ricetta-attiva') === 'true';
-            toggleStatusRicetta(ricettaId);
-            const checkbox = document.querySelector(`.attiva-checkbox[data-ricetta-id='${ricettaId}']`);
-            if (checkbox) {
-                checkbox.checked = !checkbox.checked;
-            }
-        });
-    });
+           updateRicetta(ricettaData).finally(() => {
+               this.classList.remove('btn-loading');
+               this.disabled = false;
+           });
+       });
+   });
 
-    document.querySelectorAll('.delete-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const ricettaId = this.getAttribute('data-ricetta-id');
-            deleteRicetta(ricettaId);
-        });
-    });
+   document.querySelectorAll('.toggle-btn').forEach(button => {
+       button.addEventListener('click', function() {
+           const ricettaId = this.getAttribute('data-ricetta-id');
+           const isActive = this.getAttribute('data-ricetta-attiva') === 'true';
 
-    // Riattacca i listener dopo aver aggiornato la tabella
-    document.querySelectorAll('.edit-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const recipeId = this.getAttribute('data-ricetta-id');
-            fetch(`/ingredienti_ricetta/${recipeId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status == 'success'){
-                        populateIngredientsModal(data.ricette);
-                        document.getElementById('modal-recipe-id').value = recipeId;
-                    }
-                })
-                .catch(error => console.error('Error loading the ingredients:', error));
-        });
-    });
+           // Aggiungi stato di loading
+           this.classList.add('btn-loading');
+           this.disabled = true;
 
-    filterTable();
+           toggleStatusRicetta(ricettaId).then(() => {
+               // Aggiorna stato visivo
+               const checkbox = document.querySelector(`.attiva-checkbox[data-ricetta-id='${ricettaId}']`);
+               const row = this.closest('tr');
+               const icon = this.querySelector('i');
+
+               if (checkbox) {
+                   checkbox.checked = !checkbox.checked;
+
+                   // Aggiorna classe della riga
+                   if (checkbox.checked) {
+                       row.classList.remove('recipe-inactive');
+                       row.classList.add('recipe-active');
+                       icon.className = 'fas fa-toggle-on';
+                   } else {
+                       row.classList.remove('recipe-active');
+                       row.classList.add('recipe-inactive');
+                       icon.className = 'fas fa-toggle-off';
+                   }
+
+                   this.setAttribute('data-ricetta-attiva', checkbox.checked.toString());
+               }
+           }).finally(() => {
+               this.classList.remove('btn-loading');
+               this.disabled = false;
+           });
+       });
+   });
+
+   document.querySelectorAll('.delete-btn').forEach(button => {
+       button.addEventListener('click', function() {
+           const ricettaId = this.getAttribute('data-ricetta-id');
+           const ricettaNome = document.querySelector(`input[name='nome_ricetta_${ricettaId}']`).value;
+
+           // Mostra conferma prima di eliminare
+           if (confirm(`Sei sicuro di voler eliminare la ricetta "${ricettaNome}"?`)) {
+               this.classList.add('btn-loading');
+               this.disabled = true;
+
+               deleteRicetta(ricettaId).finally(() => {
+                   this.classList.remove('btn-loading');
+                   this.disabled = false;
+               });
+           }
+       });
+   });
+
+   document.querySelectorAll('.edit-btn').forEach(button => {
+       button.addEventListener('click', function() {
+           const recipeId = this.getAttribute('data-ricetta-id');
+
+           // Aggiungi stato di loading
+           this.classList.add('btn-loading');
+           this.disabled = true;
+
+           fetch(`/ingredienti_ricetta/${recipeId}`)
+               .then(response => response.json())
+               .then(data => {
+                   if (data.status == 'success') {
+                       populateIngredientsModal(data.ricette);
+                       document.getElementById('modal-recipe-id').value = recipeId;
+                   }
+               })
+               .catch(error => console.error('Error loading the ingredients:', error))
+               .finally(() => {
+                   this.classList.remove('btn-loading');
+                   this.disabled = false;
+               });
+       });
+   });
+
+   // Inizializza tooltip
+   const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+   const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+       return new bootstrap.Tooltip(tooltipTriggerEl);
+   });
+
+   filterTable();
 }
+
 
 function populateDietaForm(data) {
     // Popola i campi del form con i dati ricevuti
@@ -1808,34 +1917,36 @@ function updateProgress(progress) {
     progressBar.setAttribute("aria-valuenow", progress);
 }
 
+// Funzione aggiuntiva per pulire i filtri (aggiorna se esiste già)
 function cleanFilters() {
-    // Resetta i valori dei filtri
-    document.getElementById('filter-nome').value = '';
-    document.getElementById('filter-ricette-calorie-min').value = '';
-    document.getElementById('filter-ricette-calorie-max').value = '';
-    document.getElementById('filter-ricette-carbo-min').value = '';
-    document.getElementById('filter-ricette-carbo-max').value = '';
-    document.getElementById('filter-ricette-proteine-min').value = '';
-    document.getElementById('filter-ricette-proteine-max').value = '';
-    document.getElementById('filter-ricette-grassi-min').value = '';
-    document.getElementById('filter-ricette-grassi-max').value = '';
-    document.getElementById('filter-ricette-fibre-min').value = '';
-    document.getElementById('filter-ricette-fibre-max').value = '';
-    document.getElementById('filter-ricette-zucchero-min').value = '';
-    document.getElementById('filter-ricette-zucchero-max').value = '';
-    document.getElementById('filter-ricette-sale-min').value = '';
-    document.getElementById('filter-ricette-sale-max').value = '';
-    document.getElementById('filter-colazione').value = 'all';
-    document.getElementById('filter-complemento-ricette').value = 'all';
-    document.getElementById('filter-colazione-sec').value = 'all';
-    document.getElementById('filter-spuntino').value = 'all';
-    document.getElementById('filter-principale').value = 'all';
-    document.getElementById('filter-contorno').value = 'all';
-    document.getElementById('filter-attiva').value = 'all';
-    document.getElementById('filter-info').value = 'all';
+   // Pulisci input di testo
+   document.getElementById('filter-nome').value = '';
 
-    // Chiama la funzione che filtra la tabella per aggiornare i risultati
-    filterTable();
+   // Pulisci filtri numerici
+   ['ricette-calorie', 'ricette-carbo', 'ricette-proteine', 'ricette-grassi',
+    'ricette-fibre', 'ricette-zucchero', 'ricette-sale'].forEach(filter => {
+       const minInput = document.getElementById(`filter-${filter}-min`);
+       const maxInput = document.getElementById(`filter-${filter}-max`);
+       if (minInput) minInput.value = '';
+       if (maxInput) maxInput.value = '';
+   });
+
+   // Reset select
+   ['colazione', 'colazione-sec', 'spuntino', 'principale', 'contorno',
+    'complemento-ricette', 'attiva'].forEach(filter => {
+       const select = document.getElementById(`filter-${filter}`);
+       if (select) select.value = 'all';
+   });
+
+   // Reset filtro info
+   const infoSelect = document.getElementById('filter-info');
+   if (infoSelect) {
+       Array.from(infoSelect.options).forEach(option => {
+           option.selected = option.value === 'all';
+       });
+   }
+
+   filterTable();
 }
 
 function deleteMenu() {

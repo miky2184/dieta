@@ -982,3 +982,244 @@ td div:last-child {
         padding: 0.5rem;
     }
 }
+
+/* ====== RICETTE STYLES ====== */
+.ricette-container {
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.ricette-table {
+    margin: 0;
+    font-size: 0.8rem;
+}
+
+.ricette-table thead th {
+    background: linear-gradient(135deg, var(--primary-color), #34495e);
+    color: white;
+    font-weight: 600;
+    text-align: center;
+    padding: 0.75rem 0.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    vertical-align: middle;
+}
+
+.ricette-table .recipe-name-header {
+    min-width: 200px;
+    max-width: 300px;
+}
+
+.ricette-table .nutrient-header {
+    min-width: 80px;
+    width: 90px;
+}
+
+.ricette-table .category-header {
+    min-width: 70px;
+    width: 80px;
+}
+
+.ricette-table .info-header {
+    min-width: 100px;
+    width: 120px;
+}
+
+.ricette-table .actions-header {
+    min-width: 150px;
+    width: 160px;
+}
+
+.ricette-table tbody td {
+    padding: 0.5rem 0.25rem;
+    vertical-align: middle;
+    border: 1px solid var(--border-color);
+    font-size: 0.75rem;
+}
+
+.ricette-table .recipe-name-cell {
+    max-width: 300px;
+    word-wrap: break-word;
+}
+
+.ricette-table .nutrient-cell {
+    text-align: center;
+    font-weight: 500;
+}
+
+.ricette-table .category-cell {
+    text-align: center;
+}
+
+.ricette-table .info-cell {
+    text-align: center;
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
+.ricette-table .actions-cell {
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Filtri ricette */
+.filter-row-ricette {
+    background: var(--light-bg);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.filter-row-ricette th {
+    background: var(--light-bg) !important;
+    color: var(--primary-color) !important;
+    padding: 0.5rem 0.25rem;
+}
+
+.filter-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.filter-input-group input {
+    font-size: 0.7rem;
+    padding: 0.25rem;
+}
+
+/* Checkbox ricette personalizzati */
+.recipe-checkbox {
+    transform: scale(1.3);
+    accent-color: var(--secondary-color);
+}
+
+.recipe-checkbox:checked {
+    accent-color: var(--success-color);
+}
+
+/* Info emoji container */
+.recipe-info-emoji {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2px;
+    font-size: 1rem;
+}
+
+.recipe-info-emoji span {
+    display: inline-block;
+    padding: 1px;
+}
+
+/* Bottoni azioni ricette */
+.recipe-actions {
+    display: flex;
+    gap: 2px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.recipe-actions .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    min-width: 30px;
+}
+
+/* Stati ricetta */
+.recipe-active {
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
+.recipe-inactive {
+    background-color: rgba(108, 117, 125, 0.1);
+    opacity: 0.7;
+}
+
+/* Indicatori categoria pasto */
+.category-indicator {
+    position: relative;
+}
+
+.category-indicator::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 100%;
+    border-radius: 2px;
+}
+
+.category-colazione::after { background: #ffc107; }
+.category-merenda::after { background: #17a2b8; }
+.category-spuntino::after { background: #6f42c1; }
+.category-principale::after { background: #28a745; }
+.category-contorno::after { background: #fd7e14; }
+.category-complemento::after { background: #dc3545; }
+
+/* Responsive ricette */
+@media (max-width: 1400px) {
+    .ricette-table {
+        font-size: 0.7rem;
+    }
+
+    .ricette-table tbody td {
+        padding: 0.25rem 0.125rem;
+    }
+
+    .recipe-actions .btn {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.3rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .ricette-container {
+        overflow-x: auto;
+    }
+
+    .ricette-table {
+        min-width: 1200px;
+        font-size: 0.65rem;
+    }
+
+    .filter-input-group input {
+        font-size: 0.65rem;
+    }
+
+    .recipe-info-emoji {
+        font-size: 0.9rem;
+    }
+}
+
+/* Tooltip personalizzato per ricette */
+.recipe-tooltip {
+    max-width: 300px;
+    font-size: 0.8rem;
+}
+
+/* Animazioni hover */
+.ricette-table tbody tr:hover {
+    background-color: rgba(74, 144, 226, 0.05);
+    transform: scale(1.01);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Header con icone */
+.header-with-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-direction: column;
+}
+
+.header-icon {
+    font-size: 1rem;
+}
+
+.header-text {
+    font-size: 0.8rem;
+    line-height: 1;
+}
