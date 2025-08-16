@@ -1,16 +1,52 @@
-<!-- app/templates/tabs.html -->
 <div class="tab">
-    <button class="tablinks tutorial-disable" onclick="openTab(event, 'Menu')" id="defaultOpen">Menu Settimanale</button>
-    <button class="tablinks" onclick="openTab(event, 'ModificaPasti')">Modifica Pasti</button>
-    <button class="tablinks" id="alimenti-tab" onclick="openTab(event, 'Alimenti')" >Alimenti Disponibili</button>
-    <button class="tablinks" id="ricette-tab" onclick="openTab(event, 'Ricette')" >Ricette Disponibili</button>
-    <button class="tablinks" onclick="openTab(event, 'ListaSpesa')">Lista della Spesa</button>
-    <button class="tablinks" id="peso-tab" onclick="openTab(event, 'Peso')">Registro del Peso</button>
-    <button class="tablinks tutorial-disable" id="dieta-tab" onclick="openTab(event, 'DietaForm')">Dieta</button>
-    <!-- Logout button with icon -->
-    <form action="{{ url_for('auth.logout') }}" method="POST" style="margin-left: auto;">
-        <button type="submit tutorial-disable" class="tablinks">
-            <i class="fas fa-sign-out-alt text-dark"></i>
+    <button class="tablinks tab-menu tutorial-disable active" onclick="openTab(event, 'Menu')" id="defaultOpen">
+        <i class="fas fa-calendar-week tab-icon"></i>
+        <span class="tab-text">Menu Settimanale</span>
+        <div class="tab-tooltip">Menu Settimanale</div>
+    </button>
+
+    <button class="tablinks tab-modifica" onclick="openTab(event, 'ModificaPasti')">
+        <i class="fas fa-edit tab-icon"></i>
+        <span class="tab-text">Modifica Pasti</span>
+        <div class="tab-tooltip">Modifica Pasti</div>
+    </button>
+
+    <button class="tablinks tab-alimenti" id="alimenti-tab" onclick="openTab(event, 'Alimenti')">
+        <i class="fas fa-apple-alt tab-icon"></i>
+        <span class="tab-text">Alimenti</span>
+        <div class="tab-badge" id="alimenti-badge"></div>
+        <div class="tab-tooltip">Alimenti Disponibili</div>
+    </button>
+
+    <button class="tablinks tab-ricette" id="ricette-tab" onclick="openTab(event, 'Ricette')">
+        <i class="fas fa-book-open tab-icon"></i>
+        <span class="tab-text">Ricette</span>
+        <div class="tab-badge" id="ricette-badge"></div>
+        <div class="tab-tooltip">Ricette Disponibili</div>
+    </button>
+
+    <button class="tablinks tab-lista" onclick="openTab(event, 'ListaSpesa')">
+        <i class="fas fa-shopping-cart tab-icon"></i>
+        <span class="tab-text">Lista Spesa</span>
+        <div class="tab-tooltip">Lista della Spesa</div>
+    </button>
+
+    <button class="tablinks tab-peso" id="peso-tab" onclick="openTab(event, 'Peso')">
+        <i class="fas fa-weight tab-icon"></i>
+        <span class="tab-text">Peso</span>
+        <div class="tab-tooltip">Registro del Peso</div>
+    </button>
+
+    <button class="tablinks tab-dieta tutorial-disable" id="dieta-tab" onclick="openTab(event, 'DietaForm')">
+        <i class="fas fa-heartbeat tab-icon"></i>
+        <span class="tab-text">Dieta</span>
+        <div class="tab-tooltip">Configurazione Dieta</div>
+    </button>
+
+    <!-- Logout button -->
+    <form action="{{ url_for('auth.logout') }}" method="POST" class="logout-form">
+        <button type="submit" class="logout-btn tutorial-disable" title="Logout">
+            <i class="fas fa-sign-out-alt"></i>
         </button>
     </form>
 </div>

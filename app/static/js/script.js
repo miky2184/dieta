@@ -13,14 +13,102 @@ function debounce(fn, wait=200) {
   };
 }
 
-function openTab(evt, tabName) {
+/*function openTab(evt, tabName) {
     const tabcontent = document.querySelectorAll(".tabcontent");
     tabcontent.forEach(tab => tab.style.display = "none");
     const tablinks = document.querySelectorAll(".tablinks");
     tablinks.forEach(link => link.className = link.className.replace(" active", ""));
     document.getElementById(tabName).style.display = "block";
     evt.currentTarget.className += " active";
+} */
+
+function openTab(evt, tabName) {
+    // Nascondi tutti i contenuti dei tab
+    var tabcontent = document.getElementsByClassName("tabcontent");
+    for (var i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+    }
+
+    // Rimuovi la classe active da tutti i tab links
+    var tablinks = document.getElementsByClassName("tablinks");
+    for (var i = 0; i < tablinks.length; i++) {
+        tablinks[i].classList.remove("active");
+    }
+
+    // Mostra il tab selezionato e aggiungi classe active
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.classList.add("active");
+
+    // Aggiungi stato di loading temporaneo
+    evt.currentTarget.classList.add("loading");
+    setTimeout(() => {
+        evt.currentTarget.classList.remove("loading");
+    }, 500);
+
+    // Salva il tab attivo nel localStorage
+    localStorage.setItem('activeTab', tabName);
+
+    // Trigger custom event per altre funzionalità
+    window.dispatchEvent(new CustomEvent('tabChanged', {
+        detail: { tabName: tabName }
+    }));
 }
+
+// Funzione per aggiungere badge di notifica
+function addTabBadge(tabId, count) {
+    const badge = document.getElementById(tabId + '-badge');
+    if (badge && count > 0) {
+        badge.textContent = count;
+        badge.classList.add('show');
+    }
+}
+
+// Funzione per rimuovere badge di notifica
+function removeTabBadge(tabId) {
+    const badge = document.getElementById(tabId + '-badge');
+    if (badge) {
+        badge.classList.remove('show');
+    }
+}
+
+// Ripristina tab attivo al caricamento della pagina
+document.addEventListener('DOMContentLoaded', function() {
+    const activeTab = localStorage.getItem('activeTab');
+    if (activeTab && document.getElementById(activeTab)) {
+        // Trova il bottone corrispondente e attivalo
+        const buttons = document.querySelectorAll('.tablinks');
+        buttons.forEach(button => {
+            if (button.onclick && button.onclick.toString().includes(activeTab)) {
+                button.click();
+            }
+        });
+    } else {
+        // Attiva il tab di default
+        document.getElementById("defaultOpen").click();
+    }
+
+    // Esempi di notifiche (rimuovi se non necessario)
+    // addTabBadge('alimenti', 5); // 5 nuovi alimenti
+    // addTabBadge('ricette', 2); // 2 nuove ricette
+});
+
+// Gestione responsive per mobile
+function handleMobileNavigation() {
+    const tabs = document.querySelectorAll('.tablinks');
+    tabs.forEach(tab => {
+        tab.addEventListener('touchstart', function(e) {
+            // Migliora la responsiveness su mobile
+            this.style.transform = 'scale(0.95)';
+        });
+
+        tab.addEventListener('touchend', function(e) {
+            this.style.transform = '';
+        });
+    });
+}
+
+// Inizializza al caricamento
+document.addEventListener('DOMContentLoaded', handleMobileNavigation);
 
 function showAlertModal(message) {
     // Imposta il messaggio nel modal
