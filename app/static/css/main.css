@@ -234,7 +234,7 @@ html, body {
 
 .input-group-text {
     background: linear-gradient(135deg, var(--primary-color), #34495e);
-    color: white;
+    color: white !important;
     border: none;
     font-weight: 500;
     min-width: 100px;
