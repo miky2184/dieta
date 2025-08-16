@@ -39,58 +39,14 @@ function openTab(evt, tabName) {
     document.getElementById(tabName).style.display = "block";
     evt.currentTarget.classList.add("active");
 
-    // Aggiungi stato di loading temporaneo
-    evt.currentTarget.classList.add("loading");
-    setTimeout(() => {
-        evt.currentTarget.classList.remove("loading");
-    }, 500);
-
     // Salva il tab attivo nel localStorage
     localStorage.setItem('activeTab', tabName);
 
-    // Trigger custom event per altre funzionalità
+    // Trigger custom event
     window.dispatchEvent(new CustomEvent('tabChanged', {
         detail: { tabName: tabName }
     }));
 }
-
-// Funzione per aggiungere badge di notifica
-function addTabBadge(tabId, count) {
-    const badge = document.getElementById(tabId + '-badge');
-    if (badge && count > 0) {
-        badge.textContent = count;
-        badge.classList.add('show');
-    }
-}
-
-// Funzione per rimuovere badge di notifica
-function removeTabBadge(tabId) {
-    const badge = document.getElementById(tabId + '-badge');
-    if (badge) {
-        badge.classList.remove('show');
-    }
-}
-
-// Ripristina tab attivo al caricamento della pagina
-document.addEventListener('DOMContentLoaded', function() {
-    const activeTab = localStorage.getItem('activeTab');
-    if (activeTab && document.getElementById(activeTab)) {
-        // Trova il bottone corrispondente e attivalo
-        const buttons = document.querySelectorAll('.tablinks');
-        buttons.forEach(button => {
-            if (button.onclick && button.onclick.toString().includes(activeTab)) {
-                button.click();
-            }
-        });
-    } else {
-        // Attiva il tab di default
-        document.getElementById("defaultOpen").click();
-    }
-
-    // Esempi di notifiche (rimuovi se non necessario)
-    // addTabBadge('alimenti', 5); // 5 nuovi alimenti
-    // addTabBadge('ricette', 2); // 2 nuove ricette
-});
 
 // Gestione responsive per mobile
 function handleMobileNavigation() {
